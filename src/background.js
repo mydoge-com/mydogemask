@@ -15,32 +15,31 @@
 
 // On first install, open home screen in new tab
 chrome.runtime.onInstalled.addListener(({ reason }) => {
-  if (
-    reason === 'install'
-  ) {
-    chrome.tabs.create({ url: chrome.runtime.getURL('home.html') })
+  if (reason === 'install') {
+    chrome.tabs.create({ url: chrome.runtime.getURL('home.html') });
   }
 });
 
 // onRequestTransaction: Launch notification popup
-function onRequestTransaction({ data = {}, sendReponse } = {}) {
-  chrome.windows.getCurrent((w) => {  
+function onRequestTransaction({ data = {}, sendResponse } = {}) {
+  chrome.windows.getCurrent((w) => {
     const width = 360;
     const height = 540;
 
     chrome.windows.create(
       {
-        url: "notification.html",
-        type: "popup",
-        width: width,
-        height: height,
+        url: `notification.html?amount=${data.amount}`,
+        type: 'popup',
+        width,
+        height,
         left: w.width + w.left - width,
         top: 0,
       },
       (newWindow) => {
         console.log(
-          "can use the newWindow id to set up listener for transaction success/fail maybe?"
+          `can use ${newWindow.id} to set up listener for transaction success/fail maybe?`
         );
+        if (sendResponse) sendResponse('success');
       }
     );
   });
@@ -50,7 +49,7 @@ function onRequestTransaction({ data = {}, sendReponse } = {}) {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message?.message) return;
   switch (message.message) {
-    case "requestTransaction":
+    case 'requestTransaction':
       onRequestTransaction({ data: message.data, sendResponse });
       break;
     default:

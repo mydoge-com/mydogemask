@@ -35,6 +35,12 @@
     "no-nested-ternary": "off",
     "no-plusplus": "off",
     "simple-import-sort/exports": "error",
-    "simple-import-sort/imports": "error"
+    "simple-import-sort/imports": "error",
+    "no-alert": "off",
+    "no-param-reassign": "off"
+  },
+  "globals": {
+    "chrome": true,
+    "it": true
   }
 }

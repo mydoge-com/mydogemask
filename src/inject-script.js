@@ -8,8 +8,12 @@ window.doge = {
     // TODO
   },
   requestTransaction: () => {
-    window.postMessage({ type: "FROM_PAGE", message: "requestTransaction", data: {} });
+    window.postMessage({
+      type: 'FROM_PAGE',
+      message: 'requestTransaction',
+      data: {},
+    });
   },
 };
-const initEvent = new Event("doge#initialized");
+const initEvent = new Event('doge#initialized');
 window.dispatchEvent(initEvent);
