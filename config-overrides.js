@@ -17,7 +17,8 @@ function override(config, env) {
     popup: paths.appIndexJs,
     options: paths.appSrc + '/options.js',
     background: paths.appSrc + '/background.js',
-    content: paths.appSrc + '/content.js'
+    content: paths.appSrc + '/content.js',
+    'inject-script': paths.appSrc + '/inject-script.js'
   };
   // Change output filename template to get rid of hash there
   config.output.filename = 'static/js/[name].js';
@@ -67,6 +68,28 @@ function override(config, env) {
   // Add the above HtmlWebpackPlugin instance into config.plugins
   // Note: you may remove/comment the next line if you don't need an options page
   config.plugins.push(optionsHtmlPlugin);
+
+  // Extra HtmlWebpackPlugin instance for notification page
+  const notificationHtmlPlugin = new HtmlWebpackPlugin({
+    inject: true,
+    chunks: ['notification'],
+    template: paths.appPublic + '/notification.html',
+    filename: 'notification.html',
+    minify: isEnvProduction && minifyOpts,
+  });
+  // Add the above HtmlWebpackPlugin instance into config.plugins
+  config.plugins.push(notificationHtmlPlugin);
+
+  // Extra HtmlWebpackPlugin instance for home page
+  const homeHtmlPlugin = new HtmlWebpackPlugin({
+    inject: true,
+    chunks: ['notification'],
+    template: paths.appPublic + '/home.html',
+    filename: 'home.html',
+    minify: isEnvProduction && minifyOpts,
+  });
+  // Add the above HtmlWebpackPlugin instance into config.plugins
+  config.plugins.push(homeHtmlPlugin);
 
   // Custom ManifestPlugin instance to cast asset-manifest.json back to old plain format
   const manifestPlugin = new (ManifestPlugin.WebpackManifestPlugin ||
