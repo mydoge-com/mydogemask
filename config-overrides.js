@@ -16,6 +16,8 @@ function override(config, env) {
   config.entry = {
     popup: paths.appIndexJs,
     options: paths.appSrc + '/options.js',
+    notification: paths.appSrc + '/notification.js',
+    home: paths.appSrc + '/home.js',
     background: paths.appSrc + '/background.js',
     content: paths.appSrc + '/content.js',
     'inject-script': paths.appSrc + '/inject-script.js'
@@ -83,7 +85,7 @@ function override(config, env) {
   // Extra HtmlWebpackPlugin instance for home page
   const homeHtmlPlugin = new HtmlWebpackPlugin({
     inject: true,
-    chunks: ['notification'],
+    chunks: ['home'],
     template: paths.appPublic + '/home.html',
     filename: 'home.html',
     minify: isEnvProduction && minifyOpts,

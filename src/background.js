@@ -18,7 +18,7 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (
     reason === 'install'
   ) {
-    chrome.tabs.create({ url: chrome.runtime.getURL('home/home.html') })
+    chrome.tabs.create({ url: chrome.runtime.getURL('home.html') })
   }
 });
 
@@ -30,7 +30,7 @@ function onRequestTransaction({ data = {}, sendReponse } = {}) {
 
     chrome.windows.create(
       {
-        url: "notification/notification.html",
+        url: "notification.html",
         type: "popup",
         width: width,
         height: height,

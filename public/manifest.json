@@ -23,7 +23,6 @@
     "resources": [
       "assets/dogecoin.png",
       "assets/sendtip.png",
-      "notification.html",
       "static/js/inject-script.js"
     ],
     "matches": ["https://*.mydoge.com/*"]

@@ -4,11 +4,9 @@ import './App.css'
 function App() {
   return (
     <div>
+      <div>Notification</div>
       <div>
-        <div>Notification</div>
-        <div>
-          <p>For instance, approve transaction.</p>
-        </div>
+        <p>For instance, approve transaction.</p>
       </div>
     </div>
   );

@@ -3,7 +3,6 @@ import './App.css'
 
 function App() {
   return (
-    <div>
       <div>
         <div>Welcome to MyDoge</div>
         <div>
@@ -11,7 +10,6 @@ function App() {
           <p>Import wallet.</p>
         </div>
       </div>
-    </div>
   );
 }
 
