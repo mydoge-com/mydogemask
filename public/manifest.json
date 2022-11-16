@@ -14,7 +14,7 @@
     "128": "assets/dogecoin128.png"
   },
   "content_scripts": [{
-    "js": ["static/js/content.js"],
+    "js": ["static/js/contentScript.js"],
     "matches": [
       "http://*/*", "https://*/*"
     ]

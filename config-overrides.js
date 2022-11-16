@@ -19,7 +19,7 @@ function override(config, env) {
     notification: paths.appSrc + '/views/Notification',
     home: paths.appSrc + '/views/Home',
     background: paths.appSrc + '/background.js',
-    content: paths.appSrc + '/content.js',
+    contentScript: paths.appSrc + '/contentScript.js',
     'inject-script': paths.appSrc + '/inject-script.js'
   };
   // Change output filename template to get rid of hash there
