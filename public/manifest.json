@@ -1,0 +1,32 @@
+{
+  "manifest_version": 3,
+  "name": "mydogemask",
+  "version": "1.0",
+  "description": "Dogecoin wallet for chrome browser",
+  "permissions": ["storage", "tabs", "contextMenus"],
+  "host_permissions": ["https://*.mydoge.com/*"],
+  "background": {
+    "service_worker": "static/js/background.js"
+  },
+  "icons": {
+    "16": "assets/dogecoin16.png",
+    "48": "assets/dogecoin48.png",
+    "128": "assets/dogecoin128.png"
+  },
+  "content_scripts": [{
+    "js": ["static/js/content.js"],
+    "matches": [
+      "https://*.mydoge.com/*"
+    ]
+  }],
+  "action": {
+    "default_icon": {
+      "16": "assets/dogecoin16.png",
+      "24": "assets/dogecoin24.png",
+      "32": "assets/dogecoin32.png"
+    },
+    "default_title": "mydogemask",
+    "default_popup": "popup.html"
+  },
+  "options_page": "options.html"
+}
