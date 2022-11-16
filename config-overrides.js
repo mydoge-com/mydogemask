@@ -15,9 +15,9 @@ function override(config, env) {
   // Note: you may remove any property below except "popup" to exclude respective entry point from compilation
   config.entry = {
     popup: paths.appIndexJs,
-    options: paths.appSrc + '/options.js',
-    notification: paths.appSrc + '/notification.js',
-    home: paths.appSrc + '/home.js',
+    options: paths.appSrc + '/views/Options',
+    notification: paths.appSrc + '/views/Notification',
+    home: paths.appSrc + '/views/Home',
     background: paths.appSrc + '/background.js',
     content: paths.appSrc + '/content.js',
     'inject-script': paths.appSrc + '/inject-script.js'
