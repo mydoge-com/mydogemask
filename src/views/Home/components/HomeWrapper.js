@@ -2,13 +2,14 @@ import { Box, HStack, Image } from 'native-base';
 
 export const HomeWrapper = ({ children }) => {
   return (
-    <HStack h='100vh' overflow='hidden' justifyContent='space-between'>
+    <HStack h='100vh' justifyContent='space-between'>
       <Box
         h='100%'
-        flex={0.5}
+        flex={1}
         justifyContent='center'
         alignItems='center'
         bg='white'
+        // flexShrink={1}
       >
         <Image
           source={{ uri: '/assets/bg.png' }}
@@ -35,7 +36,7 @@ export const HomeWrapper = ({ children }) => {
           alt='intro'
         />
       </Box>
-      <Box h='100%' bg='#f1f1f1' flex={0.5}>
+      <Box h='100%' bg='#f1f1f1' flex={1} minW='500px'>
         {children}
       </Box>
     </HStack>

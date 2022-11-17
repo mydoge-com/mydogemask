@@ -21,8 +21,8 @@ import sb from 'satoshi-bitcoin';
 import { MIN_CONFIRMATIONS } from '../../constants/Doge';
 import { MINUTES_10, SECONDS_10 } from '../../constants/Time';
 import { useInterval } from '../../hooks/useInterval';
-import { callWithRetry } from '../../utils/api';
 // import { useStorage } from '../../hooks/useStorage';
+import { callWithRetry } from '../../utils/api';
 import { logError } from '../../utils/error';
 import {
   asFiat,

@@ -11,7 +11,7 @@ export const Success = ({ setScreen }) => {
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
-      <VStack bg='white' py='40px' rounded='sm' px='40px'>
+      <VStack bg='white' py='40px' rounded='sm' px='40px' mt='20px'>
         <Text fontSize='2xl'>
           Welcome to <Text fontWeight='bold'>MyDoge Web</Text>
         </Text>
@@ -28,7 +28,7 @@ export const Success = ({ setScreen }) => {
           Let's Go!
         </BigButton>
       </VStack>
-      <Footer />
+      <Footer mt='40px' />
     </VStack>
   );
 };
