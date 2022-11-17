@@ -13,6 +13,25 @@
 //   }
 // });
 
+// Listen to taskbar click - if onBoarding not complete the show onBoarding
+chrome.action.onClicked.addListener(() => {
+  chrome.storage.local.get('onBoardingComplete', function(result) {
+    if(result.onBoardingComplete !== true){
+      chrome.tabs.create({ url: chrome.runtime.getURL('home.html') });
+    }
+  });
+});
+
+// function to call once onBoarding is completed
+function onBoardingComplete(){    
+  chrome.storage.local.set({onBoardingComplete: true}, function() {
+    console.log('onBoardingComplete is set to true');
+  });
+  chrome.action.setPopup({
+      popup: 'popup.html'
+  });
+}
+
 // On first install, open home screen in new tab
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === 'install') {
