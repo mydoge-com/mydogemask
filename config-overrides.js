@@ -26,7 +26,7 @@ function override(config, env) {
   config.output.filename = 'static/js/[name].js';
   // Disable built-in SplitChunksPlugin
   config.optimization.splitChunks = {
-    cacheGroups: {default: false}
+    cacheGroups: { default: false },
   };
   // Disable runtime chunk addition for each entry point
   config.optimization.runtimeChunk = false;
@@ -45,7 +45,7 @@ function override(config, env) {
     minifyURLs: true,
   };
   const isEnvProduction = env === 'production';
-  
+
   // Custom HtmlWebpackPlugin instance for index (popup) page
   const indexHtmlPlugin = new HtmlWebpackPlugin({
     inject: true,
@@ -55,15 +55,17 @@ function override(config, env) {
     minify: isEnvProduction && minifyOpts,
   });
   // Replace origin HtmlWebpackPlugin instance in config.plugins with the above one
-  config.plugins = replacePlugin(config.plugins,
-    (name) => /HtmlWebpackPlugin/i.test(name), indexHtmlPlugin
+  config.plugins = replacePlugin(
+    config.plugins,
+    (name) => /HtmlWebpackPlugin/i.test(name),
+    indexHtmlPlugin
   );
 
   // Extra HtmlWebpackPlugin instance for options page
   const optionsHtmlPlugin = new HtmlWebpackPlugin({
     inject: true,
     chunks: ['options'],
-    template: paths.appPublic + '/options.html',
+    template: `${paths.appPublic}/options.html`,
     filename: 'options.html',
     minify: isEnvProduction && minifyOpts,
   });
@@ -75,7 +77,7 @@ function override(config, env) {
   const notificationHtmlPlugin = new HtmlWebpackPlugin({
     inject: true,
     chunks: ['notification'],
-    template: paths.appPublic + '/notification.html',
+    template: `${paths.appPublic}/notification.html`,
     filename: 'notification.html',
     minify: isEnvProduction && minifyOpts,
   });
@@ -86,7 +88,7 @@ function override(config, env) {
   const homeHtmlPlugin = new HtmlWebpackPlugin({
     inject: true,
     chunks: ['home'],
-    template: paths.appPublic + '/home.html',
+    template: `${paths.appPublic}/home.html`,
     filename: 'home.html',
     minify: isEnvProduction && minifyOpts,
   });
@@ -99,22 +101,26 @@ function override(config, env) {
     fileName: 'asset-manifest.json',
   });
   // Replace origin ManifestPlugin instance in config.plugins with the above one
-  config.plugins = replacePlugin(config.plugins,
-    (name) => /ManifestPlugin/i.test(name), manifestPlugin
+  config.plugins = replacePlugin(
+    config.plugins,
+    (name) => /ManifestPlugin/i.test(name),
+    manifestPlugin
   );
 
   // Custom MiniCssExtractPlugin instance to get rid of hash in filename template
   const miniCssExtractPlugin = new MiniCssExtractPlugin({
-    filename: 'static/css/[name].css'
+    filename: 'static/css/[name].css',
   });
   // Replace origin MiniCssExtractPlugin instance in config.plugins with the above one
-  config.plugins = replacePlugin(config.plugins,
-    (name) => /MiniCssExtractPlugin/i.test(name), miniCssExtractPlugin
+  config.plugins = replacePlugin(
+    config.plugins,
+    (name) => /MiniCssExtractPlugin/i.test(name),
+    miniCssExtractPlugin
   );
 
   // Remove GenerateSW plugin from config.plugins to disable service worker generation
-  config.plugins = replacePlugin(config.plugins,
-    (name) => /GenerateSW/i.test(name)
+  config.plugins = replacePlugin(config.plugins, (name) =>
+    /GenerateSW/i.test(name)
   );
 
   return config;
@@ -123,10 +129,16 @@ function override(config, env) {
 // Utility function to replace/remove specific plugin in a webpack config
 function replacePlugin(plugins, nameMatcher, newPlugin) {
   const i = plugins.findIndex((plugin) => {
-    return plugin.constructor && plugin.constructor.name &&
-      nameMatcher(plugin.constructor.name);
+    return (
+      plugin.constructor &&
+      plugin.constructor.name &&
+      nameMatcher(plugin.constructor.name)
+    );
   });
-  return i > -1?
-    plugins.slice(0, i).concat(newPlugin || []).concat(plugins.slice(i+1)) :
-    plugins;
+  return i > -1
+    ? plugins
+        .slice(0, i)
+        .concat(newPlugin || [])
+        .concat(plugins.slice(i + 1))
+    : plugins;
 }

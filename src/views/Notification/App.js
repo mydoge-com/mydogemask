@@ -1,5 +1,6 @@
-import React from 'react'
-import './App.css'
+import './App.css';
+
+import React from 'react';
 
 function App() {
   return (
@@ -12,4 +13,4 @@ function App() {
   );
 }
 
-export default App
+export default App;

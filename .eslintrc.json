@@ -1,0 +1,46 @@
+{
+  "root": true,
+  "env": {
+    "browser": true,
+    "es2021": true
+  },
+  "parser": "@babel/eslint-parser",
+  "parserOptions": {
+    "ecmaFeatures": {
+      "jsx": true
+    },
+    "sourceType": "module"
+  },
+  "settings": {
+    "react": {
+      "version": "detect"
+    }
+  },
+  "extends": ["airbnb", "airbnb/hooks", "plugin:prettier/recommended"],
+  "plugins": ["react", "prettier", "simple-import-sort"],
+  "rules": {
+    "prettier/prettier": "warn",
+    "consistent-return": "off",
+    "react/jsx-filename-extension": "off",
+    "react/react-in-jsx-scope": "off",
+    "no-use-before-define": "off",
+    "react/prop-types": "off",
+    "react/no-unescaped-entities": "off",
+    "react/jsx-props-no-spreading": "off",
+    "no-console": "off",
+    "no-else-return": "off",
+    "import/prefer-default-export": "off",
+    "react/function-component-definition": "off",
+    "react/no-unstable-nested-components": ["error", { "allowAsProps": true }],
+    "no-nested-ternary": "off",
+    "no-plusplus": "off",
+    "simple-import-sort/exports": "error",
+    "simple-import-sort/imports": "error",
+    "no-alert": "off",
+    "no-param-reassign": "off"
+  },
+  "globals": {
+    "chrome": true,
+    "it": true
+  }
+}
