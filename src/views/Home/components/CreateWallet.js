@@ -1,20 +1,14 @@
-import {
-  HStack,
-  Icon,
-  IconButton,
-  Input,
-  Link,
-  Text,
-  VStack,
-} from 'native-base';
+import { Icon, IconButton, Input, Text, VStack } from 'native-base';
 import { useCallback, useState } from 'react';
-import { FaAngleLeft, FaEye, FaEyeSlash } from 'react-icons/fa';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
-import { BigButton } from './Button';
+import { BigButton } from '../../../components/Button';
+import { BackButton } from './BackButton';
+import { Footer } from './Footer';
 
 export const CreateWallet = ({ setScreen }) => {
-  const onCreateWallet = useCallback(() => {
-    setScreen(2);
+  const onCreatePassword = useCallback(() => {
+    setScreen('createWallet'); // ToDo -- Navigate to next screen
   }, [setScreen]);
 
   const [showPassword, setShowPassword] = useState(false);
@@ -29,21 +23,7 @@ export const CreateWallet = ({ setScreen }) => {
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
-      <HStack alignItems='center' pb='30px'>
-        <IconButton
-          icon={<Icon as={FaAngleLeft} />}
-          rounded='full'
-          alignSelf='flex-start'
-          borderWidth='1px'
-          borderColor='gray.500'
-          color='gray.500'
-          size='24px'
-          onPress={onBack}
-        />
-        <Text ml='6px' color='gray.500'>
-          Back
-        </Text>
-      </HStack>
+      <BackButton onPress={onBack} />
       <VStack bg='white' py='40px' rounded='sm' px='40px'>
         <Text fontSize='2xl'>
           Create a <Text fontWeight='bold'>Password</Text>
@@ -92,18 +72,11 @@ export const CreateWallet = ({ setScreen }) => {
             }
           />
         </VStack>
-        <BigButton mt='20px' onPress={onCreateWallet}>
+        <BigButton mt='20px' onPress={onCreatePassword}>
           Create Password
         </BigButton>
       </VStack>
-      <Text textAlign='center' mt='80px' color='gray.400'>
-        Need help using MyDoge?{' '}
-        <Link href='https://www.mydoge.com/#faq' target='_blank'>
-          <Text color='brandYellow.500' underline fontWeight='medium'>
-            Frequently Asked Questions
-          </Text>
-        </Link>
-      </Text>
+      <Footer />
     </VStack>
   );
 };
