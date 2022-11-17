@@ -1,9 +1,13 @@
-import './App.css';
+import { Box } from 'native-base';
 
-import React from 'react';
+import { AppProvider } from '../../components/AppProvider';
 
 function App() {
-  return <div>Options Page goes here!</div>;
+  return (
+    <AppProvider>
+      <Box>Options page goes here</Box>
+    </AppProvider>
+  );
 }
 
 export default App;
