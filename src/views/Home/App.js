@@ -1,42 +1,26 @@
-import { Box, Image } from 'native-base';
+import { useCallback, useState } from 'react';
 
 import { AppProvider } from '../../components/AppProvider';
+import { CreateWallet } from './components/CreateWallet';
+import { HomeWrapper } from './components/HomeWrapper';
+import { Intro } from './components/Intro';
+
+const screens = {
+  intro: Intro,
+  createWallet: CreateWallet,
+};
 
 function App() {
+  const [currentScreen, setCurrentScreen] = useState('intro');
+  const RenderScreen = screens[currentScreen] ?? null;
+
+  const setScreen = useCallback((id) => setCurrentScreen(id), []);
+
   return (
     <AppProvider>
-      <Box h='100vh' overflow='hidden'>
-        <Box
-          w='50vw'
-          h='100%'
-          justifyContent='center'
-          alignItems='center'
-          bg='white'
-        >
-          <Image
-            source={{ uri: '/assets/bg.png' }}
-            h='100%'
-            position='absolute'
-            zIndex={-1}
-            left={0}
-            right={0}
-          />
-          <Image
-            source={{ uri: '/assets/mydoge-mask.png' }}
-            size={200}
-            resizeMode='contain'
-            position='absolute'
-            top='0px'
-            alignSelf='center'
-          />
-          <Image
-            source={{ uri: '/assets/intro.png' }}
-            size={500}
-            resizeMode='contain'
-          />
-        </Box>
-        <Box w='50vw' h='100%' />
-      </Box>
+      <HomeWrapper>
+        <RenderScreen setScreen={setScreen} />
+      </HomeWrapper>
     </AppProvider>
   );
 }
