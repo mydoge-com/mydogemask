@@ -14,7 +14,8 @@
     "react-native-svg": "12.1.1",
     "react-native-web": "0.17.1",
     "react-scripts": "^5.0.1",
-    "webpack-manifest-plugin": "^5.0.0"
+    "webpack-manifest-plugin": "^5.0.0",
+    "wouter": "^2.8.1"
   },
   "devDependencies": {
     "@babel/core": "^7.20.2",
