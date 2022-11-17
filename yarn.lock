@@ -8167,6 +8167,11 @@ react-error-overlay@^6.0.11:
   resolved "https://registry.yarnpkg.com/react-error-overlay/-/react-error-overlay-6.0.11.tgz#92835de5841c5cf08ba00ddd2d677b6d17ff9adb"
   integrity sha512-/6UZ2qgEyH2aqzYZgQPxEnz33NJ2gNsnHA2o5+o4wW9bLM/JYQitNP9xPhsXwC08hMMovfGe/8retsdDsczPRg==
 
+react-icons@^4.6.0:
+  version "4.6.0"
+  resolved "https://registry.yarnpkg.com/react-icons/-/react-icons-4.6.0.tgz#f83eda179af5d02c047449a20b702c858653d397"
+  integrity sha512-rR/L9m9340yO8yv1QT1QurxWQvWpbNHqVX0fzMln2HEb9TEIrQRGsqiNFQfiv9/JEUbyHmHPlNTB2LWm2Ttz0g==
+
 react-is@^16.13.1:
   version "16.13.1"
   resolved "https://registry.yarnpkg.com/react-is/-/react-is-16.13.1.tgz#789729a4dc36de2999dc156dd6c1d9c18cea56a4"
@@ -9918,6 +9923,11 @@ workbox-window@6.5.4:
   dependencies:
     "@types/trusted-types" "^2.0.2"
     workbox-core "6.5.4"
+
+wouter@^2.8.1:
+  version "2.8.1"
+  resolved "https://registry.yarnpkg.com/wouter/-/wouter-2.8.1.tgz#1766d374d051acadb9756bf747d3fd2991cb0642"
+  integrity sha512-zLYdtGBUgcT/Qs0g/B3L9zVkOGAiqBzEh4zp6rZbeNVFWE0nERscpQDXY8kziFC7a3mQNFP6hd4wv+hoK3s4XQ==
 
 wrap-ansi@^7.0.0:
   version "7.0.0"
