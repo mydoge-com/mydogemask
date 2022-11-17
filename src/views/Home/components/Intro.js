@@ -28,6 +28,7 @@ export const Intro = ({ setScreen }) => {
             source={{ uri: '/assets/wallet-create.png' }}
             size='48px'
             resizeMode='contain'
+            alt='create-wallet'
           />
         </Box>
         <VStack alignItems='center' flex={1}>
@@ -52,6 +53,7 @@ export const Intro = ({ setScreen }) => {
             source={{ uri: '/assets/wallet-import.png' }}
             size='48px'
             resizeMode='contain'
+            alt='import wallet'
           />
         </Box>
         <VStack alignItems='center' flex={1}>
