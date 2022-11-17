@@ -1,3 +1,5 @@
+import { AntDesign, Ionicons } from '@native-base/icons';
+import fontsCSS from '@native-base/icons/FontsCSS/index.ts';
 import axios from 'axios';
 import moment from 'moment';
 import {
@@ -6,7 +8,7 @@ import {
   Center,
   Heading,
   HStack,
-  //   Icon,
+  Icon,
   Image,
   Pressable,
   Spinner,
@@ -14,8 +16,6 @@ import {
   VStack,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
-// import AntDesign from 'react-native-vector-icons/AntDesign';
-// import Ionicons from 'react-native-vector-icons/Ionicons';
 import sb from 'satoshi-bitcoin';
 
 import { MIN_CONFIRMATIONS } from '../../constants/Doge';
@@ -31,10 +31,16 @@ import {
   is420,
 } from '../../utils/formatters';
 
+// TODO: move this to a common layout file
+const style = document.createElement('style');
+style.type = 'text/css';
+style.appendChild(document.createTextNode(fontsCSS));
+document.head.appendChild(style);
+
 const DogecoinLogo = 'assets/dogecoin-logo-300.png';
 const SpaceBg = 'assets/milkyway-vector-bg-rounded.png';
 
-const ActionButton = ({ /* icon, */ /* isPressed, */ title }) => {
+const ActionButton = ({ icon, /* isPressed, */ title }) => {
   return (
     <VStack alignItems='center'>
       <Center
@@ -45,14 +51,14 @@ const ActionButton = ({ /* icon, */ /* isPressed, */ title }) => {
         _light={{ bg: 'rgb(55,58,60)' }}
         shadow={1}
       >
-        {/* <Icon
+        <Icon
           as={Ionicons}
           name={icon}
           color='rgb(243,203,83)'
           // _light={{ color: 'rgb(22, 26, 36)' }}
           size='sm'
           shadow={1}
-        /> */}
+        />
       </Center>
       <Text
         fontSize='13px'
@@ -520,14 +526,14 @@ export function WalletScreen() {
           listEmpty ? (
             <Center flex={0.9}>
               <Center flex={1} key='ListEmptyComponent-C2'>
-                {/* <Icon
+                <Icon
                   as={AntDesign}
                   name='star'
                   color='yellow.400'
                   size={{ base: 'lg', sm: 'xl' }}
                   mb={{ base: '14px', sm: '20px' }}
                   key='ListEmptyComponent-Icon'
-                /> */}
+                />
                 <Heading
                   key='ListEmptyComponent-H2'
                   size='md'
