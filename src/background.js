@@ -23,14 +23,14 @@ chrome.action.onClicked.addListener(() => {
 });
 
 // function to call once onBoarding is completed
-function onBoardingComplete(){    
-  chrome.storage.local.set({onBoardingComplete: true}, function() {
-    console.log('onBoardingComplete is set to true');
-  });
-  chrome.action.setPopup({
-      popup: 'popup.html'
-  });
-}
+// function onBoardingComplete(){    
+//   chrome.storage.local.set({onBoardingComplete: true}, function() {
+//     console.log('onBoardingComplete is set to true');
+//   });
+//   chrome.action.setPopup({
+//       popup: 'popup.html'
+//   });
+// }
 
 // On first install, open home screen in new tab
 chrome.runtime.onInstalled.addListener(({ reason }) => {
