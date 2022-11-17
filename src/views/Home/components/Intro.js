@@ -1,16 +1,17 @@
-import { Box, HStack, Image, Link, Text, VStack } from 'native-base';
+import { Box, HStack, Image, Text, VStack } from 'native-base';
 import { useCallback } from 'react';
 
-import { BigButton } from './Button';
+import { BigButton } from '../../../components/Button';
+import { Footer } from './Footer';
 
 export const Intro = ({ setScreen }) => {
   const onCreateWallet = useCallback(() => {
     setScreen('createWallet');
   }, [setScreen]);
 
-  // const onImportWallet = useCallback(() => {
-  //   setScreen(3);
-  // }, [setScreen]);
+  const onImportWallet = useCallback(() => {
+    setScreen('importWallet');
+  }, [setScreen]);
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
@@ -57,19 +58,12 @@ export const Intro = ({ setScreen }) => {
           <Text color='gray.600' fontWeight='medium' textAlign='center'>
             Already have a wallet? Restore
           </Text>
-          <BigButton variant='secondary' mt='20px'>
+          <BigButton variant='secondary' mt='20px' onPress={onImportWallet}>
             Import Wallet
           </BigButton>
         </VStack>
       </HStack>
-      <Text textAlign='center' mt='80px' color='gray.400'>
-        Need help using MyDoge?{' '}
-        <Link href='https://www.mydoge.com/#faq' target='_blank'>
-          <Text color='brandYellow.500' underline fontWeight='medium'>
-            Frequently Asked Questions
-          </Text>
-        </Link>
-      </Text>
+      <Footer />
     </VStack>
   );
 };

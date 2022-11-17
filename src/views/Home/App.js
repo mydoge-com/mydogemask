@@ -3,11 +3,13 @@ import { useCallback, useState } from 'react';
 import { AppProvider } from '../../components/AppProvider';
 import { CreateWallet } from './components/CreateWallet';
 import { HomeWrapper } from './components/HomeWrapper';
+import { ImportWallet } from './components/ImportWallet';
 import { Intro } from './components/Intro';
 
 const screens = {
   intro: Intro,
   createWallet: CreateWallet,
+  importWallet: ImportWallet,
 };
 
 function App() {
