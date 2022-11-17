@@ -212,11 +212,138 @@ export function WalletScreen() {
         // console.log('checking for new txs');
         txs = await queryTxs({ clearCacheEntry });
       } catch (e) {
-        logError(e);
-        setIsRefreshing(false);
-        if (!hasLoadedTxs) setFailedInitialTxLoad(true);
-        checkLock.current = false;
-        return;
+        txs = { data: {} };
+        txs.data.txs = [
+          {
+            addresses: [
+              'DDPNi26RrGrwJoTtwaqntzCDEhYBNbuYLH',
+              'DETNfQPsSEBp6UGRapSz4eBtn9KrsBmkpE',
+            ],
+            block_hash:
+              '806a370a2bf357924798fb1a1c3b56c39ca1bbaa1f20fd902459c9835042695a',
+            block_height: 4470131,
+            block_index: 44,
+            confidence: 1,
+            confirmations: 6310,
+            confirmed: '2022-11-12T21:18:12Z',
+            double_spend: false,
+            fees: 339000,
+            hash: '1ad3be9f993b29033ae03b329f4d5617b6bf46fe57a29a873d25d31aa75c63f1',
+            inputs: [
+              {
+                addresses: ['DETNfQPsSEBp6UGRapSz4eBtn9KrsBmkpE'],
+                age: 4462601,
+                output_index: 1,
+                output_value: 71583000,
+                prev_hash:
+                  '38245d570ab39077471b5836c60dc25622b7d204abdb2d8a7adbc083cb0b82df',
+                script:
+                  '483045022100e38a3a5f516582ea6f987d43d144bd951d9870acadcca13342f2ca5d3b38865702206d8c12c467adb3bf7c3c152b94475c331c50b5ed28d3eeecc2f98ece0aff1fc901210328b2b2ce16cf86b377708d465679f684a4acc43e3d17140a8c450bc03b42e9a2',
+                script_type: 'pay-to-pubkey-hash',
+                sequence: 4294967295,
+              },
+            ],
+            outputs: [
+              {
+                addresses: ['DDPNi26RrGrwJoTtwaqntzCDEhYBNbuYLH'],
+                script: '76a9145a74538baca360e7b7d170a14e3666c42bae4eb688ac',
+                script_type: 'pay-to-pubkey-hash',
+                value: 42069000,
+              },
+              {
+                addresses: ['DETNfQPsSEBp6UGRapSz4eBtn9KrsBmkpE'],
+                script: '76a914662e140deef7cff9991d672439101a7867850dfb88ac',
+                script_type: 'pay-to-pubkey-hash',
+                spent_by:
+                  'bb5fadd56dcf48e6cf36c6f6635aa889645614be9ee6b4168f3db49ded1b61be',
+                value: 29175000,
+              },
+            ],
+            preference: 'high',
+            received: '2022-11-12T21:15:54.988Z',
+            relayed_by: '34.123.14.153',
+            size: 226,
+            total: 71244000,
+            ver: 1,
+            vin_sz: 1,
+            vout_sz: 2,
+          },
+          {
+            addresses: [
+              'D6PAMECoQoN4oEAeqFfPUDTJAbj25s17Lr',
+              'DDPNi26RrGrwJoTtwaqntzCDEhYBNbuYLH',
+            ],
+            block_hash:
+              '11ccd909c1dac02c7b6b36a4c1505773221bab73ea25ab6286efdcbcc07bc168',
+            block_height: 4466092,
+            block_index: 27,
+            confidence: 1,
+            confirmations: 10349,
+            confirmed: '2022-11-09T22:02:15Z',
+            double_spend: false,
+            fees: 108640508,
+            hash: 'e07e03ff551ad821e8f3b7a1c404a64147823e66b57d896265185a9a24699ea8',
+            inputs: [
+              {
+                addresses: ['D6PAMECoQoN4oEAeqFfPUDTJAbj25s17Lr'],
+                age: 4465910,
+                output_index: 1,
+                output_value: 258306276219,
+                prev_hash:
+                  '117a973f1378e3c855138fb1f9d443201af98319ebb565c1733f006d76981ef6',
+                script:
+                  '47304402203f7c485eaf7dc32bfbafedb14357911ddadfb76bb7f6c8e9660dbbbb22fd1f03022020d946f50ae55ac56a105c0d1468b1e96038e859c9b375e0083752837b1897020121033712b425d9b480421d4d9a159886d3a487e028ce2951dfb306a89fa9836b1874',
+                script_type: 'pay-to-pubkey-hash',
+                sequence: 4294967295,
+              },
+              {
+                addresses: ['D6PAMECoQoN4oEAeqFfPUDTJAbj25s17Lr'],
+                age: 4464305,
+                output_index: 0,
+                output_value: 5000000000000,
+                prev_hash:
+                  '771ebdd69f7336ecc5dd39d9c18b665ab2b2c27219acdc93a86e32f393465528',
+                script:
+                  '4830450221008df82701c8b71a0e2c042c59f459343e644019ffc08100070ee1c3b1c197b686022042fa604d20d755c4f6ce9a77e03ffe0b6cb6f13776d055294f7d75a26e5723e90121033712b425d9b480421d4d9a159886d3a487e028ce2951dfb306a89fa9836b1874',
+                script_type: 'pay-to-pubkey-hash',
+                sequence: 4294967295,
+              },
+            ],
+            outputs: [
+              {
+                addresses: ['DDPNi26RrGrwJoTtwaqntzCDEhYBNbuYLH'],
+                script: '76a9145a74538baca360e7b7d170a14e3666c42bae4eb688ac',
+                script_type: 'pay-to-pubkey-hash',
+                spent_by:
+                  '5059ef2363cbd5fc35c0be457f4eec98130b716038fc8f687e99ea5394f67d1d',
+                value: 1803847385061,
+              },
+              {
+                addresses: ['D6PAMECoQoN4oEAeqFfPUDTJAbj25s17Lr'],
+                script: '76a9140da121291443510cb174a27ee6f8f3ae9972e44a88ac',
+                script_type: 'pay-to-pubkey-hash',
+                spent_by:
+                  '235856c110c5c5d5d0ed0b2a54ab9c9768d61bf0f20fedd9f67e0ea584be106e',
+                value: 3454350250650,
+              },
+            ],
+            preference: 'high',
+            received: '2022-11-09T22:01:54.59Z',
+            relayed_by: '93.189.27.165:22556',
+            size: 373,
+            total: 5258197635711,
+            ver: 1,
+            vin_sz: 2,
+            vout_sz: 2,
+          },
+        ];
+        if (!txs) {
+          logError(e);
+          setIsRefreshing(false);
+          if (!hasLoadedTxs) setFailedInitialTxLoad(true);
+          checkLock.current = false;
+          return;
+        }
       }
 
       setTxList((oldTxList) => {
@@ -395,7 +522,7 @@ export function WalletScreen() {
 
   const listEmpty = !transactions.length;
 
-  const renderTransaction = useCallback(({ tx }) => {
+  const renderTransaction = useCallback((tx) => {
     let address = tx.fromAddr;
     if (tx.type === 'outgoing') address = tx.toAddr;
 
@@ -412,7 +539,7 @@ export function WalletScreen() {
               <Image src={DogecoinLogo} height='40px' width='40px' />
             </VStack>
             <VStack flex={1}>
-              <Text fontSize='sm' fontWeight='medium'>
+              <Text fontSize='xs' fontWeight='medium'>
                 {address}
               </Text>
 
@@ -558,12 +685,16 @@ export function WalletScreen() {
             </Center>
           ) : (
             <>
-              <Center alignItems='center' justifyContent='center'>
-                <Heading size='md' pt='6px' mb='0px'>
+              <Center alignItems='center' justifyContent='center' mt='50px'>
+                <Heading size='md' pt='6px' mb='20px'>
                   Transactions
                 </Heading>
               </Center>
-              {transactions.map(renderTransaction)}
+              <Box px='10px'>
+                <VStack space='10px'>
+                  {transactions.map(renderTransaction)}
+                </VStack>
+              </Box>
             </>
           )
         ) : failedInitialTxLoad ? (
