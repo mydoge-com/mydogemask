@@ -9,7 +9,6 @@ function App() {
   const {
     storage: { isAuthenticated },
   } = useStorage();
-  console.log(isAuthenticated);
   return (
     <AppProvider>
       <Box width='360px' height='540px'>
