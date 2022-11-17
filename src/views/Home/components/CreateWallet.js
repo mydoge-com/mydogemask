@@ -8,7 +8,7 @@ import { Footer } from './Footer';
 
 export const CreateWallet = ({ setScreen }) => {
   const onCreatePassword = useCallback(() => {
-    setScreen('createWallet'); // ToDo -- Navigate to next screen
+    setScreen('success');
   }, [setScreen]);
 
   const [showPassword, setShowPassword] = useState(false);
@@ -72,7 +72,7 @@ export const CreateWallet = ({ setScreen }) => {
             }
           />
         </VStack>
-        <BigButton mt='20px' onPress={onCreatePassword}>
+        <BigButton mt='20px' onPress={onCreatePassword} w='80%'>
           Create Password
         </BigButton>
       </VStack>

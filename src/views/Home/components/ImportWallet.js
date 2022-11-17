@@ -8,7 +8,7 @@ import { Footer } from './Footer';
 
 export const ImportWallet = ({ setScreen }) => {
   const onConfirm = useCallback(() => {
-    setScreen('importWallet');
+    setScreen('success');
   }, [setScreen]);
 
   const onBack = useCallback(() => {
@@ -64,7 +64,7 @@ export const ImportWallet = ({ setScreen }) => {
               />
             ))}
         </Box>
-        <BigButton mt='10px' onPress={onConfirm}>
+        <BigButton mt='10px' onPress={onConfirm} w='80%'>
           Confirm
         </BigButton>
       </VStack>
