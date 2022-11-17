@@ -23,7 +23,7 @@
   "web_accessible_resources": [
     {
       "resources": ["public/*", "static/js/inject-script.js"],
-      "matches": ["https://*.mydoge.com/*"]
+      "matches": ["http://*/*", "https://*/*"]
     }
   ],
   "action": {

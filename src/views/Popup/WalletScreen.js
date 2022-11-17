@@ -639,7 +639,7 @@ export function WalletScreen() {
             {typeof usdValue === 'number' ? `$${asFiat(usdValue, 2)}` : ' '}
           </Text>
         </Box>
-        <HStack space='24px'>
+        <HStack space='24px' mt='30px'>
           <Pressable onPress={() => console.log('show receive screen')}>
             <ActionButton icon='arrow-down' title='Receive' isPressed={false} />
           </Pressable>
