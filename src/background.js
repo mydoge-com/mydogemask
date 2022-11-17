@@ -20,6 +20,10 @@ chrome.runtime.onInstalled.addListener(({ reason }) => {
   }
 });
 
+chrome.runtime.addListener(({ reason }) => {
+  console.log({ reason });
+});
+
 // onRequestTransaction: Launch notification popup
 function onRequestTransaction({ data = {}, sendResponse } = {}) {
   chrome.windows.getCurrent((w) => {

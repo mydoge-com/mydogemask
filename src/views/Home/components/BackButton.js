@@ -1,9 +1,9 @@
 import { HStack, Icon, IconButton, Text } from 'native-base';
 import { FaAngleLeft } from 'react-icons/fa';
 
-export const BackButton = ({ onPress }) => {
+export const BackButton = ({ onPress, ...props }) => {
   return (
-    <HStack alignItems='center' pb='30px'>
+    <HStack alignItems='center' pb='30px' {...props}>
       <IconButton
         icon={<Icon as={FaAngleLeft} />}
         rounded='full'

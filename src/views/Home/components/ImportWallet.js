@@ -17,8 +17,8 @@ export const ImportWallet = ({ setScreen }) => {
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
-      <BackButton onPress={onBack} />
-      <VStack bg='white' py='40px' rounded='sm' px='40px'>
+      <BackButton onPress={onBack} pb='15px' />
+      <VStack bg='white' py='20px' rounded='sm' px='40px'>
         <Text fontSize='2xl'>
           Secret Recovery <Text fontWeight='bold'>Phrase</Text>
         </Text>
@@ -39,7 +39,7 @@ export const ImportWallet = ({ setScreen }) => {
           </Text>
         </HStack>
         <Box
-          py='40px'
+          py='20px'
           style={{
             display: 'grid',
             gridTemplateColumns: '1fr 1fr 1fr',
@@ -68,7 +68,7 @@ export const ImportWallet = ({ setScreen }) => {
           Confirm
         </BigButton>
       </VStack>
-      <Footer />
+      <Footer mt='40px' />
     </VStack>
   );
 };

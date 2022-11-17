@@ -72,11 +72,11 @@ export const CreateWallet = ({ setScreen }) => {
             }
           />
         </VStack>
-        <BigButton mt='20px' onPress={onCreatePassword} w='80%'>
+        <BigButton mt='10px' onPress={onCreatePassword} w='80%'>
           Create Password
         </BigButton>
       </VStack>
-      <Footer />
+      <Footer mt='40px' />
     </VStack>
   );
 };
