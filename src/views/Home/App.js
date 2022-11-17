@@ -1,16 +1,12 @@
-import './App.css';
+import { Box } from 'native-base';
 
-import React from 'react';
+import { AppProvider } from '../../components/AppProvider';
 
 function App() {
   return (
-    <div>
-      <div>Welcome to MyDoge</div>
-      <div>
-        <p>Create wallet.</p>
-        <p>Import wallet.</p>
-      </div>
-    </div>
+    <AppProvider>
+      <Box>Home page (onboarding) - Create/import wallet</Box>
+    </AppProvider>
   );
 }
 

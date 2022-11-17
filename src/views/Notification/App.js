@@ -1,15 +1,12 @@
-import './App.css';
+import { Box } from 'native-base';
 
-import React from 'react';
+import { AppProvider } from '../../components/AppProvider';
 
 function App() {
   return (
-    <div>
-      <div>Notification</div>
-      <div>
-        <p>For instance, approve transaction.</p>
-      </div>
-    </div>
+    <AppProvider>
+      <Box>Notification popup (request transaction, etc)</Box>
+    </AppProvider>
   );
 }
 
