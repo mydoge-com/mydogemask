@@ -7,8 +7,8 @@ import { BackButton } from './BackButton';
 import { Footer } from './Footer';
 
 export const ImportWallet = ({ setScreen }) => {
-  const onCreateWallet = useCallback(() => {
-    setScreen(2);
+  const onConfirm = useCallback(() => {
+    setScreen('importWallet');
   }, [setScreen]);
 
   const onBack = useCallback(() => {
@@ -38,17 +38,33 @@ export const ImportWallet = ({ setScreen }) => {
             Anyone with this phrase can take your funds
           </Text>
         </HStack>
-        <VStack py='40px'>
-          <Input
-            variant='filled'
-            type='text'
-            focusOutlineColor='brandYellow.500'
-            _hover={{
-              borderColor: 'brandYellow.500',
-            }}
-          />
-        </VStack>
-        <BigButton mt='20px' onPress={onCreateWallet}>
+        <Box
+          py='40px'
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr 1fr',
+            gridTemplateRows: 'auto auto auto',
+            gridGap: '15px',
+          }}
+        >
+          {Array(12)
+            .fill(0)
+            .map((_, i) => (
+              <Input
+                // eslint-disable-next-line react/no-array-index-key
+                key={i}
+                variant='filled'
+                type='text'
+                focusOutlineColor='brandYellow.500'
+                _hover={{
+                  borderColor: 'brandYellow.500',
+                }}
+                width='100%'
+                size='md'
+              />
+            ))}
+        </Box>
+        <BigButton mt='10px' onPress={onConfirm}>
           Confirm
         </BigButton>
       </VStack>
