@@ -10,28 +10,23 @@
   },
   "icons": {
     "16": "assets/mydoge16.png",
+    "32": "assets/mydoge32.png",
     "48": "assets/mydoge48.png",
     "128": "assets/mydoge128.png"
   },
-  "content_scripts": [{
-    "js": ["static/js/contentScript.js"],
-    "matches": [
-      "http://*/*", "https://*/*"
-    ]
-  }],
-  "web_accessible_resources": [{
-    "resources": [
-      "assets/sendtip.png",
-      "static/js/inject-script.js"
-    ],
-    "matches": ["https://*.mydoge.com/*"]
-  }],
+  "content_scripts": [
+    {
+      "js": ["static/js/contentScript.js"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["assets/sendtip.png", "static/js/inject-script.js"],
+      "matches": ["https://*.mydoge.com/*"]
+    }
+  ],
   "action": {
-    "default_icon": {
-      "16": "assets/mydoge16.png",
-      "24": "assets/mydoge24.png",
-      "32": "assets/mydoge32.png"
-    },
     "default_title": "mydogemask",
     "default_popup": "popup.html"
   },
