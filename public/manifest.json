@@ -9,19 +9,18 @@
     "service_worker": "static/js/background.js"
   },
   "icons": {
-    "16": "assets/dogecoin16.png",
-    "48": "assets/dogecoin48.png",
-    "128": "assets/dogecoin128.png"
+    "16": "assets/mydoge16.png",
+    "48": "assets/mydoge48.png",
+    "128": "assets/mydoge128.png"
   },
   "content_scripts": [{
-    "js": ["static/js/content.js"],
+    "js": ["static/js/contentScript.js"],
     "matches": [
       "http://*/*", "https://*/*"
     ]
   }],
   "web_accessible_resources": [{
     "resources": [
-      "assets/dogecoin.png",
       "assets/sendtip.png",
       "static/js/inject-script.js"
     ],
@@ -29,9 +28,9 @@
   }],
   "action": {
     "default_icon": {
-      "16": "assets/dogecoin16.png",
-      "24": "assets/dogecoin24.png",
-      "32": "assets/dogecoin32.png"
+      "16": "assets/mydoge16.png",
+      "24": "assets/mydoge24.png",
+      "32": "assets/mydoge32.png"
     },
     "default_title": "mydogemask",
     "default_popup": "popup.html"
