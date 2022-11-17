@@ -14,7 +14,7 @@ function override(config, env) {
   // Replace single entry point in the config with multiple ones
   // Note: you may remove any property below except "popup" to exclude respective entry point from compilation
   config.entry = {
-    popup: paths.appIndexJs,
+    popup: paths.appSrc + '/views/Popup',
     options: paths.appSrc + '/views/Options',
     notification: paths.appSrc + '/views/Notification',
     home: paths.appSrc + '/views/Home',
