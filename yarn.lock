@@ -9433,6 +9433,11 @@ url-parse@^1.5.3:
     querystringify "^2.1.1"
     requires-port "^1.0.0"
 
+use-chrome-storage@^1.0.8:
+  version "1.0.8"
+  resolved "https://registry.yarnpkg.com/use-chrome-storage/-/use-chrome-storage-1.0.8.tgz#c36f0c56e5572ba5d4d6183f420c2980bf9c69d6"
+  integrity sha512-+3z6Loy36pHPlIpR3jmofo641nE7uCn2mOSMzMfn2InIhsIY8Elx0wHTBpkq9OfaGyKCJfMZ3m9X7Atad0cksA==
+
 use-subscription@^1.8.0:
   version "1.8.0"
   resolved "https://registry.yarnpkg.com/use-subscription/-/use-subscription-1.8.0.tgz#f118938c29d263c2bce12fc5585d3fe694d4dbce"
