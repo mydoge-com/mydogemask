@@ -22,7 +22,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["public/*", "static/js/inject-script.js"],
+      "resources": ["assets/*", "static/js/inject-script.js"],
       "matches": ["http://*/*", "https://*/*"]
     }
   ],

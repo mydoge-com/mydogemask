@@ -11,7 +11,7 @@
       sendTipBtn.className = 'sendTipFloating-btn';
       sendTipBtn.title = 'Tip This Site';
       sendTipBtn.style =
-        'bottom:0;right:0;position:absolute;z-index: 9999; padding: 10px;';
+        'bottom: 10px; right: 10px; position:fixed; z-index: 9999;';
       document.body.appendChild(sendTipBtn);
       sendTipBtn.addEventListener('click', sendTipEventHandler);
     }

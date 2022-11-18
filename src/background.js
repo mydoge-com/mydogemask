@@ -37,7 +37,7 @@ function onRequestTransaction({ data = {}, sendResponse } = {}) {
         width,
         height,
         left: w.width + w.left - width,
-        top: 0,
+        top: w.top,
       },
       (newWindow) => {
         console.log(
