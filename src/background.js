@@ -13,10 +13,10 @@
 //   }
 // });
 
-// On first install, open home screen in new tab
+// On first install, open onboarding screen in new tab
 chrome.runtime.onInstalled.addListener(({ reason }) => {
   if (reason === 'install') {
-    chrome.tabs.create({ url: chrome.runtime.getURL('home.html') });
+    chrome.tabs.create({ url: chrome.runtime.getURL('onboarding.html') });
   }
 });
 

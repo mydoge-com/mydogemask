@@ -2,7 +2,7 @@ import { Box } from 'native-base';
 
 import { AppProvider } from '../../components/AppProvider';
 import { useStorage } from '../../hooks/useStorage';
-import Home from '../Home/App';
+import Onboarding from '../Onboarding/App';
 import { PasswordScreen } from './PasswordScreen';
 import { WalletScreen } from './WalletScreen';
 
@@ -18,7 +18,7 @@ function App() {
           {isAuthenticated ? <WalletScreen /> : <PasswordScreen />}
         </Box>
       ) : (
-        <Home />
+        <Onboarding />
       )}
     </AppProvider>
   );

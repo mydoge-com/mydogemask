@@ -7,9 +7,9 @@ import { BackButton } from './BackButton';
 import { Footer } from './Footer';
 
 export const CreateWallet = ({ setScreen }) => {
-  const onCreatePassword = useCallback(() => {
-    setScreen('success');
-  }, [setScreen]);
+  // const onCreatePassword = useCallback(() => {
+  //   setScreen('success');
+  // }, [setScreen]);
 
   const [showPassword, setShowPassword] = useState(false);
 
@@ -21,12 +21,32 @@ export const CreateWallet = ({ setScreen }) => {
     setScreen('intro');
   }, [setScreen]);
 
+  const [formData, setFormData] = useState({});
+  const [errors, setErrors] = useState({});
+
+  const validate = useCallback(() => {
+    if (!formData.password) {
+      setErrors({ ...errors, password: true });
+      return false;
+    } else if (!formData.confirm) {
+      setErrors({ ...errors, confirm: "Password fields don't match" });
+      return false;
+    }
+    return true;
+  }, [errors, formData.confirm, formData.password]);
+
+  const onSubmit = useCallback(() => {
+    if (validate()) {
+      console.log('Validated');
+    }
+  }, [validate]);
+
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
       <BackButton onPress={onBack} />
       <VStack bg='white' py='40px' rounded='sm' px='40px'>
         <Text fontSize='2xl'>
-          Create a <Text fontWeight='bold'>Password</Text>
+          Create a <Text fontWeight='bold'>Wallet</Text>
         </Text>
         <Text color='gray.500' fontSize='14px'>
           You will need this password to access your wallet
@@ -41,25 +61,12 @@ export const CreateWallet = ({ setScreen }) => {
             _hover={{
               borderColor: 'brandYellow.500',
             }}
-            InputRightElement={
-              <IconButton
-                icon={
-                  showPassword ? <Icon as={FaEye} /> : <Icon as={FaEyeSlash} />
-                }
-                onPress={toggleShowPassword}
-                color='gray.500'
-              />
-            }
-          />
-          <Input
-            variant='filled'
-            placeholder='Confirm Password'
-            py='14px'
-            mt='16px'
-            type={showPassword ? 'text' : 'password'}
-            focusOutlineColor='brandYellow.500'
-            _hover={{
-              borderColor: 'brandYellow.500',
+            _invalid={{
+              borderColor: 'red.500',
+              focusOutlineColor: 'red.500',
+              _hover: {
+                borderColor: 'red.500',
+              },
             }}
             InputRightElement={
               <IconButton
@@ -70,10 +77,58 @@ export const CreateWallet = ({ setScreen }) => {
                 color='gray.500'
               />
             }
+            isInvalid={'password' in errors}
+            onChangeText={(value) =>
+              setFormData({ ...formData, password: value })
+            }
+            onSubmitEditing={onSubmit}
           />
+          <Input
+            variant='filled'
+            placeholder='Enter Password'
+            py='14px'
+            type={showPassword ? 'text' : 'password'}
+            focusOutlineColor='brandYellow.500'
+            _hover={{
+              borderColor: 'brandYellow.500',
+            }}
+            _invalid={{
+              borderColor: 'red.500',
+              focusOutlineColor: 'red.500',
+              _hover: {
+                borderColor: 'red.500',
+              },
+            }}
+            InputRightElement={
+              <IconButton
+                icon={
+                  showPassword ? <Icon as={FaEye} /> : <Icon as={FaEyeSlash} />
+                }
+                onPress={toggleShowPassword}
+                color='gray.500'
+              />
+            }
+            mt='12px'
+            isInvalid={'confirm' in errors}
+            onChangeText={(value) =>
+              setFormData({ ...formData, confirm: value })
+            }
+            onSubmitEditing={onSubmit}
+          />
+          {'confirm' in errors ? (
+            <Text fontSize='10px' color='red.500' pt='6px'>
+              {errors.confirm}
+            </Text>
+          ) : null}
         </VStack>
-        <BigButton mt='10px' onPress={onCreatePassword} w='80%'>
-          Create Password
+        <BigButton
+          mt='10px'
+          onPress={onSubmit}
+          w='80%'
+          type='submit'
+          role='button'
+        >
+          Create Wallet
         </BigButton>
       </VStack>
       <Footer mt='40px' />

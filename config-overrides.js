@@ -14,13 +14,13 @@ function override(config, env) {
   // Replace single entry point in the config with multiple ones
   // Note: you may remove any property below except "popup" to exclude respective entry point from compilation
   config.entry = {
-    popup: paths.appSrc + '/views/Popup',
-    options: paths.appSrc + '/views/Options',
-    notification: paths.appSrc + '/views/Notification',
-    home: paths.appSrc + '/views/Home',
-    background: paths.appSrc + '/background.js',
-    contentScript: paths.appSrc + '/contentScript.js',
-    'inject-script': paths.appSrc + '/inject-script.js'
+    popup: `${paths.appSrc}/views/Popup`,
+    options: `${paths.appSrc}/views/Options`,
+    notification: `${paths.appSrc}/views/Notification`,
+    onboarding: `${paths.appSrc}/views/Onboarding`,
+    background: `${paths.appSrc}/background.js`,
+    contentScript: `${paths.appSrc}/contentScript.js`,
+    'inject-script': `${paths.appSrc}/inject-script.js`,
   };
   // Change output filename template to get rid of hash there
   config.output.filename = 'static/js/[name].js';
@@ -84,16 +84,16 @@ function override(config, env) {
   // Add the above HtmlWebpackPlugin instance into config.plugins
   config.plugins.push(notificationHtmlPlugin);
 
-  // Extra HtmlWebpackPlugin instance for home page
-  const homeHtmlPlugin = new HtmlWebpackPlugin({
+  // Extra HtmlWebpackPlugin instance for onboarding page
+  const onboardingHtmlPlugin = new HtmlWebpackPlugin({
     inject: true,
-    chunks: ['home'],
-    template: `${paths.appPublic}/home.html`,
-    filename: 'home.html',
+    chunks: ['onboarding'],
+    template: `${paths.appPublic}/onboarding.html`,
+    filename: 'onboarding.html',
     minify: isEnvProduction && minifyOpts,
   });
   // Add the above HtmlWebpackPlugin instance into config.plugins
-  config.plugins.push(homeHtmlPlugin);
+  config.plugins.push(onboardingHtmlPlugin);
 
   // Custom ManifestPlugin instance to cast asset-manifest.json back to old plain format
   const manifestPlugin = new (ManifestPlugin.WebpackManifestPlugin ||
