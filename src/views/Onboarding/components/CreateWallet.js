@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 import { BigButton } from '../../../components/Button';
+import { useEncryptedStorage } from '../../../hooks/useEncryptedStorage';
 import { BackButton } from './BackButton';
 import { Footer } from './Footer';
 
@@ -10,7 +11,7 @@ export const CreateWallet = ({ setScreen }) => {
   // const onCreatePassword = useCallback(() => {
   //   setScreen('success');
   // }, [setScreen]);
-
+  const { setPassword } = useEncryptedStorage();
   const [showPassword, setShowPassword] = useState(false);
 
   const toggleShowPassword = useCallback(() => {
@@ -28,18 +29,23 @@ export const CreateWallet = ({ setScreen }) => {
     if (!formData.password) {
       setErrors({ ...errors, password: true });
       return false;
-    } else if (!formData.confirm) {
+    } else if (!formData.confirm || formData.confirm !== formData.password) {
       setErrors({ ...errors, confirm: "Password fields don't match" });
       return false;
+    } else if (formData.password.legnth < 10) {
+      setErrors({
+        ...errors,
+        password: 'Password must be at least 10 characters',
+      });
     }
     return true;
   }, [errors, formData.confirm, formData.password]);
 
   const onSubmit = useCallback(() => {
     if (validate()) {
-      console.log('Validated');
+      setPassword(formData.password);
     }
-  }, [validate]);
+  }, [formData.password, setPassword, validate]);
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
