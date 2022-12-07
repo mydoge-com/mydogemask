@@ -1,10 +1,6 @@
 import { EncryptStorage } from 'encrypt-storage';
 import { useCallback, useRef } from 'react';
 
-// Example of secret_key variable in an .env file
-// const encryptStorage = new EncryptStorage(process.env.SECRET_KEY, options);
-// export const encryptStorage = new EncryptStorage('secret-key-value', options);
-
 const PASSWORD = 'PASSWORD';
 
 export const useEncryptedStorage = () => {
@@ -33,5 +29,16 @@ export const useEncryptedStorage = () => {
     [getInstance]
   );
 
-  return { setPassword, checkPassword };
+  const getStorage = useCallback(
+    (password) => {
+      if (checkPassword(password)) {
+        return storage.current;
+      }
+
+      return null;
+    },
+    [checkPassword]
+  );
+
+  return { setPassword, checkPassword, getStorage };
 };
