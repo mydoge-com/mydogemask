@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 import { BigButton } from '../../../components/Button';
+import { generateRandomPhrase } from '../../../utils/wallet';
 import { BackButton } from './BackButton';
 import { Footer } from './Footer';
 
@@ -32,12 +33,18 @@ export const CreateWallet = ({ setScreen }) => {
       setErrors({ ...errors, confirm: "Password fields don't match" });
       return false;
     }
+    setErrors({});
     return true;
   }, [errors, formData.confirm, formData.password]);
 
   const onSubmit = useCallback(() => {
     if (validate()) {
       console.log('Validated');
+      try {
+        generateRandomPhrase();
+      } catch (e) {
+        console.log(e);
+      }
     }
   }, [validate]);
 

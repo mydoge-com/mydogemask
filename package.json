@@ -22,6 +22,7 @@
     "react-native-web": "0.17.1",
     "react-scripts": "^5.0.1",
     "satoshi-bitcoin": "^1.0.5",
+    "sjcl": "^1.0.8",
     "use-chrome-storage": "^1.0.8",
     "use-local-storage": "^2.3.6",
     "webpack-manifest-plugin": "^5.0.0",
