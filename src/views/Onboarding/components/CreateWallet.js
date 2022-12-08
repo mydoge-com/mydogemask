@@ -35,7 +35,7 @@ export const CreateWallet = ({ setScreen }) => {
     } else if (formData.password.legnth < 10) {
       setErrors({
         ...errors,
-        password: 'Password must be at least 10 characters',
+        confirm: 'Password must be at least 10 characters',
       });
     }
     return true;
