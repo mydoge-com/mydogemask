@@ -11,6 +11,7 @@
     "bitcoinjs-lib": "4.0.5",
     "buffer": "^6.0.3",
     "dogecoin-bip84": "0.0.5",
+    "encrypt-storage": "^2.12.12",
     "html-webpack-plugin": "^5.5.0",
     "mini-css-extract-plugin": "^2.7.0",
     "moment": "^2.29.4",

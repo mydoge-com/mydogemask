@@ -4,11 +4,13 @@ import { useCallback, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 import { BigButton } from '../../../components/Button';
+import { useEncryptedStorage } from '../../../hooks/useEncryptedStorage';
 import { generateWallet } from '../../../utils/wallet';
 import { BackButton } from './BackButton';
 import { Footer } from './Footer';
 
 export const CreateWallet = ({ setScreen }) => {
+  const { setPassword } = useEncryptedStorage();
   const [showPassword, setShowPassword] = useState(false);
 
   const toggleShowPassword = useCallback(() => {
@@ -26,9 +28,14 @@ export const CreateWallet = ({ setScreen }) => {
     if (!formData.password) {
       setErrors({ ...errors, password: true });
       return false;
-    } else if (!formData.confirm || formData.password !== formData.confirm) {
+    } else if (!formData.confirm || formData.confirm !== formData.password) {
       setErrors({ ...errors, confirm: "Password fields don't match" });
       return false;
+    } else if (formData.password.legnth < 10) {
+      setErrors({
+        ...errors,
+        confirm: 'Password must be at least 10 characters',
+      });
     }
     setErrors({});
     return true;
@@ -37,14 +44,11 @@ export const CreateWallet = ({ setScreen }) => {
   const onSubmit = useCallback(() => {
     if (validate()) {
       const phrase = bip39.generateMnemonic(128);
-      try {
-        const { genAddr, genPriv, genPub } = generateWallet(phrase);
-        console.log({ genAddr, genPriv, genPub });
-      } catch (e) {
-        console.log(e);
-      }
+      const { genAddr, genPriv, genPub } = generateWallet(phrase);
+      console.log({ genAddr, genPriv, genPub });
+      setPassword(formData.password);
     }
-  }, [validate]);
+  }, [formData.password, setPassword, validate]);
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
