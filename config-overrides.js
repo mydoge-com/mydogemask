@@ -2,6 +2,9 @@ const paths = require('react-scripts/config/paths');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const ManifestPlugin = require('webpack-manifest-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
+
+const webpack = require('webpack');
 
 // Export override function(s) via object
 module.exports = {
@@ -122,6 +125,21 @@ function override(config, env) {
   config.plugins = replacePlugin(config.plugins, (name) =>
     /GenerateSW/i.test(name)
   );
+
+  const fallback = config.resolve.fallback || {};
+  Object.assign(fallback, {
+    crypto: require.resolve('crypto-browserify'),
+    buffer: require.resolve('buffer'),
+  });
+  config.resolve.fallback = fallback;
+  config.plugins = (config.plugins || []).concat([
+    new webpack.ProvidePlugin({
+      process: 'process/browser',
+      Buffer: ['buffer', 'Buffer'],
+    }),
+  ]);
+
+  config.plugins.push(new NodePolyfillPlugin());
 
   return config;
 }

@@ -1,17 +1,14 @@
+import * as bip39 from 'bip39';
 import { Icon, IconButton, Input, Text, VStack } from 'native-base';
 import { useCallback, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 import { BigButton } from '../../../components/Button';
-import { generateRandomPhrase } from '../../../utils/wallet';
+import { generateWallet } from '../../../utils/wallet';
 import { BackButton } from './BackButton';
 import { Footer } from './Footer';
 
 export const CreateWallet = ({ setScreen }) => {
-  // const onCreatePassword = useCallback(() => {
-  //   setScreen('success');
-  // }, [setScreen]);
-
   const [showPassword, setShowPassword] = useState(false);
 
   const toggleShowPassword = useCallback(() => {
@@ -29,7 +26,7 @@ export const CreateWallet = ({ setScreen }) => {
     if (!formData.password) {
       setErrors({ ...errors, password: true });
       return false;
-    } else if (!formData.confirm) {
+    } else if (!formData.confirm || formData.password !== formData.confirm) {
       setErrors({ ...errors, confirm: "Password fields don't match" });
       return false;
     }
@@ -39,9 +36,10 @@ export const CreateWallet = ({ setScreen }) => {
 
   const onSubmit = useCallback(() => {
     if (validate()) {
-      console.log('Validated');
+      const phrase = bip39.generateMnemonic(128);
       try {
-        generateRandomPhrase();
+        const { genAddr, genPriv, genPub } = generateWallet(phrase);
+        console.log({ genAddr, genPriv, genPub });
       } catch (e) {
         console.log(e);
       }
