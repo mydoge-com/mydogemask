@@ -19,19 +19,19 @@ networks.dogecoin = { ...constants.NETWORKS.mainnet };
 networks.dogecoin.wif = networks.bitcoin.wif;
 
 export function generateWallet(phrase, bip84 = false) {
-  let genAddr;
-  let genPriv;
-  let genPub;
+  let addr;
+  let priv;
+  let pub;
 
   if (!bip84) {
     // Generate bip32 priv, pub and address
     const root = bip32.fromSeed(bip39.mnemonicToSeedSync(phrase));
     const child = root.derivePath("m/44'/3'/0'/0/0");
-    genPriv = child.toWIF();
-    genPub = root.publicKey.toString('hex'); // Store the root public key so we can identify all addresses generated from this root in the future
+    priv = child.toWIF();
+    pub = root.publicKey.toString('hex'); // Store the root public key so we can identify all addresses generated from this root in the future
     const network =
       process.env.USE_TESTNET === 'true' ? networks.testnet : networks.dogecoin;
-    genAddr = bitcoin.payments.p2pkh({
+    addr = bitcoin.payments.p2pkh({
       pubkey: child.publicKey,
       network,
     }).address;
@@ -44,11 +44,11 @@ export function generateWallet(phrase, bip84 = false) {
     );
     const child = root.deriveAccount(0);
     const account = new FromZPrv(child);
-    genPriv = account.getPrivateKey(0).toString('hex');
-    genPub = account.getPublicKey(0).toString('hex');
-    genAddr = account.getAddress(0, false, 44);
+    priv = account.getPrivateKey(0).toString('hex');
+    pub = account.getPublicKey(0).toString('hex');
+    addr = account.getAddress(0, false, 44);
   }
-  return { genAddr, genPriv, genPub };
+  return { addr, priv, pub };
 }
 
 export function fromWIF(wif, bip84 = false) {

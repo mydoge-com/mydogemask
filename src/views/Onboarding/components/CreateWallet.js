@@ -5,13 +5,17 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 import { BigButton } from '../../../components/Button';
 import { useEncryptedStorage } from '../../../hooks/useEncryptedStorage';
+import { useStorage } from '../../../hooks/useStorage';
 import { generateWallet } from '../../../utils/wallet';
 import { BackButton } from './BackButton';
 import { Footer } from './Footer';
 
 export const CreateWallet = ({ setScreen }) => {
-  const { setPassword } = useEncryptedStorage();
+  const { setPassword, setWallet } = useEncryptedStorage();
   const [showPassword, setShowPassword] = useState(false);
+  const {
+    storage: { updateStorage },
+  } = useStorage();
 
   const toggleShowPassword = useCallback(() => {
     setShowPassword((current) => !current);
@@ -31,11 +35,12 @@ export const CreateWallet = ({ setScreen }) => {
     } else if (!formData.confirm || formData.confirm !== formData.password) {
       setErrors({ ...errors, confirm: "Password fields don't match" });
       return false;
-    } else if (formData.password.legnth < 10) {
+    } else if (formData.password.length < 10) {
       setErrors({
         ...errors,
         confirm: 'Password must be at least 10 characters',
       });
+      return false;
     }
     setErrors({});
     return true;
@@ -44,11 +49,18 @@ export const CreateWallet = ({ setScreen }) => {
   const onSubmit = useCallback(() => {
     if (validate()) {
       const phrase = bip39.generateMnemonic(128);
-      const { genAddr, genPriv, genPub } = generateWallet(phrase);
-      console.log({ genAddr, genPriv, genPub });
+      const { addr, priv, pub } = generateWallet(phrase);
       setPassword(formData.password);
+      setWallet({
+        password: formData.password,
+        phrase,
+        addr,
+        priv,
+        pub,
+      });
+      updateStorage({ isAuthenticated: true, onboardingComplete: true });
     }
-  }, [formData.password, setPassword, validate]);
+  }, [formData.password, setPassword, setWallet, updateStorage, validate]);
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
