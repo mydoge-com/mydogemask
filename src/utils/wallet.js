@@ -14,21 +14,19 @@ export function generatePhrase() {
   return bip39.generateMnemonic(128);
 }
 
-export function generateRootWIF(phrase) {
-  // Generate bip32 priv, pub and address
-  // const root = bip32.fromSeed(bip39.mnemonicToSeedSync(phrase));
-  // const child = root.derivePath("m/44'/3'/0'/0/0");
-  // const priv = child.toWIF();
-  // const pub = root.publicKey.toString('hex'); // Store the root public key so we can identify all addresses generated from this root in the future
-  // const network =
-  //   process.env.USE_TESTNET === 'true' ? networks.testnet : networks.dogecoin;
-  // const addr = bitcoin.payments.p2pkh({
-  //   pubkey: child.publicKey,
-  //   network,
-  // }).address;
+export function generateRoot(phrase) {
+  return bip32.fromSeed(bip39.mnemonicToSeedSync(phrase));
+}
 
-  // return { addr, priv, pub };
-  return bip32.fromSeed(bip39.mnemonicToSeedSync(phrase)).toWIF();
+export function generateChild(root, idx) {
+  return root.derivePath(`m/44'/3'/0'/0/${idx}`);
+}
+
+export function generateAddress(child) {
+  return bitcoin.payments.p2pkh({
+    pubkey: child.publicKey,
+    network: networks.dogecoin,
+  }).address;
 }
 
 export function fromWIF(wif) {

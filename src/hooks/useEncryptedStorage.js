@@ -4,7 +4,7 @@ import { useCallback, useRef } from 'react';
 const PASSWORD = 'PASSWORD';
 const PHRASE = 'PHRASE';
 const ROOT_KEY = 'ROOT_KEY';
-// const CHILD_KEY = 'CHILD_KEY_';
+const CHILD_KEY = 'CHILD_KEY_';
 
 export const useEncryptedStorage = () => {
   const storage = useRef(null);
@@ -33,12 +33,19 @@ export const useEncryptedStorage = () => {
   );
 
   const setWalletRoot = useCallback(
-    ({ phrase, root, password }) => {
-      const instance = getInstance(password);
-      instance.setItem(PHRASE, phrase);
-      instance.setItem(ROOT_KEY, root);
+    ({ password, phrase, root, child }) => {
+      const instance = getStorage(password);
+
+      if (instance) {
+        instance.setItem(PHRASE, phrase);
+        instance.setItem(ROOT_KEY, root);
+        instance.setItem(`${CHILD_KEY}0`, child);
+        return true;
+      }
+
+      return false;
     },
-    [getInstance]
+    [getStorage]
   );
 
   const getStorage = useCallback(

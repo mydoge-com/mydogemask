@@ -1,4 +1,11 @@
-import { getStorage } from './hooks/useEncryptedStorage';
+import { useEncryptedStorage } from './hooks/useEncryptedStorage';
+import { useStorage } from './hooks/useStorage';
+import {
+  generateAddress,
+  generateChild,
+  generatePhrase,
+  generateRoot,
+} from './utils/wallet';
 // // Add a Send Tip button on mydoge.com
 // chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 //   if (tab.url && tab.url.includes("mydoge.com")) {
@@ -50,6 +57,36 @@ function onRequestTransaction({ data = {}, sendResponse } = {}) {
   });
 }
 
+// Generates a seed phrase, root keypair, child keypair + address 0
+// Stores the phrase
+function onCreateWallet({ data = {}, sendResponse } = {}) {
+  const { setWalletRoot } = useEncryptedStorage();
+  const { updateStorage } = useStorage();
+
+  if (data.password) {
+    const phrase = generatePhrase();
+    const root = generateRoot(phrase);
+    const child = generateChild(root, 0);
+    const address0 = generateAddress(child);
+
+    // This will fail if the password is not set or is incorrect
+    const result = setWalletRoot({
+      password: data.password,
+      phrase,
+      root: root.toWIF(),
+      child: child.toWIF(),
+    });
+
+    if (result) {
+      updateStorage({ addresses: [address0] });
+      sendResponse(true);
+      return;
+    }
+  }
+
+  sendResponse(false);
+}
+
 // Listen to messages
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (!message?.message) return;
@@ -59,6 +96,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       break;
     case 'createWallet':
       console.log('message data', message.data);
+      onCreateWallet({ data: message.data, sendResponse });
       break;
     default:
   }

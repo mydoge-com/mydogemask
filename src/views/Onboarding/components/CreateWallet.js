@@ -3,14 +3,13 @@ import { useCallback, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 import { BigButton } from '../../../components/Button';
-// import { useEncryptedStorage } from '../../../hooks/useEncryptedStorage';
+import { useEncryptedStorage } from '../../../hooks/useEncryptedStorage';
 import { useStorage } from '../../../hooks/useStorage';
-// import { generateWallet } from '../../../utils/wallet';
 import { BackButton } from './BackButton';
 import { Footer } from './Footer';
 
 export const CreateWallet = ({ setScreen }) => {
-  // const { setPassword, setWallet } = useEncryptedStorage();
+  const { setPassword } = useEncryptedStorage();
   const [showPassword, setShowPassword] = useState(false);
   const { updateStorage } = useStorage();
 
@@ -45,24 +44,19 @@ export const CreateWallet = ({ setScreen }) => {
 
   const onSubmit = useCallback(() => {
     if (validate()) {
-      // const { addr, priv, pub } = generateWallet(phrase);
-      // setPassword(formData.password);
-      // setWallet({
-      //   password: formData.password,
-      //   phrase,
-      //   addr,
-      //   priv,
-      //   pub,
-      // });
+      setPassword(formData.password);
+
       chrome.runtime.sendMessage(
         { message: 'createWallet', data: { password: formData.password } },
         (response) => {
           console.log(response);
+          if (response) {
+            updateStorage({ isAuthenticated: true, onboardingComplete: true });
+          }
         }
       );
-      updateStorage({ isAuthenticated: true, onboardingComplete: true });
     }
-  }, [formData.password, updateStorage, validate]);
+  }, [formData.password, setPassword, updateStorage, validate]);
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>

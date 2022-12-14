@@ -7,6 +7,7 @@ const SETTINGS_KEY = 'mydogemask';
 const INITIAL_VALUE = {
   isAuthenticated: false,
   onboardingComplete: false,
+  addresses: [],
 };
 
 const useStorageLocal = chrome?.storage
