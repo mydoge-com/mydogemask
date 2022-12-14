@@ -2,7 +2,9 @@ import { EncryptStorage } from 'encrypt-storage';
 import { useCallback, useRef } from 'react';
 
 const PASSWORD = 'PASSWORD';
-const WALLET = 'WALLET';
+const PHRASE = 'PHRASE';
+const ROOT_KEY = 'ROOT_KEY';
+// const CHILD_KEY = 'CHILD_KEY_';
 
 export const useEncryptedStorage = () => {
   const storage = useRef(null);
@@ -30,10 +32,11 @@ export const useEncryptedStorage = () => {
     [getInstance]
   );
 
-  const setWallet = useCallback(
-    ({ phrase, priv, pub, addr, password }) => {
+  const setWalletRoot = useCallback(
+    ({ phrase, root, password }) => {
       const instance = getInstance(password);
-      instance.setItem(WALLET, { phrase, priv, pub, addr });
+      instance.setItem(PHRASE, phrase);
+      instance.setItem(ROOT_KEY, root);
     },
     [getInstance]
   );
@@ -49,5 +52,5 @@ export const useEncryptedStorage = () => {
     [checkPassword]
   );
 
-  return { setPassword, checkPassword, getStorage, setWallet };
+  return { setPassword, checkPassword, getStorage, setWalletRoot };
 };

@@ -1569,6 +1569,11 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
+"@mydogeofficial/dogecoin-js@^0.1.0-beta.4":
+  version "0.1.0-beta.4"
+  resolved "https://registry.yarnpkg.com/@mydogeofficial/dogecoin-js/-/dogecoin-js-0.1.0-beta.4.tgz#1cf0b155553624180ce767c10423110d092deb55"
+  integrity sha512-Ouaka4/Y1b+LL5fShLfOY49/pKlrnY91Rz/D9/W4AiDFfaOPjhVxr7YpH0xN5Lt9+HF4B4VdGM/G/wjzc1LjZw==
+
 "@native-base/icons@^0.0.11":
   version "0.0.11"
   resolved "https://registry.yarnpkg.com/@native-base/icons/-/icons-0.0.11.tgz#aeb3215ace21da30e264bbbb5c5e2136a5d25612"

@@ -4,6 +4,7 @@
   "private": true,
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",
+    "@mydogeofficial/dogecoin-js": "^0.1.0-beta.4",
     "@native-base/icons": "^0.0.11",
     "axios": "^1.1.3",
     "bip32": "2.0.4",

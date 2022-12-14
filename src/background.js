@@ -1,3 +1,4 @@
+import { getStorage } from './hooks/useEncryptedStorage';
 // // Add a Send Tip button on mydoge.com
 // chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
 //   if (tab.url && tab.url.includes("mydoge.com")) {
@@ -55,6 +56,9 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.message) {
     case 'requestTransaction':
       onRequestTransaction({ data: message.data, sendResponse });
+      break;
+    case 'createWallet':
+      console.log('message data', message.data);
       break;
     default:
   }

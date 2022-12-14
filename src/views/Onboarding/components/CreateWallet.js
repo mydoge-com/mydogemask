@@ -1,17 +1,16 @@
-import * as bip39 from 'bip39';
 import { Icon, IconButton, Input, Text, VStack } from 'native-base';
 import { useCallback, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 import { BigButton } from '../../../components/Button';
-import { useEncryptedStorage } from '../../../hooks/useEncryptedStorage';
+// import { useEncryptedStorage } from '../../../hooks/useEncryptedStorage';
 import { useStorage } from '../../../hooks/useStorage';
-import { generateWallet } from '../../../utils/wallet';
+// import { generateWallet } from '../../../utils/wallet';
 import { BackButton } from './BackButton';
 import { Footer } from './Footer';
 
 export const CreateWallet = ({ setScreen }) => {
-  const { setPassword, setWallet } = useEncryptedStorage();
+  // const { setPassword, setWallet } = useEncryptedStorage();
   const [showPassword, setShowPassword] = useState(false);
   const { updateStorage } = useStorage();
 
@@ -46,26 +45,24 @@ export const CreateWallet = ({ setScreen }) => {
 
   const onSubmit = useCallback(() => {
     if (validate()) {
-      const phrase = bip39.generateMnemonic(128);
-      const { addr, priv, pub } = generateWallet(phrase);
-      setPassword(formData.password);
-      setWallet({
-        password: formData.password,
-        phrase,
-        addr,
-        priv,
-        pub,
-      });
-      console.log({
-        password: formData.password,
-        phrase,
-        addr,
-        priv,
-        pub,
-      });
+      // const { addr, priv, pub } = generateWallet(phrase);
+      // setPassword(formData.password);
+      // setWallet({
+      //   password: formData.password,
+      //   phrase,
+      //   addr,
+      //   priv,
+      //   pub,
+      // });
+      chrome.runtime.sendMessage(
+        { message: 'createWallet', data: { password: formData.password } },
+        (response) => {
+          console.log(response);
+        }
+      );
       updateStorage({ isAuthenticated: true, onboardingComplete: true });
     }
-  }, [formData.password, setPassword, setWallet, updateStorage, validate]);
+  }, [formData.password, updateStorage, validate]);
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
