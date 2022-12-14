@@ -41,6 +41,7 @@
   },
   "globals": {
     "chrome": true,
-    "it": true
+    "it": true,
+    "webpack": true
   }
 }

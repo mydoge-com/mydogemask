@@ -7,15 +7,13 @@ import { PasswordScreen } from './PasswordScreen';
 import { WalletScreen } from './WalletScreen';
 
 function App() {
-  const {
-    storage: { isAuthenticated, onboardingComplete },
-  } = useStorage();
+  const { storage } = useStorage();
 
   return (
     <AppProvider>
-      {onboardingComplete ? (
+      {storage.onboardingComplete ? (
         <Box width='360px' height='540px'>
-          {isAuthenticated ? <WalletScreen /> : <PasswordScreen />}
+          {storage.isAuthenticated ? <WalletScreen /> : <PasswordScreen />}
         </Box>
       ) : (
         <Onboarding />

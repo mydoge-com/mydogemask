@@ -13,9 +13,7 @@ import { Footer } from './Footer';
 export const CreateWallet = ({ setScreen }) => {
   const { setPassword, setWallet } = useEncryptedStorage();
   const [showPassword, setShowPassword] = useState(false);
-  const {
-    storage: { updateStorage },
-  } = useStorage();
+  const { updateStorage } = useStorage();
 
   const toggleShowPassword = useCallback(() => {
     setShowPassword((current) => !current);
@@ -52,6 +50,13 @@ export const CreateWallet = ({ setScreen }) => {
       const { addr, priv, pub } = generateWallet(phrase);
       setPassword(formData.password);
       setWallet({
+        password: formData.password,
+        phrase,
+        addr,
+        priv,
+        pub,
+      });
+      console.log({
         password: formData.password,
         phrase,
         addr,

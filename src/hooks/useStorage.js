@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { createChromeStorageStateHookLocal } from 'use-chrome-storage';
-import useLocalStorage from 'use-local-storage';
+
+import { useLocalStorage } from './useLocalStorage';
 
 const SETTINGS_KEY = 'mydogemask';
 const INITIAL_VALUE = {

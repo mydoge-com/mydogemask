@@ -4,7 +4,7 @@ const ManifestPlugin = require('webpack-manifest-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 
-const webpack = require('webpack');
+// const webpack = require('webpack');
 
 // Export override function(s) via object
 module.exports = {
