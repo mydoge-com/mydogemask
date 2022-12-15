@@ -40,10 +40,10 @@ export const useEncryptedStorage = () => {
         instance.setItem(PHRASE, phrase);
         instance.setItem(ROOT_KEY, root);
         instance.setItem(`${CHILD_KEY}0`, child);
-        return true;
+        return instance;
       }
 
-      return false;
+      return null;
     },
     [getStorage]
   );

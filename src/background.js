@@ -71,15 +71,14 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
     const address0 = generateAddress(child);
 
     // This will fail if the password is not set or is incorrect
-    const result = setWalletRoot({
+    secureStorage = setWalletRoot({
       password: data.password,
       phrase,
       root: root.toWIF(),
       child: child.toWIF(),
     });
 
-    if (result) {
-      secureStorage = getStorage(data.password); // Store reference to unlocked storage
+    if (secureStorage) {
       updateStorage({ addresses: [address0] });
       sendResponse(true);
       return;
