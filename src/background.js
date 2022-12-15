@@ -20,6 +20,7 @@ import {
 //     }
 //   }
 // });
+let secureStorage = null;
 
 // On first install, open onboarding screen in new tab
 chrome.runtime.onInstalled.addListener(({ reason }) => {
@@ -60,7 +61,7 @@ function onRequestTransaction({ data = {}, sendResponse } = {}) {
 // Generates a seed phrase, root keypair, child keypair + address 0
 // Stores the phrase
 function onCreateWallet({ data = {}, sendResponse } = {}) {
-  const { setWalletRoot } = useEncryptedStorage();
+  const { setWalletRoot, getStorage } = useEncryptedStorage();
   const { updateStorage } = useStorage();
 
   if (data.password) {
@@ -78,6 +79,7 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
     });
 
     if (result) {
+      secureStorage = getStorage(data.password); // Store reference to unlocked storage
       updateStorage({ addresses: [address0] });
       sendResponse(true);
       return;
