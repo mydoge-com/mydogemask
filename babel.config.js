@@ -1,15 +1,7 @@
-module.exports = function babelConfig(api) {
-  api.cache(true);
-  return {
-    presets: [
-      [
-        '@babel/preset-react',
-        {
-          // Use React 17 automatic JSX runtime.
-          jsxRuntime: 'automatic',
-        },
-      ],
-    ],
-    plugins: ['@babel/plugin-proposal-optional-chaining'],
-  };
+module.exports = {
+  presets: ["@native-base/next-adapter/babel"],
+  plugins: [
+    ["@babel/plugin-proposal-private-methods", { loose: true }],
+    ["@babel/plugin-proposal-private-property-in-object", { loose: true }],
+  ],
 };
