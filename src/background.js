@@ -59,7 +59,8 @@ function onRequestTransaction({ data = {}, sendResponse } = {}) {
 }
 
 // Generates a seed phrase, root keypair, child keypair + address 0
-// Stores the phrase
+// Encrypt + store the private data and address
+// Keep reference to unlocked storage for use during current session
 function onCreateWallet({ data = {}, sendResponse } = {}) {
   const { setWalletRoot, getStorage } = useEncryptedStorage();
   const { updateStorage } = useStorage();
