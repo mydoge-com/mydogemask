@@ -1,9 +1,10 @@
-import React, { createContext, useCallback, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useMemo } from 'react';
 
 import { useEncryptedStorage } from './hooks/useEncryptedStorage';
 import { useStorage } from './hooks/useStorage';
 
 const ONBOARDING_COMPLETE = '@mydoge_ONBOARDING_COMPLETE';
+const AUTH = '@mydoge_AUTH';
 
 export const AppContext = createContext(null);
 
@@ -15,12 +16,18 @@ const initialAppContext = {
 
 export const AppContextProvider = ({ children }) => {
   const { checkPassword } = useEncryptedStorage();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useStorage({
+    key: AUTH,
+    value: false,
+    persist: false,
+  });
+
   const [isOnboardingComplete, setIsOnboardingComplete] = useStorage({
     key: ONBOARDING_COMPLETE,
     value: false,
     persist: true,
   });
+
   const authenticate = useCallback(
     (password) => {
       const auth = checkPassword(password);
@@ -30,7 +37,7 @@ export const AppContextProvider = ({ children }) => {
       }
       return auth;
     },
-    [checkPassword, setIsOnboardingComplete]
+    [checkPassword, setIsAuthenticated, setIsOnboardingComplete]
   );
 
   const providerValue = useMemo(
