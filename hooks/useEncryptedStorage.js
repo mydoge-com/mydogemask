@@ -3,7 +3,6 @@ import SecureLS from 'secure-ls';
 
 const PASSWORD = '@mydoge_PASSWORD';
 const WALLET = '@mydoge_WALLET';
-const ONBOARDING_COMPLETE = '@mydoge_ONBOARDING_COMPLETE';
 
 const CryptoJS = require('crypto-js');
 
@@ -28,7 +27,7 @@ export const useEncryptedStorage = () => {
   const setPassword = useCallback(
     (password) => {
       const instance = getInstance(password);
-      instance.set(PASSWORD, password);
+      instance.set(PASSWORD, hash(password));
     },
     [getInstance]
   );
@@ -37,7 +36,7 @@ export const useEncryptedStorage = () => {
     (password) => {
       const instance = getInstance();
       try {
-        return hash(password, password) === instance.get(PASSWORD);
+        return hash(password) === instance.get(PASSWORD);
       } catch (e) {
         return false;
       }
@@ -63,20 +62,18 @@ export const useEncryptedStorage = () => {
     [checkPassword]
   );
 
-  const setOnboardingComplete = useCallback((status) => {
-    new SecureLS().set(ONBOARDING_COMPLETE, status);
-  }, []);
+  // const setOnboardingComplete = useCallback((status) => {
+  //   new SecureLS().set(ONBOARDING_COMPLETE, status);
+  // }, []);
 
-  const getOnboardingComplete = useCallback(() => {
-    return new SecureLS().get(ONBOARDING_COMPLETE);
-  }, []);
+  // const getOnboardingComplete = useCallback(() => {
+  //   return new SecureLS().get(ONBOARDING_COMPLETE);
+  // }, []);
 
   return {
     setPassword,
     checkPassword,
     getStorage,
     setWallet,
-    getOnboardingComplete,
-    setOnboardingComplete,
   };
 };

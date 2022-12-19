@@ -6,16 +6,15 @@ import { useAppContext } from '../../hooks/useAppContext';
 export const PasswordScreen = (props) => {
   const { authenticate } = useAppContext();
 
+  const [password, setPassword] = useState('');
+
   const onAuthenticate = useCallback(() => {
-    const auth = authenticate(password);
-    console.log({ auth, password });
+    authenticate(password);
   }, [authenticate, password]);
 
   const onChangeText = useCallback((text) => {
     setPassword(text);
   }, []);
-
-  const [password, setPassword] = useState('');
 
   return (
     <Box {...props}>

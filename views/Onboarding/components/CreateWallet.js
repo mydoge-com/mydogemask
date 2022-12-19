@@ -6,17 +6,13 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { BigButton } from '../../../components/Button';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { useEncryptedStorage } from '../../../hooks/useEncryptedStorage';
-// import { useClientEncryptedStorage } from '../../../hooks/useEncryptedStorage';
-// import { useEncryptedStorage } from '../../../hooks/useEncryptedStorage';
-// import { useStorage } from '../../../hooks/useStorage';
 import { generateWallet } from '../../../utils/wallet';
 import { BackButton } from './BackButton';
 import { Footer } from './Footer';
 
 export const CreateWallet = ({ setScreen }) => {
   const { authenticate } = useAppContext();
-  const { setPassword, setWallet, setOnboardingComplete } =
-    useEncryptedStorage();
+  const { setPassword, setWallet } = useEncryptedStorage();
   const [showPassword, setShowPassword] = useState(false);
 
   const toggleShowPassword = useCallback(() => {
@@ -60,17 +56,9 @@ export const CreateWallet = ({ setScreen }) => {
         priv,
         pub,
       });
-      setOnboardingComplete(true);
       authenticate(formData.password);
     }
-  }, [
-    authenticate,
-    formData.password,
-    setOnboardingComplete,
-    setPassword,
-    setWallet,
-    validate,
-  ]);
+  }, [authenticate, formData.password, setPassword, setWallet, validate]);
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
