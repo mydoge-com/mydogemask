@@ -12,9 +12,6 @@
 /.next/
 /out/
 
-# production
-/build
-
 # misc
 .DS_Store
 *.pem
@@ -51,7 +48,6 @@ yarn-error.log*
 /.next/*
 /out/
 # Next.js production
-/build/
 # Next.js dependencies
 /.pnp
 .pnp.js
