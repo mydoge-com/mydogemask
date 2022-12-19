@@ -62,14 +62,6 @@ export const useEncryptedStorage = () => {
     [checkPassword]
   );
 
-  // const setOnboardingComplete = useCallback((status) => {
-  //   new SecureLS().set(ONBOARDING_COMPLETE, status);
-  // }, []);
-
-  // const getOnboardingComplete = useCallback(() => {
-  //   return new SecureLS().get(ONBOARDING_COMPLETE);
-  // }, []);
-
   return {
     setPassword,
     checkPassword,
