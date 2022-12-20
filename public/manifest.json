@@ -2,11 +2,11 @@
   "manifest_version": 3,
   "name": "mydogemask",
   "version": "1.0",
-  "description": "Dogecoin wallet for chrome browser",
+  "description": "Dogecoin wallet for Chrome browser",
   "permissions": ["storage", "tabs", "activeTab", "contextMenus"],
   "host_permissions": ["https://*.mydoge.com/*"],
   "background": {
-    "service_worker": "static/js/background.js"
+    "service_worker": "scripts/background.js"
   },
   "icons": {
     "16": "assets/mydoge16.png",
@@ -14,21 +14,16 @@
     "48": "assets/mydoge48.png",
     "128": "assets/mydoge128.png"
   },
-  "content_scripts": [
-    {
-      "js": ["static/js/contentScript.js"],
-      "matches": ["http://*/*", "https://*/*"]
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": ["assets/*", "static/js/inject-script.js"],
-      "matches": ["http://*/*", "https://*/*"]
-    }
-  ],
+  "content_scripts": [{
+    "js": ["scripts/contentScript.js"],
+    "matches": ["http://*/*", "https://*/*"]
+  }],
+  "web_accessible_resources": [{
+    "resources": ["assets/*", "scripts/inject-script.js"],
+    "matches": ["http://*/*", "https://*/*"]
+  }],
   "action": {
     "default_title": "mydogemask",
-    "default_popup": "popup.html"
-  },
-  "options_page": "options.html"
+    "default_popup": "index.html"
+  }
 }
