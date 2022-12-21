@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export && mv out/_next out/next && sed -i '' -e 's=/_next/=/next/=g' out/**.html && mv out/*.html build && rsync -va --delete-after out/next/ build/next/ && rm -rf out && rsync -va public/ build/ && rsync -va scripts/ build/scripts/",
+    "build": "next build && next export && mv out/_next out/next && sed -i '' -e 's=/_next/=/next/=g' out/**.html && mv out/*.html build && rsync -va --delete-after out/next/static/chunks/scripts/ build/scripts/ && mv build/scripts/background.js** build/scripts/background.js && mv build/scripts/contentScript.js** build/scripts/contentScript.js && mv build/scripts/inject-script.js** build/scripts/inject-script.js && rsync -va --delete-after out/next/ build/next/ && rm -rf out && rsync -va public/ build/",
     "start": "next start",
     "lint": "next lint"
   },

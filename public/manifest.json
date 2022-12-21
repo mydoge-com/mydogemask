@@ -6,7 +6,8 @@
   "permissions": ["storage", "tabs", "activeTab", "contextMenus"],
   "host_permissions": ["https://*.mydoge.com/*"],
   "background": {
-    "service_worker": "scripts/background.js"
+    "service_worker": "scripts/background.js",
+    "type": "module"
   },
   "icons": {
     "16": "assets/mydoge16.png",

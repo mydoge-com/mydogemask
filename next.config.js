@@ -22,7 +22,18 @@ module.exports = withNativebase({
         '.web.tsx',
         ...config.resolve.extensions,
       ];
-      return config;
+      return {
+        ...config,
+        entry: async () => {
+          const entryConfig = await config.entry();
+          return {
+            ...entryConfig,
+            'scripts/background.js': './scripts/background.js',
+            'scripts/inject-script.js': './scripts/inject-script.js',
+            'scripts/contentScript.js': './scripts/contentScript.js',
+          };
+        },
+      };
     },
     images: {
       unoptimized: true,

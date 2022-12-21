@@ -1,53 +1,46 @@
-import React, { createContext, useCallback, useMemo } from 'react';
+import React, { createContext, useEffect, useMemo, useState } from 'react';
 
-import { useEncryptedStorage } from './hooks/useEncryptedStorage';
-import { useStorage } from './hooks/useStorage';
-
-const ONBOARDING_COMPLETE = '@mydoge_ONBOARDING_COMPLETE';
-const AUTH = '@mydoge_AUTH';
+import { messageHandler } from './scripts/background';
+import {
+  AUTHENTICATED,
+  ONBOARDING_COMPLETE,
+} from './scripts/helpers/constants';
+import { addListener } from './scripts/helpers/message';
+import { getLocalValue, getSessionValue } from './scripts/helpers/storage';
 
 export const AppContext = createContext(null);
 
 const initialAppContext = {
-  isAuthenticated: false,
-  isOnboardingComplete: false,
-  wallet: null,
+  authenticated: false,
+  onboardingComplete: undefined,
 };
 
 export const AppContextProvider = ({ children }) => {
-  const { checkPassword } = useEncryptedStorage();
-  const [isAuthenticated, setIsAuthenticated] = useStorage({
-    key: AUTH,
-    value: false,
-    persist: false,
-  });
+  const [authenticated, setAuthenticated] = useState(false);
+  const [onboardingComplete, setOnboardingComplete] = useState();
 
-  const [isOnboardingComplete, setIsOnboardingComplete] = useStorage({
-    key: ONBOARDING_COMPLETE,
-    value: false,
-    persist: true,
-  });
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'development') {
+      addListener(messageHandler);
+    }
+    getLocalValue(ONBOARDING_COMPLETE, (value) => {
+      setOnboardingComplete(value);
+    });
 
-  const authenticate = useCallback(
-    (password) => {
-      const auth = checkPassword(password);
-      if (auth) {
-        setIsAuthenticated(true);
-        setIsOnboardingComplete(true);
-      }
-      return auth;
-    },
-    [checkPassword, setIsAuthenticated, setIsOnboardingComplete]
-  );
+    getSessionValue(AUTHENTICATED, (value) => {
+      setAuthenticated(value);
+    });
+  }, []);
 
   const providerValue = useMemo(
     () => ({
       ...initialAppContext,
-      authenticate,
-      isAuthenticated,
-      isOnboardingComplete,
+      authenticated,
+      setAuthenticated,
+      onboardingComplete,
+      setOnboardingComplete,
     }),
-    [authenticate, isAuthenticated, isOnboardingComplete]
+    [authenticated, onboardingComplete]
   );
   return (
     <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>

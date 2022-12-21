@@ -39,6 +39,6 @@
     "simple-import-sort/imports": "error"
   },
   "globals": {
-    "chrome": "readonly"
+    "chrome": true
   }
 }

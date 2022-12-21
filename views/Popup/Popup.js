@@ -5,7 +5,7 @@ import { PasswordScreen } from './PasswordScreen';
 import { WalletScreen } from './WalletScreen';
 
 export const Popup = () => {
-  const { isAuthenticated } = useAppContext();
+  const { authenticated } = useAppContext();
 
-  return isAuthenticated ? <WalletScreen /> : <PasswordScreen />;
+  return authenticated ? <WalletScreen /> : <PasswordScreen />;
 };

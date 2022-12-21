@@ -1,19 +1,15 @@
-// import * as bip39 from 'bip39';
 import { Icon, IconButton, Input, Text, VStack } from 'native-base';
 import { useCallback, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 import { BigButton } from '../../../components/Button';
-import { useEncryptedStorage } from '../../../hooks/useEncryptedStorage';
-import { useStorage } from '../../../hooks/useStorage';
-// import { generateWallet } from '../../../utils/wallet';
+import { useAppContext } from '../../../hooks/useAppContext';
+import { sendMessage } from '../../../scripts/helpers/message';
 import { BackButton } from './BackButton';
 import { Footer } from './Footer';
 
 export const CreateWallet = ({ setScreen }) => {
-  const { setPassword } = useEncryptedStorage();
   const [showPassword, setShowPassword] = useState(false);
-  const { updateStorage } = useStorage();
 
   const toggleShowPassword = useCallback(() => {
     setShowPassword((current) => !current);
@@ -25,6 +21,8 @@ export const CreateWallet = ({ setScreen }) => {
 
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
+
+  const { setAuthenticated, setOnboardingComplete } = useAppContext();
 
   const validate = useCallback(() => {
     if (!formData.password) {
@@ -46,19 +44,17 @@ export const CreateWallet = ({ setScreen }) => {
 
   const onSubmit = useCallback(() => {
     if (validate()) {
-      setPassword(formData.password);
-
-      chrome.runtime.sendMessage(
+      sendMessage(
         { message: 'createWallet', data: { password: formData.password } },
         (response) => {
-          console.log(response);
           if (response) {
-            updateStorage({ isAuthenticated: true, onboardingComplete: true });
+            setAuthenticated(true);
+            setOnboardingComplete(true);
           }
         }
       );
     }
-  }, [formData.password, setPassword, updateStorage, validate]);
+  }, [formData.password, setAuthenticated, setOnboardingComplete, validate]);
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
