@@ -14,13 +14,6 @@ import {
   generateRoot,
 } from './helpers/wallet';
 
-const constants = require('dogecoin-bip84/src/constants');
-const networks = require('bitcoinjs-lib/src/networks');
-
-// Hack bitcoinjs-lib values to use the dogecoin values from bip84
-networks.dogecoin = { ...constants.NETWORKS.mainnet };
-networks.dogecoin.wif = networks.bitcoin.wif;
-
 // onRequestTransaction: Launch notification popup
 function onRequestTransaction({ data = {}, sendResponse } = {}) {
   chrome.windows.getCurrent((w) => {
@@ -57,7 +50,7 @@ async function onCreateWallet({ data = {}, sendResponse = () => {} } = {}) {
     const wallet = {
       phrase,
       root: root.toWIF(),
-      child: child.toWIF(),
+      children: [child.toWIF()],
       addresses: [address0],
     };
 

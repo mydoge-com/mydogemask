@@ -1,3 +1,4 @@
+/* eslint-disable import/no-relative-packages */
 import { Icon, IconButton, Input, Text, VStack } from 'native-base';
 import { useCallback, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';

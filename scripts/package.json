@@ -1,0 +1,22 @@
+{
+  "name": "scripts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "rollup --config"
+  },
+  "dependencies": {
+    "@mydogeofficial/dogecoin-js": "^0.1.0-beta.4",
+    "@rollup/plugin-node-resolve": "^15.0.1",
+    "bip32": "2.0.4",
+    "bip39": "^3.0.4",
+    "bitcoinjs-lib": "4.0.5",
+    "crypto-js": "^4.1.1",
+    "dogecoin-bip84": "0.0.5",
+    "multicoin-address-validator": "0.5.10",
+    "satoshi-bitcoin": "1.0.5"
+  },
+  "devDependencies": {
+    "rollup": "^3.8.0"
+  }
+}

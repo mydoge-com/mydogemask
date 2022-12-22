@@ -3,9 +3,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export && mv out/_next out/next && sed -i '' -e 's=/_next/=/next/=g' out/**.html && mv out/*.html build && rsync -va --delete-after out/next/static/chunks/scripts/ build/scripts/ && mv build/scripts/background.js** build/scripts/background.js && mv build/scripts/contentScript.js** build/scripts/contentScript.js && mv build/scripts/inject-script.js** build/scripts/inject-script.js && rsync -va --delete-after out/next/ build/next/ && rm -rf out && rsync -va public/ build/",
+    "build": "next build && next export && mv out/_next out/next && sed -i '' -e 's=/_next/=/next/=g' out/**.html && mv out/*.html build && cd scripts && yarn build && cd .. &&  rsync -va --delete-after scripts/compiled/ build/scripts/ && rm -rf scripts/compiled && rsync -va --delete-after out/next/ build/next/ && rm -rf out && rsync -va public/ build/",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "postinstall": "cd scripts && yarn install && cd .."
   },
   "dependencies": {
     "@mydogeofficial/dogecoin-js": "^0.1.0-beta.4",

@@ -1,3 +1,4 @@
+/* eslint-disable import/no-relative-packages */
 import React, { createContext, useEffect, useMemo, useState } from 'react';
 
 import { messageHandler } from './scripts/background';
