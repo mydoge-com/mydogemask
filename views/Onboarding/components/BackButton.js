@@ -1,5 +1,4 @@
 import { HStack, Icon, IconButton, Text } from 'native-base';
-import React from 'react';
 import { FaAngleLeft } from 'react-icons/fa';
 
 export const BackButton = ({ onPress, ...props }) => {

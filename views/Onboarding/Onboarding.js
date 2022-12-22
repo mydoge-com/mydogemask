@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { CreateWallet } from './components/CreateWallet';
 import { HomeWrapper } from './components/HomeWrapper';

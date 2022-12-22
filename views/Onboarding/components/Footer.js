@@ -1,5 +1,4 @@
 import { Link, Text } from 'native-base';
-import React from 'react';
 
 export const Footer = ({ ...props }) => (
   <Text textAlign='center' mt='80px' color='gray.400' {...props}>

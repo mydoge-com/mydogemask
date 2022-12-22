@@ -1,5 +1,5 @@
 import { Box, HStack, Image, Text, VStack } from 'native-base';
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { BigButton } from '../../../components/Button';
 import { Footer } from './Footer';

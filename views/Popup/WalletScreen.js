@@ -15,7 +15,7 @@ import {
   Text,
   VStack,
 } from 'native-base';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import sb from 'satoshi-bitcoin';
 
 import { MIN_CONFIRMATIONS } from '../../constants/Doge';

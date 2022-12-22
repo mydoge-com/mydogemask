@@ -1,5 +1,5 @@
 /* eslint-disable import/no-relative-packages */
-import React, { createContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useEffect, useMemo, useState } from 'react';
 
 import { messageHandler } from './scripts/background';
 import {
@@ -18,18 +18,18 @@ const initialAppContext = {
 
 export const AppContextProvider = ({ children }) => {
   const [authenticated, setAuthenticated] = useState(false);
-  const [onboardingComplete, setOnboardingComplete] = useState();
+  const [onboardingComplete, setOnboardingComplete] = useState(undefined);
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       addListener(messageHandler);
     }
     getLocalValue(ONBOARDING_COMPLETE, (value) => {
-      setOnboardingComplete(value);
+      setOnboardingComplete(!!value);
     });
 
     getSessionValue(AUTHENTICATED, (value) => {
-      setAuthenticated(value);
+      setAuthenticated(!!value);
     });
   }, []);
 

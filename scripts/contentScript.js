@@ -42,7 +42,7 @@
     node.appendChild(script);
   }
 
-  injectScript(chrome.runtime.getURL('static/js/inject-script.js'), 'body');
+  injectScript(chrome.runtime.getURL('scripts/inject-script.js'), 'body');
 
   // Listen to messages from injected script
   function onRequestTransaction(data) {

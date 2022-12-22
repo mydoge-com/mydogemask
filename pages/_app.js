@@ -1,7 +1,6 @@
 import '../styles/globals.css';
 
 import { extendTheme, NativeBaseProvider } from 'native-base';
-import React from 'react';
 import NoSSR from 'react-no-ssr';
 
 import { AppContextProvider } from '../Context';

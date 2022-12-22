@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { useAppContext } from '../../hooks/useAppContext';
 import { PasswordScreen } from './PasswordScreen';
 import { WalletScreen } from './WalletScreen';

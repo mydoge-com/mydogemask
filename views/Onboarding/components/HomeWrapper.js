@@ -1,5 +1,4 @@
 import { Box, HStack, Image } from 'native-base';
-import React from 'react';
 
 export const HomeWrapper = ({ children }) => {
   return (
