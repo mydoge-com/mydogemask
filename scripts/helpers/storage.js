@@ -29,7 +29,7 @@ export const setSessionValue = (keyValues) => {
     });
     return Promise.resolve();
   }
-  return chrome.storage.local.set(keyValues);
+  return chrome.storage.session.set(keyValues);
 };
 
 export const setLocalValue = (keyValues) => {

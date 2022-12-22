@@ -40,7 +40,7 @@ function onRequestTransaction({ data = {}, sendResponse } = {}) {
 
 // Generates a seed phrase, root keypair, child keypair + address 0
 // Encrypt + store the private data and address
-async function onCreateWallet({ data = {}, sendResponse = () => {} } = {}) {
+function onCreateWallet({ data = {}, sendResponse = () => {} } = {}) {
   if (data.password) {
     const phrase = generatePhrase();
     const root = generateRoot(phrase);
@@ -64,12 +64,12 @@ async function onCreateWallet({ data = {}, sendResponse = () => {} } = {}) {
     });
 
     Promise.all([
-      await setLocalValue({
+      setLocalValue({
         [PASSWORD]: encryptedPassword,
         [WALLET]: encryptedWallet,
         [ONBOARDING_COMPLETE]: true,
       }),
-      await setSessionValue({ [AUTHENTICATED]: true }),
+      setSessionValue({ [AUTHENTICATED]: true }),
     ])
       .then(() => {
         sendResponse(true);
@@ -90,6 +90,7 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     default:
   }
+  return true;
 };
 
 // Listen for messages from the popup
