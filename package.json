@@ -3,10 +3,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export && mv out/_next out/next && sed -i '' -e 's=/_next/=/next/=g' out/**.html && mv out/*.html build && cd scripts && yarn build && cd .. &&  rsync -va --delete-after scripts/compiled/ build/scripts/ && rm -rf scripts/compiled && rsync -va --delete-after out/next/ build/next/ && rm -rf out && rsync -va public/ build/",
+    "build": "next build && next export && mv out/_next out/next && sed -i '' -e 's=/_next/=/next/=g' out/**.html && mv out/*.html build && cd scripts && yarn build && cd .. &&  rsync -va --delete-after scripts/compiled/ build/scripts/ && rm -rf scripts/compiled && rsync -va --delete-after out/next/ build/next/ && rm -rf out && rsync -va public/ build/ && open -a \"Google Chrome\" http://reload.extensions",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "cd scripts && yarn install && cd .."
+    "postinstall": "cd scripts && yarn install && cd ..",
+    "watch": "npm-watch build"
   },
   "dependencies": {
     "@mydogeofficial/dogecoin-js": "^0.1.0-beta.4",
@@ -57,6 +58,14 @@
     "next-compose-plugins": "^2.2.1",
     "next-fonts": "^1.5.1",
     "next-transpile-modules": "^9.0.0",
+    "npm-watch": "^0.11.0",
     "prettier": "2.7.1"
+  },
+  "watch": {
+    "build": {
+      "extensions": "js,jsx,css,scss",
+      "patterns": "./",
+      "ignore": ["node_modules", "build", "./scripts/compiled", "./scripts/node_modules", "out", "next"]
+    }
   }
 }
