@@ -2,10 +2,11 @@
   "root": true,
   "env": {
     "browser": true,
-    "es2021": true
+    "es2021": true,
+    "react-native/react-native": true
   },
-  "parser": "@babel/eslint-parser",
   "parserOptions": {
+    "ecmaVersion": 2020,
     "ecmaFeatures": {
       "jsx": true
     },
@@ -17,7 +18,7 @@
     }
   },
   "extends": ["airbnb", "airbnb/hooks", "plugin:prettier/recommended"],
-  "plugins": ["react", "prettier", "simple-import-sort"],
+  "plugins": ["react", "react-native", "prettier", "simple-import-sort"],
   "rules": {
     "prettier/prettier": "warn",
     "consistent-return": "off",
@@ -35,13 +36,9 @@
     "no-nested-ternary": "off",
     "no-plusplus": "off",
     "simple-import-sort/exports": "error",
-    "simple-import-sort/imports": "error",
-    "no-alert": "off",
-    "no-param-reassign": "off"
+    "simple-import-sort/imports": "error"
   },
   "globals": {
-    "chrome": true,
-    "it": true,
-    "webpack": true
+    "chrome": true
   }
 }
