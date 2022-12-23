@@ -5,25 +5,26 @@ import { BigButton } from '../../components/Button';
 import { useAppContext } from '../../hooks/useAppContext';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export const PasswordScreen = () => {
+export const Password = () => {
   const [password, setPassword] = useState('');
   const onChangeText = useCallback((text) => {
     setErrors({});
     setPassword(text);
   }, []);
 
-  const { setAuthenticated } = useAppContext();
+  const { setAuthenticated, navigate } = useAppContext();
 
   const onSubmit = useCallback(() => {
     sendMessage({ message: 'authenticate', data: { password } }, (response) => {
       if (response) {
         setErrors({});
         setAuthenticated(true);
+        navigate('transactions');
       } else {
         setErrors({ password: 'Incorrect password' });
       }
     });
-  }, [password, setAuthenticated]);
+  }, [navigate, password, setAuthenticated]);
 
   const [errors, setErrors] = useState({});
 
@@ -89,6 +90,7 @@ export const PasswordScreen = () => {
           fontWeight='medium'
           textAlign='center'
           pt='12px'
+          onPress={() => navigate('resetWallet')}
         >
           Forgot password?
         </Text>

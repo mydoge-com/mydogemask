@@ -1,6 +1,6 @@
 import { Box, HStack, Image } from 'native-base';
 
-export const HomeWrapper = ({ children }) => {
+export const OnboardingLayout = ({ children }) => {
   return (
     <HStack justifyContent='space-between' h='600px' w='800px'>
       <Box

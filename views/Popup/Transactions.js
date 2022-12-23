@@ -106,7 +106,7 @@ function getTxSummary(tx, address) {
   return ret;
 }
 
-export function WalletScreen() {
+export function Transactions() {
   const QUERY_INTERVAL = 30000;
   const [balance, setBalance] = useState(4200); // TODO: change back to null
   const [usdValue, setUSDValue] = useState(null);
