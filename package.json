@@ -65,7 +65,9 @@
     "build": {
       "extensions": "js,jsx,css,scss",
       "patterns": "./",
-      "ignore": ["node_modules", "build", "./scripts/compiled", "./scripts/node_modules", "out", "next"]
+      "ignore": ["node_modules", "build", "./scripts/compiled", "./scripts/node_modules", "out", ".next"],
+      "verbose": true,
+      "delay": 1000
     }
   }
 }

@@ -1,3 +1,5 @@
+// Helper functions for hashing, encryption and decryption
+
 import * as CryptoJS from 'crypto-js';
 
 const JSONFormatter = {
@@ -43,10 +45,14 @@ export const encrypt = ({ data, password }) => {
 };
 
 export const decrypt = ({ data, password }) => {
-  const decrypted = CryptoJS.AES.decrypt(data, password, {
-    format: JSONFormatter,
-  });
-  return JSON.parse(decrypted.toString(CryptoJS.enc.Utf8));
+  try {
+    const decrypted = CryptoJS.AES.decrypt(data, password, {
+      format: JSONFormatter,
+    });
+    return JSON.parse(decrypted.toString(CryptoJS.enc.Utf8));
+  } catch (error) {
+    return null;
+  }
 };
 
 export const hash = (password) => {

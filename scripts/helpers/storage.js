@@ -1,24 +1,28 @@
+// Wrapper functions for chrome.storage.local and chrome.storage.session. Adds a wrapper for localStorage and sessionStorage in development mode.
+
 export const getSessionValue = (key, callback) => {
   if (process.env.NODE_ENV === 'development') {
     const value = JSON.parse(sessionStorage.getItem(key));
-    callback(value);
-    return Promise.resolve();
+    callback?.(value);
+    return Promise.resolve(value);
   }
 
   chrome.storage.session.get([key]).then((result) => {
-    callback(result[key]);
+    callback?.(result[key]);
+    return result[key];
   });
 };
 
 export const getLocalValue = (key, callback) => {
   if (process.env.NODE_ENV === 'development') {
     const value = JSON.parse(localStorage.getItem(key));
-    callback(value);
-    return Promise.resolve();
+    callback?.(value);
+    return Promise.resolve(value);
   }
 
   chrome.storage.local.get([key]).then((result) => {
-    callback(result[key]);
+    callback?.(result[key]);
+    return result[key];
   });
 };
 

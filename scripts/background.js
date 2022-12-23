@@ -1,4 +1,4 @@
-import { encrypt, hash } from './helpers/cipher';
+import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
   ONBOARDING_COMPLETE,
@@ -6,7 +6,11 @@ import {
   WALLET,
 } from './helpers/constants';
 import { addListener } from './helpers/message';
-import { setLocalValue, setSessionValue } from './helpers/storage';
+import {
+  getLocalValue,
+  setLocalValue,
+  setSessionValue,
+} from './helpers/storage';
 import {
   generateAddress,
   generateChild,
@@ -79,6 +83,23 @@ function onCreateWallet({ data = {}, sendResponse = () => {} } = {}) {
   return true;
 }
 
+function onAuthenticate({ data = {}, sendResponse = () => {} } = {}) {
+  if (data.password) {
+    getLocalValue(PASSWORD, (encryptedPass) => {
+      const decryptedPass = decrypt({
+        data: encryptedPass,
+        password: data.password,
+      });
+      const authenticated = decryptedPass === hash(data.password);
+      if (authenticated) {
+        setSessionValue({ [AUTHENTICATED]: true });
+      }
+      sendResponse(authenticated);
+    });
+  }
+  return true;
+}
+
 export const messageHandler = ({ message, data }, sender, sendResponse) => {
   if (!message) return;
   switch (message) {
@@ -87,6 +108,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case 'createWallet':
       onCreateWallet({ data, sendResponse });
+      break;
+    case 'authenticate':
+      onAuthenticate({ data, sendResponse });
       break;
     default:
   }
