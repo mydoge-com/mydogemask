@@ -22,7 +22,7 @@ export const CreateWallet = ({ setScreen }) => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
 
-  const { setAuthenticated, setOnboardingComplete } = useAppContext();
+  const { setAuthenticated } = useAppContext();
 
   const validate = useCallback(() => {
     if (!formData.password) {
@@ -49,12 +49,12 @@ export const CreateWallet = ({ setScreen }) => {
         (response) => {
           if (response) {
             setAuthenticated(true);
-            setOnboardingComplete(true);
+            setScreen('success');
           }
         }
       );
     }
-  }, [formData.password, setAuthenticated, setOnboardingComplete, validate]);
+  }, [formData.password, setAuthenticated, setScreen, validate]);
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>

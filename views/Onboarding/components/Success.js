@@ -2,12 +2,14 @@ import { Image, Text, VStack } from 'native-base';
 import { useCallback } from 'react';
 
 import { BigButton } from '../../../components/Button';
+import { useAppContext } from '../../../hooks/useAppContext';
 import { Footer } from './Footer';
 
-export const Success = ({ setScreen }) => {
-  const onCreatePassword = useCallback(() => {
-    setScreen('success'); // ToDo -- Navigate to next screen
-  }, [setScreen]);
+export const Success = () => {
+  const { setOnboardingComplete } = useAppContext();
+  const onComplete = useCallback(() => {
+    setOnboardingComplete(true);
+  }, [setOnboardingComplete]);
 
   return (
     <VStack px='15%' justifyContent='center' h='100%'>
@@ -24,7 +26,7 @@ export const Success = ({ setScreen }) => {
           mt='30px'
           alignSelf='center'
         />
-        <BigButton mt='20px' onPress={onCreatePassword} w='80%'>
+        <BigButton mt='20px' onPress={onComplete} w='80%'>
           Let's Go!
         </BigButton>
       </VStack>

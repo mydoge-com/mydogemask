@@ -1,12 +1,7 @@
 import { createContext, useEffect, useMemo, useState } from 'react';
 
 import { messageHandler } from './scripts/background';
-import {
-  AUTHENTICATED,
-  ONBOARDING_COMPLETE,
-} from './scripts/helpers/constants';
-import { addListener } from './scripts/helpers/message';
-import { getLocalValue, getSessionValue } from './scripts/helpers/storage';
+import { addListener, sendMessage } from './scripts/helpers/message';
 
 export const AppContext = createContext(null);
 
@@ -23,13 +18,9 @@ export const AppContextProvider = ({ children }) => {
     if (process.env.NODE_ENV === 'development') {
       addListener(messageHandler);
     }
-    getLocalValue(ONBOARDING_COMPLETE, (value) => {
-      setOnboardingComplete(!!value);
-    });
+    sendMessage({ message: 'isOnboardingComplete' }, setOnboardingComplete);
 
-    getSessionValue(AUTHENTICATED, (value) => {
-      setAuthenticated(!!value);
-    });
+    sendMessage({ message: 'isAuthenticated' }, setAuthenticated);
   }, []);
 
   const providerValue = useMemo(
