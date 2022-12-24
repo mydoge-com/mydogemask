@@ -4,6 +4,7 @@ import React, { useCallback, useState } from 'react';
 import { BigButton } from '../../components/Button';
 import { useAppContext } from '../../hooks/useAppContext';
 import { sendMessage } from '../../scripts/helpers/message';
+import { PopupLayout } from './PopupLayout';
 
 export const Password = () => {
   const [password, setPassword] = useState('');
@@ -15,86 +16,91 @@ export const Password = () => {
   const { setAuthenticated, navigate } = useAppContext();
 
   const onSubmit = useCallback(() => {
-    sendMessage({ message: 'authenticate', data: { password } }, (response) => {
-      if (response) {
-        setErrors({});
-        setAuthenticated(true);
-        navigate('transactions');
-      } else {
-        setErrors({ password: 'Incorrect password' });
+    sendMessage(
+      { message: 'isAuthenticated', data: { password } },
+      (response) => {
+        if (response) {
+          setErrors({});
+          setAuthenticated(true);
+          navigate('Transactions');
+        } else {
+          setErrors({ ...errors, password: 'Incorrect password' });
+        }
       }
-    });
-  }, [navigate, password, setAuthenticated]);
+    );
+  }, [errors, navigate, password, setAuthenticated]);
 
   const [errors, setErrors] = useState({});
 
   return (
-    <VStack
-      bg='white'
-      pt='40px'
-      pb='20px'
-      rounded='sm'
-      px='40px'
-      h='100%'
-      justifyContent='flex-end'
-    >
-      <Image
-        source={{ uri: '/assets/password.jpg' }}
+    <PopupLayout p={0}>
+      <VStack
+        bg='white'
+        pt='40px'
+        pb='20px'
+        rounded='sm'
+        px='40px'
         h='100%'
-        position='absolute'
-        zIndex={-1}
-        top='-68px'
-        left={0}
-        right={0}
-        alt='background'
-      />
-      <Box>
-        <Text fontSize='3xl' textAlign='center'>
-          Unlock your <Text fontWeight='bold'>Doge</Text>
-        </Text>
-        <Text color='gray.500' fontSize='14px' textAlign='center'>
-          Enter password to access your wallet
-        </Text>
-        <VStack pt='40px' pb='8px'>
-          <Input
-            variant='filled'
-            placeholder='Password'
-            py='14px'
-            type='password'
-            focusOutlineColor='brandYellow.500'
-            _hover={{
-              borderColor: 'brandYellow.500',
-            }}
-            _invalid={{
-              borderColor: 'red.500',
-              focusOutlineColor: 'red.500',
-              _hover: {
-                borderColor: 'red.500',
-              },
-            }}
-            isInvalid={'password' in errors}
-            onChangeText={onChangeText}
-            onSubmitEditing={onSubmit}
-            autoFocus
-          />
-          <Text fontSize='10px' color='red.500' pt='6px'>
-            {errors.password || ' '}
+        justifyContent='flex-end'
+      >
+        <Image
+          source={{ uri: '/assets/password.jpg' }}
+          h='100%'
+          position='absolute'
+          zIndex={-1}
+          top='-68px'
+          left={0}
+          right={0}
+          alt='background'
+        />
+        <Box>
+          <Text fontSize='3xl' textAlign='center'>
+            Unlock your <Text fontWeight='bold'>Doge</Text>
           </Text>
-        </VStack>
-        <BigButton onPress={onSubmit} w='80%' type='submit' role='button'>
-          Unlock
-        </BigButton>
-        <Text
-          color='brandYellow.500'
-          underline
-          fontWeight='medium'
-          textAlign='center'
-          pt='12px'
-          onPress={() => navigate('resetWallet')}
-        >
-          Forgot password?
-        </Text>
-      </Box>
-    </VStack>
+          <Text color='gray.500' fontSize='14px' textAlign='center'>
+            Enter password to access your wallet
+          </Text>
+          <VStack pt='40px' pb='8px'>
+            <Input
+              variant='filled'
+              placeholder='Password'
+              py='14px'
+              type='password'
+              focusOutlineColor='brandYellow.500'
+              _hover={{
+                borderColor: 'brandYellow.500',
+              }}
+              _invalid={{
+                borderColor: 'red.500',
+                focusOutlineColor: 'red.500',
+                _hover: {
+                  borderColor: 'red.500',
+                },
+              }}
+              isInvalid={'password' in errors}
+              onChangeText={onChangeText}
+              onSubmitEditing={onSubmit}
+              autoFocus
+            />
+            <Text fontSize='10px' color='red.500' pt='6px'>
+              {errors.password || ' '}
+            </Text>
+          </VStack>
+          <BigButton onPress={onSubmit} w='80%' type='submit' role='button'>
+            Unlock
+          </BigButton>
+          <Text
+            color='brandYellow.500'
+            underline
+            fontWeight='medium'
+            textAlign='center'
+            pt='10px'
+            onPress={() => navigate('ResetWallet')}
+          >
+            Forgot password?
+          </Text>
+        </Box>
+      </VStack>
+    </PopupLayout>
   );
 };

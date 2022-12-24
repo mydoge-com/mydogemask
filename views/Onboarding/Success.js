@@ -10,7 +10,7 @@ export const Success = () => {
   const { setOnboardingComplete, navigate } = useAppContext();
   const onComplete = useCallback(() => {
     setOnboardingComplete(true);
-    navigate('transactions');
+    navigate('Transactions');
   }, [navigate, setOnboardingComplete]);
 
   return (

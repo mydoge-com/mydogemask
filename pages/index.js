@@ -5,15 +5,16 @@ import {
   Intro,
   Success,
 } from '../views/Onboarding';
-import { Password, Transactions } from '../views/Popup';
+import { Password, ResetWallet, Transactions } from '../views/Popup';
 
 const screens = {
-  intro: Intro,
-  createWallet: CreateWallet,
-  importWallet: ImportWallet,
-  success: Success,
-  password: Password,
-  transactions: Transactions,
+  Intro,
+  CreateWallet,
+  ImportWallet,
+  Success,
+  Password,
+  Transactions,
+  ResetWallet,
 };
 
 export default function App() {

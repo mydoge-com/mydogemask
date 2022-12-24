@@ -1,25 +1,28 @@
-import { Icon, IconButton, Input, Text, VStack } from 'native-base';
+import {
+  Box,
+  Icon,
+  IconButton,
+  Input,
+  Text,
+  TextArea,
+  VStack,
+} from 'native-base';
 import { useCallback, useState } from 'react';
+import { CgDanger } from 'react-icons/cg';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 import { BackButton } from '../../components/BackButton';
 import { BigButton } from '../../components/Button';
-import { Footer } from '../../components/Footer';
 import { useAppContext } from '../../hooks/useAppContext';
 import { sendMessage } from '../../scripts/helpers/message';
-import { OnboardingLayout } from './OnboardingLayout';
+import { PopupLayout } from './PopupLayout';
 
-export const CreateWallet = () => {
-  const [showPassword, setShowPassword] = useState(false);
+export const ResetWallet = () => {
   const { navigate } = useAppContext();
-
+  const [showPassword, setShowPassword] = useState(false);
   const toggleShowPassword = useCallback(() => {
     setShowPassword((current) => !current);
   }, []);
-
-  const onBack = useCallback(() => {
-    navigate('Intro');
-  }, [navigate]);
 
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
@@ -27,7 +30,13 @@ export const CreateWallet = () => {
   const { setAuthenticated } = useAppContext();
 
   const validate = useCallback(() => {
-    if (!formData.password) {
+    if (!formData.recoveryPhrase) {
+      setErrors({
+        ...errors,
+        recoveryPhrase: true,
+      });
+      return false;
+    } else if (!formData.password) {
       setErrors({ ...errors, password: true });
       return false;
     } else if (!formData.confirm || formData.confirm !== formData.password) {
@@ -42,12 +51,12 @@ export const CreateWallet = () => {
     }
     setErrors({});
     return true;
-  }, [errors, formData.confirm, formData.password]);
+  }, [errors, formData.confirm, formData.password, formData.recoveryPhrase]);
 
   const onSubmit = useCallback(() => {
     if (validate()) {
       sendMessage(
-        { message: 'createWallet', data: { password: formData.password } },
+        { message: 'resetWallet', data: { password: formData.password } },
         (response) => {
           if (response) {
             setAuthenticated(true);
@@ -59,17 +68,64 @@ export const CreateWallet = () => {
   }, [formData.password, navigate, setAuthenticated, validate]);
 
   return (
-    <OnboardingLayout>
-      <VStack px='15%' justifyContent='center' h='100%'>
-        <BackButton onPress={onBack} />
-        <VStack bg='white' py='40px' rounded='sm' px='40px'>
-          <Text fontSize='2xl'>
-            Create a <Text fontWeight='bold'>Wallet</Text>
+    <PopupLayout>
+      <VStack>
+        <BackButton pb='10px' onPress={() => navigate('Password')} />
+        <VStack>
+          <Text fontSize='3xl'>
+            Reset <Text fontWeight='bold'>Wallet</Text>
           </Text>
-          <Text color='gray.500' fontSize='14px'>
-            You will need this password to access your wallet
-          </Text>
-          <VStack py='40px'>
+          <VStack
+            rounded='xl'
+            bg='rose.100'
+            alignItems='flex-start'
+            p='14px'
+            borderWidth='1'
+            borderColor='rose.500'
+            mt='8px'
+          >
+            <Box bg='rose.500' p='6px' rounded='xl' mb='10px'>
+              <Icon as={CgDanger} bg='white' />
+            </Box>
+            <Text color='gray.500' fontSize='11px'>
+              Mydogemask does not keep a copy of your password. If you’re having
+              trouble unlocking your account, you will need to reset your
+              wallet. You can do this by providing the 12-word Secret Recovery
+              Phrase.{' '}
+              <Text fontWeight='bold'>
+                This action will delete your current wallet and Secret Phrase
+                from this device. You will not be able to undo this.
+              </Text>
+            </Text>
+          </VStack>
+          <TextArea
+            variant='filled'
+            focusOutlineColor='brandYellow.500'
+            _hover={{
+              borderColor: 'brandYellow.500',
+            }}
+            _focus={{
+              borderColor: 'brandYellow.500',
+            }}
+            width='100%'
+            mt='16px'
+            numberOfLines={2}
+            placeholder='Enter Secret Recovery Phrase'
+            onChangeText={(value) => {
+              setFormData({ ...formData, recoveryPhrase: value });
+              setErrors({ ...errors, recoveryPhrase: false });
+            }}
+            onSubmitEditing={onSubmit}
+            _invalid={{
+              borderColor: 'red.500',
+              focusOutlineColor: 'red.500',
+              _hover: {
+                borderColor: 'red.500',
+              },
+            }}
+            isInvalid={errors.recoveryPhrase}
+          />
+          <VStack pt='16px'>
             <Input
               variant='filled'
               placeholder='Enter Password'
@@ -99,10 +155,11 @@ export const CreateWallet = () => {
                   color='gray.500'
                 />
               }
-              isInvalid={'password' in errors}
-              onChangeText={(value) =>
-                setFormData({ ...formData, password: value })
-              }
+              isInvalid={errors.password}
+              onChangeText={(value) => {
+                setFormData({ ...formData, password: value });
+                setErrors({ ...errors, password: false });
+              }}
               onSubmitEditing={onSubmit}
             />
             <Input
@@ -135,30 +192,33 @@ export const CreateWallet = () => {
                 />
               }
               mt='12px'
-              isInvalid={'confirm' in errors}
-              onChangeText={(value) =>
-                setFormData({ ...formData, confirm: value })
-              }
+              isInvalid={errors.confirm}
+              onChangeText={(value) => {
+                setFormData({ ...formData, confirm: value });
+                setErrors({ ...errors, confirm: false });
+              }}
               onSubmitEditing={onSubmit}
             />
-            {'confirm' in errors ? (
+            {errors.confirm ? (
               <Text fontSize='10px' color='red.500' pt='6px'>
                 {errors.confirm}
               </Text>
             ) : null}
           </VStack>
           <BigButton
-            mt='10px'
-            onPress={onSubmit}
+            mt='16px'
             w='80%'
-            type='submit'
-            role='button'
+            onPress={onSubmit}
+            isDisabled={
+              !formData.recoveryPhrase ||
+              !formData.password ||
+              !formData.confirm
+            }
           >
-            Create Wallet
+            Restore
           </BigButton>
         </VStack>
-        <Footer mt='40px' />
       </VStack>
-    </OnboardingLayout>
+    </PopupLayout>
   );
 };

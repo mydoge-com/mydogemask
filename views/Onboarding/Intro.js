@@ -9,11 +9,11 @@ import { OnboardingLayout } from './OnboardingLayout';
 export const Intro = () => {
   const { navigate } = useAppContext();
   const onCreateWallet = useCallback(() => {
-    navigate('createWallet');
+    navigate('CreateWallet');
   }, [navigate]);
 
   const onImportWallet = useCallback(() => {
-    navigate('importWallet');
+    navigate('ImportWallet');
   }, [navigate]);
 
   return (

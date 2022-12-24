@@ -35,13 +35,13 @@ export const AppContextProvider = ({ children }) => {
         sendMessage({ message: 'isAuthenticated' }, (res) => {
           if (res) {
             setAuthenticated(res);
-            setCurrentRoute('transactions');
+            setCurrentRoute('Transactions');
           } else {
-            setCurrentRoute('password');
+            setCurrentRoute('Password');
           }
         });
       } else {
-        setCurrentRoute('intro');
+        setCurrentRoute('Intro');
       }
     });
   }, []);
