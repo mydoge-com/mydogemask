@@ -47,7 +47,7 @@ function onRequestTransaction({ data = {}, sendResponse } = {}) {
 // Encrypt + store the private data and address
 function onCreateWallet({ data = {}, sendResponse } = {}) {
   if (data.password) {
-    const phrase = generatePhrase();
+    const phrase = data.seedPhrase ?? generatePhrase();
     const root = generateRoot(phrase);
     const child = generateChild(root, 0);
     const address0 = generateAddress(child);
@@ -120,6 +120,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       onRequestTransaction({ data, sendResponse });
       break;
     case 'createWallet':
+      onCreateWallet({ data, sendResponse });
+      break;
+    case 'resetWallet':
       onCreateWallet({ data, sendResponse });
       break;
     case 'authenticate':

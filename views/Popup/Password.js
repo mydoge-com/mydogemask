@@ -86,7 +86,13 @@ export const Password = () => {
               {errors.password || ' '}
             </Text>
           </VStack>
-          <BigButton onPress={onSubmit} w='80%' type='submit' role='button'>
+          <BigButton
+            onPress={onSubmit}
+            w='80%'
+            type='submit'
+            role='button'
+            isDisabled={!password}
+          >
             Unlock
           </BigButton>
           <Text

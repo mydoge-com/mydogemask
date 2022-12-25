@@ -1,5 +1,7 @@
 import {
+  AlertDialog,
   Box,
+  Button,
   Icon,
   IconButton,
   Input,
@@ -7,7 +9,7 @@ import {
   TextArea,
   VStack,
 } from 'native-base';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { CgDanger } from 'react-icons/cg';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
@@ -27,13 +29,20 @@ export const ResetWallet = () => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
 
+  const [dialogIsOpen, setDialogIsOpen] = useState(false);
+  const openDialog = useCallback(() => setDialogIsOpen(true), []);
+  const closeDialog = useCallback(() => setDialogIsOpen(false), []);
+  const cancelRef = useRef();
+
   const { setAuthenticated } = useAppContext();
 
   const validate = useCallback(() => {
-    if (!formData.recoveryPhrase) {
+    if (
+      formData.seedPhrase.replace(/\s+/g, ' ').trim().split(' ').length !== 12
+    ) {
       setErrors({
         ...errors,
-        recoveryPhrase: true,
+        seedPhrase: 'Invalid Seed Phrase',
       });
       return false;
     } else if (!formData.password) {
@@ -51,21 +60,35 @@ export const ResetWallet = () => {
     }
     setErrors({});
     return true;
-  }, [errors, formData.confirm, formData.password, formData.recoveryPhrase]);
+  }, [errors, formData.confirm, formData.password, formData.seedPhrase]);
 
   const onSubmit = useCallback(() => {
     if (validate()) {
-      sendMessage(
-        { message: 'resetWallet', data: { password: formData.password } },
-        (response) => {
-          if (response) {
-            setAuthenticated(true);
-            navigate('Success');
-          }
-        }
-      );
+      openDialog();
     }
-  }, [formData.password, navigate, setAuthenticated, validate]);
+  }, [openDialog, validate]);
+
+  const onReset = useCallback(() => {
+    sendMessage(
+      {
+        message: 'resetWallet',
+        data: { password: formData.password, seedPhrase: formData.seedPhrase },
+      },
+      (response) => {
+        if (response) {
+          closeDialog();
+          setAuthenticated(true);
+          navigate('Success');
+        }
+      }
+    );
+  }, [
+    closeDialog,
+    formData.password,
+    formData.seedPhrase,
+    navigate,
+    setAuthenticated,
+  ]);
 
   return (
     <PopupLayout>
@@ -90,11 +113,10 @@ export const ResetWallet = () => {
             <Text color='gray.500' fontSize='11px'>
               Mydogemask does not keep a copy of your password. If you’re having
               trouble unlocking your account, you will need to reset your
-              wallet. You can do this by providing the 12-word Secret Recovery
-              Phrase.{' '}
+              wallet. You can do this by providing the 12-word Seed Phrase.{' '}
               <Text fontWeight='bold'>
-                This action will delete your current wallet and Secret Phrase
-                from this device. You will not be able to undo this.
+                This action will delete your current wallet and Seed Phrase from
+                this device. You will not be able to undo this.
               </Text>
             </Text>
           </VStack>
@@ -110,10 +132,10 @@ export const ResetWallet = () => {
             width='100%'
             mt='16px'
             numberOfLines={2}
-            placeholder='Enter Secret Recovery Phrase'
+            placeholder='Enter Seed Phrase'
             onChangeText={(value) => {
-              setFormData({ ...formData, recoveryPhrase: value });
-              setErrors({ ...errors, recoveryPhrase: false });
+              setFormData({ ...formData, seedPhrase: value });
+              setErrors({ ...errors, seedPhrase: false });
             }}
             onSubmitEditing={onSubmit}
             _invalid={{
@@ -123,9 +145,14 @@ export const ResetWallet = () => {
                 borderColor: 'red.500',
               },
             }}
-            isInvalid={errors.recoveryPhrase}
+            isInvalid={errors.seedPhrase}
           />
-          <VStack pt='16px'>
+          {errors.seedPhrase ? (
+            <Text fontSize='10px' color='red.500' pt='6px'>
+              {errors.seedPhrase}
+            </Text>
+          ) : null}
+          <VStack pt='12px'>
             <Input
               variant='filled'
               placeholder='Enter Password'
@@ -210,13 +237,40 @@ export const ResetWallet = () => {
             w='80%'
             onPress={onSubmit}
             isDisabled={
-              !formData.recoveryPhrase ||
-              !formData.password ||
-              !formData.confirm
+              !formData.seedPhrase || !formData.password || !formData.confirm
             }
           >
-            Restore
+            Reset
           </BigButton>
+          <AlertDialog
+            leastDestructiveRef={cancelRef}
+            isOpen={dialogIsOpen}
+            onClose={closeDialog}
+          >
+            <AlertDialog.Content>
+              <AlertDialog.CloseButton />
+              <AlertDialog.Header>Reset Wallet</AlertDialog.Header>
+              <AlertDialog.Body>
+                This will delete your current wallet and Seed Phrase from this
+                device. This action cannot be reversed.
+              </AlertDialog.Body>
+              <AlertDialog.Footer>
+                <Button.Group space={2}>
+                  <Button
+                    variant='unstyled'
+                    colorScheme='coolGray'
+                    onPress={closeDialog}
+                    ref={cancelRef}
+                  >
+                    Cancel
+                  </Button>
+                  <BigButton variant='danger' onPress={onReset} px='24px'>
+                    Reset
+                  </BigButton>
+                </Button.Group>
+              </AlertDialog.Footer>
+            </AlertDialog.Content>
+          </AlertDialog>
         </VStack>
       </VStack>
     </PopupLayout>

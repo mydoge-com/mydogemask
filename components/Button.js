@@ -23,6 +23,17 @@ const styleVariants = {
       color: 'white',
     },
   },
+  danger: {
+    button: {
+      background: 'danger.600',
+      _hover: {
+        background: 'danger.700',
+      },
+    },
+    text: {
+      color: 'white',
+    },
+  },
 };
 
 export const BigButton = ({
