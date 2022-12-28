@@ -19,7 +19,7 @@ export const Intro = () => {
   return (
     <OnboardingLayout>
       <VStack px='15%' justifyContent='center' h='100%'>
-        <HStack bg='white' py='40px' rounded='sm' px='40px'>
+        <HStack bg='white' py='40px' rounded='sm' px='40px' alignItems='center'>
           <Box
             p='18px'
             rounded='3xl'
@@ -44,7 +44,14 @@ export const Intro = () => {
             </BigButton>
           </VStack>
         </HStack>
-        <HStack bg='white' py='40px' rounded='sm' px='40px' mt='42px'>
+        <HStack
+          bg='white'
+          py='40px'
+          rounded='sm'
+          px='40px'
+          mt='42px'
+          alignItems='center'
+        >
           <Box
             p='18px'
             rounded='3xl'

@@ -101,13 +101,13 @@ function onAuthenticate({ data = {}, sendResponse } = {}) {
   return true;
 }
 
-function getOnboardingComplete({ sendResponse } = {}) {
+function getOnboardingStatus({ sendResponse } = {}) {
   getLocalValue(ONBOARDING_COMPLETE, (value) => {
     sendResponse?.(!!value);
   });
 }
 
-function getAuthenticated({ sendResponse } = {}) {
+function getAuthStatus({ sendResponse } = {}) {
   getSessionValue(AUTHENTICATED, (value) => {
     sendResponse?.(!!value);
   });
@@ -120,8 +120,6 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       onRequestTransaction({ data, sendResponse });
       break;
     case 'createWallet':
-      onCreateWallet({ data, sendResponse });
-      break;
     case 'resetWallet':
       onCreateWallet({ data, sendResponse });
       break;
@@ -129,10 +127,10 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       onAuthenticate({ data, sendResponse });
       break;
     case 'isOnboardingComplete':
-      getOnboardingComplete({ data, sendResponse });
+      getOnboardingStatus({ sendResponse });
       break;
-    case 'isAuthenticated':
-      getAuthenticated({ data, sendResponse });
+    case 'isSessionAuthenticated':
+      getAuthStatus({ sendResponse });
       break;
     default:
   }

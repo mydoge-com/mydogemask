@@ -2,9 +2,9 @@ import { Box, Image, Input, Text, VStack } from 'native-base';
 import React, { useCallback, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
+import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
 import { sendMessage } from '../../scripts/helpers/message';
-import { PopupLayout } from './PopupLayout';
 
 export const Password = () => {
   const [password, setPassword] = useState('');
@@ -16,24 +16,21 @@ export const Password = () => {
   const { setAuthenticated, navigate } = useAppContext();
 
   const onSubmit = useCallback(() => {
-    sendMessage(
-      { message: 'isAuthenticated', data: { password } },
-      (response) => {
-        if (response) {
-          setErrors({});
-          setAuthenticated(true);
-          navigate('Transactions');
-        } else {
-          setErrors({ ...errors, password: 'Incorrect password' });
-        }
+    sendMessage({ message: 'authenticate', data: { password } }, (response) => {
+      if (response) {
+        setErrors({});
+        setAuthenticated(true);
+        navigate('Transactions');
+      } else {
+        setErrors({ ...errors, password: 'Incorrect password' });
       }
-    );
+    });
   }, [errors, navigate, password, setAuthenticated]);
 
   const [errors, setErrors] = useState({});
 
   return (
-    <PopupLayout p={0}>
+    <Layout p={0}>
       <VStack
         bg='white'
         pt='40px'
@@ -107,6 +104,6 @@ export const Password = () => {
           </Text>
         </Box>
       </VStack>
-    </PopupLayout>
+    </Layout>
   );
 };

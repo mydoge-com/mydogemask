@@ -32,7 +32,7 @@ export const AppContextProvider = ({ children }) => {
     sendMessage({ message: 'isOnboardingComplete' }, (response) => {
       if (response) {
         setOnboardingComplete(response);
-        sendMessage({ message: 'isAuthenticated' }, (res) => {
+        sendMessage({ message: 'isSessionAuthenticated' }, (res) => {
           if (res) {
             setAuthenticated(res);
             setCurrentRoute('Transactions');

@@ -1,11 +1,12 @@
 import { useAppContext } from '../hooks/useAppContext';
+import { Password, ResetWallet } from '../views/Auth';
 import {
   CreateWallet,
   ImportWallet,
   Intro,
   Success,
 } from '../views/Onboarding';
-import { Password, ResetWallet, Transactions } from '../views/Popup';
+import { Transactions } from '../views/Transactions';
 
 const screens = {
   Intro,
@@ -18,9 +19,9 @@ const screens = {
 };
 
 export default function App() {
-  const { currentRoute, navigate } = useAppContext();
+  const { currentRoute } = useAppContext();
 
   const RenderScreen = screens[currentRoute];
 
-  return RenderScreen ? <RenderScreen navigate={navigate} /> : null;
+  return RenderScreen ? <RenderScreen /> : null;
 }

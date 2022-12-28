@@ -61,7 +61,7 @@ export const CreateWallet = () => {
   return (
     <OnboardingLayout>
       <VStack px='15%' justifyContent='center' h='100%'>
-        <BackButton onPress={onBack} />
+        <BackButton onPress={onBack} pb='20px' />
         <VStack bg='white' py='40px' rounded='sm' px='40px'>
           <Text fontSize='2xl'>
             Create a <Text fontWeight='bold'>Wallet</Text>
@@ -69,7 +69,7 @@ export const CreateWallet = () => {
           <Text color='gray.500' fontSize='14px'>
             You will need this password to access your wallet
           </Text>
-          <VStack py='40px'>
+          <VStack pt='40px'>
             <Input
               variant='filled'
               placeholder='Enter Password'
@@ -148,11 +148,12 @@ export const CreateWallet = () => {
             ) : null}
           </VStack>
           <BigButton
-            mt='10px'
             onPress={onSubmit}
             w='80%'
             type='submit'
             role='button'
+            mt='32px'
+            isDisabled={!formData.password || !formData.confirm}
           >
             Create Wallet
           </BigButton>
