@@ -1,13 +1,13 @@
-/* eslint-disable import/no-relative-packages */
-import { createContext, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
 
 import { messageHandler } from './scripts/background';
-import {
-  AUTHENTICATED,
-  ONBOARDING_COMPLETE,
-} from './scripts/helpers/constants';
-import { addListener } from './scripts/helpers/message';
-import { getLocalValue, getSessionValue } from './scripts/helpers/storage';
+import { addListener, sendMessage } from './scripts/helpers/message';
 
 export const AppContext = createContext(null);
 
@@ -19,17 +19,30 @@ const initialAppContext = {
 export const AppContextProvider = ({ children }) => {
   const [authenticated, setAuthenticated] = useState(false);
   const [onboardingComplete, setOnboardingComplete] = useState(undefined);
+  const [currentRoute, setCurrentRoute] = useState();
+
+  const navigate = useCallback((route) => {
+    setCurrentRoute(route);
+  }, []);
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
       addListener(messageHandler);
     }
-    getLocalValue(ONBOARDING_COMPLETE, (value) => {
-      setOnboardingComplete(!!value);
-    });
-
-    getSessionValue(AUTHENTICATED, (value) => {
-      setAuthenticated(!!value);
+    sendMessage({ message: 'isOnboardingComplete' }, (response) => {
+      if (response) {
+        setOnboardingComplete(response);
+        sendMessage({ message: 'isSessionAuthenticated' }, (res) => {
+          if (res) {
+            setAuthenticated(res);
+            setCurrentRoute('Transactions');
+          } else {
+            setCurrentRoute('Password');
+          }
+        });
+      } else {
+        setCurrentRoute('Intro');
+      }
     });
   }, []);
 
@@ -40,8 +53,10 @@ export const AppContextProvider = ({ children }) => {
       setAuthenticated,
       onboardingComplete,
       setOnboardingComplete,
+      navigate,
+      currentRoute,
     }),
-    [authenticated, onboardingComplete]
+    [authenticated, currentRoute, navigate, onboardingComplete]
   );
   return (
     <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>

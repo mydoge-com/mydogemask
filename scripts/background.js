@@ -1,4 +1,4 @@
-import { encrypt, hash } from './helpers/cipher';
+import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
   ONBOARDING_COMPLETE,
@@ -6,7 +6,12 @@ import {
   WALLET,
 } from './helpers/constants';
 import { addListener } from './helpers/message';
-import { setLocalValue, setSessionValue } from './helpers/storage';
+import {
+  getLocalValue,
+  getSessionValue,
+  setLocalValue,
+  setSessionValue,
+} from './helpers/storage';
 import {
   generateAddress,
   generateChild,
@@ -40,9 +45,9 @@ function onRequestTransaction({ data = {}, sendResponse } = {}) {
 
 // Generates a seed phrase, root keypair, child keypair + address 0
 // Encrypt + store the private data and address
-function onCreateWallet({ data = {}, sendResponse = () => {} } = {}) {
+function onCreateWallet({ data = {}, sendResponse } = {}) {
   if (data.password) {
-    const phrase = generatePhrase();
+    const phrase = data.seedPhrase ?? generatePhrase();
     const root = generateRoot(phrase);
     const child = generateChild(root, 0);
     const address0 = generateAddress(child);
@@ -72,11 +77,40 @@ function onCreateWallet({ data = {}, sendResponse = () => {} } = {}) {
       setSessionValue({ [AUTHENTICATED]: true }),
     ])
       .then(() => {
-        sendResponse(true);
+        sendResponse?.(true);
       })
-      .catch(() => sendResponse(false));
+      .catch(() => sendResponse?.(false));
+  } else {
+    sendResponse?.(false);
   }
   return true;
+}
+
+function onAuthenticate({ data = {}, sendResponse } = {}) {
+  getLocalValue(PASSWORD, (encryptedPass) => {
+    const decryptedPass = decrypt({
+      data: encryptedPass,
+      password: data.password,
+    });
+    const authenticated = decryptedPass === hash(data.password);
+    if (authenticated) {
+      setSessionValue({ [AUTHENTICATED]: true });
+    }
+    sendResponse?.(authenticated);
+  });
+  return true;
+}
+
+function getOnboardingStatus({ sendResponse } = {}) {
+  getLocalValue(ONBOARDING_COMPLETE, (value) => {
+    sendResponse?.(!!value);
+  });
+}
+
+function getAuthStatus({ sendResponse } = {}) {
+  getSessionValue(AUTHENTICATED, (value) => {
+    sendResponse?.(!!value);
+  });
 }
 
 export const messageHandler = ({ message, data }, sender, sendResponse) => {
@@ -86,7 +120,17 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       onRequestTransaction({ data, sendResponse });
       break;
     case 'createWallet':
+    case 'resetWallet':
       onCreateWallet({ data, sendResponse });
+      break;
+    case 'authenticate':
+      onAuthenticate({ data, sendResponse });
+      break;
+    case 'isOnboardingComplete':
+      getOnboardingStatus({ sendResponse });
+      break;
+    case 'isSessionAuthenticated':
+      getAuthStatus({ sendResponse });
       break;
     default:
   }

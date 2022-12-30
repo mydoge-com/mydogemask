@@ -1,3 +1,5 @@
+// Wrapper for chrome.runtime.sendMessage and chrome.runtime.onMessage. Adds a listener for messages in development mode.
+
 const listeners = [];
 
 export const sendMessage = ({ message, data }, sendResponse) => {

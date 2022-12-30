@@ -1,13 +1,27 @@
 import { useAppContext } from '../hooks/useAppContext';
-import { Onboarding } from '../views/Onboarding/Onboarding';
-import { Popup } from '../views/Popup/Popup';
+import { Password, ResetWallet } from '../views/Auth';
+import {
+  CreateWallet,
+  ImportWallet,
+  Intro,
+  Success,
+} from '../views/Onboarding';
+import { Transactions } from '../views/Transactions';
+
+const screens = {
+  Intro,
+  CreateWallet,
+  ImportWallet,
+  Success,
+  Password,
+  Transactions,
+  ResetWallet,
+};
 
 export default function App() {
-  const { onboardingComplete } = useAppContext();
+  const { currentRoute } = useAppContext();
 
-  if (onboardingComplete === undefined) {
-    return null;
-  }
+  const RenderScreen = screens[currentRoute];
 
-  return !onboardingComplete ? <Onboarding /> : <Popup />;
+  return RenderScreen ? <RenderScreen /> : null;
 }
