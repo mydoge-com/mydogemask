@@ -9,6 +9,7 @@ import { addListener } from './helpers/message';
 import {
   getLocalValue,
   getSessionValue,
+  removeSessionValue,
   setLocalValue,
   setSessionValue,
 } from './helpers/storage';
@@ -113,6 +114,10 @@ function getAuthStatus({ sendResponse } = {}) {
   });
 }
 
+function signOut({ sendResponse } = {}) {
+  removeSessionValue(AUTHENTICATED).then(() => sendResponse?.(true));
+}
+
 export const messageHandler = ({ message, data }, sender, sendResponse) => {
   if (!message) return;
   switch (message) {
@@ -131,6 +136,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case 'isSessionAuthenticated':
       getAuthStatus({ sendResponse });
+      break;
+    case 'signOut':
+      signOut({ sendResponse });
       break;
     default:
   }

@@ -72,7 +72,7 @@ export const CreateWallet = () => {
           <VStack pt='40px'>
             <Input
               variant='filled'
-              placeholder='Enter Password'
+              placeholder='Password (10 characters minimum)'
               py='14px'
               type={showPassword ? 'text' : 'password'}
               focusOutlineColor='brandYellow.500'

@@ -5,7 +5,7 @@ import { Layout } from '../../components/Layout';
 export const OnboardingLayout = ({ children, ...props }) => {
   return (
     <Layout justifyContent='space-between' h='600px' w='800px' p={0} {...props}>
-      <HStack>
+      <HStack flex={1}>
         <Box
           h='100%'
           flex={1}
