@@ -57,7 +57,7 @@ export const Header = () => {
         </Text>
         <MenuItem onPress={onSignOut}>
           <FiLock />
-          Sign out
+          Lock
         </MenuItem>
         <Divider my='6px' w='100%' />
         <MenuItem>

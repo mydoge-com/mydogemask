@@ -18,6 +18,7 @@ const initialAppContext = {
 
 export const AppContextProvider = ({ children }) => {
   const [authenticated, setAuthenticated] = useState(false);
+  const [wallet, setWallet] = useState();
   const [onboardingComplete, setOnboardingComplete] = useState(undefined);
   const [currentRoute, setCurrentRoute] = useState();
 
@@ -55,8 +56,10 @@ export const AppContextProvider = ({ children }) => {
       setOnboardingComplete,
       navigate,
       currentRoute,
+      wallet,
+      setWallet,
     }),
-    [authenticated, currentRoute, navigate, onboardingComplete]
+    [authenticated, currentRoute, navigate, onboardingComplete, wallet]
   );
   return (
     <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>
