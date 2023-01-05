@@ -61,7 +61,7 @@ export const Header = () => {
         rounded='md'
       >
         <Text fontWeight='medium' fontSize='lg' pb='12px' px='12px'>
-          My wallets
+          My addresses
         </Text>
         {wallet.addresses.map((address, i) => {
           return (
@@ -81,7 +81,7 @@ export const Header = () => {
                 />
                 <VStack>
                   <Text fontSize='md' fontWeight='medium'>
-                    Wallet {i + 1}
+                    Address {i + 1}
                   </Text>
                   <Text fontSize='sm' color='gray.500'>
                     {address.slice(0, 5)}...{address.slice(-4)}
@@ -94,7 +94,7 @@ export const Header = () => {
         <Divider my='6px' w='100%' />
         <MenuItem onPress={() => setWalletDetailOpen(true)}>
           <FiGrid size='18px' />
-          Wallet details
+          Receive dogecoin
         </MenuItem>
         <Divider my='6px' w='100%' />
         <MenuItem>
@@ -104,9 +104,9 @@ export const Header = () => {
             resizeMode='contain'
             alt='create-wallet'
           />
-          Create wallet
+          Create address
         </MenuItem>
-        <MenuItem>
+        {/* <MenuItem>
           <Image
             source={{ uri: '/assets/wallet-import.png' }}
             size='18px'
@@ -114,7 +114,7 @@ export const Header = () => {
             alt='create-wallet'
           />
           Import wallet
-        </MenuItem>
+        </MenuItem> */}
         <Divider my='6px' w='100%' />
         <MenuItem>
           <FiSettings />
@@ -129,7 +129,7 @@ export const Header = () => {
       <WalletDetailModal
         showModal={walletDetailOpen}
         onClose={() => setWalletDetailOpen(false)}
-        walletName={`Wallet ${currentWalletIndex + 1}`}
+        walletName={`Address ${currentWalletIndex + 1}`}
         address={wallet.addresses[currentWalletIndex]}
       />
     </HStack>
