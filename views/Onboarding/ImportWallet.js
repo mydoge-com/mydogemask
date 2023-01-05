@@ -15,13 +15,12 @@ export const ImportWallet = () => {
         type: 'SIGN_IN',
         payload: { authenticated, wallet, navigate: 'Success' },
       });
-      navigate('Success');
       dispatch({
         type: 'SET_ONBOARDING_COMPLETE',
-        payload: { authenticated, wallet, navigate: 'Success' },
+        payload: true,
       });
     },
-    [dispatch, navigate]
+    [dispatch]
   );
 
   const onBack = useCallback(() => {

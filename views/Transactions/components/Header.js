@@ -16,6 +16,7 @@ import { FiCheck, FiCopy, FiGrid, FiLock, FiSettings } from 'react-icons/fi';
 import { BigButton } from '../../../components/Button';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { sendMessage } from '../../../scripts/helpers/message';
+import { logError } from '../../../utils/error';
 import { QRCode } from './QRCode';
 
 export const Header = () => {
@@ -142,9 +143,19 @@ const MenuItem = ({ children, ...props }) => (
 );
 
 const WalletDetailModal = ({ showModal, onClose, walletName, address }) => {
+  const [addressCopied, setAddressCopied] = useState(false);
+  const onCopy = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(address);
+      setAddressCopied(true);
+      setTimeout(() => setAddressCopied(false), 3000);
+    } catch (e) {
+      logError(e);
+    }
+  }, [address]);
   return (
     <Modal isOpen={showModal} onClose={onClose}>
-      <Modal.Content maxWidth='500px' width='90%' h='90%' maxH='750px'>
+      <Modal.Content maxWidth='500px' width='90%' h='auto' maxH='750px'>
         <Modal.CloseButton />
         <Modal.Body alignItems='center'>
           <Text textAlign='center' fontWeight='medium' fontSize='xl'>
@@ -191,10 +202,13 @@ const WalletDetailModal = ({ showModal, onClose, walletName, address }) => {
             <Text pr='12px' noOfLines={3} textAlign='center' pb='12px'>
               {address}
             </Text>
-            <BigButton px='20px'>
+            <BigButton px='20px' onPress={onCopy}>
               <FiCopy />
             </BigButton>
           </HStack>
+          <Text fontWeight='medium' p='6px' fontSize={12}>
+            {addressCopied ? 'Address copied' : ' '}
+          </Text>
         </Modal.Body>
       </Modal.Content>
     </Modal>
