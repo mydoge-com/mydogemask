@@ -118,7 +118,7 @@ export const Header = () => {
         <Divider my='6px' w='100%' />
         <MenuItem>
           <FiSettings />
-          Settings
+          Backup & security
         </MenuItem>
         <MenuItem onPress={onSignOut}>
           <FiLock />
@@ -196,17 +196,16 @@ const WalletDetailModal = ({ showModal, onClose, walletName, address }) => {
             alignItems='center'
             pt='20px'
             w='100%'
-            flexWrap='wrap'
             justifyContent='center'
           >
-            <Text pr='12px' noOfLines={3} textAlign='center' pb='12px'>
+            <Text pr='12px' noOfLines={3}>
               {address}
             </Text>
-            <BigButton px='20px' onPress={onCopy}>
+            <BigButton px='16px' py='4px' onPress={onCopy}>
               <FiCopy />
             </BigButton>
           </HStack>
-          <Text fontWeight='medium' p='6px' fontSize={12}>
+          <Text fontSize='12px' color='gray.500'>
             {addressCopied ? 'Address copied' : ' '}
           </Text>
         </Modal.Body>
