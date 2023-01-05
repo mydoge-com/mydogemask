@@ -7,11 +7,10 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { OnboardingLayout } from './OnboardingLayout';
 
 export const Success = () => {
-  const { setOnboardingComplete, navigate } = useAppContext();
+  const { navigate } = useAppContext();
   const onComplete = useCallback(() => {
-    setOnboardingComplete(true);
     navigate('Transactions');
-  }, [navigate, setOnboardingComplete]);
+  }, [navigate]);
 
   return (
     <OnboardingLayout>

@@ -7,6 +7,7 @@ import {
 } from './helpers/constants';
 import { addListener } from './helpers/message';
 import {
+  clearSessionStorage,
   getLocalValue,
   getSessionValue,
   setLocalValue,
@@ -77,7 +78,7 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
       setSessionValue({ [AUTHENTICATED]: true }),
     ])
       .then(() => {
-        sendResponse?.(true);
+        sendResponse?.({ authenticated: true, wallet });
       })
       .catch(() => sendResponse?.(false));
   } else {
@@ -87,30 +88,43 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
 }
 
 function onAuthenticate({ data = {}, sendResponse } = {}) {
-  getLocalValue(PASSWORD, (encryptedPass) => {
-    const decryptedPass = decrypt({
-      data: encryptedPass,
-      password: data.password,
-    });
-    const authenticated = decryptedPass === hash(data.password);
-    if (authenticated) {
-      setSessionValue({ [AUTHENTICATED]: true });
+  Promise.all([getLocalValue(PASSWORD), getLocalValue(WALLET)]).then(
+    ([encryptedPass, encryptedWallet]) => {
+      const decryptedPass = decrypt({
+        data: encryptedPass,
+        password: data.password,
+      });
+
+      const decryptedWallet = decrypt({
+        data: encryptedWallet,
+        password: data.password,
+      });
+      const authenticated = decryptedPass === hash(data.password);
+      if (authenticated) {
+        setSessionValue({ [AUTHENTICATED]: true, [WALLET]: decryptedWallet });
+      }
+      sendResponse?.({ authenticated, wallet: decryptedWallet });
     }
-    sendResponse?.(authenticated);
-  });
+  );
   return true;
 }
 
 function getOnboardingStatus({ sendResponse } = {}) {
-  getLocalValue(ONBOARDING_COMPLETE, (value) => {
+  getLocalValue(ONBOARDING_COMPLETE).then((value) => {
     sendResponse?.(!!value);
   });
 }
 
 function getAuthStatus({ sendResponse } = {}) {
-  getSessionValue(AUTHENTICATED, (value) => {
-    sendResponse?.(!!value);
-  });
+  Promise.all([getSessionValue(AUTHENTICATED), getSessionValue(WALLET)]).then(
+    ([authenticated, wallet]) => {
+      sendResponse?.({ authenticated, wallet });
+    }
+  );
+}
+
+function signOut({ sendResponse } = {}) {
+  clearSessionStorage().then(() => sendResponse?.(true));
 }
 
 export const messageHandler = ({ message, data }, sender, sendResponse) => {
@@ -131,6 +145,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case 'isSessionAuthenticated':
       getAuthStatus({ sendResponse });
+      break;
+    case 'signOut':
+      signOut({ sendResponse });
       break;
     default:
   }

@@ -11,7 +11,6 @@ import {
 import { useCallback, useRef, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
-import { useAppContext } from '../hooks/useAppContext';
 import { sendMessage } from '../scripts/helpers/message';
 import { BigButton } from './Button';
 
@@ -33,8 +32,6 @@ export const WalletRestore = ({
   const openDialog = useCallback(() => setDialogIsOpen(true), []);
   const closeDialog = useCallback(() => setDialogIsOpen(false), []);
   const cancelRef = useRef();
-
-  const { setAuthenticated } = useAppContext();
 
   const validate = useCallback(() => {
     if (
@@ -78,21 +75,14 @@ export const WalletRestore = ({
         message: 'resetWallet',
         data: { password: formData.password, seedPhrase: formData.seedPhrase },
       },
-      (response) => {
-        if (response) {
+      ({ authenticated, wallet }) => {
+        if (authenticated && wallet) {
           closeDialog();
-          setAuthenticated(true);
-          onRestoreComplete();
+          onRestoreComplete({ authenticated, wallet });
         }
       }
     );
-  }, [
-    closeDialog,
-    formData.password,
-    formData.seedPhrase,
-    onRestoreComplete,
-    setAuthenticated,
-  ]);
+  }, [closeDialog, formData.password, formData.seedPhrase, onRestoreComplete]);
 
   return (
     <VStack {...props}>

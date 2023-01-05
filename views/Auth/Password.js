@@ -13,19 +13,21 @@ export const Password = () => {
     setPassword(text);
   }, []);
 
-  const { setAuthenticated, navigate } = useAppContext();
+  const { dispatch, navigate } = useAppContext();
 
   const onSubmit = useCallback(() => {
-    sendMessage({ message: 'authenticate', data: { password } }, (response) => {
-      if (response) {
-        setErrors({});
-        setAuthenticated(true);
-        navigate('Transactions');
-      } else {
-        setErrors({ ...errors, password: 'Incorrect password' });
+    sendMessage(
+      { message: 'authenticate', data: { password } },
+      ({ authenticated, wallet }) => {
+        if (authenticated && wallet) {
+          setErrors({});
+          dispatch({ type: 'SIGN_IN', payload: { authenticated, wallet } });
+        } else {
+          setErrors({ ...errors, password: 'Incorrect password' });
+        }
       }
-    });
-  }, [errors, navigate, password, setAuthenticated]);
+    );
+  }, [dispatch, errors, password]);
 
   const [errors, setErrors] = useState({});
 

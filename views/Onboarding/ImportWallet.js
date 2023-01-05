@@ -8,10 +8,20 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { OnboardingLayout } from './OnboardingLayout';
 
 export const ImportWallet = () => {
-  const { navigate } = useAppContext();
-  const onConfirm = useCallback(() => {
-    navigate('Success');
-  }, [navigate]);
+  const { navigate, dispatch } = useAppContext();
+  const onConfirm = useCallback(
+    ({ authenticated, wallet }) => {
+      dispatch({
+        type: 'SIGN_IN',
+        payload: { authenticated, wallet, navigate: 'Success' },
+      });
+      dispatch({
+        type: 'SET_ONBOARDING_COMPLETE',
+        payload: true,
+      });
+    },
+    [dispatch]
+  );
 
   const onBack = useCallback(() => {
     navigate('Intro');

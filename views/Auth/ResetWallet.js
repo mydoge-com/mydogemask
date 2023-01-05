@@ -8,11 +8,18 @@ import { WalletRestore } from '../../components/WalletRestore';
 import { useAppContext } from '../../hooks/useAppContext';
 
 export const ResetWallet = () => {
-  const { navigate } = useAppContext();
+  const { navigate, dispatch } = useAppContext();
 
-  const onRestoreComplete = useCallback(() => {
-    navigate('Success');
-  }, [navigate]);
+  const onRestoreComplete = useCallback(
+    ({ authenticated, wallet }) => {
+      dispatch({
+        type: 'SIGN_IN',
+        payload: { authenticated, wallet, navigate: 'Success' },
+      });
+      navigate('Success');
+    },
+    [dispatch, navigate]
+  );
 
   const onBack = useCallback(() => {
     navigate('Password');
