@@ -11,7 +11,7 @@ import { OnboardingLayout } from './OnboardingLayout';
 
 export const CreateWallet = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const { navigate } = useAppContext();
+  const { navigate, dispatch } = useAppContext();
 
   const toggleShowPassword = useCallback(() => {
     setShowPassword((current) => !current);
@@ -23,8 +23,6 @@ export const CreateWallet = () => {
 
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
-
-  const { setAuthenticated } = useAppContext();
 
   const validate = useCallback(() => {
     if (!formData.password) {
@@ -48,15 +46,21 @@ export const CreateWallet = () => {
     if (validate()) {
       sendMessage(
         { message: 'createWallet', data: { password: formData.password } },
-        (response) => {
-          if (response) {
-            setAuthenticated(true);
-            navigate('Success');
+        ({ authenticated, wallet }) => {
+          if (authenticated && wallet) {
+            dispatch({
+              type: 'SIGN_IN',
+              payload: { authenticated, wallet, navigate: 'Success' },
+            });
+            dispatch({
+              type: 'SET_ONBOARDING_COMPLETE',
+              payload: true,
+            });
           }
         }
       );
     }
-  }, [formData.password, navigate, setAuthenticated, validate]);
+  }, [dispatch, formData.password, validate]);
 
   return (
     <OnboardingLayout>

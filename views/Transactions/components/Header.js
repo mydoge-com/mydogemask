@@ -6,6 +6,7 @@ import {
   Menu,
   Pressable,
   Text,
+  VStack,
 } from 'native-base';
 import { useCallback } from 'react';
 import { FiLock, FiSettings } from 'react-icons/fi';
@@ -14,17 +15,16 @@ import { useAppContext } from '../../../hooks/useAppContext';
 import { sendMessage } from '../../../scripts/helpers/message';
 
 export const Header = () => {
-  const { setAuthenticated, navigate } = useAppContext();
+  const { wallet, dispatch } = useAppContext();
   const onSignOut = useCallback(() => {
     sendMessage(
       { message: 'signOut' },
       () => {
-        setAuthenticated(false);
-        navigate('Password');
+        dispatch({ type: 'SIGN_OUT' });
       },
       []
     );
-  }, [navigate, setAuthenticated]);
+  }, [dispatch]);
   return (
     <HStack
       alignItems='center'
@@ -40,7 +40,7 @@ export const Header = () => {
         minW='200px'
         trigger={(triggerProps) => {
           return (
-            <Pressable accessibilityLabel='More options menu' {...triggerProps}>
+            <Pressable accessibilityLabel='Accounts menu' {...triggerProps}>
               <Avatar
                 source={{
                   uri: '/assets/default-avatar.png',
@@ -52,9 +52,34 @@ export const Header = () => {
         }}
         rounded='md'
       >
-        <Text fontWeight='medium' fontSize='lg' pl='12px' pb='6px'>
-          My wallet
+        <Text fontWeight='medium' fontSize='lg' pb='6px' px='12px'>
+          My wallets
         </Text>
+        <Divider my='6px' w='100%' />
+        {wallet.addresses.map((address, i) => {
+          return (
+            <Pressable px='12px'>
+              <HStack alignItems='center'>
+                <Avatar
+                  source={{
+                    uri: '/assets/default-avatar.png',
+                  }}
+                  size='30px'
+                  mr='12px'
+                />
+                <VStack>
+                  <Text fontSize='md' fontWeight='medium'>
+                    Account {i + 1}
+                  </Text>
+                  <Text fontSize='sm' color='gray.500'>
+                    {address.slice(0, 5)}...{address.slice(-4)}
+                  </Text>
+                </VStack>
+              </HStack>
+            </Pressable>
+          );
+        })}
+        <Divider my='6px' w='100%' />
         <MenuItem onPress={onSignOut}>
           <FiLock />
           Lock

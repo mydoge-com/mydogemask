@@ -3,7 +3,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
-  useState,
+  useReducer,
 } from 'react';
 
 import { messageHandler } from './scripts/background';
@@ -11,19 +11,45 @@ import { addListener, sendMessage } from './scripts/helpers/message';
 
 export const AppContext = createContext(null);
 
-const initialAppContext = {
-  authenticated: false,
-  onboardingComplete: undefined,
+const reducer = (state, { type, payload }) => {
+  switch (type) {
+    case 'SET_CURRENT_ROUTE':
+      return { ...state, currentRoute: payload };
+    case 'SET_ONBOARDING_COMPLETE':
+      return { ...state, onboardingComplete: payload };
+    case 'SET_AUTHENTICATED':
+      return { ...state, authenticated: payload };
+    case 'SET_WALLET':
+      return { ...state, wallet: payload };
+    case 'SIGN_OUT':
+      return {
+        ...state,
+        authenticated: false,
+        wallet: undefined,
+        currentRoute: 'Password',
+      };
+    case 'SIGN_IN':
+      return {
+        ...state,
+        authenticated: payload.authenticated,
+        wallet: payload.wallet,
+        currentRoute: payload.navigate ?? 'Transactions',
+      };
+    default:
+      return state;
+  }
 };
 
 export const AppContextProvider = ({ children }) => {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [wallet, setWallet] = useState();
-  const [onboardingComplete, setOnboardingComplete] = useState(undefined);
-  const [currentRoute, setCurrentRoute] = useState();
+  const [state, dispatch] = useReducer(reducer, {
+    authenticated: false,
+    onboardingComplete: undefined,
+    wallet: undefined,
+    currentRoute: undefined,
+  });
 
   const navigate = useCallback((route) => {
-    setCurrentRoute(route);
+    dispatch({ type: 'SET_CURRENT_ROUTE', payload: route });
   }, []);
 
   useEffect(() => {
@@ -32,34 +58,30 @@ export const AppContextProvider = ({ children }) => {
     }
     sendMessage({ message: 'isOnboardingComplete' }, (response) => {
       if (response) {
-        setOnboardingComplete(response);
-        sendMessage({ message: 'isSessionAuthenticated' }, (res) => {
-          if (res) {
-            setAuthenticated(res);
-            setCurrentRoute('Transactions');
-          } else {
-            setCurrentRoute('Password');
+        dispatch({ type: 'SET_ONBOARDING_COMPLETE', payload: response });
+        sendMessage(
+          { message: 'isSessionAuthenticated' },
+          ({ wallet, authenticated }) => {
+            if (authenticated && wallet) {
+              dispatch({ type: 'SIGN_IN', payload: { authenticated, wallet } });
+            } else {
+              navigate('Password');
+            }
           }
-        });
+        );
       } else {
-        setCurrentRoute('Intro');
+        navigate('Intro');
       }
     });
-  }, []);
+  }, [navigate]);
 
   const providerValue = useMemo(
     () => ({
-      ...initialAppContext,
-      authenticated,
-      setAuthenticated,
-      onboardingComplete,
-      setOnboardingComplete,
+      ...state,
+      dispatch,
       navigate,
-      currentRoute,
-      wallet,
-      setWallet,
     }),
-    [authenticated, currentRoute, navigate, onboardingComplete, wallet]
+    [navigate, state]
   );
   return (
     <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>

@@ -1,7 +1,9 @@
 // Wrapper functions for chrome.storage.local and chrome.storage.session. Adds a wrapper for localStorage and sessionStorage in development mode.
 
+const dev = process.env.NODE_ENV === 'development';
+
 export const getSessionValue = (key) => {
-  if (process.env.NODE_ENV === 'development') {
+  if (dev) {
     const value = JSON.parse(sessionStorage.getItem(key));
     return Promise.resolve(value);
   }
@@ -12,7 +14,7 @@ export const getSessionValue = (key) => {
 };
 
 export const getLocalValue = (key) => {
-  if (process.env.NODE_ENV === 'development') {
+  if (dev) {
     const value = JSON.parse(localStorage.getItem(key));
     return Promise.resolve(value);
   }
@@ -23,7 +25,7 @@ export const getLocalValue = (key) => {
 };
 
 export const setSessionValue = (keyValues) => {
-  if (process.env.NODE_ENV === 'development') {
+  if (dev) {
     Object.keys(keyValues).forEach((key) => {
       sessionStorage.setItem(key, JSON.stringify(keyValues[key]));
     });
@@ -33,7 +35,7 @@ export const setSessionValue = (keyValues) => {
 };
 
 export const setLocalValue = (keyValues) => {
-  if (process.env.NODE_ENV === 'development') {
+  if (dev) {
     Object.keys(keyValues).forEach((key) => {
       localStorage.setItem(key, JSON.stringify(keyValues[key]));
     });
@@ -43,7 +45,7 @@ export const setLocalValue = (keyValues) => {
 };
 
 export const removeSessionValue = (keys) => {
-  if (process.env.NODE_ENV === 'development') {
+  if (dev) {
     if (typeof keys === 'string') {
       sessionStorage.removeItem(keys);
     } else {
@@ -54,4 +56,12 @@ export const removeSessionValue = (keys) => {
     return Promise.resolve();
   }
   return chrome.storage.session.remove(keys);
+};
+
+export const clearSessionStorage = () => {
+  if (dev) {
+    sessionStorage.clear();
+    return Promise.resolve();
+  }
+  return chrome.storage.session.clear();
 };

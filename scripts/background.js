@@ -7,9 +7,9 @@ import {
 } from './helpers/constants';
 import { addListener } from './helpers/message';
 import {
+  clearSessionStorage,
   getLocalValue,
   getSessionValue,
-  removeSessionValue,
   setLocalValue,
   setSessionValue,
 } from './helpers/storage';
@@ -78,7 +78,7 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
       setSessionValue({ [AUTHENTICATED]: true }),
     ])
       .then(() => {
-        sendResponse?.(true);
+        sendResponse?.({ authenticated: true, wallet });
       })
       .catch(() => sendResponse?.(false));
   } else {
@@ -116,13 +116,15 @@ function getOnboardingStatus({ sendResponse } = {}) {
 }
 
 function getAuthStatus({ sendResponse } = {}) {
-  getSessionValue(AUTHENTICATED).then((value) => {
-    sendResponse?.(!!value);
-  });
+  Promise.all([getSessionValue(AUTHENTICATED), getSessionValue(WALLET)]).then(
+    ([authenticated, wallet]) => {
+      sendResponse?.({ authenticated, wallet });
+    }
+  );
 }
 
 function signOut({ sendResponse } = {}) {
-  removeSessionValue(AUTHENTICATED).then(() => sendResponse?.(true));
+  clearSessionStorage().then(() => sendResponse?.(true));
 }
 
 export const messageHandler = ({ message, data }, sender, sendResponse) => {
