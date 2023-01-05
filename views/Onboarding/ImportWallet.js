@@ -18,7 +18,7 @@ export const ImportWallet = () => {
       navigate('Success');
       dispatch({
         type: 'SET_ONBOARDING_COMPLETE',
-        payload: true,
+        payload: { authenticated, wallet, navigate: 'Success' },
       });
     },
     [dispatch, navigate]

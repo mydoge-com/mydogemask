@@ -8,7 +8,7 @@ export const getSessionValue = (key) => {
     return Promise.resolve(value);
   }
 
-  chrome.storage.session.get([key]).then((result) => {
+  return chrome.storage.session.get([key]).then((result) => {
     return result[key];
   });
 };
@@ -19,7 +19,7 @@ export const getLocalValue = (key) => {
     return Promise.resolve(value);
   }
 
-  chrome.storage.local.get([key]).then((result) => {
+  return chrome.storage.local.get([key]).then((result) => {
     return result[key];
   });
 };

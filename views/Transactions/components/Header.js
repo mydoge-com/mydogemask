@@ -1,21 +1,25 @@
 import {
   Avatar,
+  Box,
   Divider,
   HStack,
   Image,
   Menu,
+  Modal,
   Pressable,
   Text,
   VStack,
 } from 'native-base';
-import { useCallback } from 'react';
-import { FiLock, FiSettings } from 'react-icons/fi';
+import { useCallback, useState } from 'react';
+import { FiCheck, FiCopy, FiGrid, FiLock, FiSettings } from 'react-icons/fi';
 
+import { BigButton } from '../../../components/Button';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { sendMessage } from '../../../scripts/helpers/message';
+import { QRCode } from './QRCode';
 
 export const Header = () => {
-  const { wallet, dispatch } = useAppContext();
+  const { wallet, currentWalletIndex, dispatch } = useAppContext();
   const onSignOut = useCallback(() => {
     sendMessage(
       { message: 'signOut' },
@@ -25,6 +29,9 @@ export const Header = () => {
       []
     );
   }, [dispatch]);
+
+  const [walletDetailOpen, setWalletDetailOpen] = useState(false);
+
   return (
     <HStack
       alignItems='center'
@@ -37,7 +44,7 @@ export const Header = () => {
       justifyContent='flex-end'
     >
       <Menu
-        minW='200px'
+        minW='250px'
         trigger={(triggerProps) => {
           return (
             <Pressable accessibilityLabel='Accounts menu' {...triggerProps}>
@@ -52,14 +59,18 @@ export const Header = () => {
         }}
         rounded='md'
       >
-        <Text fontWeight='medium' fontSize='lg' pb='6px' px='12px'>
+        <Text fontWeight='medium' fontSize='lg' pb='12px' px='12px'>
           My wallets
         </Text>
-        <Divider my='6px' w='100%' />
         {wallet.addresses.map((address, i) => {
           return (
             <Pressable px='12px'>
               <HStack alignItems='center'>
+                <Box w='30px'>
+                  {i === currentWalletIndex ? (
+                    <FiCheck color='#54a937' size='22px' />
+                  ) : null}
+                </Box>
                 <Avatar
                   source={{
                     uri: '/assets/default-avatar.png',
@@ -69,7 +80,7 @@ export const Header = () => {
                 />
                 <VStack>
                   <Text fontSize='md' fontWeight='medium'>
-                    Account {i + 1}
+                    Wallet {i + 1}
                   </Text>
                   <Text fontSize='sm' color='gray.500'>
                     {address.slice(0, 5)}...{address.slice(-4)}
@@ -80,9 +91,9 @@ export const Header = () => {
           );
         })}
         <Divider my='6px' w='100%' />
-        <MenuItem onPress={onSignOut}>
-          <FiLock />
-          Lock
+        <MenuItem onPress={() => setWalletDetailOpen(true)}>
+          <FiGrid size='18px' />
+          Wallet details
         </MenuItem>
         <Divider my='6px' w='100%' />
         <MenuItem>
@@ -108,13 +119,84 @@ export const Header = () => {
           <FiSettings />
           Settings
         </MenuItem>
+        <MenuItem onPress={onSignOut}>
+          <FiLock />
+          Lock
+        </MenuItem>
       </Menu>
+
+      <WalletDetailModal
+        showModal={walletDetailOpen}
+        onClose={() => setWalletDetailOpen(false)}
+        walletName={`Wallet ${currentWalletIndex + 1}`}
+        address={wallet.addresses[currentWalletIndex]}
+      />
     </HStack>
   );
 };
 
 const MenuItem = ({ children, ...props }) => (
-  <Menu.Item flexDirection='row' gap='8px' {...props}>
+  <Menu.Item flexDirection='row' gap='8px' alignItems='center' {...props}>
     {children}
   </Menu.Item>
 );
+
+const WalletDetailModal = ({ showModal, onClose, walletName, address }) => {
+  return (
+    <Modal isOpen={showModal} onClose={onClose}>
+      <Modal.Content maxWidth='500px' width='90%' h='90%' maxH='750px'>
+        <Modal.CloseButton />
+        <Modal.Body alignItems='center'>
+          <Text textAlign='center' fontWeight='medium' fontSize='xl'>
+            {walletName}
+          </Text>
+          <Box bg='white' rounded='44px' p='16px' pb='28px'>
+            <Box
+              p={{ base: '12px', sm: '12px' }}
+              bg='white'
+              rounded='36px'
+              borderColor='black'
+              borderWidth='4'
+            >
+              <QRCode
+                value={address}
+                size={200}
+                avatarSource={{ uri: '/assets/default-avatar.png' }}
+              />
+              <Image
+                source={{ uri: '/assets/mydoge-mask.png' }}
+                w={120}
+                h='32px'
+                resizeMode='contain'
+                alt='mydogemask'
+                bg='white'
+                ml='auto'
+                mr='auto'
+                position='absolute'
+                bottom='-45px'
+                left='50%'
+                style={{
+                  transform: [{ translateX: '-50%' }, { translateY: '-50%' }],
+                }}
+              />
+            </Box>
+          </Box>
+          <HStack
+            alignItems='center'
+            pt='20px'
+            w='100%'
+            flexWrap='wrap'
+            justifyContent='center'
+          >
+            <Text pr='12px' noOfLines={3} textAlign='center' pb='12px'>
+              {address}
+            </Text>
+            <BigButton px='20px'>
+              <FiCopy />
+            </BigButton>
+          </HStack>
+        </Modal.Body>
+      </Modal.Content>
+    </Modal>
+  );
+};
