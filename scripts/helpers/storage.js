@@ -58,10 +58,32 @@ export const removeSessionValue = (keys) => {
   return chrome.storage.session.remove(keys);
 };
 
+export const removeLocalValue = (keys) => {
+  if (dev) {
+    if (typeof keys === 'string') {
+      localStorage.removeItem(keys);
+    } else {
+      keys.forEach((key) => {
+        localStorage.removeItem(key);
+      });
+    }
+    return Promise.resolve();
+  }
+  return chrome.storage.local.remove(keys);
+};
+
 export const clearSessionStorage = () => {
   if (dev) {
     sessionStorage.clear();
     return Promise.resolve();
   }
   return chrome.storage.session.clear();
+};
+
+export const clearLocalStorage = () => {
+  if (dev) {
+    localStorage.clear();
+    return Promise.resolve();
+  }
+  return chrome.storage.local.clear();
 };

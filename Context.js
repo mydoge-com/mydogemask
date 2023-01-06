@@ -26,7 +26,7 @@ const reducer = (state, { type, payload }) => {
         ...state,
         authenticated: false,
         wallet: undefined,
-        currentRoute: 'Password',
+        currentRoute: payload.navigate ?? 'Password',
       };
     case 'SIGN_IN':
       return {

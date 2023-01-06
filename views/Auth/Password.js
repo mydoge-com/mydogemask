@@ -32,7 +32,7 @@ export const Password = () => {
   const [errors, setErrors] = useState({});
 
   return (
-    <Layout p={0}>
+    <Layout>
       <VStack
         bg='white'
         pt='40px'

@@ -1,9 +1,12 @@
 import { Box } from 'native-base';
 import React from 'react';
 
-export const Layout = ({ children, ...props }) => {
+import { Header } from './Header/Header';
+
+export const Layout = ({ withHeader, children, ...props }) => {
   return (
-    <Box w='357px' h='600px' overflowX='hidden' bg='white' p='20px' {...props}>
+    <Box w='357px' h='600px' overflowX='hidden' bg='white' {...props}>
+      {withHeader ? <Header /> : null}
       {children}
     </Box>
   );

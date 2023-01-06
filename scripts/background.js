@@ -10,6 +10,7 @@ import {
   clearSessionStorage,
   getLocalValue,
   getSessionValue,
+  removeLocalValue,
   setLocalValue,
   setSessionValue,
 } from './helpers/storage';
@@ -87,6 +88,18 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
   return true;
 }
 
+function onDeleteWallet({ sendResponse } = {}) {
+  Promise.all([
+    clearSessionStorage(),
+    removeLocalValue([PASSWORD, WALLET, ONBOARDING_COMPLETE]),
+  ])
+    .then(() => {
+      sendResponse?.(true);
+    })
+    .catch(() => sendResponse?.(false));
+  return true;
+}
+
 function onAuthenticate({ data = {}, sendResponse } = {}) {
   Promise.all([getLocalValue(PASSWORD), getLocalValue(WALLET)]).then(
     ([encryptedPass, encryptedWallet]) => {
@@ -148,6 +161,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case 'signOut':
       signOut({ sendResponse });
+      break;
+    case 'deleteWallet':
+      onDeleteWallet({ sendResponse });
       break;
     default:
   }
