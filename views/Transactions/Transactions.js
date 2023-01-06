@@ -16,6 +16,7 @@ import {
 import { useCallback } from 'react';
 import { IoArrowDown, IoArrowUp } from 'react-icons/io5';
 
+import { WalletDetailModal } from '../../components/Header/WalletDetailModal';
 import { Layout } from '../../components/Layout';
 import {
   asFiat,
@@ -229,6 +230,7 @@ export function Transactions() {
           )}
         </Box>
       </Box>
+      <WalletDetailModal />
     </Layout>
   );
 }

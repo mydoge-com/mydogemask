@@ -88,6 +88,68 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
   return true;
 }
 
+function createAddress({ data = {}, sendResponse } = {}) {
+  if (data.password) {
+    // const phrase = data.seedPhrase ?? generatePhrase();
+    // const root = generateRoot(phrase);
+    // const child = generateChild(root, 0);
+    // const address0 = generateAddress(child);
+    // const wallet = {
+    //   phrase,
+    //   root: root.toWIF(),
+    //   children: [child.toWIF()],
+    //   addresses: [address0],
+    // };
+    // const encryptedPassword = encrypt({
+    //   data: hash(data.password),
+    //   password: data.password,
+    // });
+    // const encryptedWallet = encrypt({
+    //   data: wallet,
+    //   password: data.password,
+    // });
+    // Promise.all([
+    //   setLocalValue({
+    //     [PASSWORD]: encryptedPassword,
+    //     [WALLET]: encryptedWallet,
+    //     [ONBOARDING_COMPLETE]: true,
+    //   }),
+    //   setSessionValue({ [AUTHENTICATED]: true }),
+    // ])
+    //   .then(() => {
+    //     sendResponse?.({ authenticated: true, wallet });
+    //   })
+    //   .catch(() => sendResponse?.(false));
+    getLocalValue(WALLET).then((wallet) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password: data.password,
+      });
+      const child = generateChild(
+        decryptedWallet.root,
+        decryptedWallet.children.length
+      );
+      const address = generateAddress(child);
+      decryptedWallet.children.push(child.toWIF());
+      decryptedWallet.addresses.push(address);
+      const encryptedWallet = encrypt({
+        data: decryptedWallet,
+        password: data.password,
+      });
+      setLocalValue({
+        [WALLET]: encryptedWallet,
+      })
+        .then(() => {
+          sendResponse?.({ wallet: decryptedWallet });
+        })
+        .catch(() => sendResponse?.(false));
+    });
+  } else {
+    sendResponse?.(false);
+  }
+  return true;
+}
+
 function onDeleteWallet({ sendResponse } = {}) {
   Promise.all([
     clearSessionStorage(),
@@ -164,6 +226,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case 'deleteWallet':
       onDeleteWallet({ sendResponse });
+      break;
+    case 'createAddress':
+      createAddress({ data, sendResponse });
       break;
     default:
   }
