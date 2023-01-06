@@ -1,35 +1,29 @@
-import { Box, Image, Input, Text, VStack } from 'native-base';
+import { Box, Image, Text, VStack } from 'native-base';
 import React, { useCallback, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
-import { sendMessage } from '../../scripts/helpers/message';
+import { useAuth } from '../../hooks/useAuth';
 
 export const Password = () => {
-  const [password, setPassword] = useState('');
-  const onChangeText = useCallback((text) => {
-    setErrors({});
-    setPassword(text);
-  }, []);
-
   const { dispatch, navigate } = useAppContext();
 
-  const onSubmit = useCallback(() => {
-    sendMessage(
-      { message: 'authenticate', data: { password } },
-      ({ authenticated, wallet }) => {
-        if (authenticated && wallet) {
-          setErrors({});
-          dispatch({ type: 'SIGN_IN', payload: { authenticated, wallet } });
-        } else {
-          setErrors({ ...errors, password: 'Incorrect password' });
-        }
+  const onValidAuth = useCallback(
+    ({ authenticated, wallet }) => {
+      if (authenticated && wallet) {
+        setErrors({});
+        dispatch({ type: 'SIGN_IN', payload: { authenticated, wallet } });
+      } else {
+        setErrors({ ...errors, password: 'Incorrect password' });
       }
-    );
-  }, [dispatch, errors, password]);
+    },
+    [dispatch, errors]
+  );
 
   const [errors, setErrors] = useState({});
+
+  const { renderPasswordInput, onSubmit, password } = useAuth({ onValidAuth });
 
   return (
     <Layout>
@@ -59,32 +53,7 @@ export const Password = () => {
           <Text color='gray.500' fontSize='14px' textAlign='center'>
             Enter password to access your wallet
           </Text>
-          <VStack pt='40px' pb='8px'>
-            <Input
-              variant='filled'
-              placeholder='Password'
-              py='14px'
-              type='password'
-              focusOutlineColor='brandYellow.500'
-              _hover={{
-                borderColor: 'brandYellow.500',
-              }}
-              _invalid={{
-                borderColor: 'red.500',
-                focusOutlineColor: 'red.500',
-                _hover: {
-                  borderColor: 'red.500',
-                },
-              }}
-              isInvalid={'password' in errors}
-              onChangeText={onChangeText}
-              onSubmitEditing={onSubmit}
-              autoFocus
-            />
-            <Text fontSize='10px' color='red.500' pt='6px'>
-              {errors.password || ' '}
-            </Text>
-          </VStack>
+          <Box pt='40px'>{renderPasswordInput()}</Box>
           <BigButton
             onPress={onSubmit}
             w='80%'

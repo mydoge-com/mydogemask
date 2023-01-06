@@ -26,14 +26,14 @@ const reducer = (state, { type, payload }) => {
         ...state,
         authenticated: false,
         wallet: undefined,
-        currentRoute: payload.navigate ?? 'Password',
+        currentRoute: payload?.navigate ?? 'Password',
       };
     case 'SIGN_IN':
       return {
         ...state,
-        authenticated: payload.authenticated,
-        wallet: payload.wallet,
-        currentRoute: payload.navigate ?? 'Transactions',
+        authenticated: payload?.authenticated,
+        wallet: payload?.wallet,
+        currentRoute: payload?.navigate ?? 'Transactions',
       };
     case 'SELECT_WALLET':
       return { ...state, currentWalletIndex: payload };
