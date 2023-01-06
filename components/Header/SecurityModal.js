@@ -8,9 +8,11 @@ import {
   VStack,
 } from 'native-base';
 import { useCallback, useRef, useState } from 'react';
+import { FiCopy } from 'react-icons/fi';
 
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../hooks/useAuth';
+import { useCopyText } from '../../hooks/useCopyText';
 import { sendMessage } from '../../scripts/helpers/message';
 import { BigButton } from '../Button';
 
@@ -111,8 +113,13 @@ const DeleteWallet = () => {
 const BackupWallet = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [phrase, setPhrase] = useState('');
-  const onClose = useCallback(() => setIsOpen(false), []);
+  const onClose = useCallback(() => {
+    setIsOpen(false);
+    setTimeout(() => setPhrase(''));
+  }, []);
   const cancelRef = useRef();
+
+  const { copyTextToClipboard, textCopied } = useCopyText({ text: phrase });
 
   const onConfirm = useCallback(({ wallet }) => {
     setPhrase(wallet.phrase);
@@ -137,9 +144,9 @@ const BackupWallet = () => {
       >
         <AlertDialog.Content>
           <AlertDialog.CloseButton />
-          <AlertDialog.Header>Backup Seed Phrase</AlertDialog.Header>
           {!phrase ? (
             <>
+              <AlertDialog.Header>Backup Seed Phrase</AlertDialog.Header>
               <AlertDialog.Body>
                 <Text>
                   If you ever change browsers or move computers, you will need
@@ -171,24 +178,30 @@ const BackupWallet = () => {
             </>
           ) : (
             <>
+              <AlertDialog.Header>Your Recovery Phrase</AlertDialog.Header>
               <AlertDialog.Body>
-                <Text>Your Recovery Phrase</Text>
-                <Box>{phrase}</Box>
-              </AlertDialog.Body>
-              <AlertDialog.Footer>
-                <Button.Group>
+                <Text
+                  fontSize='16px'
+                  bg='gray.200'
+                  p='6px'
+                  rounded='lg'
+                  textAlign='center'
+                >
+                  {phrase}
+                </Text>
+                <Button.Group pt='24px' alignItems='center'>
                   <BigButton
                     variant='primary'
-                    onPress={() => {
-                      setIsOpen(false);
-                      setPhrase('');
-                    }}
+                    onPress={copyTextToClipboard}
                     px='24px'
                   >
-                    Done
+                    Copy <FiCopy size={12} />
                   </BigButton>
+                  <Text fontSize='12px' color='gray.500'>
+                    {textCopied ? 'Phrase copied' : ' '}
+                  </Text>
                 </Button.Group>
-              </AlertDialog.Footer>
+              </AlertDialog.Body>
             </>
           )}
         </AlertDialog.Content>

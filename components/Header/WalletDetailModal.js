@@ -1,8 +1,7 @@
 import { Box, HStack, Image, Modal, Text } from 'native-base';
-import { useCallback, useState } from 'react';
 import { FiCopy } from 'react-icons/fi';
 
-import { logError } from '../../utils/error';
+import { useCopyText } from '../../hooks/useCopyText';
 import { BigButton } from '../Button';
 import { QRCode } from './QRCode';
 
@@ -12,16 +11,7 @@ export const WalletDetailModal = ({
   walletName,
   address,
 }) => {
-  const [addressCopied, setAddressCopied] = useState(false);
-  const onCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(address);
-      setAddressCopied(true);
-      setTimeout(() => setAddressCopied(false), 3000);
-    } catch (e) {
-      logError(e);
-    }
-  }, [address]);
+  const { copyTextToClipboard, textCopied } = useCopyText({ text: address });
   return (
     <Modal isOpen={showModal} onClose={onClose}>
       <Modal.Content maxWidth='500px' width='90%' h='auto' maxH='750px'>
@@ -70,12 +60,12 @@ export const WalletDetailModal = ({
             <Text pr='12px' noOfLines={3}>
               {address}
             </Text>
-            <BigButton px='16px' py='4px' onPress={onCopy}>
+            <BigButton px='16px' py='4px' onPress={copyTextToClipboard}>
               <FiCopy />
             </BigButton>
           </HStack>
           <Text fontSize='12px' color='gray.500'>
-            {addressCopied ? 'Address copied' : ' '}
+            {textCopied ? 'Address copied' : ' '}
           </Text>
         </Modal.Body>
       </Modal.Content>
