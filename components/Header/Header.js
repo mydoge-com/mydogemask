@@ -1,4 +1,5 @@
 import {
+  Alert,
   Avatar,
   Box,
   Divider,
@@ -7,6 +8,7 @@ import {
   Menu,
   Pressable,
   Text,
+  Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useState } from 'react';
@@ -30,10 +32,56 @@ export const Header = () => {
   }, [dispatch]);
 
   const [openModal, setOpenModal] = useState(null);
+  const [closeOnSelect, setCloseOnSelect] = useState(true);
 
   const onCloseModal = useCallback(() => {
     setOpenModal(null);
   }, []);
+
+  const onGenerateAddress = useCallback(() => {
+    setCloseOnSelect(false);
+    sendMessage(
+      { message: 'generateAddress' },
+      ({ wallet: updatedWallet }) => {
+        if (updatedWallet) {
+          dispatch({ type: 'SET_WALLET', payload: { wallet: updatedWallet } });
+          setCloseOnSelect(true);
+        } else {
+          Toast.show({
+            title: 'Error',
+            description: 'Failed to generate address',
+            duration: 3000,
+            render: () => {
+              return (
+                <Alert w='100%' status='error'>
+                  <HStack
+                    flexShrink={1}
+                    space={2}
+                    justifyContent='space-between'
+                  >
+                    <Alert.Icon mt='1' />
+                    <Text fontSize='md' color='coolGray.800'>
+                      Failed to generate address
+                    </Text>
+                  </HStack>
+                </Alert>
+              );
+            },
+          });
+        }
+      },
+      []
+    );
+  }, [dispatch]);
+
+  const onSelectAddress = useCallback(
+    (index) => {
+      setCloseOnSelect(false);
+      dispatch({ type: 'SELECT_WALLET', payload: { index } });
+      setTimeout(() => setCloseOnSelect(true));
+    },
+    [dispatch]
+  );
 
   return (
     <HStack
@@ -61,13 +109,14 @@ export const Header = () => {
           );
         }}
         rounded='md'
+        closeOnSelect={closeOnSelect}
       >
         <Text fontWeight='medium' fontSize='lg' pb='12px' px='12px'>
           My addresses
         </Text>
         {wallet.addresses.map((address, i) => {
           return (
-            <Pressable px='12px'>
+            <Pressable px='12px' onPress={() => onSelectAddress(i)}>
               <HStack alignItems='center'>
                 <Box w='30px'>
                   {i === currentWalletIndex ? (
@@ -99,7 +148,7 @@ export const Header = () => {
           Receive dogecoin
         </MenuItem>
         <Divider my='6px' w='100%' />
-        <MenuItem>
+        <MenuItem onPress={onGenerateAddress}>
           <Image
             source={{ uri: '/assets/wallet-create.png' }}
             size='18px'

@@ -14,13 +14,13 @@ export const AppContext = createContext(null);
 const reducer = (state, { type, payload }) => {
   switch (type) {
     case 'SET_CURRENT_ROUTE':
-      return { ...state, currentRoute: payload };
+      return { ...state, currentRoute: payload.route };
     case 'SET_ONBOARDING_COMPLETE':
       return { ...state, onboardingComplete: payload };
     case 'SET_AUTHENTICATED':
       return { ...state, authenticated: payload };
     case 'SET_WALLET':
-      return { ...state, wallet: payload };
+      return { ...state, wallet: payload.wallet };
     case 'SIGN_OUT':
       return {
         ...state,
@@ -36,7 +36,7 @@ const reducer = (state, { type, payload }) => {
         currentRoute: payload?.navigate ?? 'Transactions',
       };
     case 'SELECT_WALLET':
-      return { ...state, currentWalletIndex: payload };
+      return { ...state, currentWalletIndex: payload.index };
     default:
       return state;
   }
@@ -52,7 +52,7 @@ export const AppContextProvider = ({ children }) => {
   });
 
   const navigate = useCallback((route) => {
-    dispatch({ type: 'SET_CURRENT_ROUTE', payload: route });
+    dispatch({ type: 'SET_CURRENT_ROUTE', payload: { route } });
   }, []);
 
   useEffect(() => {
