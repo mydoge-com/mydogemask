@@ -36,7 +36,7 @@ const reducer = (state, { type, payload }) => {
         currentRoute: payload?.navigate ?? 'Transactions',
       };
     case 'SELECT_WALLET':
-      return { ...state, currentWalletIndex: payload.index };
+      return { ...state, selectedAddressIndex: payload.index };
     default:
       return state;
   }
@@ -48,7 +48,7 @@ export const AppContextProvider = ({ children }) => {
     onboardingComplete: undefined,
     wallet: undefined,
     currentRoute: undefined,
-    currentWalletIndex: 0,
+    selectedAddressIndex: 0,
   });
 
   const navigate = useCallback((route) => {

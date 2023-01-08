@@ -4,10 +4,16 @@ export const ToastRender = ({ title, description, status }) => (
   <Alert status={status} w='100%' alignItems='flex-start'>
     <HStack flexShrink={1} space={2} justifyContent='space-between' pb='4px'>
       <Alert.Icon mt='1' />
-      <Text fontWeight='bold'>{title}</Text>
+      {title ? (
+        <Text fontWeight='bold'>{title}</Text>
+      ) : (
+        <Text>{description}</Text>
+      )}
     </HStack>
-    <Text fontSize='12px' color='coolGray.800'>
-      {description}
-    </Text>
+    {title ? (
+      <Text fontSize='12px' color='coolGray.800'>
+        {description}
+      </Text>
+    ) : null}
   </Alert>
 );
