@@ -76,7 +76,11 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
         [WALLET]: encryptedWallet,
         [ONBOARDING_COMPLETE]: true,
       }),
-      setSessionValue({ [AUTHENTICATED]: true }),
+      setSessionValue({
+        [AUTHENTICATED]: true,
+        [WALLET]: wallet,
+        [PASSWORD]: data.password,
+      }),
     ])
       .then(() => {
         sendResponse?.({ authenticated: true, wallet });
@@ -85,6 +89,73 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
   } else {
     sendResponse?.(false);
   }
+  return true;
+}
+
+function onGenerateAddress({ sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+        return;
+      }
+      const root = generateRoot(decryptedWallet.phrase);
+      const child = generateChild(root, decryptedWallet.children.length);
+      const address = generateAddress(child);
+      decryptedWallet.children.push(child.toWIF());
+      decryptedWallet.addresses.push(address);
+      const encryptedWallet = encrypt({
+        data: decryptedWallet,
+        password,
+      });
+      Promise.all([
+        setSessionValue({ [WALLET]: decryptedWallet }),
+        setLocalValue({
+          [WALLET]: encryptedWallet,
+        }),
+      ])
+        .then(() => {
+          sendResponse?.({ wallet: decryptedWallet });
+        })
+        .catch(() => sendResponse?.(false));
+    }
+  );
+  return true;
+}
+
+function onDeleteAddress({ sendResponse, data } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+        return;
+      }
+
+      decryptedWallet.addresses.splice(data.index, 1);
+      const encryptedWallet = encrypt({
+        data: decryptedWallet,
+        password,
+      });
+      Promise.all([
+        setSessionValue({ [WALLET]: decryptedWallet }),
+        setLocalValue({
+          [WALLET]: encryptedWallet,
+        }),
+      ])
+        .then(() => {
+          sendResponse?.({ wallet: decryptedWallet });
+        })
+        .catch(() => sendResponse?.(false));
+    }
+  );
   return true;
 }
 
@@ -114,7 +185,11 @@ function onAuthenticate({ data = {}, sendResponse } = {}) {
       });
       const authenticated = decryptedPass === hash(data.password);
       if (authenticated) {
-        setSessionValue({ [AUTHENTICATED]: true, [WALLET]: decryptedWallet });
+        setSessionValue({
+          [AUTHENTICATED]: true,
+          [WALLET]: decryptedWallet,
+          [PASSWORD]: data.password,
+        });
       }
       sendResponse?.({ authenticated, wallet: decryptedWallet });
     }
@@ -164,6 +239,12 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case 'deleteWallet':
       onDeleteWallet({ sendResponse });
+      break;
+    case 'generateAddress':
+      onGenerateAddress({ sendResponse });
+      break;
+    case 'deleteAddress':
+      onDeleteAddress({ data, sendResponse });
       break;
     default:
   }

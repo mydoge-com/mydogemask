@@ -150,8 +150,8 @@ const BackupWallet = () => {
               <AlertDialog.Body>
                 <Text>
                   If you ever change browsers or move computers, you will need
-                  this Seed Phrase to access your Dogecoin. {'\n\n'}Enter
-                  password to continue.
+                  this Seed Phrase to access your Dogecoin.{'\n\n'}
+                  <Text fontWeight='semibold'>Enter password to continue.</Text>
                 </Text>
                 <Box pt='20px'>{renderPasswordInput()}</Box>
               </AlertDialog.Body>
