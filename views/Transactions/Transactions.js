@@ -16,6 +16,7 @@ import {
 import { useCallback } from 'react';
 import { IoArrowDown, IoArrowUp } from 'react-icons/io5';
 
+import { Layout } from '../../components/Layout';
 import {
   asFiat,
   formatSatoshisAsDoge,
@@ -24,7 +25,6 @@ import {
 } from '../../utils/formatters';
 import { ActionButton } from './components/ActionButton';
 import { useTransactions } from './Transactions.hooks';
-import { TransactionsLayout } from './TransactionsLayout';
 
 const DogecoinLogo = 'assets/dogecoin-logo-300.png';
 const SpaceBg = 'assets/milkyway-vector-bg-rounded.png';
@@ -118,7 +118,7 @@ export function Transactions() {
   const imageHeight = imageWidth / imageRatio;
 
   return (
-    <TransactionsLayout>
+    <Layout withHeader p={0}>
       <Box>
         <Image
           width={imageWidth}
@@ -229,6 +229,6 @@ export function Transactions() {
           )}
         </Box>
       </Box>
-    </TransactionsLayout>
+    </Layout>
   );
 }

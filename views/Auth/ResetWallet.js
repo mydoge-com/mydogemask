@@ -27,7 +27,7 @@ export const ResetWallet = () => {
 
   return (
     <Layout>
-      <VStack>
+      <VStack p='20px'>
         <BackButton mb='10px' onPress={onBack} />
         <VStack>
           <Text fontSize='3xl'>
