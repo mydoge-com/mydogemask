@@ -12,10 +12,11 @@ import {
   VStack,
 } from 'native-base';
 import { useCallback, useState } from 'react';
-import { FiCheck, FiGrid, FiLock, FiSettings } from 'react-icons/fi';
+import { FiCheck, FiLock, FiSettings, FiTrash2 } from 'react-icons/fi';
 
 import { useAppContext } from '../../hooks/useAppContext';
 import { sendMessage } from '../../scripts/helpers/message';
+import { ToastRender } from '../ToastRender';
 import { SecurityModal } from './SecurityModal';
 import { WalletDetailModal } from './WalletDetailModal';
 
@@ -32,20 +33,32 @@ export const Header = () => {
   }, [dispatch]);
 
   const [openModal, setOpenModal] = useState(null);
-  const [closeOnSelect, setCloseOnSelect] = useState(true);
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const toggleMenu = useCallback(() => {
+    setMenuOpen(!menuOpen);
+  }, [menuOpen]);
 
   const onCloseModal = useCallback(() => {
     setOpenModal(null);
   }, []);
 
   const onGenerateAddress = useCallback(() => {
-    setCloseOnSelect(false);
     sendMessage(
       { message: 'generateAddress' },
       ({ wallet: updatedWallet }) => {
         if (updatedWallet) {
           dispatch({ type: 'SET_WALLET', payload: { wallet: updatedWallet } });
-          setCloseOnSelect(true);
+          dispatch({
+            type: 'SELECT_WALLET',
+            payload: { index: updatedWallet.addresses.length - 1 },
+          });
+          Toast.show({
+            duration: 3000,
+            render: () => {
+              return <ToastRender title='Address Generated' status='info' />;
+            },
+          });
         } else {
           Toast.show({
             title: 'Error',
@@ -53,18 +66,11 @@ export const Header = () => {
             duration: 3000,
             render: () => {
               return (
-                <Alert w='100%' status='error'>
-                  <HStack
-                    flexShrink={1}
-                    space={2}
-                    justifyContent='space-between'
-                  >
-                    <Alert.Icon mt='1' />
-                    <Text fontSize='md' color='coolGray.800'>
-                      Failed to generate address
-                    </Text>
-                  </HStack>
-                </Alert>
+                <ToastRender
+                  title='Error'
+                  description='Failed to generate address'
+                  status='error'
+                />
               );
             },
           });
@@ -74,11 +80,51 @@ export const Header = () => {
     );
   }, [dispatch]);
 
+  const onDeleteAddress = useCallback(() => {
+    const addressToDelete = wallet.addresses[currentWalletIndex];
+    sendMessage(
+      { message: 'deleteAddress', data: { index: currentWalletIndex } },
+      ({ wallet: updatedWallet }) => {
+        if (updatedWallet) {
+          dispatch({ type: 'SET_WALLET', payload: { wallet: updatedWallet } });
+          dispatch({
+            type: 'SELECT_WALLET',
+            payload: { index: 0 },
+          });
+          Toast.show({
+            duration: 3000,
+            render: () => {
+              return (
+                <ToastRender
+                  title='Address Deleted'
+                  description={`${addressToDelete} has been deleted`}
+                  status='info'
+                />
+              );
+            },
+          });
+        } else {
+          Toast.show({
+            duration: 3000,
+            render: () => {
+              return (
+                <ToastRender
+                  title='Error'
+                  description='There was an error deleting the address'
+                  status='error'
+                />
+              );
+            },
+          });
+        }
+      },
+      []
+    );
+  }, [currentWalletIndex, dispatch, wallet.addresses]);
+
   const onSelectAddress = useCallback(
     (index) => {
-      setCloseOnSelect(false);
       dispatch({ type: 'SELECT_WALLET', payload: { index } });
-      setTimeout(() => setCloseOnSelect(true));
     },
     [dispatch]
   );
@@ -98,7 +144,11 @@ export const Header = () => {
         minW='250px'
         trigger={(triggerProps) => {
           return (
-            <Pressable accessibilityLabel='Accounts menu' {...triggerProps}>
+            <Pressable
+              accessibilityLabel='Accounts menu'
+              {...triggerProps}
+              // onPress={toggleMenu}
+            >
               <Avatar
                 source={{
                   uri: '/assets/default-avatar.png',
@@ -109,14 +159,24 @@ export const Header = () => {
           );
         }}
         rounded='md'
-        closeOnSelect={closeOnSelect}
+        closeOnSelect={false}
+        // isOpen={menuOpen}
+        zIndex={1}
       >
         <Text fontWeight='medium' fontSize='lg' pb='12px' px='12px'>
           My addresses
         </Text>
         {wallet.addresses.map((address, i) => {
           return (
-            <Pressable px='12px' onPress={() => onSelectAddress(i)}>
+            <Pressable
+              px='12px'
+              onPress={() => onSelectAddress(i)}
+              key={address}
+              _hover={{
+                bg: 'rgba(0,0,0, 0.1)',
+              }}
+              bg={i === currentWalletIndex && 'rgba(0,0,0, 0.1)'}
+            >
               <HStack alignItems='center'>
                 <Box w='30px'>
                   {i === currentWalletIndex ? (
@@ -135,7 +195,7 @@ export const Header = () => {
                     Address {i + 1}
                   </Text>
                   <Text fontSize='sm' color='gray.500'>
-                    {address.slice(0, 5)}...{address.slice(-4)}
+                    {address.slice(0, 8)}...{address.slice(-4)}
                   </Text>
                 </VStack>
               </HStack>
@@ -144,7 +204,12 @@ export const Header = () => {
         })}
         <Divider my='6px' w='100%' />
         <MenuItem onPress={() => setOpenModal('WALLET_DETAIL')}>
-          <FiGrid size='18px' />
+          <Image
+            source={{ uri: '/assets/wallet-import.png' }}
+            size='18px'
+            resizeMode='contain'
+            alt='create-wallet'
+          />
           Receive dogecoin
         </MenuItem>
         <Divider my='6px' w='100%' />
@@ -157,13 +222,17 @@ export const Header = () => {
           />
           Create address
         </MenuItem>
+        <MenuItem onPress={onDeleteAddress}>
+          <FiTrash2 size='20px' />
+          Delete address
+        </MenuItem>
         <Divider my='6px' w='100%' />
         <MenuItem onPress={() => setOpenModal('BACKUP_SECURITY')}>
-          <FiSettings />
+          <FiSettings size='20px' />
           Backup & security
         </MenuItem>
         <MenuItem onPress={onSignOut}>
-          <FiLock />
+          <FiLock size='20px' />
           Lock
         </MenuItem>
       </Menu>

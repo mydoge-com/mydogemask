@@ -127,6 +127,38 @@ function onGenerateAddress({ sendResponse } = {}) {
   return true;
 }
 
+function onDeleteAddress({ sendResponse, data } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+        return;
+      }
+
+      decryptedWallet.addresses.splice(data.index, 1);
+      const encryptedWallet = encrypt({
+        data: decryptedWallet,
+        password,
+      });
+      Promise.all([
+        setSessionValue({ [WALLET]: decryptedWallet }),
+        setLocalValue({
+          [WALLET]: encryptedWallet,
+        }),
+      ])
+        .then(() => {
+          sendResponse?.({ wallet: decryptedWallet });
+        })
+        .catch(() => sendResponse?.(false));
+    }
+  );
+  return true;
+}
+
 function onDeleteWallet({ sendResponse } = {}) {
   Promise.all([
     clearSessionStorage(),
@@ -209,7 +241,10 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       onDeleteWallet({ sendResponse });
       break;
     case 'generateAddress':
-      onGenerateAddress({ data, sendResponse });
+      onGenerateAddress({ sendResponse });
+      break;
+    case 'deleteAddress':
+      onDeleteAddress({ data, sendResponse });
       break;
     default:
   }
