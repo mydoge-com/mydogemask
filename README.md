@@ -2,7 +2,7 @@
 
 ## 🚀 Quick start
 
-- Use Node.js version 16
+- Use Node.js version 18
 - Use Yarn installed by NPM only: `npm install --global yarn`
 - Install packages with `yarn install`.
 - Run `yarn start` to start the development server
