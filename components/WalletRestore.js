@@ -14,6 +14,8 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { sendMessage } from '../scripts/helpers/message';
 import { BigButton } from './Button';
 
+const wordList = require('../constants/wordList.json');
+
 export const WalletRestore = ({
   onRestoreComplete = () => {},
   confirmBefore = false,
@@ -34,9 +36,11 @@ export const WalletRestore = ({
   const cancelRef = useRef();
 
   const validate = useCallback(() => {
-    if (
-      formData.seedPhrase.replace(/\s+/g, ' ').trim().split(' ').length !== 12
-    ) {
+    const phraseTokens = formData.seedPhrase
+      .replace(/\s+/g, ' ')
+      .trim()
+      .split(' ');
+    if (phraseTokens.length !== 12) {
       setErrors({
         ...errors,
         seedPhrase: 'Invalid Seed Phrase',
@@ -54,6 +58,17 @@ export const WalletRestore = ({
         confirm: 'Password must be at least 10 characters',
       });
       return false;
+    }
+
+    for (let i = 0; i < phraseTokens.length; ++i) {
+      const word = phraseTokens[i];
+      if (wordList.indexOf(word) === -1 && word !== '') {
+        setErrors({
+          ...errors,
+          seedPhrase: `'${word}' is not a MyDoge seed phrase word`,
+        });
+        return false;
+      }
     }
     setErrors({});
     return true;
