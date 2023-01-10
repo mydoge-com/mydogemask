@@ -10,6 +10,7 @@ export const BackButton = ({ onPress, ...props }) => {
       _pressed={{ bg: 'transparent' }}
       alignSelf='flex-start'
       onPress={onPress}
+      zIndex={2}
       {...props}
     >
       <HStack alignItems='center'>

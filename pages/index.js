@@ -6,6 +6,7 @@ import {
   Intro,
   Success,
 } from '../views/Onboarding';
+import { Send } from '../views/Send';
 import { Transactions } from '../views/Transactions';
 
 const screens = {
@@ -16,6 +17,7 @@ const screens = {
   Password,
   Transactions,
   ResetWallet,
+  Send,
 };
 
 export default function App() {
