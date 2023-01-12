@@ -12,6 +12,7 @@ import { validateAddress } from '../../scripts/helpers/wallet';
 import { sanitizeDogeInput, sanitizeFiat } from '../../utils/formatters';
 
 const MAX_CHARACTERS = 16;
+const REFRESH_INTERVAL = 10000;
 
 export function Send() {
   const { wallet, selectedAddressIndex } = useAppContext();
@@ -215,7 +216,7 @@ const AmountScreen = ({
       getDogecoinPrice();
       getAddressBalance();
     },
-    10000,
+    REFRESH_INTERVAL,
     { immediate: true }
   );
 
@@ -355,9 +356,11 @@ const AmountScreen = ({
           : formData.fiatAmount || 0}
       </Text>
       <HStack>
-        <Text fontSize='14px' color='gray.400' pt='12px'>
-          Balance: Ð{sb.toBitcoin(addressBalance)}
-        </Text>
+        {addressBalance ? (
+          <Text fontSize='14px' color='gray.400' pt='12px'>
+            Balance: Ð{sb.toBitcoin(addressBalance)}
+          </Text>
+        ) : null}
       </HStack>
       <HStack alignItems='center' mt='60px' space='12px'>
         <Button
