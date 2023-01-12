@@ -3,7 +3,6 @@ import { nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
-  // NOWNODES_BASE_URL,
   ONBOARDING_COMPLETE,
   PASSWORD,
   WALLET,
