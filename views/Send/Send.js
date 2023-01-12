@@ -1,4 +1,4 @@
-import { Avatar, Box, Center, HStack, Input, Text } from 'native-base';
+import { Avatar, Box, Button, Center, HStack, Input, Text } from 'native-base';
 import { useCallback, useRef, useState } from 'react';
 import { IoSwapVerticalOutline } from 'react-icons/io5';
 
@@ -32,7 +32,7 @@ export function Send() {
       <Box pt='72px' px='12px'>
         <RenderScreen
           walletAddress={walletAddress}
-          setFormStage={setFormPage}
+          setFormPage={setFormPage}
           formData={formData}
           setFormData={setFormData}
           errors={errors}
@@ -45,7 +45,7 @@ export function Send() {
 
 const AddressScreen = ({
   walletAddress,
-  setFormStage,
+  setFormPage,
   errors,
   setErrors,
   setFormData,
@@ -79,9 +79,9 @@ const AddressScreen = ({
 
   const onSubmit = useCallback(() => {
     if (validate()) {
-      setFormStage('amount');
+      setFormPage('amount');
     }
-  }, [setFormStage, validate]);
+  }, [setFormPage, validate]);
 
   return (
     <>
@@ -128,7 +128,7 @@ const AddressScreen = ({
 };
 
 const AmountScreen = ({
-  setFormStage,
+  setFormPage,
   errors,
   // setErrors,
   setFormData,
@@ -198,21 +198,14 @@ const AmountScreen = ({
 
   const onSubmit = useCallback(() => {
     if (validate()) {
-      setFormStage('amount');
+      setFormPage('amount');
     }
-  }, [setFormStage, validate]);
+  }, [setFormPage, validate]);
 
   const dogeInputRef = useRef(null);
   const fiatInputRef = useRef(null);
 
-  // const fiatAmount = Number(formData.dogeAmount) * dogecoinPrice || 0;
-
   const swapInput = useCallback(() => {
-    // if (isCurrencySwapped) {
-    //   dogeInputRef.current?.focus();
-    // } else {
-    //   fiatInputRef.current?.focus();
-    // }
     setIsCurrencySwapped((state) => !state);
   }, []);
 
@@ -321,9 +314,6 @@ const AmountScreen = ({
           />
         )}
       </Box>
-      {/* <Text fontSize='10px' color='red.500' pt='6px'>
-        {errors.dogeAmount || ' '}
-      </Text> */}
       <BigButton
         variant='secondary'
         px='6px'
@@ -341,17 +331,25 @@ const AmountScreen = ({
           ? formData.dogeAmount || 0
           : formData.fiatAmount || 0}
       </Text>
-
-      <BigButton
-        onPress={onSubmit}
-        w='80%'
-        type='submit'
-        role='button'
-        mt='32px'
-        isDisabled={!formData.dogeAmount || errors.dogeAmount}
-      >
-        Next
-      </BigButton>
+      <HStack alignItems='center' mt='60px' space='12px'>
+        <Button
+          variant='unstyled'
+          colorScheme='coolGray'
+          onPress={() => setFormPage('address')}
+        >
+          Back
+        </Button>
+        <BigButton
+          onPress={onSubmit}
+          // w='80%'
+          type='submit'
+          role='button'
+          px='28px'
+          isDisabled={!formData.dogeAmount || errors.dogeAmount}
+        >
+          Next
+        </BigButton>
+      </HStack>
     </Center>
   );
 };

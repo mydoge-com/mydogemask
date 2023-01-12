@@ -1,7 +1,8 @@
-import axios from 'axios';
+import wretch from 'wretch';
 
-export const nownodes = axios.create({
-  baseURL: 'https://dogebook.nownodes.io/api/v2',
+import { NOWNODES_BASE_URL } from './helpers/constants';
+
+export const nownodes = wretch(NOWNODES_BASE_URL, {
   headers: {
     'api-key': process.env.NEXT_PUBLIC_NOWNODES_API_KEY,
   },

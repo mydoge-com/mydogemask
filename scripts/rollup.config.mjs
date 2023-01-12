@@ -3,68 +3,44 @@
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
-import dotenv from 'rollup-plugin-dotenv';
+import injectEnv from 'rollup-plugin-inject-env';
 import injectProcessEnv from 'rollup-plugin-inject-process-env';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
 import { uglify } from 'rollup-plugin-uglify';
 
+const common = {
+  output: {
+    format: 'iife',
+    dir: './compiled',
+  },
+  plugins: [
+    resolve({
+      browser: true,
+      jsnext: true,
+      preferBuiltins: true,
+    }),
+    commonjs(),
+    json(),
+    injectProcessEnv({
+      NODE_ENV: 'production',
+    }),
+    injectEnv({ envFilePath: '../.env' }),
+    nodePolyfills(),
+    uglify(),
+  ],
+};
+
 export default [
   {
     input: 'background.js',
-    output: {
-      format: 'iife',
-      dir: './compiled',
-    },
-    plugins: [
-      commonjs(),
-      json(),
-      injectProcessEnv({
-        NODE_ENV: 'production',
-      }),
-      dotenv({ cwd: '../' }),
-      nodePolyfills(),
-      resolve({
-        browser: true,
-      }),
-      uglify(),
-    ],
+    ...common,
   },
   {
     input: 'contentScript.js',
-    output: {
-      format: 'iife',
-      dir: './compiled',
-    },
-    plugins: [
-      commonjs(),
-      json(),
-      injectProcessEnv({
-        NODE_ENV: 'production',
-      }),
-      nodePolyfills(),
-      resolve({
-        browser: true,
-      }),
-      uglify(),
-    ],
+    ...common,
   },
   {
     input: 'inject-script.js',
-    output: {
-      format: 'iife',
-      dir: './compiled',
-    },
-    plugins: [
-      commonjs(),
-      json(),
-      injectProcessEnv({
-        NODE_ENV: 'production',
-      }),
-      nodePolyfills(),
-      resolve({
-        browser: true,
-      }),
-      uglify(),
-    ],
+    ...common,
   },
 ];

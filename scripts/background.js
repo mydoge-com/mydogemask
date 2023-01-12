@@ -3,6 +3,7 @@ import { nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
+  // NOWNODES_BASE_URL,
   ONBOARDING_COMPLETE,
   PASSWORD,
   WALLET,
@@ -96,12 +97,8 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
 
 function onGetDogecoinPrice({ sendResponse } = {}) {
   nownodes
-    .get('/tickers', {
-      params: {
-        currency: 'usd',
-      },
-    })
-    .then(({ data }) => {
+    .get('/tickers/?currency=usd')
+    .json((data) => {
       sendResponse?.(data.rates);
     })
     .catch((err) => {
