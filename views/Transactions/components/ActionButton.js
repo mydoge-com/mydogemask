@@ -1,7 +1,7 @@
 import { Center, Text, VStack } from 'native-base';
 import { cloneElement } from 'react';
 
-export const ActionButton = ({ Icon, title }) => {
+export const ActionButton = ({ Icon, title, ...props }) => {
   return (
     <VStack alignItems='center'>
       <Center
@@ -9,8 +9,8 @@ export const ActionButton = ({ Icon, title }) => {
         height='40px'
         rounded='12px'
         bg='rgb(45,47,49)'
-        _light={{ bg: 'rgb(55,58,60)' }}
         shadow={1}
+        {...props}
       >
         {cloneElement(Icon, {
           size: 20,

@@ -135,6 +135,7 @@ export const QRCode = (props) => {
             borderRadius: logoSize / 2,
           }}
           source={avatarSource}
+          alt='avatar'
         />
       )}
     </Box>

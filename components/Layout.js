@@ -3,10 +3,18 @@ import React from 'react';
 
 import { Header } from './Header/Header';
 
-export const Layout = ({ withHeader, children, ...props }) => {
+export const Layout = ({
+  withHeader,
+  withBackButton,
+  backRoute,
+  children,
+  ...props
+}) => {
   return (
     <Box w='357px' h='600px' overflowX='hidden' bg='white' {...props}>
-      {withHeader ? <Header /> : null}
+      {withHeader ? (
+        <Header withBackButton={withBackButton} backRoute={backRoute} />
+      ) : null}
       {children}
     </Box>
   );

@@ -13,11 +13,12 @@ import {
   Text,
   VStack,
 } from 'native-base';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { IoArrowDown, IoArrowUp } from 'react-icons/io5';
 
 import { WalletDetailModal } from '../../components/Header/WalletDetailModal';
 import { Layout } from '../../components/Layout';
+import { useAppContext } from '../../hooks/useAppContext';
 import {
   asFiat,
   formatSatoshisAsDoge,
@@ -41,6 +42,10 @@ export function Transactions() {
     updateBalance,
     checkForNewTxs,
   } = useTransactions();
+
+  const { wallet, selectedAddressIndex, navigate } = useAppContext();
+
+  const [addressDetailOpen, setAddressDetailOpen] = useState(false);
 
   const renderTransaction = useCallback((tx) => {
     let address = tx.fromAddr;
@@ -142,19 +147,11 @@ export function Transactions() {
             {typeof usdValue === 'number' ? `$${asFiat(usdValue, 2)}` : ' '}
           </Text>
           <HStack space='24px' pt='20px'>
-            <Pressable onPress={() => console.log('show receive screen')}>
-              <ActionButton
-                Icon={<IoArrowDown />}
-                title='Receive'
-                isPressed={false}
-              />
+            <Pressable onPress={() => setAddressDetailOpen(true)}>
+              <ActionButton Icon={<IoArrowDown />} title='Receive' />
             </Pressable>
-            <Pressable onPress={() => console.log('show send screen')}>
-              <ActionButton
-                Icon={<IoArrowUp />}
-                title='Send'
-                isPressed={false}
-              />
+            <Pressable onPress={() => navigate('Send')}>
+              <ActionButton Icon={<IoArrowUp />} title='Send' />
             </Pressable>
           </HStack>
         </Center>
@@ -230,7 +227,12 @@ export function Transactions() {
           )}
         </Box>
       </Box>
-      <WalletDetailModal />
+      <WalletDetailModal
+        showModal={addressDetailOpen}
+        onClose={() => setAddressDetailOpen(false)}
+        walletName={`Address ${selectedAddressIndex + 1}`}
+        address={wallet.addresses[selectedAddressIndex]}
+      />
     </Layout>
   );
 }
