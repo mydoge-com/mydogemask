@@ -1,6 +1,7 @@
 import { Avatar, Box, Button, Center, HStack, Input, Text } from 'native-base';
 import { useCallback, useRef, useState } from 'react';
 import { IoSwapVerticalOutline } from 'react-icons/io5';
+import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { Layout } from '../../components/Layout';
@@ -108,6 +109,7 @@ const AddressScreen = ({
         onSubmitEditing={onSubmit}
         autoFocus
         type='number'
+        value={formData.address}
       />
       <Text fontSize='10px' color='red.500' pt='6px'>
         {errors.address || ' '}
@@ -130,9 +132,9 @@ const AddressScreen = ({
 const AmountScreen = ({
   setFormPage,
   errors,
-  // setErrors,
   setFormData,
   formData,
+  walletAddress,
 }) => {
   const onChangeTextDoge = useCallback(
     (text) => {
@@ -144,7 +146,6 @@ const AmountScreen = ({
         return;
       }
 
-      // update the USD value and use value to display fiat bleow
       const newFiatValue = parseFloat(cleanText * dogecoinPrice)
         .toFixed(2)
         .toString();
@@ -167,7 +168,7 @@ const AmountScreen = ({
       const cleanText = sanitizeFiat(text, formData.fiatAmount, isDeletion);
 
       let newDogeValue = parseFloat(cleanText / dogecoinPrice);
-      newDogeValue = parseFloat(newDogeValue.toFixed(2)); // show at most 2 decimals
+      newDogeValue = parseFloat(newDogeValue.toFixed(2));
 
       if (newDogeValue.toString().length > MAX_CHARACTERS) return;
 
@@ -186,15 +187,37 @@ const AmountScreen = ({
     return true;
   }, []);
 
-  const [dogecoinPrice, setDogecoinPrice] = useState(null);
+  const [dogecoinPrice, setDogecoinPrice] = useState();
+  const [addressBalance, setAddressBalance] = useState();
 
-  const fetchDogecoinPrice = useCallback(() => {
+  const getDogecoinPrice = useCallback(() => {
     sendMessage({ message: 'getDogecoinPrice' }, (rates) => {
-      setDogecoinPrice(rates.usd);
+      if (rates && rates.usd) {
+        setDogecoinPrice(rates.usd);
+      }
     });
   }, []);
 
-  useInterval(fetchDogecoinPrice, 10000, { immediate: true });
+  const getAddressBalance = useCallback(() => {
+    sendMessage(
+      { message: 'getAddressBalance', data: { address: walletAddress } },
+      (balance) => {
+        if (balance) {
+          console.log('balance', balance);
+          setAddressBalance(balance);
+        }
+      }
+    );
+  }, [walletAddress]);
+
+  useInterval(
+    () => {
+      getDogecoinPrice();
+      getAddressBalance();
+    },
+    10000,
+    { immediate: true }
+  );
 
   const onSubmit = useCallback(() => {
     if (validate()) {
@@ -331,6 +354,11 @@ const AmountScreen = ({
           ? formData.dogeAmount || 0
           : formData.fiatAmount || 0}
       </Text>
+      <HStack>
+        <Text fontSize='14px' color='gray.400' pt='12px'>
+          Balance: Ð{sb.toBitcoin(addressBalance)}
+        </Text>
+      </HStack>
       <HStack alignItems='center' mt='60px' space='12px'>
         <Button
           variant='unstyled'
@@ -341,7 +369,6 @@ const AmountScreen = ({
         </Button>
         <BigButton
           onPress={onSubmit}
-          // w='80%'
           type='submit'
           role='button'
           px='28px'

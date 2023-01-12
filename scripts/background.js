@@ -98,8 +98,21 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
 function onGetDogecoinPrice({ sendResponse } = {}) {
   nownodes
     .get('/tickers/?currency=usd')
-    .json((data) => {
-      sendResponse?.(data.rates);
+    .json((response) => {
+      sendResponse?.(response.rates);
+    })
+    .catch((err) => {
+      logError(err);
+      sendResponse?.(false);
+    });
+  return true;
+}
+
+function onGetAddressBalance({ data, sendResponse } = {}) {
+  nownodes
+    .get(`/address/${data.address}`)
+    .json((response) => {
+      sendResponse?.(response.balance);
     })
     .catch((err) => {
       logError(err);
@@ -264,6 +277,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case 'getDogecoinPrice':
       onGetDogecoinPrice({ sendResponse });
+      break;
+    case 'getAddressBalance':
+      onGetAddressBalance({ data, sendResponse });
       break;
     default:
   }
