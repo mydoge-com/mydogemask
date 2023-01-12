@@ -1,10 +1,16 @@
 import { Avatar, Box, Center, HStack, Input, Text } from 'native-base';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { IoSwapVerticalOutline } from 'react-icons/io5';
 
 import { BigButton } from '../../components/Button';
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
+import { useInterval } from '../../hooks/useInterval';
+import { sendMessage } from '../../scripts/helpers/message';
 import { validateAddress } from '../../scripts/helpers/wallet';
+import { sanitizeDogeInput, sanitizeFiat } from '../../utils/formatters';
+
+const MAX_CHARACTERS = 16;
 
 export function Send() {
   const { wallet, selectedAddressIndex } = useAppContext();
@@ -124,31 +130,91 @@ const AddressScreen = ({
 const AmountScreen = ({
   setFormStage,
   errors,
-  setErrors,
+  // setErrors,
   setFormData,
   formData,
 }) => {
-  const onChangeText = useCallback(
+  const onChangeTextDoge = useCallback(
     (text) => {
-      setFormData({ ...formData, amount: text });
       if (Number.isNaN(Number(text))) {
-        setErrors({ ...errors, amount: 'Invalid amount' });
-      } else {
-        setErrors({});
+        return;
       }
+      const cleanText = sanitizeDogeInput(text) || '0';
+      if (cleanText.length > MAX_CHARACTERS) {
+        return;
+      }
+
+      // update the USD value and use value to display fiat bleow
+      const newFiatValue = parseFloat(cleanText * dogecoinPrice)
+        .toFixed(2)
+        .toString();
+
+      setFormData({
+        ...formData,
+        dogeAmount: cleanText,
+        fiatAmount: String(newFiatValue),
+      });
     },
-    [errors, formData, setErrors, setFormData]
+    [dogecoinPrice, formData, setFormData]
   );
+
+  const onChangeTextFiat = useCallback(
+    (text) => {
+      if (Number.isNaN(Number(text))) {
+        return;
+      }
+      const isDeletion = text.length < formData.fiatAmount.length;
+      const cleanText = sanitizeFiat(text, formData.fiatAmount, isDeletion);
+
+      let newDogeValue = parseFloat(cleanText / dogecoinPrice);
+      newDogeValue = parseFloat(newDogeValue.toFixed(2)); // show at most 2 decimals
+
+      if (newDogeValue.toString().length > MAX_CHARACTERS) return;
+
+      setFormData({
+        ...formData,
+        fiatAmount: cleanText,
+        dogeAmount: String(newDogeValue),
+      });
+    },
+    [dogecoinPrice, formData, setFormData]
+  );
+
+  const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
 
   const validate = useCallback(() => {
     return true;
   }, []);
+
+  const [dogecoinPrice, setDogecoinPrice] = useState(null);
+
+  const fetchDogecoinPrice = useCallback(() => {
+    sendMessage({ message: 'getDogecoinPrice' }, (rates) => {
+      setDogecoinPrice(rates.usd);
+    });
+  }, []);
+
+  useInterval(fetchDogecoinPrice, 10000, { immediate: true });
 
   const onSubmit = useCallback(() => {
     if (validate()) {
       setFormStage('amount');
     }
   }, [setFormStage, validate]);
+
+  const dogeInputRef = useRef(null);
+  const fiatInputRef = useRef(null);
+
+  // const fiatAmount = Number(formData.dogeAmount) * dogecoinPrice || 0;
+
+  const swapInput = useCallback(() => {
+    // if (isCurrencySwapped) {
+    //   dogeInputRef.current?.focus();
+    // } else {
+    //   fiatInputRef.current?.focus();
+    // }
+    setIsCurrencySwapped((state) => !state);
+  }, []);
 
   return (
     <Center>
@@ -168,43 +234,112 @@ const AmountScreen = ({
           {formData.address.slice(0, 8)}...{formData.address.slice(-4)}
         </Text>
       </HStack>
-      <Input
-        variant='filled'
-        placeholder='Ðoge amount'
+      <Box
+        justifyContent='center'
+        alignItems='center'
         py='14px'
-        focusOutlineColor='brandYellow.500'
-        _hover={{
-          borderColor: 'brandYellow.500',
-        }}
-        _invalid={{
-          borderColor: 'red.500',
-          focusOutlineColor: 'red.500',
-          _hover: {
-            borderColor: 'red.500',
-          },
-        }}
-        isInvalid={'address' in errors}
-        onChangeText={onChangeText}
-        onSubmitEditing={onSubmit}
-        autoFocus
-        type='number'
-        w='60%'
-        fontSize='24px'
-        fontWeight='semibold'
-        _input={{
-          py: '10px',
-          pl: '4px',
-          type: 'number',
-        }}
-        InputLeftElement={
-          <Text fontSize='24px' fontWeight='semibold' px='4px'>
-            Ð
-          </Text>
-        }
-        textAlign='center'
-      />
-      <Text fontSize='10px' color='red.500' pt='6px'>
-        {errors.amount || ' '}
+        w='80%'
+        h='70px'
+      >
+        {!isCurrencySwapped ? (
+          <Input
+            variant='filled'
+            placeholder='0'
+            focusOutlineColor='brandYellow.500'
+            _hover={{
+              borderColor: 'brandYellow.500',
+            }}
+            _invalid={{
+              borderColor: 'red.500',
+              focusOutlineColor: 'red.500',
+              _hover: {
+                borderColor: 'red.500',
+              },
+            }}
+            isInvalid={'dogeAmount' in errors}
+            onChangeText={onChangeTextDoge}
+            onSubmitEditing={onSubmit}
+            autoFocus
+            type='number'
+            fontSize='24px'
+            fontWeight='semibold'
+            _input={{
+              py: '10px',
+              pl: '4px',
+              type: 'number',
+            }}
+            InputLeftElement={
+              <Text fontSize='24px' fontWeight='semibold' px='4px'>
+                Ð
+              </Text>
+            }
+            textAlign='center'
+            ref={dogeInputRef}
+            value={formData.dogeAmount}
+            position='absolute'
+            top={0}
+          />
+        ) : (
+          <Input
+            variant='filled'
+            placeholder='0'
+            focusOutlineColor='brandYellow.500'
+            _hover={{
+              borderColor: 'brandYellow.500',
+            }}
+            _invalid={{
+              borderColor: 'red.500',
+              focusOutlineColor: 'red.500',
+              _hover: {
+                borderColor: 'red.500',
+              },
+            }}
+            isInvalid={'dogeAmount' in errors}
+            onChangeText={onChangeTextFiat}
+            onSubmitEditing={onSubmit}
+            autoFocus
+            type='number'
+            fontSize='24px'
+            fontWeight='semibold'
+            _input={{
+              py: '10px',
+              pl: '4px',
+              type: 'number',
+            }}
+            InputLeftElement={
+              <Text fontSize='24px' fontWeight='semibold' px='4px'>
+                $
+              </Text>
+            }
+            textAlign='center'
+            ref={fiatInputRef}
+            value={formData.fiatAmount}
+            position='absolute'
+            top={0}
+            allowFontScaling
+            adjustsFontSizeToFit
+          />
+        )}
+      </Box>
+      {/* <Text fontSize='10px' color='red.500' pt='6px'>
+        {errors.dogeAmount || ' '}
+      </Text> */}
+      <BigButton
+        variant='secondary'
+        px='6px'
+        py='4px'
+        rounded='10px'
+        mt='18px'
+        mb='4px'
+        onPress={swapInput}
+      >
+        <IoSwapVerticalOutline size='22px' style={{ paddingTop: 3 }} />
+      </BigButton>
+      <Text fontSize='20px' fontWeight='semibold' color='gray.500' pt='6px'>
+        {!isCurrencySwapped ? '$' : 'Ð'}
+        {isCurrencySwapped
+          ? formData.dogeAmount || 0
+          : formData.fiatAmount || 0}
       </Text>
 
       <BigButton
@@ -213,7 +348,7 @@ const AmountScreen = ({
         type='submit'
         role='button'
         mt='32px'
-        isDisabled={!formData.address || formData.address.length <= 26}
+        isDisabled={!formData.dogeAmount || errors.dogeAmount}
       >
         Next
       </BigButton>

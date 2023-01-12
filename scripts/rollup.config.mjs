@@ -3,9 +3,10 @@
 import commonjs from '@rollup/plugin-commonjs';
 import json from '@rollup/plugin-json';
 import resolve from '@rollup/plugin-node-resolve';
+import dotenv from 'rollup-plugin-dotenv';
 import injectProcessEnv from 'rollup-plugin-inject-process-env';
 import nodePolyfills from 'rollup-plugin-polyfill-node';
-import { uglify } from "rollup-plugin-uglify";
+import { uglify } from 'rollup-plugin-uglify';
 
 export default [
   {
@@ -20,6 +21,7 @@ export default [
       injectProcessEnv({
         NODE_ENV: 'production',
       }),
+      dotenv({ cwd: '../' }),
       nodePolyfills(),
       resolve({
         browser: true,

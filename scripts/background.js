@@ -1,3 +1,5 @@
+import { logError } from '../utils/error';
+import { nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
@@ -89,6 +91,23 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
   } else {
     sendResponse?.(false);
   }
+  return true;
+}
+
+function onGetDogecoinPrice({ sendResponse } = {}) {
+  nownodes
+    .get('/tickers', {
+      params: {
+        currency: 'usd',
+      },
+    })
+    .then(({ data }) => {
+      sendResponse?.(data.rates);
+    })
+    .catch((err) => {
+      logError(err);
+      sendResponse?.(false);
+    });
   return true;
 }
 
@@ -245,6 +264,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case 'deleteAddress':
       onDeleteAddress({ data, sendResponse });
+      break;
+    case 'getDogecoinPrice':
+      onGetDogecoinPrice({ sendResponse });
       break;
     default:
   }
