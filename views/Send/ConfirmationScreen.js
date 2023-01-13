@@ -2,23 +2,43 @@ import { Avatar, Button, Center, HStack, Text } from 'native-base';
 import { useCallback } from 'react';
 
 import { BigButton } from '../../components/Button';
+import { sendMessage } from '../../scripts/helpers/message';
+import { validateTransaction } from '../../scripts/helpers/wallet';
 
 export const ConfirmationScreen = ({
   setFormPage,
   errors,
+  setErrors,
   formData,
   walletAddress,
   selectedAddressIndex,
 }) => {
-  const validate = useCallback(() => {
-    return true;
-  }, []);
-
   const onSubmit = useCallback(() => {
-    if (validate()) {
-      setFormPage('amount');
-    }
-  }, [setFormPage, validate]);
+    let addressBalance;
+    sendMessage(
+      { message: 'getAddressBalance', data: { address: walletAddress } },
+      (balance) => {
+        if (balance) {
+          addressBalance = balance;
+        } else {
+          setErrors({ confirmation: 'Error getting address balance' });
+        }
+
+        const error = validateTransaction({
+          senderAddress: walletAddress,
+          recipientAddress: formData.address.trim(),
+          dogeAmount: formData.dogeAmount,
+          addressBalance,
+        });
+        if (error) {
+          setErrors({ confirmation: error });
+          return;
+        }
+        // Process transaction
+        console.log('sending transaction');
+      }
+    );
+  }, [formData.address, formData.dogeAmount, setErrors, walletAddress]);
 
   return (
     <Center>
@@ -65,7 +85,7 @@ export const ConfirmationScreen = ({
           type='submit'
           role='button'
           px='28px'
-          isDisabled={!Number(formData.dogeAmount) || errors.dogeAmount}
+          isDisabled={errors.confirmation}
         >
           Pay
         </BigButton>

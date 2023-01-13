@@ -6,7 +6,7 @@ import sb from 'satoshi-bitcoin';
 import { BigButton } from '../../components/Button';
 import { useInterval } from '../../hooks/useInterval';
 import { sendMessage } from '../../scripts/helpers/message';
-import { validateAddress } from '../../scripts/helpers/wallet';
+import { validateTransaction } from '../../scripts/helpers/wallet';
 import { sanitizeDogeInput, sanitizeFiat } from '../../utils/formatters';
 
 const MAX_CHARACTERS = 10000;
@@ -69,7 +69,7 @@ export const AmountScreen = ({
   );
 
   const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
-  const [dogecoinPrice, setDogecoinPrice] = useState();
+  const [dogecoinPrice, setDogecoinPrice] = useState(0);
   const [addressBalance, setAddressBalance] = useState();
 
   const getDogecoinPrice = useCallback(() => {
@@ -115,48 +115,27 @@ export const AmountScreen = ({
     onChangeTextDoge(String(sb.toBitcoin(addressBalance)));
   }, [addressBalance, onChangeTextDoge]);
 
-  const validate = useCallback(() => {
-    if (!validateAddress(formData.address.trim())) {
-      setErrors({
-        ...errors,
-        dogeAmount: 'Invalid address',
-      });
-      return false;
-    } else if (formData.address.trim() === walletAddress) {
-      setErrors({
-        ...errors,
-        dogeAmount: 'Cannot send to yourself',
-      });
-      return false;
-    } else if (formData.dogeAmount === '0') {
-      setErrors({
-        ...errors,
-        dogeAmount: 'Cannot send 0 DOGE',
-      });
-      return false;
-    } else if (Number(formData.dogeAmount) > sb.toBitcoin(addressBalance)) {
-      setErrors({
-        ...errors,
-        dogeAmount: 'Insufficient balance',
-      });
-      return false;
+  const onSubmit = useCallback(() => {
+    const error = validateTransaction({
+      senderAddress: walletAddress,
+      recipientAddress: formData.address.trim(),
+      dogeAmount: formData.dogeAmount,
+      addressBalance,
+    });
+    if (error) {
+      setErrors({ ...errors, dogeAmount: error });
+    } else {
+      setFormPage('confirmation');
     }
-    setErrors({});
-    return true;
   }, [
     addressBalance,
     errors,
     formData.address,
     formData.dogeAmount,
     setErrors,
+    setFormPage,
     walletAddress,
   ]);
-
-  const onSubmit = useCallback(() => {
-    if (validate()) {
-      setFormPage('confirmation');
-    }
-  }, [setFormPage, validate]);
 
   return (
     <Center>
@@ -206,7 +185,7 @@ export const AmountScreen = ({
                 borderColor: 'red.500',
               },
             }}
-            isInvalid={'dogeAmount' in errors}
+            isInvalid={errors.dogeAmount}
             onChangeText={onChangeTextDoge}
             onSubmitEditing={onSubmit}
             autoFocus
@@ -244,7 +223,7 @@ export const AmountScreen = ({
                 borderColor: 'red.500',
               },
             }}
-            isInvalid={'dogeAmount' in errors}
+            isInvalid={errors.dogeAmount}
             onChangeText={onChangeTextFiat}
             onSubmitEditing={onSubmit}
             autoFocus
