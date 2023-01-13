@@ -104,12 +104,6 @@ export const AmountScreen = ({
     { immediate: true }
   );
 
-  const onSubmit = useCallback(() => {
-    if (validate()) {
-      setFormPage('confirmation');
-    }
-  }, [setFormPage, validate]);
-
   const dogeInputRef = useRef(null);
   const fiatInputRef = useRef(null);
 
@@ -140,10 +134,7 @@ export const AmountScreen = ({
         dogeAmount: 'Cannot send 0 DOGE',
       });
       return false;
-    } else if (
-      !addressBalance ||
-      formData.dogeAmount > sb.toBitcoin(addressBalance)
-    ) {
+    } else if (Number(formData.dogeAmount) > sb.toBitcoin(addressBalance)) {
       setErrors({
         ...errors,
         dogeAmount: 'Insufficient balance',
@@ -160,6 +151,12 @@ export const AmountScreen = ({
     setErrors,
     walletAddress,
   ]);
+
+  const onSubmit = useCallback(() => {
+    if (validate()) {
+      setFormPage('confirmation');
+    }
+  }, [setFormPage, validate]);
 
   return (
     <Center>
@@ -325,7 +322,9 @@ export const AmountScreen = ({
           type='submit'
           role='button'
           px='28px'
-          isDisabled={!Number(formData.dogeAmount) || errors.dogeAmount}
+          isDisabled={
+            !Number(formData.dogeAmount) || !addressBalance || errors.dogeAmount
+          }
         >
           Next
         </BigButton>
