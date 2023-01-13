@@ -33,6 +33,7 @@ export function Send() {
           setFormData={setFormData}
           errors={errors}
           setErrors={setErrors}
+          selectedAddressIndex={selectedAddressIndex}
         />
       </Box>
     </Layout>

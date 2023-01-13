@@ -1,5 +1,5 @@
 import { Avatar, Box, Button, Center, HStack, Input, Text } from 'native-base';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { IoSwapVerticalOutline } from 'react-icons/io5';
 import sb from 'satoshi-bitcoin';
 
@@ -17,6 +17,7 @@ export const AmountScreen = ({
   setFormData,
   formData,
   walletAddress,
+  selectedAddressIndex,
 }) => {
   const onChangeTextDoge = useCallback(
     (text) => {
@@ -64,21 +65,24 @@ export const AmountScreen = ({
   );
 
   const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
+  const [dogecoinPrice, setDogecoinPrice] = useState();
+  const [addressBalance, setAddressBalance] = useState();
 
   const validate = useCallback(() => {
     return true;
   }, []);
 
-  const [dogecoinPrice, setDogecoinPrice] = useState();
-  const [addressBalance, setAddressBalance] = useState();
-
   const getDogecoinPrice = useCallback(() => {
-    sendMessage({ message: 'getDogecoinPrice' }, (rates) => {
-      if (rates && rates.usd) {
-        setDogecoinPrice(rates.usd);
+    sendMessage({ message: 'getDogecoinPrice' }, ({ usd }) => {
+      if (usd) {
+        setDogecoinPrice(usd);
       }
     });
   }, []);
+
+  useEffect(() => {
+    getAddressBalance();
+  }, [getAddressBalance, walletAddress]);
 
   const getAddressBalance = useCallback(() => {
     sendMessage(
@@ -102,7 +106,7 @@ export const AmountScreen = ({
 
   const onSubmit = useCallback(() => {
     if (validate()) {
-      setFormPage('amount');
+      setFormPage('confirmation');
     }
   }, [setFormPage, validate]);
 
@@ -119,7 +123,14 @@ export const AmountScreen = ({
 
   return (
     <Center>
-      <Text fontSize='xl' pb='16px' textAlign='center' fontWeight='semibold'>
+      <Text fontSize='sm' color='gray.500' textAlign='center' mb='8px'>
+        <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
+          Wallet {selectedAddressIndex + 1}
+        </Text>
+        {'  '}
+        {walletAddress.slice(0, 8)}...{formData.address.slice(-4)}
+      </Text>
+      <Text fontSize='xl' pb='4px' textAlign='center' fontWeight='semibold'>
         Paying
       </Text>
       <HStack alignItems='center' space='12px' pb='28px'>
