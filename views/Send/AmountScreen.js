@@ -6,6 +6,7 @@ import sb from 'satoshi-bitcoin';
 import { BigButton } from '../../components/Button';
 import { useInterval } from '../../hooks/useInterval';
 import { sendMessage } from '../../scripts/helpers/message';
+import { validateAddress } from '../../scripts/helpers/wallet';
 import { sanitizeDogeInput, sanitizeFiat } from '../../utils/formatters';
 
 const MAX_CHARACTERS = 10000;
@@ -14,6 +15,7 @@ const REFRESH_INTERVAL = 10000;
 export const AmountScreen = ({
   setFormPage,
   errors,
+  setErrors,
   setFormData,
   formData,
   walletAddress,
@@ -24,6 +26,7 @@ export const AmountScreen = ({
       if (Number.isNaN(Number(text))) {
         return;
       }
+      setErrors({ ...errors, dogeAmount: '' });
       const cleanText = sanitizeDogeInput(text) || '0';
       if (cleanText.length > MAX_CHARACTERS) {
         return;
@@ -39,7 +42,7 @@ export const AmountScreen = ({
         fiatAmount: String(newFiatValue),
       });
     },
-    [dogecoinPrice, formData, setFormData]
+    [dogecoinPrice, errors, formData, setErrors, setFormData]
   );
 
   const onChangeTextFiat = useCallback(
@@ -47,6 +50,7 @@ export const AmountScreen = ({
       if (Number.isNaN(Number(text))) {
         return;
       }
+      setErrors({ ...errors, dogeAmount: '' });
       const isDeletion = text.length < formData.fiatAmount.length;
       const cleanText = sanitizeFiat(text, formData.fiatAmount, isDeletion);
 
@@ -61,16 +65,12 @@ export const AmountScreen = ({
         dogeAmount: String(newDogeValue),
       });
     },
-    [dogecoinPrice, formData, setFormData]
+    [dogecoinPrice, errors, formData, setErrors, setFormData]
   );
 
   const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
   const [dogecoinPrice, setDogecoinPrice] = useState();
   const [addressBalance, setAddressBalance] = useState();
-
-  const validate = useCallback(() => {
-    return true;
-  }, []);
 
   const getDogecoinPrice = useCallback(() => {
     sendMessage({ message: 'getDogecoinPrice' }, ({ usd }) => {
@@ -121,6 +121,46 @@ export const AmountScreen = ({
     onChangeTextDoge(String(sb.toBitcoin(addressBalance)));
   }, [addressBalance, onChangeTextDoge]);
 
+  const validate = useCallback(() => {
+    if (!validateAddress(formData.address.trim())) {
+      setErrors({
+        ...errors,
+        dogeAmount: 'Invalid address',
+      });
+      return false;
+    } else if (formData.address.trim() === walletAddress) {
+      setErrors({
+        ...errors,
+        dogeAmount: 'Cannot send to yourself',
+      });
+      return false;
+    } else if (formData.dogeAmount === '0') {
+      setErrors({
+        ...errors,
+        dogeAmount: 'Cannot send 0 DOGE',
+      });
+      return false;
+    } else if (
+      !addressBalance ||
+      formData.dogeAmount > sb.toBitcoin(addressBalance)
+    ) {
+      setErrors({
+        ...errors,
+        dogeAmount: 'Insufficient balance',
+      });
+      return false;
+    }
+    setErrors({});
+    return true;
+  }, [
+    addressBalance,
+    errors,
+    formData.address,
+    formData.dogeAmount,
+    setErrors,
+    walletAddress,
+  ]);
+
   return (
     <Center>
       <Text fontSize='sm' color='gray.500' textAlign='center' mb='8px'>
@@ -149,7 +189,8 @@ export const AmountScreen = ({
       <Box
         justifyContent='center'
         alignItems='center'
-        py='14px'
+        pt='14px'
+        pb='8px'
         w='80%'
         h='70px'
       >
@@ -233,6 +274,10 @@ export const AmountScreen = ({
           />
         )}
       </Box>
+
+      <Text fontSize='10px' color='red.500'>
+        {errors.dogeAmount || ' '}
+      </Text>
       <BigButton
         variant='secondary'
         px='6px'
