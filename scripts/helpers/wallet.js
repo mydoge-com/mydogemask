@@ -4,6 +4,7 @@ import * as bitcoin from 'bitcoinjs-lib';
 import * as _networks from 'bitcoinjs-lib/src/networks';
 import * as constants from 'dogecoin-bip84/src/constants';
 import * as Validator from 'multicoin-address-validator';
+import sb from 'satoshi-bitcoin';
 
 const networks = { ..._networks };
 // Hack bitcoinjs-lib values to use the dogecoin values from bip84
@@ -36,3 +37,21 @@ export function fromWIF(wif) {
 export function validateAddress(data) {
   return Validator.validate(data, 'doge', 'prod');
 }
+
+export const validateTransaction = ({
+  senderAddress,
+  recipientAddress,
+  dogeAmount,
+  addressBalance,
+}) => {
+  if (!validateAddress(recipientAddress)) {
+    return 'Invalid address';
+  } else if (senderAddress.trim() === recipientAddress.trim()) {
+    return 'Cannot send to yourself';
+  } else if (!Number(dogeAmount)) {
+    return 'Invalid Doge amount';
+  } else if (Number(dogeAmount) > sb.toBitcoin(addressBalance)) {
+    return 'Insufficient balance';
+  }
+  return undefined;
+};

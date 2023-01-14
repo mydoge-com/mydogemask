@@ -16,13 +16,14 @@ import { MdQrCode2 } from 'react-icons/md';
 
 import { useAppContext } from '../../hooks/useAppContext';
 import { sendMessage } from '../../scripts/helpers/message';
+import { BackButton } from '../BackButton';
 import { ToastRender } from '../ToastRender';
 import { DeleteAddressModal } from './DeleteAddressModal';
 import { SecurityModal } from './SecurityModal';
 import { WalletDetailModal } from './WalletDetailModal';
 
-export const Header = () => {
-  const { wallet, selectedAddressIndex, dispatch } = useAppContext();
+export const Header = ({ withBackButton, backRoute }) => {
+  const { wallet, selectedAddressIndex, dispatch, navigate } = useAppContext();
   const onSignOut = useCallback(() => {
     sendMessage(
       { message: 'signOut' },
@@ -96,12 +97,20 @@ export const Header = () => {
       alignItems='center'
       bg='rgba(255,255,255, 0.1)'
       position='absolute'
-      zIndex={99}
+      zIndex={1}
       w='100%'
       py='8px'
       px='12px'
       justifyContent='flex-end'
     >
+      {withBackButton ? (
+        <BackButton
+          position='absolute'
+          left='12px'
+          pt='8px'
+          onPress={() => navigate(backRoute)}
+        />
+      ) : null}
       <Menu
         minW='250px'
         trigger={({ onPress, ...triggerProps }) => {

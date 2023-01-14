@@ -5,6 +5,8 @@
 - Use Node.js version 18
 - Use Yarn installed by NPM only: `npm install --global yarn`
 - Install packages with `yarn install`.
+- Create a file named .env at the root of the project and add the following line to the .env file, replacing "YOUR_API_KEY" with your actual NowNodes API key: <br/>
+  `NEXT_PUBLIC_NOWNODES_API_KEY=YOUR_API_KEY`
 - Run `yarn start` to start the development server
 - Open [http://localhost:3000](http://localhost:3000) to view the development build in your browser
 
