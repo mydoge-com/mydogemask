@@ -5,19 +5,60 @@ import sb from 'satoshi-bitcoin';
 
 import { MIN_CONFIRMATIONS } from '../../constants/Doge';
 import { MINUTES_10, SECONDS_10 } from '../../constants/Time';
+import { useAppContext } from '../../hooks/useAppContext';
 import { useInterval } from '../../hooks/useInterval';
+import { sendMessage } from '../../scripts/helpers/message';
 import { callWithRetry } from '../../utils/api';
 import { logError } from '../../utils/error';
 import { getTxSummary } from '../../utils/transactions';
 
+const QUERY_INTERVAL = 30000;
+
 export const useTransactions = () => {
-  const QUERY_INTERVAL = 30000;
-  const [balance, setBalance] = useState(4200); // TODO: change back to null
-  const [usdValue, setUSDValue] = useState(null);
-  const [usdPrice, setUSDPrice] = useState(0.08479); // TODO: change back to 0
+  const { wallet, selectedAddressIndex } = useAppContext();
+  const walletAddress = wallet.addresses[selectedAddressIndex];
+
+  const [balance, setBalance] = useState(null);
+  const [usdPrice, setUSDPrice] = useState(0);
   const [txList, setTxList] = useState([]);
   const [hasLoadedTxs, setHasLoadedTxs] = useState(false);
   const [failedInitialTxLoad, setFailedInitialTxLoad] = useState(false);
+
+  const usdValue = balance ? sb.toBitcoin(balance) * usdPrice : 0;
+  const getAddressBalance = useCallback(() => {
+    sendMessage(
+      { message: 'getAddressBalance', data: { address: walletAddress } },
+      (walletBalance) => {
+        if (walletBalance) {
+          setBalance(Number(walletBalance));
+        } else {
+          logError(new Error('Failed to get wallet balance'));
+        }
+      }
+    );
+  }, [walletAddress]);
+
+  const getDogecoinPrice = useCallback(() => {
+    sendMessage({ message: 'getDogecoinPrice' }, ({ usd }) => {
+      if (usd) {
+        setUSDPrice(usd);
+      } else {
+        logError(new Error('Failed to get dogecoin price'));
+      }
+    });
+  }, []);
+
+  useInterval(
+    () => {
+      getAddressBalance();
+      getDogecoinPrice();
+    },
+    QUERY_INTERVAL,
+    true
+  );
+
+  useEffect(() => getAddressBalance(), [getAddressBalance, walletAddress]);
+
   // note: we rely on these initial values for oldestTx and newestTx
   const [oldestTx, setOldestTx] = useState({
     block_height: 0, // important: must be 0, we check === 0 to know if we have one yet or not
@@ -56,25 +97,25 @@ export const useTransactions = () => {
   // Update balance on load and at interval
   useInterval(updateBalance, QUERY_INTERVAL, true);
 
-  const updateUSDValue = useCallback(async () => {
-    try {
-      const response = await callWithRetry(axios.get, `/dogeverse/stats`, {
-        cache: { maxAge: SECONDS_10 },
-      });
-      setUSDPrice(response.data.stats.price);
-    } catch (e) {
-      logError(e);
-    }
-  }, []);
+  // const updateUSDValue = useCallback(async () => {
+  //   try {
+  //     const response = await callWithRetry(axios.get, `/dogeverse/stats`, {
+  //       cache: { maxAge: SECONDS_10 },
+  //     });
+  //     setUSDPrice(response.data.stats.price);
+  //   } catch (e) {
+  //     logError(e);
+  //   }
+  // }, []);
 
-  // Update USD value on load and at interval
-  useInterval(updateUSDValue, QUERY_INTERVAL, true);
+  // // Update USD value on load and at interval
+  // useInterval(updateUSDValue, QUERY_INTERVAL, true);
 
-  useEffect(() => {
-    if (balance !== null) {
-      setUSDValue(usdPrice * sb.toBitcoin(balance));
-    }
-  }, [usdPrice, balance]);
+  // useEffect(() => {
+  //   if (balance !== null) {
+  //     setUSDValue(usdPrice * sb.toBitcoin(balance));
+  //   }
+  // }, [usdPrice, balance]);
 
   // optionally takes oldest block height
   const queryTxs = useCallback(

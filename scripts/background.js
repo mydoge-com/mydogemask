@@ -120,6 +120,19 @@ function onGetAddressBalance({ data, sendResponse } = {}) {
   return true;
 }
 
+function onGetTransactionHistory({ data, sendResponse } = {}) {
+  nownodes
+    .get(`/balancehistory/${data.address}`)
+    .json((response) => {
+      sendResponse?.(response.balance);
+    })
+    .catch((err) => {
+      logError(err);
+      sendResponse?.(false);
+    });
+  return true;
+}
+
 function onGenerateAddress({ sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
     ([wallet, password]) => {
@@ -279,6 +292,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case 'getAddressBalance':
       onGetAddressBalance({ data, sendResponse });
+      break;
+    case 'getTransactionHistory':
+      onGetTransactionHistory({ data, sendResponse });
       break;
     default:
   }
