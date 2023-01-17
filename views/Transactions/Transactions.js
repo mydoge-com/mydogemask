@@ -36,11 +36,12 @@ export function Transactions() {
     balance,
     usdValue,
     transactions,
-    hasLoadedTxs,
-    listEmpty,
-    failedInitialTxLoad,
-    updateBalance,
-    checkForNewTxs,
+    loading,
+    // hasLoadedTxs,
+    // listEmpty,
+    // failedInitialTxLoad,
+    // updateBalance,
+    // checkForNewTxs,
   } = useTransactions();
 
   const { wallet, selectedAddressIndex, navigate } = useAppContext();
@@ -156,8 +157,8 @@ export function Transactions() {
           </HStack>
         </Center>
         <Box flex={1}>
-          {hasLoadedTxs ? (
-            listEmpty ? (
+          {!loading ? (
+            transactions.length <= 0 ? (
               <Center flex={0.9}>
                 <Center flex={1} key='ListEmptyComponent-C2'>
                   <Icon
@@ -204,23 +205,24 @@ export function Transactions() {
                 </Box>
               </>
             )
-          ) : failedInitialTxLoad ? (
-            <Center flex={1} pb='50px'>
-              <Heading size='md'>Error loading transactions...</Heading>
-              <HStack>
-                <Button
-                  ml='auto'
-                  mr='auto'
-                  onPress={() => {
-                    updateBalance();
-                    checkForNewTxs();
-                  }}
-                >
-                  Try Again
-                </Button>
-              </HStack>
-            </Center>
           ) : (
+            // : failedInitialTxLoad ? (
+            //   <Center flex={1} pb='50px'>
+            //     <Heading size='md'>Error loading transactions...</Heading>
+            //     <HStack>
+            //       <Button
+            //         ml='auto'
+            //         mr='auto'
+            //         onPress={() => {
+            //           updateBalance();
+            //           checkForNewTxs();
+            //         }}
+            //       >
+            //         Try Again
+            //       </Button>
+            //     </HStack>
+            //   </Center>
+            // )
             <Center flex={1}>
               <Spinner color='amber.400' />
             </Center>
