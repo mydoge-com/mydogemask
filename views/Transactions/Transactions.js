@@ -74,7 +74,7 @@ export function Transactions() {
               _light={{ color: 'gray.400' }}
               _dark={{ color: 'gray.500' }}
             >
-              {tx.time ? moment(tx.time).fromNow() : null}
+              {tx.blockTime ? moment(tx.blockTime).fromNow() : null}
             </Text>
           </VStack>
           <VStack flexDirection='row' alignItems='flex-start' ml='8px'>
