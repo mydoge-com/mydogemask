@@ -52,7 +52,7 @@ export const useTransactions = () => {
       {
         message: 'getTransactions',
         data: {
-          address: 'DAHkCF5LajV6jYyi5o4eMvtpqXRcm9eZYq',
+          address: walletAddress,
           page: currentPage.current,
         },
       },

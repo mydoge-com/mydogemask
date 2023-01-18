@@ -32,9 +32,12 @@ export function getTxSummary(tx, address) {
 }
 
 export const formatTransaction = ({ transaction, walletAddress }) => {
-  const address = transaction.vout[0].addresses[0];
+  let address = transaction.vout[0].addresses[0];
   const amount = transaction.vout[0].value;
-  const type = address === walletAddress ? 'outgoing' : 'incoming';
+  const type = address === walletAddress ? 'incoming' : 'outgoing';
+  if (type === 'incoming') {
+    [address] = transaction.vin[0].addresses;
+  }
   const { txid: id, blockTime, confirmations } = transaction;
   return { address, amount, type, blockTime, id, confirmations };
 };

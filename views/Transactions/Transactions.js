@@ -273,7 +273,7 @@ const Transaction = ({
           </VStack>
           <VStack flex={1}>
             <Text fontSize='xs' fontWeight='medium'>
-              {address}
+              {address.slice(0, 8)}...{address.slice(-4)}
             </Text>
 
             <Text
