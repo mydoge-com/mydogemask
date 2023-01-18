@@ -185,8 +185,8 @@ export const Header = ({ withBackButton, backRoute }) => {
           </VStack>
           <Divider my='6px' w='100%' />
           <MenuItem onPress={() => setOpenModal('WALLET_DETAIL')}>
-            <MdQrCode2 size='20px' alt='Receive dogecoin' />
-            Receive dogecoin
+            <MdQrCode2 size='20px' alt='Receive Dogecoin' />
+            Receive Dogecoin
           </MenuItem>
           <Divider my='6px' w='100%' />
           <MenuItem onPress={onGenerateAddress}>

@@ -72,7 +72,7 @@ const DeleteWallet = () => {
     <>
       <Section
         title='Delete wallet'
-        body='Erase the current wallet from this device'
+        body='Erase the current wallet from this device.'
         buttonVariant='danger'
         action={() => setIsOpen(true)}
       />

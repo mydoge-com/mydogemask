@@ -1,15 +1,22 @@
 import * as bip32 from 'bip32';
 import * as bip39 from 'bip39';
 import * as bitcoin from 'bitcoinjs-lib';
-import * as _networks from 'bitcoinjs-lib/src/networks';
-import * as constants from 'dogecoin-bip84/src/constants';
 import * as Validator from 'multicoin-address-validator';
 import sb from 'satoshi-bitcoin';
 
-const networks = { ..._networks };
-// Hack bitcoinjs-lib values to use the dogecoin values from bip84
-networks.dogecoin = { ...constants.NETWORKS.mainnet };
-networks.dogecoin.wif = networks.bitcoin.wif;
+// Dogecoin mainnet
+const network = {
+  messagePrefix: '\x19Dogecoin Signed Message:\n',
+  bech32: 'dc',
+  bip44: 3,
+  bip32: {
+    public: 0x02facafd,
+    private: 0x02fac398,
+  },
+  pubKeyHash: 0x1e,
+  scriptHash: 0x16,
+  wif: 0x80,
+};
 
 export function generatePhrase() {
   return bip39.generateMnemonic(128);
@@ -20,18 +27,18 @@ export function generateRoot(phrase) {
 }
 
 export function generateChild(root, idx) {
-  return root.derivePath(`m/44'/3'/0'/0/${idx}`);
+  return root.derivePath(`m/44'/${network.bip44}'/0'/0/${idx}`);
 }
 
 export function generateAddress(child) {
   return bitcoin.payments.p2pkh({
     pubkey: child.publicKey,
-    network: networks.dogecoin,
+    network,
   }).address;
 }
 
 export function fromWIF(wif) {
-  return new bitcoin.ECPair.fromWIF(wif, networks.dogecoin); // eslint-disable-line
+  return new bitcoin.ECPair.fromWIF(wif, network); // eslint-disable-line
 }
 
 export function validateAddress(data) {

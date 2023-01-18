@@ -41,7 +41,7 @@ export const useTransactions = () => {
       if (usd) {
         setUSDPrice(usd);
       } else {
-        logError(new Error('Failed to get dogecoin price'));
+        logError(new Error('Failed to get Dogecoin price'));
       }
     });
   }, []);
