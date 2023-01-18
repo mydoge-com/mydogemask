@@ -15,8 +15,10 @@ export const useTransactions = () => {
 
   const [balance, setBalance] = useState(null);
   const [usdPrice, setUSDPrice] = useState(0);
-  const [transactions, setTransactions] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [transactions, setTransactions] = useState();
+  const [loading, setLoading] = useState(true);
+
+  const [hasMore, setHasMore] = useState(true);
 
   const currentPage = useRef(0);
 
@@ -49,17 +51,26 @@ export const useTransactions = () => {
     sendMessage(
       {
         message: 'getTransactions',
-        data: { address: walletAddress, page: currentPage.current },
+        data: {
+          address: 'DAHkCF5LajV6jYyi5o4eMvtpqXRcm9eZYq',
+          page: currentPage.current,
+        },
       },
-      (txHistory) => {
-        if (txHistory) {
+      ({ page, totalPages, transactions: transactions_ }) => {
+        if (transactions_) {
           const formattedTransactions = [];
-          txHistory.transactions.forEach((transaction) => {
+          transactions_.forEach((transaction) => {
             formattedTransactions.push(
               formatTransaction({ transaction, walletAddress })
             );
           });
-          setTransactions((state) => [...state, ...formattedTransactions]);
+          setTransactions((state = []) =>
+            [...state, ...formattedTransactions].filter(
+              (tx, i, self) => self.findIndex((t) => t.id === tx.id) === i
+            )
+          );
+          currentPage.current = page + 1;
+          setHasMore(page < totalPages);
           setLoading(false);
         } else {
           logError(new Error('Failed to get transaction history'));
@@ -67,6 +78,12 @@ export const useTransactions = () => {
       }
     );
   }, [walletAddress]);
+
+  const fetchMore = useCallback(() => {
+    if (hasMore) {
+      getTransactions();
+    }
+  }, [getTransactions, hasMore]);
 
   useInterval(
     () => {
@@ -87,5 +104,7 @@ export const useTransactions = () => {
     usdValue,
     loading,
     transactions,
+    hasMore,
+    fetchMore,
   };
 };

@@ -35,6 +35,6 @@ export const formatTransaction = ({ transaction, walletAddress }) => {
   const address = transaction.vout[0].addresses[0];
   const amount = transaction.vout[0].value;
   const type = address === walletAddress ? 'outgoing' : 'incoming';
-  const { txid, blockTime } = transaction;
-  return { address, amount, type, blockTime, txid };
+  const { txid: id, blockTime } = transaction;
+  return { address, amount, type, blockTime, id };
 };
