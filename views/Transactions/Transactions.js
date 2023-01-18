@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Center,
+  FlatList,
   Heading,
   HStack,
   Icon,
@@ -15,7 +16,8 @@ import {
   Text,
   VStack,
 } from 'native-base';
-import { Fragment, useState } from 'react';
+import { Fragment, useCallback, useState } from 'react';
+import { FiArrowUpRight, FiCopy } from 'react-icons/fi';
 import { IoArrowDown, IoArrowUp } from 'react-icons/io5';
 import TimeAgo from 'timeago-react';
 
@@ -23,6 +25,7 @@ import { BigButton } from '../../components/Button';
 import { WalletDetailModal } from '../../components/Header/WalletDetailModal';
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
+import { useCopyText } from '../../hooks/useCopyText';
 import {
   asFiat,
   formatSatoshisAsDoge,
@@ -46,6 +49,11 @@ export function Transactions() {
   const imageRatio = 1601 / 1158;
   const imageWidth = 360;
   const imageHeight = imageWidth / imageRatio;
+
+  const renderItem = useCallback(
+    ({ item }) => <Transaction transaction={item} />,
+    []
+  );
 
   return (
     <Layout withHeader p={0}>
@@ -108,9 +116,7 @@ export function Transactions() {
                 <HStack width='86%' key='ListEmptyComponent-HS2'>
                   <Button
                     key='ListEmptyComponent-BB4'
-                    onPress={() => {
-                      console.log('show receive screen');
-                    }}
+                    onPress={() => setAddressDetailOpen(true)}
                   >
                     Deposit DOGE
                   </Button>
@@ -126,12 +132,7 @@ export function Transactions() {
               </Center>
               <Box px='10px'>
                 <VStack space='10px'>
-                  {transactions.map((transaction) => (
-                    <Transaction
-                      transaction={transaction}
-                      key={transaction.id}
-                    />
-                  ))}
+                  <FlatList data={transactions} renderItem={renderItem} />
                   {hasMore ? (
                     <Button
                       variant='unstyled'
@@ -179,10 +180,12 @@ const TransactionModal = ({
   amount,
   blockTime,
   id,
+  confirmations,
 }) => {
+  const { copyTextToClipboard, textCopied } = useCopyText({ text: address });
   return (
     <Modal isOpen={isOpen} onClose={onClose} size='full'>
-      <Modal.Content w='80%'>
+      <Modal.Content w='90%'>
         <Modal.CloseButton />
         <Modal.Body alignItems='center' pt='54px' pb='36px'>
           <VStack w='100%' alignItems='center'>
@@ -194,7 +197,7 @@ const TransactionModal = ({
             >
               {type === 'outgoing' ? 'TO' : 'FROM'}
             </Text>
-            <HStack alignItems='center' space='12px' pb='8px'>
+            <HStack alignItems='center' space='12px'>
               <Avatar
                 size='sm'
                 bg='brandYellow.500'
@@ -210,15 +213,30 @@ const TransactionModal = ({
               >
                 {address.slice(0, 8)}...{address.slice(-4)}
               </Text>
+              <Button
+                variant='subtle'
+                px='6px'
+                py='4px'
+                onPress={copyTextToClipboard}
+                colorScheme='gray'
+              >
+                <FiCopy />
+              </Button>
             </HStack>
-            <Text textAlign='center' fontSize='28px' fontWeight='semibold'>
+            <Text fontSize='10px' color='gray.500'>
+              {textCopied ? 'Address copied' : ' '}
+            </Text>
+            <Text
+              textAlign='center'
+              fontSize='28px'
+              fontWeight='semibold'
+              pb='12px'
+            >
               Ɖ{formatSatoshisAsDoge(amount, 3)}
             </Text>
-            <HStack justifyContent='space-between' w='100%' pt='20px'>
-              <Text color='gray.500'>Confirmation </Text>
-              <Text>
-                {dayjs(blockTime * 1000).format('YYYY-MM-DD HH:mm:ss')}
-              </Text>
+            <HStack justifyContent='space-between' w='100%'>
+              <Text color='gray.500'>Confirmations </Text>
+              <Text>{confirmations}</Text>
             </HStack>
             <HStack justifyContent='space-between' w='100%' pt='6px'>
               <Text color='gray.500'>Timestamp </Text>
@@ -226,11 +244,13 @@ const TransactionModal = ({
                 {dayjs(blockTime * 1000).format('YYYY-MM-DD HH:mm:ss')}
               </Text>
             </HStack>
-            <Box>
+            <Box pt='32px'>
               <BigButton
                 onPress={() => window.open(`https://sochain.com/tx/DOGE/${id}`)}
+                variant='secondary'
+                px='28px'
               >
-                View on SoChain
+                View on SoChain <FiArrowUpRight />
               </BigButton>
             </Box>
           </VStack>
@@ -241,7 +261,7 @@ const TransactionModal = ({
 };
 
 const Transaction = ({
-  transaction: { address, id, blockTime, type, amount },
+  transaction: { address, id, blockTime, type, amount, confirmations },
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -313,6 +333,7 @@ const Transaction = ({
         amount={amount}
         blockTime={blockTime}
         id={id}
+        confirmations={confirmations}
       />
     </Fragment>
   );
