@@ -23,6 +23,8 @@ import {
   generateRoot,
 } from './helpers/wallet';
 
+const TRANSACTION_PAGE_SIZE = 10;
+
 // onRequestTransaction: Launch notification popup
 function onRequestTransaction({ data = {}, sendResponse } = {}) {
   chrome.windows.getCurrent((w) => {
@@ -112,6 +114,39 @@ function onGetAddressBalance({ data, sendResponse } = {}) {
     .get(`/address/${data.address}`)
     .json((response) => {
       sendResponse?.(response.balance);
+    })
+    .catch((err) => {
+      logError(err);
+      sendResponse?.(false);
+    });
+  return true;
+}
+
+async function onGetTransactions({ data, sendResponse } = {}) {
+  // Get txids
+  let txIds = [];
+  let totalPages;
+  let page;
+
+  nownodes
+    .get(
+      `/address/${data.address}?page=${
+        data.page || 1
+      }&pageSize=${TRANSACTION_PAGE_SIZE}`
+    )
+    .json((response) => {
+      txIds = response.txids;
+      totalPages = response.totalPages;
+      page = response.page;
+    })
+    // Get tx details
+    .then(async () => {
+      const transactions = (
+        await Promise.all(
+          txIds.map((txId) => nownodes.get(`/tx/${txId}`).json())
+        )
+      ).sort((a, b) => b.blockTime - a.blockTime);
+      sendResponse?.({ transactions, totalPages, page });
     })
     .catch((err) => {
       logError(err);
@@ -279,6 +314,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case 'getAddressBalance':
       onGetAddressBalance({ data, sendResponse });
+      break;
+    case 'getTransactions':
+      onGetTransactions({ data, sendResponse });
       break;
     default:
   }

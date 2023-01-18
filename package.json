@@ -18,9 +18,9 @@
     "bip39": "^3.0.4",
     "bitcoinjs-lib": "4.0.5",
     "crypto-js": "^4.1.1",
+    "dayjs": "^1.11.7",
     "dogecoin-bip84": "0.0.5",
     "expo-font": "^10.0.3",
-    "moment": "^2.29.4",
     "multicoin-address-validator": "0.5.10",
     "native-base": "3.4.0",
     "next": "12.0.4",
@@ -35,7 +35,8 @@
     "react-native-web-linear-gradient": "^1.1.2",
     "react-no-ssr": "^1.1.0",
     "satoshi-bitcoin": "1.0.5",
-    "secure-ls": "^1.2.6"
+    "secure-ls": "^1.2.6",
+    "timeago-react": "^3.0.5"
   },
   "devDependencies": {
     "@babel/core": "7.18.10",

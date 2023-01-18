@@ -1,24 +1,31 @@
 import { AntDesign } from '@native-base/icons';
-import moment from 'moment';
+import dayjs from 'dayjs';
 import {
+  Avatar,
   Box,
   Button,
   Center,
+  FlatList,
   Heading,
   HStack,
   Icon,
   Image,
+  Modal,
   Pressable,
   Spinner,
   Text,
   VStack,
 } from 'native-base';
-import { useCallback, useState } from 'react';
+import { Fragment, useCallback, useState } from 'react';
+import { FiArrowUpRight, FiCopy } from 'react-icons/fi';
 import { IoArrowDown, IoArrowUp } from 'react-icons/io5';
+import TimeAgo from 'timeago-react';
 
+import { BigButton } from '../../components/Button';
 import { WalletDetailModal } from '../../components/Header/WalletDetailModal';
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
+import { useCopyText } from '../../hooks/useCopyText';
 import {
   asFiat,
   formatSatoshisAsDoge,
@@ -32,96 +39,21 @@ const DogecoinLogo = 'assets/dogecoin-logo-300.png';
 const SpaceBg = 'assets/milkyway-vector-bg-rounded.png';
 
 export function Transactions() {
-  const {
-    balance,
-    usdValue,
-    transactions,
-    hasLoadedTxs,
-    listEmpty,
-    failedInitialTxLoad,
-    updateBalance,
-    checkForNewTxs,
-  } = useTransactions();
+  const { balance, usdValue, transactions, loading, hasMore, fetchMore } =
+    useTransactions();
 
   const { wallet, selectedAddressIndex, navigate } = useAppContext();
 
   const [addressDetailOpen, setAddressDetailOpen] = useState(false);
 
-  const renderTransaction = useCallback((tx) => {
-    let address = tx.fromAddr;
-    if (tx.type === 'outgoing') address = tx.toAddr;
-
-    return (
-      <Pressable
-        key={tx.id}
-        onPress={() => {
-          console.log('navigate to tx screen');
-        }}
-      >
-        <HStack p='2px'>
-          <VStack mr='12px'>
-            <Image src={DogecoinLogo} height='40px' width='40px' />
-          </VStack>
-          <VStack flex={1}>
-            <Text fontSize='xs' fontWeight='medium'>
-              {address}
-            </Text>
-
-            <Text
-              fontSize='xs'
-              fontWeight='semibold'
-              _light={{ color: 'gray.400' }}
-              _dark={{ color: 'gray.500' }}
-            >
-              {tx.time ? moment(tx.time).fromNow() : null}
-            </Text>
-          </VStack>
-          <VStack flexDirection='row' alignItems='flex-start' ml='8px'>
-            <HStack
-              _light={{
-                bg: tx.type === 'outgoing' ? '#E4F0FF' : '#E0F8E8',
-              }}
-              _dark={{
-                bg: tx.type === 'outgoing' ? '#000643' : '#001109',
-              }}
-              px='14px'
-              py='4px'
-              rounded='2xl'
-            >
-              <Text
-                fontSize='sm'
-                fontWeight='bold'
-                _light={{
-                  color: is420(formatSatoshisAsDoge(tx.amount, 3))
-                    ? 'green.600'
-                    : tx.type === 'outgoing'
-                    ? 'blue.500'
-                    : 'green.500',
-                }}
-                _dark={{
-                  color: is420(formatSatoshisAsDoge(tx.amount, 3))
-                    ? 'green.300'
-                    : tx.type === 'outgoing'
-                    ? 'blue.400'
-                    : 'green.500',
-                }}
-              >
-                {tx.type === 'outgoing' ? '-' : '+'}{' '}
-                {formatSatoshisAsDoge(tx.amount, 3)}
-              </Text>
-              <Text fontSize='sm' fontWeight='bold'>
-                {is69(formatSatoshisAsDoge(tx.amount, 3)) && ' 😏'}
-              </Text>
-            </HStack>
-          </VStack>
-        </HStack>
-      </Pressable>
-    );
-  }, []);
-
   const imageRatio = 1601 / 1158;
   const imageWidth = 360;
   const imageHeight = imageWidth / imageRatio;
+
+  const renderItem = useCallback(
+    ({ item }) => <Transaction transaction={item} />,
+    []
+  );
 
   return (
     <Layout withHeader p={0}>
@@ -156,74 +88,77 @@ export function Transactions() {
           </HStack>
         </Center>
         <Box flex={1}>
-          {hasLoadedTxs ? (
-            listEmpty ? (
-              <Center flex={0.9}>
-                <Center flex={1} key='ListEmptyComponent-C2'>
-                  <Icon
-                    as={AntDesign}
-                    name='star'
-                    color='yellow.400'
-                    size={{ base: 'lg', sm: 'xl' }}
-                    mb={{ base: '14px', sm: '20px' }}
-                    key='ListEmptyComponent-Icon'
-                  />
-                  <Heading
-                    key='ListEmptyComponent-H2'
-                    size='md'
-                    fontSize={{ base: '17px', sm: '20px' }}
-                    textAlign='center'
-                    lineHeight='30px'
-                    mb={{ base: '18px', sm: '32px' }}
-                  >
-                    To get started, send DOGE to your wallet
-                  </Heading>
-                  <HStack width='86%' key='ListEmptyComponent-HS2'>
-                    <Button
-                      key='ListEmptyComponent-BB4'
-                      onPress={() => {
-                        console.log('show receive screen');
-                      }}
-                    >
-                      Deposit DOGE
-                    </Button>
-                  </HStack>
-                </Center>
-              </Center>
-            ) : (
-              <>
-                <Center alignItems='center' justifyContent='center' mt='50px'>
-                  <Heading size='md' pt='6px' mb='20px'>
-                    Transactions
-                  </Heading>
-                </Center>
-                <Box px='10px'>
-                  <VStack space='10px'>
-                    {transactions.map(renderTransaction)}
-                  </VStack>
-                </Box>
-              </>
-            )
-          ) : failedInitialTxLoad ? (
-            <Center flex={1} pb='50px'>
-              <Heading size='md'>Error loading transactions...</Heading>
-              <HStack>
-                <Button
-                  ml='auto'
-                  mr='auto'
-                  onPress={() => {
-                    updateBalance();
-                    checkForNewTxs();
-                  }}
-                >
-                  Try Again
-                </Button>
-              </HStack>
-            </Center>
-          ) : (
-            <Center flex={1}>
+          {transactions === undefined ? (
+            <Center pt='40px'>
               <Spinner color='amber.400' />
             </Center>
+          ) : transactions.length <= 0 ? (
+            <Center flex={0.9}>
+              <Center flex={1} key='ListEmptyComponent-C2'>
+                <Icon
+                  as={AntDesign}
+                  name='star'
+                  color='yellow.400'
+                  size={{ base: 'lg', sm: 'xl' }}
+                  mb={{ base: '14px', sm: '20px' }}
+                  key='ListEmptyComponent-Icon'
+                />
+                <Heading
+                  key='ListEmptyComponent-H2'
+                  size='md'
+                  fontSize={{ base: '17px', sm: '20px' }}
+                  textAlign='center'
+                  lineHeight='30px'
+                  mb={{ base: '18px', sm: '32px' }}
+                >
+                  To get started, send DOGE to your wallet
+                </Heading>
+                <HStack width='86%' key='ListEmptyComponent-HS2'>
+                  <Button
+                    key='ListEmptyComponent-BB4'
+                    onPress={() => setAddressDetailOpen(true)}
+                  >
+                    Deposit DOGE
+                  </Button>
+                </HStack>
+              </Center>
+            </Center>
+          ) : (
+            <>
+              <Center alignItems='center' justifyContent='center' mt='50px'>
+                <Heading size='md' pt='6px' mb='20px'>
+                  Transactions
+                </Heading>
+              </Center>
+              <Box px='10px'>
+                <VStack space='10px'>
+                  <FlatList data={transactions} renderItem={renderItem} />
+                  {hasMore ? (
+                    <Button
+                      variant='unstyled'
+                      my='12px'
+                      _hover={{ bg: 'gray.200' }}
+                      alignSelf='center'
+                      bg='gray.100'
+                      onPress={fetchMore}
+                      isDisabled={loading}
+                      alignItems='center'
+                    >
+                      <Text color='gray.500' alignItems='center'>
+                        View more
+                        {loading ? (
+                          <Spinner
+                            color='amber.400'
+                            pl='8px'
+                            transform={[{ translateY: 4 }]}
+                          />
+                        ) : null}
+                      </Text>
+                    </Button>
+                  ) : null}
+                </VStack>
+              </Box>
+            </>
           )}
         </Box>
       </Box>
@@ -236,3 +171,170 @@ export function Transactions() {
     </Layout>
   );
 }
+
+const TransactionModal = ({
+  isOpen,
+  onClose,
+  address,
+  type,
+  amount,
+  blockTime,
+  id,
+  confirmations,
+}) => {
+  const { copyTextToClipboard, textCopied } = useCopyText({ text: address });
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} size='full'>
+      <Modal.Content w='90%'>
+        <Modal.CloseButton />
+        <Modal.Body alignItems='center' pt='54px' pb='36px'>
+          <VStack w='100%' alignItems='center'>
+            <Text
+              fontSize='sm'
+              pb='4px'
+              textAlign='center'
+              fontWeight='semibold'
+            >
+              {type === 'outgoing' ? 'TO' : 'FROM'}
+            </Text>
+            <HStack alignItems='center' space='12px'>
+              <Avatar
+                size='sm'
+                bg='brandYellow.500'
+                _text={{ color: 'gray.800' }}
+              >
+                {address.substring(0, 2)}
+              </Avatar>
+              <Text
+                fontSize='sm'
+                fontWeight='semibold'
+                color='gray.500'
+                textAlign='center'
+              >
+                {address.slice(0, 8)}...{address.slice(-4)}
+              </Text>
+              <Button
+                variant='subtle'
+                px='6px'
+                py='4px'
+                onPress={copyTextToClipboard}
+                colorScheme='gray'
+              >
+                <FiCopy />
+              </Button>
+            </HStack>
+            <Text fontSize='10px' color='gray.500'>
+              {textCopied ? 'Address copied' : ' '}
+            </Text>
+            <Text
+              textAlign='center'
+              fontSize='28px'
+              fontWeight='semibold'
+              pb='12px'
+            >
+              Ɖ{formatSatoshisAsDoge(amount, 3)}
+            </Text>
+            <HStack justifyContent='space-between' w='100%'>
+              <Text color='gray.500'>Confirmations </Text>
+              <Text>{confirmations}</Text>
+            </HStack>
+            <HStack justifyContent='space-between' w='100%' pt='6px'>
+              <Text color='gray.500'>Timestamp </Text>
+              <Text>
+                {dayjs(blockTime * 1000).format('YYYY-MM-DD HH:mm:ss')}
+              </Text>
+            </HStack>
+            <Box pt='32px'>
+              <BigButton
+                onPress={() => window.open(`https://sochain.com/tx/DOGE/${id}`)}
+                variant='secondary'
+                px='28px'
+              >
+                View on SoChain <FiArrowUpRight />
+              </BigButton>
+            </Box>
+          </VStack>
+        </Modal.Body>
+      </Modal.Content>
+    </Modal>
+  );
+};
+
+const Transaction = ({
+  transaction: { address, id, blockTime, type, amount, confirmations },
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  return (
+    <Fragment key={id}>
+      <Pressable onPress={() => setIsOpen(true)}>
+        <HStack p='2px'>
+          <VStack mr='12px'>
+            <Image src={DogecoinLogo} height='40px' width='40px' alt='doge' />
+          </VStack>
+          <VStack flex={1}>
+            <Text fontSize='xs' fontWeight='medium'>
+              {address.slice(0, 8)}...{address.slice(-4)}
+            </Text>
+
+            <Text
+              fontSize='xs'
+              fontWeight='semibold'
+              _light={{ color: 'gray.400' }}
+              _dark={{ color: 'gray.500' }}
+            >
+              <TimeAgo datetime={blockTime * 1000} />
+            </Text>
+          </VStack>
+          <VStack flexDirection='row' alignItems='flex-start' ml='8px'>
+            <HStack
+              _light={{
+                bg: type === 'outgoing' ? '#E4F0FF' : '#E0F8E8',
+              }}
+              _dark={{
+                bg: type === 'outgoing' ? '#000643' : '#001109',
+              }}
+              px='14px'
+              py='4px'
+              rounded='2xl'
+            >
+              <Text
+                fontSize='sm'
+                fontWeight='bold'
+                _light={{
+                  color: is420(formatSatoshisAsDoge(amount, 3))
+                    ? 'green.600'
+                    : type === 'outgoing'
+                    ? 'blue.500'
+                    : 'green.500',
+                }}
+                _dark={{
+                  color: is420(formatSatoshisAsDoge(amount, 3))
+                    ? 'green.300'
+                    : type === 'outgoing'
+                    ? 'blue.400'
+                    : 'green.500',
+                }}
+              >
+                {type === 'outgoing' ? '-' : '+'}{' '}
+                {formatSatoshisAsDoge(amount, 3)}
+              </Text>
+              <Text fontSize='sm' fontWeight='bold'>
+                {is69(formatSatoshisAsDoge(amount, 3)) && ' 😏'}
+              </Text>
+            </HStack>
+          </VStack>
+        </HStack>
+      </Pressable>
+      <TransactionModal
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        address={address}
+        type={type}
+        amount={amount}
+        blockTime={blockTime}
+        id={id}
+        confirmations={confirmations}
+      />
+    </Fragment>
+  );
+};
