@@ -35,10 +35,16 @@ export const ConfirmationScreen = ({
           return;
         }
         // Process transaction
-        console.log('sending transaction');
+        console.log('sending transaction', formData.rawTx);
       }
     );
-  }, [formData.address, formData.dogeAmount, setErrors, walletAddress]);
+  }, [
+    formData.address,
+    formData.dogeAmount,
+    formData.rawTx,
+    setErrors,
+    walletAddress,
+  ]);
 
   return (
     <Center>

@@ -29,7 +29,8 @@ const TRANSACTION_PAGE_SIZE = 10;
 
 // Build a raw transaction and determine fee
 function onCreateTransaction({ data = {}, sendResponse } = {}) {
-  const amount = parseFloat(data.dogeAmount);
+  const amountSatoshi = sb.toSatoshi(data.dogeAmount);
+  const amount = sb.toBitcoin(amountSatoshi);
   const jsonrpcReq = {
     API_key: process.env.NEXT_PUBLIC_NOWNODES_API_KEY,
     jsonrpc: '2.0',
@@ -72,7 +73,25 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
           break;
         }
       }
+      // Add change address and amount if enough, otherwise add to fee
+      const changeSatoshi =
+        sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee);
 
+      if (changeSatoshi > 0) {
+        const changeAmount = sb.toBitcoin(changeSatoshi);
+        if (changeAmount > feePerInput) {
+          jsonrpcReq.params[1][data.senderAddress] = changeAmount;
+        } else {
+          fee += changeAmount;
+        }
+      } else {
+        // All inputs can't cover fee, send max
+        jsonrpcReq.params[1][data.recipientAddress] = sb.toBitcoin(
+          sb.toSatoshi(amount) - sb.toSatoshi(fee)
+        );
+      }
+      // console.log('create raw req', jsonrpcReq);
+      // Return the raw tx and the fee
       return node.post(jsonrpcReq).json((jsonrpcRes) => {
         sendResponse?.({ rawTx: jsonrpcRes.result, fee });
       });
