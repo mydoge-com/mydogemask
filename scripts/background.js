@@ -1,3 +1,5 @@
+import sb from 'satoshi-bitcoin';
+
 import { logError } from '../utils/error';
 import { nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
@@ -20,10 +22,39 @@ import {
   generateAddress,
   generateChild,
   generatePhrase,
+  generateRawTx,
   generateRoot,
 } from './helpers/wallet';
 
 const TRANSACTION_PAGE_SIZE = 10;
+
+// Build a raw transaction and determine fee
+function onCreateTransaction({ data = {}, sendResponse } = {}) {
+  nownodes
+    .get(`/utxo/${data.senderAddress}`)
+    .json((response) => {
+      // Sort by smallest + oldest
+      const utxos = response.sort((a, b) => {
+        const aValue = sb.toBitcoin(a.value);
+        const bValue = sb.toBitcoin(b.value);
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : a.height - b.height;
+      });
+      console.log('sorted utxos', utxos);
+      return generateRawTx(
+        data.senderAddress,
+        data.recipientAddress,
+        data.dogeAmount,
+        utxos
+      );
+    })
+    .then(({ rawTx, fee }) => {
+      sendResponse?.({ rawTx, fee });
+    })
+    .catch((err) => {
+      logError(err);
+      sendResponse?.(false);
+    });
+}
 
 // onRequestTransaction: Launch notification popup
 function onRequestTransaction({ data = {}, sendResponse } = {}) {
@@ -286,6 +317,9 @@ function signOut({ sendResponse } = {}) {
 export const messageHandler = ({ message, data }, sender, sendResponse) => {
   if (!message) return;
   switch (message) {
+    case 'createTransaction':
+      onCreateTransaction({ data, sendResponse });
+      break;
     case 'requestTransaction':
       onRequestTransaction({ data, sendResponse });
       break;

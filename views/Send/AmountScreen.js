@@ -116,23 +116,41 @@ export const AmountScreen = ({
   }, [addressBalance, onChangeTextDoge]);
 
   const onSubmit = useCallback(() => {
-    const error = validateTransaction({
+    const txData = {
       senderAddress: walletAddress,
       recipientAddress: formData.address.trim(),
       dogeAmount: formData.dogeAmount,
+    };
+    const error = validateTransaction({
+      ...txData,
       addressBalance,
     });
     if (error) {
       setErrors({ ...errors, dogeAmount: error });
     } else {
-      setFormPage('confirmation');
+      sendMessage(
+        {
+          message: 'createTransaction',
+          data: txData,
+        },
+        ({ rawTx, fee }) => {
+          if (rawTx && fee) {
+            setFormData({
+              ...formData,
+              rawTx,
+              fee,
+            });
+            setFormPage('confirmation');
+          }
+        }
+      );
     }
   }, [
     addressBalance,
     errors,
-    formData.address,
-    formData.dogeAmount,
+    formData,
     setErrors,
+    setFormData,
     setFormPage,
     walletAddress,
   ]);

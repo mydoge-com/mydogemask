@@ -1,3 +1,4 @@
+import { DogecoinJS } from '@mydogeofficial/dogecoin-js';
 import * as bip32 from 'bip32';
 import * as bip39 from 'bip39';
 import * as bitcoin from 'bitcoinjs-lib';
@@ -62,3 +63,37 @@ export const validateTransaction = ({
   }
   return undefined;
 };
+
+export async function generateRawTx(sender, recipient, amount, utxos) {
+  const dogecoin = await DogecoinJS.init();
+  const index = dogecoin.startTransaction();
+  let total = 0;
+  const fee = 0.01;
+
+  for (let i = 0; i < utxos.length; i++) {
+    const utxo = utxos[i];
+    console.log('utxo', utxo);
+    const value = sb.toBitcoin(utxo.value);
+    total += value;
+    console.log(
+      `added tx value ${value} for total ${total} > ${amount} + ${fee}`
+    );
+    dogecoin.addUTXO(index, utxo.txid, utxo.vout);
+
+    if (total > amount + fee) {
+      break;
+    }
+  }
+
+  dogecoin.addOutput(index, recipient, `${amount}`);
+  const rawTx = dogecoin.finalizeTransaction(
+    index,
+    recipient,
+    `${fee}`,
+    `${total}`,
+    sender
+  );
+
+  console.log('rawTx', rawTx);
+  return { rawTx, fee };
+}
