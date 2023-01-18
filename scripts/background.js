@@ -1,7 +1,7 @@
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { nownodes } from './api';
+import { node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
@@ -22,7 +22,6 @@ import {
   generateAddress,
   generateChild,
   generatePhrase,
-  generateRawTx,
   generateRoot,
 } from './helpers/wallet';
 
@@ -30,6 +29,20 @@ const TRANSACTION_PAGE_SIZE = 10;
 
 // Build a raw transaction and determine fee
 function onCreateTransaction({ data = {}, sendResponse } = {}) {
+  const amount = parseFloat(data.dogeAmount);
+  const jsonrpcReq = {
+    API_key: process.env.NEXT_PUBLIC_NOWNODES_API_KEY,
+    jsonrpc: '2.0',
+    id: `${data.senderAddress}_${Date.now()}`,
+    method: 'createrawtransaction',
+    params: [
+      [],
+      {
+        [data.recipientAddress]: amount,
+      },
+    ],
+  };
+
   nownodes
     .get(`/utxo/${data.senderAddress}`)
     .json((response) => {
@@ -39,16 +52,30 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
         const bValue = sb.toBitcoin(b.value);
         return aValue > bValue ? 1 : aValue < bValue ? -1 : a.height - b.height;
       });
-      console.log('sorted utxos', utxos);
-      return generateRawTx(
-        data.senderAddress,
-        data.recipientAddress,
-        data.dogeAmount,
-        utxos
-      );
-    })
-    .then(({ rawTx, fee }) => {
-      sendResponse?.({ rawTx, fee });
+
+      const feePerInput = 0.0014; // start with minimum fee
+      let fee = feePerInput;
+      let total = 0;
+
+      for (let i = 0; i < utxos.length; i++) {
+        const utxo = utxos[i];
+        const value = sb.toBitcoin(utxo.value);
+        total += value;
+        fee = feePerInput * (i + 1);
+
+        jsonrpcReq.params[0].push({
+          txid: utxo.txid,
+          vout: utxo.vout,
+        });
+
+        if (total > amount + fee) {
+          break;
+        }
+      }
+
+      return node.post(jsonrpcReq).json((jsonrpcRes) => {
+        sendResponse?.({ rawTx: jsonrpcRes.result, fee });
+      });
     })
     .catch((err) => {
       logError(err);

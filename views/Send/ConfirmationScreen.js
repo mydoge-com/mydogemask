@@ -72,6 +72,9 @@ export const ConfirmationScreen = ({
       <Text fontSize='52px' fontWeight='semibold' pt='6px'>
         Ð{formData.dogeAmount}
       </Text>
+      <Text fontSize='13px' fontWeight='semibold' pt='6px'>
+        Network Fee Ð{formData.fee}
+      </Text>
       <HStack alignItems='center' mt='60px' space='12px'>
         <Button
           variant='unstyled'
