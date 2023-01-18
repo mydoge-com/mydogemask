@@ -198,7 +198,7 @@ export const Header = ({ withBackButton, backRoute }) => {
             />
             Create address
           </MenuItem>
-          <MenuItem
+          {/* <MenuItem
             onPress={() => setOpenModal('DELETE_ADDRESS')}
             isDisabled={
               wallet.addresses.length === 1 || selectedAddressIndex === 0
@@ -206,7 +206,7 @@ export const Header = ({ withBackButton, backRoute }) => {
           >
             <FiTrash2 size='20px' alt='Delete address' />
             Delete address
-          </MenuItem>
+          </MenuItem> */}
           <Divider my='6px' w='100%' />
           <MenuItem onPress={() => setOpenModal('BACKUP_SECURITY')}>
             <FiSettings size='20px' alt='Backup & security' />

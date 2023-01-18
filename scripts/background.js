@@ -207,6 +207,7 @@ function onDeleteAddress({ sendResponse, data } = {}) {
       }
 
       decryptedWallet.addresses.splice(data.index, 1);
+      decryptedWallet.children.splice(data.index, 1);
       const encryptedWallet = encrypt({
         data: decryptedWallet,
         password,
