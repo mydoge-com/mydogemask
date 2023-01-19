@@ -133,12 +133,13 @@ export const AmountScreen = ({
           message: 'createTransaction',
           data: txData,
         },
-        ({ rawTx, fee }) => {
-          if (rawTx && fee) {
+        ({ rawTx, fee, amount }) => {
+          if (rawTx && fee && amount) {
             setFormData({
               ...formData,
               rawTx,
               fee,
+              dogeAmount: amount,
             });
             setFormPage('confirmation');
           }

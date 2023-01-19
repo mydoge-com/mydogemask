@@ -54,7 +54,7 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
         return aValue > bValue ? 1 : aValue < bValue ? -1 : a.height - b.height;
       });
 
-      const feePerInput = 0.0014; // start with minimum fee
+      const feePerInput = 0.0012; // estimate fee per input
       let fee = feePerInput;
       let total = 0;
 
@@ -69,36 +69,52 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
           vout: utxo.vout,
         });
 
-        if (total > amount + fee) {
+        if (total >= amount + fee) {
           break;
         }
       }
-      // Add change address and amount if enough, otherwise add to fee
-      const changeSatoshi =
-        sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee);
-
-      if (changeSatoshi >= 0) {
-        const changeAmount = sb.toBitcoin(changeSatoshi);
-        if (changeAmount > feePerInput) {
-          jsonrpcReq.params[1][data.senderAddress] = changeAmount;
-        } else {
-          fee += changeAmount;
-        }
-      } else {
-        // All inputs can't cover fee, send max
-        jsonrpcReq.params[1][data.recipientAddress] = sb.toBitcoin(
-          sb.toSatoshi(amount) - sb.toSatoshi(fee)
+      // Set a dummy amount in the change address
+      jsonrpcReq.params[1][data.senderAddress] = feePerInput;
+      // console.log('estimated fee', fee);
+      // Get the raw transaction to determine actual size
+      return node.post(jsonrpcReq).json((estimateRes) => {
+        const size = estimateRes.result.length / 2;
+        // console.log('estimated size', size);
+        fee = Math.max(
+          parseFloat(((size / 1000) * 0.01).toFixed(8)),
+          feePerInput
         );
-      }
-      // console.log('createrawtransaction req', jsonrpcReq);
-      // Return the raw tx and the fee
-      return node.post(jsonrpcReq).json((jsonrpcRes) => {
-        // console.log(
-        //   'createrawtransaction req',
-        //   jsonrpcRes,
-        //   jsonrpcRes.result.length / 2
-        // );
-        sendResponse?.({ rawTx: jsonrpcRes.result, fee });
+        // console.log('calculated fee', fee);
+        // Add change address and amount if enough, otherwise add to fee
+        const changeSatoshi =
+          sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee);
+
+        if (changeSatoshi >= 0) {
+          const changeAmount = sb.toBitcoin(changeSatoshi);
+          if (changeAmount > feePerInput) {
+            jsonrpcReq.params[1][data.senderAddress] = changeAmount;
+          } else {
+            delete jsonrpcReq.params[1][data.senderAddress];
+            fee += changeAmount;
+          }
+        } else {
+          delete jsonrpcReq.params[1][data.senderAddress];
+          // All inputs can't cover fee, send max
+          jsonrpcReq.params[1][data.recipientAddress] = sb.toBitcoin(
+            sb.toSatoshi(amount) - sb.toSatoshi(fee)
+          );
+        }
+        // console.log('createrawtransaction req', jsonrpcReq);
+        // Return the raw tx and the fee
+        node.post(jsonrpcReq).json((jsonrpcRes) => {
+          // console.log('actual size', jsonrpcRes.result.length / 2);
+          // console.log('raw tx', jsonrpcRes.result);
+          sendResponse?.({
+            rawTx: jsonrpcRes.result,
+            fee,
+            amount: jsonrpcReq.params[1][data.recipientAddress],
+          });
+        });
       });
     })
     .catch((err) => {
