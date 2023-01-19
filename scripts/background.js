@@ -77,7 +77,7 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
       const changeSatoshi =
         sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee);
 
-      if (changeSatoshi > 0) {
+      if (changeSatoshi >= 0) {
         const changeAmount = sb.toBitcoin(changeSatoshi);
         if (changeAmount > feePerInput) {
           jsonrpcReq.params[1][data.senderAddress] = changeAmount;
@@ -90,9 +90,14 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
           sb.toSatoshi(amount) - sb.toSatoshi(fee)
         );
       }
-      // console.log('create raw req', jsonrpcReq);
+      // console.log('createrawtransaction req', jsonrpcReq);
       // Return the raw tx and the fee
       return node.post(jsonrpcReq).json((jsonrpcRes) => {
+        // console.log(
+        //   'createrawtransaction req',
+        //   jsonrpcRes,
+        //   jsonrpcRes.result.length / 2
+        // );
         sendResponse?.({ rawTx: jsonrpcRes.result, fee });
       });
     })
