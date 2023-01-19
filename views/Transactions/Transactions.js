@@ -1,4 +1,3 @@
-import { AntDesign } from '@native-base/icons';
 import dayjs from 'dayjs';
 import {
   Avatar,
@@ -8,7 +7,6 @@ import {
   FlatList,
   Heading,
   HStack,
-  Icon,
   Image,
   Modal,
   Pressable,
@@ -18,7 +16,7 @@ import {
 } from 'native-base';
 import { Fragment, useCallback, useState } from 'react';
 import { FiArrowUpRight, FiCopy } from 'react-icons/fi';
-import { IoArrowDown, IoArrowUp } from 'react-icons/io5';
+import { IoArrowDown, IoArrowUp, IoWalletOutline } from 'react-icons/io5';
 import TimeAgo from 'timeago-react';
 
 import { BigButton } from '../../components/Button';
@@ -55,6 +53,16 @@ export function Transactions() {
     []
   );
 
+  const openReceiveModal = useCallback(() => {
+    setAddressDetailOpen(true);
+  }, []);
+
+  const [walletAddress] = wallet.addresses;
+
+  const onBuy = useCallback(() => {
+    window.open(`https://buy.getdoge.com/?addr=${walletAddress}`);
+  }, [walletAddress]);
+
   return (
     <Layout withHeader p={0}>
       <Box>
@@ -79,7 +87,10 @@ export function Transactions() {
             {typeof usdValue === 'number' ? `$${asFiat(usdValue, 2)}` : ' '}
           </Text>
           <HStack space='24px' pt='20px'>
-            <Pressable onPress={() => setAddressDetailOpen(true)}>
+            <Pressable onPress={onBuy}>
+              <ActionButton Icon={<IoWalletOutline />} title='Buy' />
+            </Pressable>
+            <Pressable onPress={openReceiveModal}>
               <ActionButton Icon={<IoArrowDown />} title='Receive' />
             </Pressable>
             <Pressable onPress={() => navigate('Send')}>
@@ -93,36 +104,20 @@ export function Transactions() {
               <Spinner color='amber.400' />
             </Center>
           ) : transactions.length <= 0 ? (
-            <Center flex={0.9}>
-              <Center flex={1} key='ListEmptyComponent-C2'>
-                <Icon
-                  as={AntDesign}
-                  name='star'
-                  color='yellow.400'
-                  size={{ base: 'lg', sm: 'xl' }}
-                  mb={{ base: '14px', sm: '20px' }}
-                  key='ListEmptyComponent-Icon'
-                />
-                <Heading
-                  key='ListEmptyComponent-H2'
-                  size='md'
-                  fontSize={{ base: '17px', sm: '20px' }}
-                  textAlign='center'
-                  lineHeight='30px'
-                  mb={{ base: '18px', sm: '32px' }}
-                >
-                  To get started, send DOGE to your wallet
-                </Heading>
-                <HStack width='86%' key='ListEmptyComponent-HS2'>
-                  <Button
-                    key='ListEmptyComponent-BB4'
-                    onPress={() => setAddressDetailOpen(true)}
-                  >
-                    Deposit DOGE
-                  </Button>
-                </HStack>
-              </Center>
-            </Center>
+            <VStack pt='48px' alignItems='center'>
+              <Text color='gray.500' pt='24px' pb='32px'>
+                No transactions found
+              </Text>
+              <Text fontSize='16px'>
+                To get started, send DOGE to your wallet
+              </Text>
+              <BigButton mt='24px' onPress={onBuy}>
+                Buy DOGE
+              </BigButton>
+              <BigButton mt='18px' onPress={openReceiveModal}>
+                Deposit DOGE
+              </BigButton>
+            </VStack>
           ) : (
             <>
               <Center alignItems='center' justifyContent='center' mt='50px'>

@@ -141,6 +141,10 @@ async function onGetTransactions({ data, sendResponse } = {}) {
     })
     // Get tx details
     .then(async () => {
+      if (!txIds?.length) {
+        sendResponse?.({ transactions: [], totalPages, page });
+        return;
+      }
       const transactions = (
         await Promise.all(
           txIds.map((txId) => nownodes.get(`/tx/${txId}`).json())

@@ -94,7 +94,14 @@ export const useTransactions = () => {
     true
   );
 
+  const currentAddress = useRef(walletAddress);
+
   useEffect(() => {
+    if (currentAddress.current !== walletAddress) {
+      currentAddress.current = walletAddress;
+      currentPage.current = 0;
+      setTransactions();
+    }
     getTransactions();
     getAddressBalance();
   }, [getAddressBalance, getTransactions, walletAddress]);
