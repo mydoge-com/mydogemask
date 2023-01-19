@@ -1,7 +1,8 @@
-import { Avatar, Button, Center, HStack, Text } from 'native-base';
+import { Avatar, Button, Center, HStack, Text, Toast } from 'native-base';
 import { useCallback } from 'react';
 
 import { BigButton } from '../../components/Button';
+import { ToastRender } from '../../components/ToastRender';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
 
@@ -35,13 +36,49 @@ export const ConfirmationScreen = ({
           return;
         }
         // Process transaction
-        console.log('sending transaction', formData.rawTx);
+        sendMessage(
+          {
+            message: 'sendTransaction',
+            data: { rawTx: formData.rawTx, selectedAddressIndex },
+          },
+          (txId) => {
+            if (txId) {
+              Toast.show({
+                duration: 3000,
+                render: () => {
+                  return (
+                    <ToastRender
+                      description={`Sent Transaction: ${txId}`}
+                      status='success'
+                    />
+                  );
+                },
+              });
+            } else {
+              Toast.show({
+                title: 'Error',
+                description: 'Transaction Failed',
+                duration: 3000,
+                render: () => {
+                  return (
+                    <ToastRender
+                      title='Error'
+                      description='Failed to send transaction.'
+                      status='error'
+                    />
+                  );
+                },
+              });
+            }
+          }
+        );
       }
     );
   }, [
     formData.address,
     formData.dogeAmount,
     formData.rawTx,
+    selectedAddressIndex,
     setErrors,
     walletAddress,
   ]);

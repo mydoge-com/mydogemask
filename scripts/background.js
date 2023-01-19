@@ -1,3 +1,4 @@
+import * as bitcoin from 'bitcoinjs-lib';
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
@@ -23,6 +24,7 @@ import {
   generateChild,
   generatePhrase,
   generateRoot,
+  signRawTx,
 } from './helpers/wallet';
 
 const TRANSACTION_PAGE_SIZE = 10;
@@ -34,7 +36,7 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
   const jsonrpcReq = {
     API_key: process.env.NEXT_PUBLIC_NOWNODES_API_KEY,
     jsonrpc: '2.0',
-    id: `${data.senderAddress}_${Date.now()}`,
+    id: `${data.senderAddress}_create_${Date.now()}`,
     method: 'createrawtransaction',
     params: [
       [],
@@ -121,6 +123,45 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
       logError(err);
       sendResponse?.(false);
     });
+}
+
+function onSendTransaction({ data = {}, sender, sendResponse } = {}) {
+  // TODO Confirm that the sender is the extension
+  if (process.env.NODE_ENV === 'development' || sender?.id) {
+    Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+      ([wallet, password]) => {
+        const decryptedWallet = decrypt({
+          data: wallet,
+          password,
+        });
+        if (!decryptedWallet) {
+          sendResponse?.(false);
+        }
+        const signed = signRawTx(
+          data.rawTx,
+          decryptedWallet.children[data.selectedAddressIndex]
+        );
+        console.log('signed tx', data.selectedAddressIndex, signed);
+        const jsonrpcReq = {
+          API_key: process.env.NEXT_PUBLIC_NOWNODES_API_KEY,
+          jsonrpc: '2.0',
+          id: `${data.senderAddress}_send_${Date.now()}`,
+          method: 'sendrawtransaction',
+          params: [signed],
+        };
+        node
+          .post(jsonrpcReq)
+          .json((jsonrpcRes) => {
+            // console.log('sendrawtransaction', jsonrpcRes);
+            sendResponse(jsonrpcRes.result);
+          })
+          .catch((err) => {
+            logError(err);
+            sendResponse?.(false);
+          });
+      }
+    );
+  }
 }
 
 // onRequestTransaction: Launch notification popup
@@ -386,6 +427,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
   switch (message) {
     case 'createTransaction':
       onCreateTransaction({ data, sendResponse });
+      break;
+    case 'sendTransaction':
+      onSendTransaction({ data, sender, sendResponse });
       break;
     case 'requestTransaction':
       onRequestTransaction({ data, sendResponse });

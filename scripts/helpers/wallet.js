@@ -64,6 +64,18 @@ export const validateTransaction = ({
   return undefined;
 };
 
+export function signRawTx(rawTx, wif) {
+  const keyPair = fromWIF(wif);
+  const tx = bitcoin.Transaction.fromHex(rawTx);
+  const txb = bitcoin.TransactionBuilder.fromTransaction(tx, network);
+
+  for (let i = 0; i < tx.ins.length; i++) {
+    txb.sign(i, keyPair);
+  }
+
+  return txb.build().toHex();
+}
+
 // export async function generateRawTx(sender, recipient, amount, utxos) {
 //   const dogecoin = await DogecoinJS.init();
 //   const index = dogecoin.startTransaction();
