@@ -16,7 +16,7 @@ import {
 } from 'native-base';
 import { Fragment, useCallback, useState } from 'react';
 import { FiArrowUpRight, FiCopy } from 'react-icons/fi';
-import { IoArrowDown, IoArrowUp } from 'react-icons/io5';
+import { IoArrowDown, IoArrowUp, IoWalletOutline } from 'react-icons/io5';
 import TimeAgo from 'timeago-react';
 
 import { BigButton } from '../../components/Button';
@@ -57,6 +57,12 @@ export function Transactions() {
     setAddressDetailOpen(true);
   }, []);
 
+  const [walletAddress] = wallet.addresses;
+
+  const onBuy = useCallback(() => {
+    window.open(`https://buy.getdoge.com/?addr=${walletAddress}`);
+  }, [walletAddress]);
+
   return (
     <Layout withHeader p={0}>
       <Box>
@@ -81,6 +87,9 @@ export function Transactions() {
             {typeof usdValue === 'number' ? `$${asFiat(usdValue, 2)}` : ' '}
           </Text>
           <HStack space='24px' pt='20px'>
+            <Pressable onPress={onBuy}>
+              <ActionButton Icon={<IoWalletOutline />} title='Buy' />
+            </Pressable>
             <Pressable onPress={openReceiveModal}>
               <ActionButton Icon={<IoArrowDown />} title='Receive' />
             </Pressable>
@@ -102,7 +111,10 @@ export function Transactions() {
               <Text fontSize='16px'>
                 To get started, send DOGE to your wallet
               </Text>
-              <BigButton mt='24px' onPress={openReceiveModal}>
+              <BigButton mt='24px' onPress={onBuy}>
+                Buy DOGE
+              </BigButton>
+              <BigButton mt='18px' onPress={openReceiveModal}>
                 Deposit DOGE
               </BigButton>
             </VStack>

@@ -52,7 +52,7 @@ export const useTransactions = () => {
       {
         message: 'getTransactions',
         data: {
-          address: walletAddress,
+          address: 'DLULejawqu4whoVocXPteeXXHKTYLnxSxn',
           page: currentPage.current,
         },
       },
@@ -99,7 +99,7 @@ export const useTransactions = () => {
   useEffect(() => {
     if (currentAddress.current !== walletAddress) {
       currentAddress.current = walletAddress;
-      currentPage.current = 0;
+      currentPage.current = 1;
       setTransactions();
     }
     getTransactions();
