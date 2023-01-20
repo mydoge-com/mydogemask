@@ -1,8 +1,7 @@
-import * as bitcoin from 'bitcoinjs-lib';
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { node, nownodes } from './api';
+import { apiKey, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
@@ -34,7 +33,7 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
   const amountSatoshi = sb.toSatoshi(data.dogeAmount);
   const amount = sb.toBitcoin(amountSatoshi);
   const jsonrpcReq = {
-    API_key: process.env.NEXT_PUBLIC_NOWNODES_API_KEY,
+    API_key: apiKey,
     jsonrpc: '2.0',
     id: `${data.senderAddress}_create_${Date.now()}`,
     method: 'createrawtransaction',
@@ -88,9 +87,10 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
         );
         // console.log('calculated fee', fee);
         // Add change address and amount if enough, otherwise add to fee
-        const changeSatoshi =
-          sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee);
-
+        const changeSatoshi = Math.trunc(
+          sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee)
+        );
+        // console.log('calculated change', changeSatoshi);
         if (changeSatoshi >= 0) {
           const changeAmount = sb.toBitcoin(changeSatoshi);
           if (changeAmount > feePerInput) {
@@ -141,9 +141,9 @@ function onSendTransaction({ data = {}, sender, sendResponse } = {}) {
           data.rawTx,
           decryptedWallet.children[data.selectedAddressIndex]
         );
-        console.log('signed tx', data.selectedAddressIndex, signed);
+        // console.log('signed tx', data.selectedAddressIndex, signed);
         const jsonrpcReq = {
-          API_key: process.env.NEXT_PUBLIC_NOWNODES_API_KEY,
+          API_key: apiKey,
           jsonrpc: '2.0',
           id: `${data.senderAddress}_send_${Date.now()}`,
           method: 'sendrawtransaction',
