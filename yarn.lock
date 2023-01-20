@@ -3534,11 +3534,6 @@ bindings@^1.3.0, bindings@^1.5.0:
   dependencies:
     file-uri-to-path "1.0.0"
 
-bip174@^2.0.1:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/bip174/-/bip174-2.1.0.tgz#cd3402581feaa5116f0f00a0eaee87a5843a2d30"
-  integrity sha512-lkc0XyiX9E9KiVAS1ZiOqK1xfiwvf4FXDDdkDq5crcDzOq+xGytY+14qCsqz7kCiy8rpN1CRNfacRhf9G3JNSA==
-
 bip32@2.0.4:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/bip32/-/bip32-2.0.4.tgz#b662bd28710d4676fb351ba8a13be45cb4d85d01"
@@ -3564,19 +3559,6 @@ bip32@^1.0.4:
     typeforce "^1.11.5"
     wif "^2.0.6"
 
-bip32@^2.0.4:
-  version "2.0.6"
-  resolved "https://registry.yarnpkg.com/bip32/-/bip32-2.0.6.tgz#6a81d9f98c4cd57d05150c60d8f9e75121635134"
-  integrity sha512-HpV5OMLLGTjSVblmrtYRfFFKuQB+GArM0+XP8HGWfJ5vxYBqo+DesvJwOdC2WJ3bCkZShGf0QIfoIpeomVzVdA==
-  dependencies:
-    "@types/node" "10.12.18"
-    bs58check "^2.1.1"
-    create-hash "^1.2.0"
-    create-hmac "^1.1.7"
-    tiny-secp256k1 "^1.1.3"
-    typeforce "^1.11.5"
-    wif "^2.0.6"
-
 bip39@^3.0.4:
   version "3.0.4"
   resolved "https://registry.yarnpkg.com/bip39/-/bip39-3.0.4.tgz#5b11fed966840b5e1b8539f0f54ab6392969b2a0"
@@ -3593,15 +3575,6 @@ bip66@^1.1.0:
   integrity sha512-nemMHz95EmS38a26XbbdxIYj5csHd3RMP3H5bwQknX0WYHF01qhpufP42mLOwVICuH2JmhIhXiWs89MfUGL7Xw==
   dependencies:
     safe-buffer "^5.0.1"
-
-bip84@^0.2.7:
-  version "0.2.7"
-  resolved "https://registry.yarnpkg.com/bip84/-/bip84-0.2.7.tgz#ed350a2fea02051b3048c411ccc344996d8fda29"
-  integrity sha512-qIBhY2ojC3iATFrpWw8FmNHPFGgjUEkbA4qnchZY6nzv2SAzKy5tmdg9JxVPJlpSfQXYn0hcbzjhEp0+G/Mvqw==
-  dependencies:
-    bip39 "^3.0.4"
-    bitcoinjs-lib "^5.0.3"
-    bs58check "^2.1.2"
 
 bitcoin-ops@^1.3.0, bitcoin-ops@^1.4.0:
   version "1.4.1"
@@ -3625,27 +3598,6 @@ bitcoinjs-lib@4.0.5:
     randombytes "^2.0.1"
     safe-buffer "^5.1.1"
     tiny-secp256k1 "^1.0.0"
-    typeforce "^1.11.3"
-    varuint-bitcoin "^1.0.4"
-    wif "^2.0.1"
-
-bitcoinjs-lib@^5.0.3:
-  version "5.2.0"
-  resolved "https://registry.yarnpkg.com/bitcoinjs-lib/-/bitcoinjs-lib-5.2.0.tgz#caf8b5efb04274ded1b67e0706960b93afb9d332"
-  integrity sha512-5DcLxGUDejgNBYcieMIUfjORtUeNWl828VWLHJGVKZCb4zIS1oOySTUr0LGmcqJBQgTBz3bGbRQla4FgrdQEIQ==
-  dependencies:
-    bech32 "^1.1.2"
-    bip174 "^2.0.1"
-    bip32 "^2.0.4"
-    bip66 "^1.1.0"
-    bitcoin-ops "^1.4.0"
-    bs58check "^2.0.0"
-    create-hash "^1.1.0"
-    create-hmac "^1.1.3"
-    merkle-lib "^2.0.10"
-    pushdata-bitcoin "^1.0.1"
-    randombytes "^2.0.1"
-    tiny-secp256k1 "^1.1.1"
     typeforce "^1.11.3"
     varuint-bitcoin "^1.0.4"
     wif "^2.0.1"
@@ -3824,7 +3776,7 @@ bs58@^4.0.0:
   dependencies:
     base-x "^3.0.2"
 
-bs58check@<3.0.0, bs58check@^2.0.0, bs58check@^2.1.1, bs58check@^2.1.2:
+bs58check@<3.0.0, bs58check@^2.0.0, bs58check@^2.1.1:
   version "2.1.2"
   resolved "https://registry.yarnpkg.com/bs58check/-/bs58check-2.1.2.tgz#53b018291228d82a5aa08e7d796fdafda54aebfc"
   integrity sha512-0TS1jicxdU09dwJMNZtVAfzPi6Q6QeN0pM1Fkzrjn+XYHvzMKPU3pHVpva+769iNVSfIYWf7LJ6WR+BuuMf8cA==
@@ -5010,13 +4962,6 @@ doctrine@^3.0.0:
   integrity sha512-yS+Q5i3hBf7GBkd4KG8a7eBNNWNGLTaEwwYWUijIYM7zrlYDM0BFXHjjPWlWZ1Rg7UaddZeIDmi9jF3HmqiQ2w==
   dependencies:
     esutils "^2.0.2"
-
-dogecoin-bip84@0.0.5:
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/dogecoin-bip84/-/dogecoin-bip84-0.0.5.tgz#7053ac917eaf35ddd5d44caa815b1b316c82b527"
-  integrity sha512-WJ6az63hHv1AONRsnCdMgxdGZp/RPH98K//foGkJz47A8iJEPljJ3lQPv2MMUFcaSk9Voq+oF0e/dXy36NiTGQ==
-  dependencies:
-    bip84 "^0.2.7"
 
 dom-converter@^0.2.0:
   version "0.2.0"
@@ -11412,7 +11357,7 @@ timsort@^0.3.0:
   resolved "https://registry.yarnpkg.com/timsort/-/timsort-0.3.0.tgz#405411a8e7e6339fe64db9a234de11dc31e02bd4"
   integrity sha512-qsdtZH+vMoCARQtyod4imc2nIJwg9Cc7lPRrw9CzF8ZKR0khdr8+2nX80PBhET3tcyTtJDxAffGh2rXH4tyU8A==
 
-tiny-secp256k1@^1.0.0, tiny-secp256k1@^1.1.0, tiny-secp256k1@^1.1.1, tiny-secp256k1@^1.1.3:
+tiny-secp256k1@^1.0.0, tiny-secp256k1@^1.1.0:
   version "1.1.6"
   resolved "https://registry.yarnpkg.com/tiny-secp256k1/-/tiny-secp256k1-1.1.6.tgz#7e224d2bee8ab8283f284e40e6b4acb74ffe047c"
   integrity sha512-FmqJZGduTyvsr2cF3375fqGHUovSwDi/QytexX1Se4BPuPZpTE5Ftp5fg+EFSuEf3lhZqgCRjEG3ydUQ/aNiwA==

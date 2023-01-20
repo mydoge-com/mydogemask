@@ -1,5 +1,7 @@
+import sb from 'satoshi-bitcoin';
+
 import { logError } from '../utils/error';
-import { nownodes } from './api';
+import { apiKey, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
@@ -21,9 +23,146 @@ import {
   generateChild,
   generatePhrase,
   generateRoot,
+  signRawTx,
 } from './helpers/wallet';
 
 const TRANSACTION_PAGE_SIZE = 10;
+
+// Build a raw transaction and determine fee
+function onCreateTransaction({ data = {}, sendResponse } = {}) {
+  const amountSatoshi = sb.toSatoshi(data.dogeAmount);
+  const amount = sb.toBitcoin(amountSatoshi);
+  const jsonrpcReq = {
+    API_key: apiKey,
+    jsonrpc: '2.0',
+    id: `${data.senderAddress}_create_${Date.now()}`,
+    method: 'createrawtransaction',
+    params: [
+      [],
+      {
+        [data.recipientAddress]: amount,
+      },
+    ],
+  };
+
+  nownodes
+    .get(`/utxo/${data.senderAddress}`)
+    .json((response) => {
+      // Sort by smallest + oldest
+      const utxos = response.sort((a, b) => {
+        const aValue = sb.toBitcoin(a.value);
+        const bValue = sb.toBitcoin(b.value);
+        return aValue > bValue ? 1 : aValue < bValue ? -1 : a.height - b.height;
+      });
+
+      const feePerInput = 0.0012; // estimate fee per input
+      let fee = feePerInput;
+      let total = 0;
+
+      for (let i = 0; i < utxos.length; i++) {
+        const utxo = utxos[i];
+        const value = sb.toBitcoin(utxo.value);
+        total += value;
+        fee = feePerInput * (i + 1);
+
+        jsonrpcReq.params[0].push({
+          txid: utxo.txid,
+          vout: utxo.vout,
+        });
+
+        if (total >= amount + fee) {
+          break;
+        }
+      }
+      // Set a dummy amount in the change address
+      jsonrpcReq.params[1][data.senderAddress] = feePerInput;
+      // console.log('estimated fee', fee);
+      // Get the raw transaction to determine actual size
+      return node.post(jsonrpcReq).json((estimateRes) => {
+        const size = estimateRes.result.length / 2;
+        // console.log('estimated size', size);
+        fee = Math.max(
+          parseFloat(((size / 1000) * 0.01).toFixed(8)),
+          feePerInput
+        );
+        // console.log('calculated fee', fee);
+        // Add change address and amount if enough, otherwise add to fee
+        const changeSatoshi = Math.trunc(
+          sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee)
+        );
+        // console.log('calculated change', changeSatoshi);
+        if (changeSatoshi >= 0) {
+          const changeAmount = sb.toBitcoin(changeSatoshi);
+          if (changeAmount > feePerInput) {
+            jsonrpcReq.params[1][data.senderAddress] = changeAmount;
+          } else {
+            delete jsonrpcReq.params[1][data.senderAddress];
+            fee += changeAmount;
+          }
+        } else {
+          delete jsonrpcReq.params[1][data.senderAddress];
+          // All inputs can't cover fee, send max
+          jsonrpcReq.params[1][data.recipientAddress] = sb.toBitcoin(
+            sb.toSatoshi(amount) - sb.toSatoshi(fee)
+          );
+        }
+        // console.log('createrawtransaction req', jsonrpcReq);
+        // Return the raw tx and the fee
+        node.post(jsonrpcReq).json((jsonrpcRes) => {
+          // console.log('actual size', jsonrpcRes.result.length / 2);
+          // console.log('raw tx', jsonrpcRes.result);
+          sendResponse?.({
+            rawTx: jsonrpcRes.result,
+            fee,
+            amount: jsonrpcReq.params[1][data.recipientAddress],
+          });
+        });
+      });
+    })
+    .catch((err) => {
+      logError(err);
+      sendResponse?.(false);
+    });
+}
+
+function onSendTransaction({ data = {}, sender, sendResponse } = {}) {
+  // TODO Confirm that the sender is the extension
+  if (process.env.NODE_ENV === 'development' || sender?.id) {
+    Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+      ([wallet, password]) => {
+        const decryptedWallet = decrypt({
+          data: wallet,
+          password,
+        });
+        if (!decryptedWallet) {
+          sendResponse?.(false);
+        }
+        const signed = signRawTx(
+          data.rawTx,
+          decryptedWallet.children[data.selectedAddressIndex]
+        );
+        // console.log('signed tx', data.selectedAddressIndex, signed);
+        const jsonrpcReq = {
+          API_key: apiKey,
+          jsonrpc: '2.0',
+          id: `${data.senderAddress}_send_${Date.now()}`,
+          method: 'sendrawtransaction',
+          params: [signed],
+        };
+        node
+          .post(jsonrpcReq)
+          .json((jsonrpcRes) => {
+            // console.log('sendrawtransaction', jsonrpcRes);
+            sendResponse(jsonrpcRes.result);
+          })
+          .catch((err) => {
+            logError(err);
+            sendResponse?.(false);
+          });
+      }
+    );
+  }
+}
 
 // onRequestTransaction: Launch notification popup
 function onRequestTransaction({ data = {}, sendResponse } = {}) {
@@ -207,6 +346,7 @@ function onDeleteAddress({ sendResponse, data } = {}) {
       }
 
       decryptedWallet.addresses.splice(data.index, 1);
+      decryptedWallet.children.splice(data.index, 1);
       const encryptedWallet = encrypt({
         data: decryptedWallet,
         password,
@@ -285,6 +425,12 @@ function signOut({ sendResponse } = {}) {
 export const messageHandler = ({ message, data }, sender, sendResponse) => {
   if (!message) return;
   switch (message) {
+    case 'createTransaction':
+      onCreateTransaction({ data, sendResponse });
+      break;
+    case 'sendTransaction':
+      onSendTransaction({ data, sender, sendResponse });
+      break;
     case 'requestTransaction':
       onRequestTransaction({ data, sendResponse });
       break;

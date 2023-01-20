@@ -46,7 +46,7 @@ export const ResetWallet = () => {
               <Icon as={CgDanger} bg='white' />
             </Box>
             <Text color='gray.500' fontSize='11px'>
-              Mydogemask does not keep a copy of your password. If you’re having
+              MyDogeMask does not keep a copy of your password. If you’re having
               trouble unlocking your account, you will need to reset your
               wallet. You can do this by providing the 12-word Seed Phrase.{' '}
               <Text fontWeight='bold'>
