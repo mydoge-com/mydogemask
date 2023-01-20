@@ -7,6 +7,7 @@ import {
 } from 'react';
 
 import { messageHandler } from './scripts/background';
+import { MESSAGE_TYPES } from './scripts/helpers/constants';
 import { addListener, sendMessage } from './scripts/helpers/message';
 
 export const AppContext = createContext(null);
@@ -59,23 +60,29 @@ export const AppContextProvider = ({ children }) => {
     if (process.env.NODE_ENV === 'development') {
       addListener(messageHandler);
     }
-    sendMessage({ message: 'isOnboardingComplete' }, (response) => {
-      if (response) {
-        dispatch({ type: 'SET_ONBOARDING_COMPLETE', payload: response });
-        sendMessage(
-          { message: 'isSessionAuthenticated' },
-          ({ wallet, authenticated }) => {
-            if (authenticated && wallet) {
-              dispatch({ type: 'SIGN_IN', payload: { authenticated, wallet } });
-            } else {
-              navigate('Password');
+    sendMessage(
+      { message: MESSAGE_TYPES.IS_ONBOARDING_COMPLETE },
+      (response) => {
+        if (response) {
+          dispatch({ type: 'SET_ONBOARDING_COMPLETE', payload: response });
+          sendMessage(
+            { message: MESSAGE_TYPES.IS_SESSION_AUTHENTICATED },
+            ({ wallet, authenticated }) => {
+              if (authenticated && wallet) {
+                dispatch({
+                  type: 'SIGN_IN',
+                  payload: { authenticated, wallet },
+                });
+              } else {
+                navigate('Password');
+              }
             }
-          }
-        );
-      } else {
-        navigate('Intro');
+          );
+        } else {
+          navigate('Intro');
+        }
       }
-    });
+    );
   }, [navigate]);
 
   const providerValue = useMemo(

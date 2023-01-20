@@ -3,6 +3,7 @@ import { nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
+  MESSAGE_TYPES,
   ONBOARDING_COMPLETE,
   PASSWORD,
   WALLET,
@@ -122,7 +123,8 @@ function onGetAddressBalance({ data, sendResponse } = {}) {
   return true;
 }
 
-async function onGetTransactions({ data, sendResponse } = {}) {
+async function onGetTransactions({ data, sendResponse, sender } = {}) {
+  console.log({ sender });
   // Get txids
   let txIds = [];
   let totalPages;
@@ -160,6 +162,41 @@ async function onGetTransactions({ data, sendResponse } = {}) {
 }
 
 function onGenerateAddress({ sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+        return;
+      }
+      const root = generateRoot(decryptedWallet.phrase);
+      const child = generateChild(root, decryptedWallet.children.length);
+      const address = generateAddress(child);
+      decryptedWallet.children.push(child.toWIF());
+      decryptedWallet.addresses.push(address);
+      const encryptedWallet = encrypt({
+        data: decryptedWallet,
+        password,
+      });
+      Promise.all([
+        setSessionValue({ [WALLET]: decryptedWallet }),
+        setLocalValue({
+          [WALLET]: encryptedWallet,
+        }),
+      ])
+        .then(() => {
+          sendResponse?.({ wallet: decryptedWallet });
+        })
+        .catch(() => sendResponse?.(false));
+    }
+  );
+  return true;
+}
+
+function onConnect({ sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
     ([wallet, password]) => {
       const decryptedWallet = decrypt({
@@ -285,42 +322,45 @@ function signOut({ sendResponse } = {}) {
 export const messageHandler = ({ message, data }, sender, sendResponse) => {
   if (!message) return;
   switch (message) {
-    case 'requestTransaction':
-      onRequestTransaction({ data, sendResponse });
+    case MESSAGE_TYPES.REQUEST_TRANSACTION:
+      onRequestTransaction({ data, sendResponse, sender });
       break;
-    case 'createWallet':
-    case 'resetWallet':
-      onCreateWallet({ data, sendResponse });
+    case MESSAGE_TYPES.CREATE_WALLET:
+    case MESSAGE_TYPES.RESET_WALLET:
+      onCreateWallet({ data, sendResponse, sender });
       break;
-    case 'authenticate':
-      onAuthenticate({ data, sendResponse });
+    case MESSAGE_TYPES.AUTHENTICATE:
+      onAuthenticate({ data, sendResponse, sender });
       break;
-    case 'isOnboardingComplete':
-      getOnboardingStatus({ sendResponse });
+    case MESSAGE_TYPES.IS_ONBOARDING_COMPLETE:
+      getOnboardingStatus({ data, sendResponse, sender });
       break;
-    case 'isSessionAuthenticated':
-      getAuthStatus({ sendResponse });
+    case MESSAGE_TYPES.IS_SESSION_AUTHENTICATED:
+      getAuthStatus({ data, sendResponse, sender });
       break;
-    case 'signOut':
-      signOut({ sendResponse });
+    case MESSAGE_TYPES.SIGN_OUT:
+      signOut({ data, sendResponse, sender });
       break;
-    case 'deleteWallet':
-      onDeleteWallet({ sendResponse });
+    case MESSAGE_TYPES.DELETE_WALLET:
+      onDeleteWallet({ data, sendResponse, sender });
       break;
-    case 'generateAddress':
-      onGenerateAddress({ sendResponse });
+    case MESSAGE_TYPES.GENERATE_ADDRESS:
+      onGenerateAddress({ data, sendResponse, sender });
       break;
-    case 'deleteAddress':
-      onDeleteAddress({ data, sendResponse });
+    case MESSAGE_TYPES.DELETE_ADDRESS:
+      onDeleteAddress({ data, sendResponse, sender });
       break;
-    case 'getDogecoinPrice':
-      onGetDogecoinPrice({ sendResponse });
+    case MESSAGE_TYPES.GET_DOGECOIN_PRICE:
+      onGetDogecoinPrice({ data, sendResponse, sender });
       break;
-    case 'getAddressBalance':
-      onGetAddressBalance({ data, sendResponse });
+    case MESSAGE_TYPES.GET_ADDRESS_BALANCE:
+      onGetAddressBalance({ data, sendResponse, sender });
       break;
-    case 'getTransactions':
-      onGetTransactions({ data, sendResponse });
+    case MESSAGE_TYPES.GET_TRANSACTIONS:
+      onGetTransactions({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CONNECT:
+      onConnect({ sender, sendResponse, data });
       break;
     default:
   }

@@ -13,6 +13,7 @@ import { FiCopy } from 'react-icons/fi';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../hooks/useAuth';
 import { useCopyText } from '../../hooks/useCopyText';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { BigButton } from '../Button';
 
@@ -64,7 +65,7 @@ const DeleteWallet = () => {
   const cancelRef = useRef();
 
   const onConfirm = useCallback(() => {
-    sendMessage({ message: 'deleteWallet' }, () => {
+    sendMessage({ message: MESSAGE_TYPES.DELETE_WALLET }, () => {
       dispatch({ type: 'SIGN_OUT', payload: { navigate: 'Intro' } });
     });
   }, [dispatch]);

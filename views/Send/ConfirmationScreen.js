@@ -2,6 +2,7 @@ import { Avatar, Button, Center, HStack, Text } from 'native-base';
 import { useCallback } from 'react';
 
 import { BigButton } from '../../components/Button';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
 
@@ -16,7 +17,10 @@ export const ConfirmationScreen = ({
   const onSubmit = useCallback(() => {
     let addressBalance;
     sendMessage(
-      { message: 'getAddressBalance', data: { address: walletAddress } },
+      {
+        message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
+        data: { address: walletAddress },
+      },
       (balance) => {
         if (balance) {
           addressBalance = balance;

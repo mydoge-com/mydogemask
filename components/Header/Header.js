@@ -15,6 +15,7 @@ import { FiCheck, FiLock, FiSettings, FiTrash2 } from 'react-icons/fi';
 import { MdQrCode2 } from 'react-icons/md';
 
 import { useAppContext } from '../../hooks/useAppContext';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { BackButton } from '../BackButton';
 import { ToastRender } from '../ToastRender';
@@ -26,7 +27,7 @@ export const Header = ({ withBackButton, backRoute }) => {
   const { wallet, selectedAddressIndex, dispatch, navigate } = useAppContext();
   const onSignOut = useCallback(() => {
     sendMessage(
-      { message: 'signOut' },
+      { message: MESSAGE_TYPES.SIGN_OUT },
       () => {
         dispatch({ type: 'SIGN_OUT' });
       },
@@ -43,7 +44,7 @@ export const Header = ({ withBackButton, backRoute }) => {
 
   const onGenerateAddress = useCallback(() => {
     sendMessage(
-      { message: 'generateAddress' },
+      { message: MESSAGE_TYPES.GENERATE_ADDRESS },
       ({ wallet: updatedWallet }) => {
         if (updatedWallet) {
           dispatch({ type: 'SET_WALLET', payload: { wallet: updatedWallet } });

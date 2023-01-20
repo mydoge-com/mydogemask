@@ -5,6 +5,7 @@ import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { useInterval } from '../../hooks/useInterval';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
 import { sanitizeDogeInput, sanitizeFiat } from '../../utils/formatters';
@@ -73,7 +74,7 @@ export const AmountScreen = ({
   const [addressBalance, setAddressBalance] = useState();
 
   const getDogecoinPrice = useCallback(() => {
-    sendMessage({ message: 'getDogecoinPrice' }, ({ usd }) => {
+    sendMessage({ message: MESSAGE_TYPES.GET_DOGECOIN_PRICE }, ({ usd }) => {
       if (usd) {
         setDogecoinPrice(usd);
       }
@@ -86,7 +87,10 @@ export const AmountScreen = ({
 
   const getAddressBalance = useCallback(() => {
     sendMessage(
-      { message: 'getAddressBalance', data: { address: walletAddress } },
+      {
+        message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
+        data: { address: walletAddress },
+      },
       (balance) => {
         if (balance) {
           setAddressBalance(balance);
