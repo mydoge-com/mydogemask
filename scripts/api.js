@@ -6,7 +6,7 @@ export const apiKey = process.env.NEXT_PUBLIC_NOWNODES_API_KEY;
 
 export const nownodes = wretch(NOWNODES_BASE_URL, {
   headers: {
-    'api-key': process.env.NEXT_PUBLIC_NOWNODES_API_KEY,
+    'api-key': apiKey,
   },
   redirect: 'follow',
 });
