@@ -111,6 +111,23 @@ function onGetDogecoinPrice({ sendResponse } = {}) {
 }
 
 function onGetAddressBalance({ data, sendResponse } = {}) {
+  if (data.addresses) {
+    console.log('data.addresses', data.addresses);
+    Promise.all(
+      data.addresses.map((address) =>
+        nownodes.get(`/address/${address}`).json((response) => response.balance)
+      )
+    )
+      .then((balances) => {
+        sendResponse?.(balances);
+      })
+      .catch((err) => {
+        logError(err);
+        sendResponse?.(false);
+      });
+
+    return true;
+  }
   nownodes
     .get(`/address/${data.address}`)
     .json((response) => {
@@ -123,8 +140,7 @@ function onGetAddressBalance({ data, sendResponse } = {}) {
   return true;
 }
 
-async function onGetTransactions({ data, sendResponse, sender } = {}) {
-  console.log({ sender });
+async function onGetTransactions({ data, sendResponse } = {}) {
   // Get txids
   let txIds = [];
   let totalPages;
@@ -196,38 +212,20 @@ function onGenerateAddress({ sendResponse } = {}) {
   return true;
 }
 
-function onConnect({ sendResponse } = {}) {
-  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-    ([wallet, password]) => {
-      const decryptedWallet = decrypt({
-        data: wallet,
-        password,
-      });
-      if (!decryptedWallet) {
+function onConnect({ sendResponse, sender } = {}) {
+  console.log({ sender });
+  chrome.windows
+    .create({
+      url: `index.html?tabId=${sender.tab.id}&origin=${sender.origin}#connect`,
+      type: 'popup',
+    })
+    .then((tab) => {
+      if (tab) {
+        sendResponse?.(tab);
+      } else {
         sendResponse?.(false);
-        return;
       }
-      const root = generateRoot(decryptedWallet.phrase);
-      const child = generateChild(root, decryptedWallet.children.length);
-      const address = generateAddress(child);
-      decryptedWallet.children.push(child.toWIF());
-      decryptedWallet.addresses.push(address);
-      const encryptedWallet = encrypt({
-        data: decryptedWallet,
-        password,
-      });
-      Promise.all([
-        setSessionValue({ [WALLET]: decryptedWallet }),
-        setLocalValue({
-          [WALLET]: encryptedWallet,
-        }),
-      ])
-        .then(() => {
-          sendResponse?.({ wallet: decryptedWallet });
-        })
-        .catch(() => sendResponse?.(false));
-    }
-  );
+    });
   return true;
 }
 

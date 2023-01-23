@@ -4,17 +4,26 @@ import { MESSAGE_TYPES } from './helpers/constants';
 window.doge = {
   isMyDogeMask: true,
   async connect() {
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        { message: MESSAGE_TYPES.CONNECT },
-        (response) => {
-          if (response) {
-            resolve(response);
-          } else {
-            reject(new Error('Failed to connect'));
-          }
-        }
-      );
+    return new Promise((resolve) => {
+      window.postMessage({ type: MESSAGE_TYPES.CONNECT }, '*');
+
+      window.addEventListener('message', (event) => {
+        console.log('from contentScript.js', event);
+        resolve(event);
+      });
+      // chrome.runtime.sendMessage(
+      //   {
+      //     message: MESSAGE_TYPES.CONNECT,
+      //     data: { origin: window.location.origin },
+      //   },
+      //   (response) => {
+      //     if (response) {
+      //       resolve(response);
+      //     } else {
+      //       reject(new Error('Failed to connect'));
+      //     }
+      //   }
+      // );
     });
   },
   getAddress: () => {

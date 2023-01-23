@@ -1,4 +1,10 @@
 (() => {
+  // window.addEventListener('message', (event) => {
+  //   console.log('from inject-script.js', event);
+  // });
+  const initEvent = new Event('doge#initialized');
+  window.dispatchEvent(initEvent);
+
   const loadSendTipFloating = async () => {
     const sendTipFloatingBtnExists = document.getElementsByClassName(
       'sendTipFloating-btn'
@@ -54,16 +60,39 @@
     );
   }
 
+  let originTab = null;
+
   window.addEventListener(
     'message',
-    (event) => {
+    ({ source, data: { type, data } }) => {
       // only accept messages from the current tab
-      if (event.source !== window) return;
+      if (source !== window) return;
 
-      if (event.data.type && event.data.type === 'FROM_PAGE') {
-        chrome.runtime.sendMessage(event.data);
+      if (type) {
+        chrome.runtime.sendMessage(
+          {
+            message: type,
+            data,
+          },
+          (tab) => {
+            if (tab) {
+              originTab = tab;
+            } else {
+              originTab = null;
+            }
+          }
+        );
       }
     },
     false
   );
+
+  // chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  //   console.log(
+  //     sender.tab
+  //       ? `from a content script:${sender.tab.url}`
+  //       : 'from the extension'
+  //   );
+  //   if (request.greeting === 'hello') sendResponse({ farewell: 'goodbye' });
+  // });
 })();

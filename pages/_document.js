@@ -1,3 +1,3 @@
-import document from '@native-base/next-adapter/document';
+import Document from '@native-base/next-adapter/document';
 
-export default document;
+export default Document;

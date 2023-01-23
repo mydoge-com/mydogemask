@@ -34,10 +34,14 @@ const reducer = (state, { type, payload }) => {
         ...state,
         authenticated: payload?.authenticated,
         wallet: payload?.wallet,
-        currentRoute: payload?.navigate ?? 'Transactions',
+        currentRoute: state.connect
+          ? 'Connect'
+          : payload?.navigate ?? 'Transactions',
       };
     case 'SELECT_WALLET':
       return { ...state, selectedAddressIndex: payload.index };
+    case 'SET_CONNECTION_REQUESTED':
+      return { ...state, connect: payload.connect };
     default:
       return state;
   }
@@ -67,11 +71,31 @@ export const AppContextProvider = ({ children }) => {
           dispatch({ type: 'SET_ONBOARDING_COMPLETE', payload: response });
           sendMessage(
             { message: MESSAGE_TYPES.IS_SESSION_AUTHENTICATED },
-            ({ wallet, authenticated }) => {
+            async ({ wallet, authenticated }) => {
+              let connect;
+              let url;
+              if (chrome?.windows) {
+                const extPopupWindow = await chrome.tabs.getCurrent();
+                url = new URL(extPopupWindow.url);
+              } else {
+                url = new URL(window.location.href);
+              }
+              const tabId = url.searchParams.get('tabId');
+              const origin = url.searchParams.get('origin');
+              if (tabId && origin) {
+                connect = { tabId, origin };
+                dispatch({
+                  type: 'SET_CONNECTION_REQUESTED',
+                  payload: { connect },
+                });
+              }
               if (authenticated && wallet) {
                 dispatch({
                   type: 'SIGN_IN',
-                  payload: { authenticated, wallet },
+                  payload: {
+                    authenticated,
+                    wallet,
+                  },
                 });
               } else {
                 navigate('Password');
