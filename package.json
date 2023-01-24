@@ -19,7 +19,6 @@
     "bitcoinjs-lib": "4.0.5",
     "crypto-js": "^4.1.1",
     "dayjs": "^1.11.7",
-    "dogecoin-bip84": "0.0.5",
     "expo-font": "^10.0.3",
     "multicoin-address-validator": "0.5.10",
     "native-base": "3.4.0",

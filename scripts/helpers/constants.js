@@ -20,4 +20,7 @@ export const MESSAGE_TYPES = {
   GET_TRANSACTIONS: 'getTransactions',
   CONNECTION_REQUEST: 'connectionRequest',
   APPROVE_CONNECTION: 'approveConnection',
+  CREATE_TRANSACTION: 'createTransaction',
+  SEND_TRANSACTION: 'sendTransaction',
 };
+export const NODE_BASE_URL = 'https://doge.nownodes.io';

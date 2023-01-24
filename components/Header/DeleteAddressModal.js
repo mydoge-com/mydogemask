@@ -67,8 +67,9 @@ export const DeleteAddressModal = ({
           <Text fontWeight='bold' color='danger.500' pb='4px'>
             {wallet.addresses[selectedAddressIndex]}
           </Text>
-          Are you sure you want to delete this address? You will not be able to
-          recover it.
+          Are you sure you want to delete this address? Deleting an address will
+          simply remove it from your wallet. The balance will remain and it can
+          be added back using "Create address".
         </AlertDialog.Body>
         <AlertDialog.Footer>
           <Button.Group space={2}>

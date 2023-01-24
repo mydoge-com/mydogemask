@@ -1,7 +1,8 @@
-import { Avatar, Button, Center, HStack, Text } from 'native-base';
+import { Avatar, Button, Center, HStack, Text, Toast } from 'native-base';
 import { useCallback } from 'react';
 
 import { BigButton } from '../../components/Button';
+import { ToastRender } from '../../components/ToastRender';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
@@ -39,10 +40,52 @@ export const ConfirmationScreen = ({
           return;
         }
         // Process transaction
-        console.log('sending transaction');
+        sendMessage(
+          {
+            message: 'sendTransaction',
+            data: { rawTx: formData.rawTx, selectedAddressIndex },
+          },
+          (txId) => {
+            if (txId) {
+              Toast.show({
+                duration: 3000,
+                render: () => {
+                  return (
+                    <ToastRender
+                      description={`Sent Transaction: ${txId}`}
+                      status='success'
+                    />
+                  );
+                },
+              });
+            } else {
+              Toast.show({
+                title: 'Error',
+                description: 'Transaction Failed',
+                duration: 3000,
+                render: () => {
+                  return (
+                    <ToastRender
+                      title='Error'
+                      description='Failed to send transaction.'
+                      status='error'
+                    />
+                  );
+                },
+              });
+            }
+          }
+        );
       }
     );
-  }, [formData.address, formData.dogeAmount, setErrors, walletAddress]);
+  }, [
+    formData.address,
+    formData.dogeAmount,
+    formData.rawTx,
+    selectedAddressIndex,
+    setErrors,
+    walletAddress,
+  ]);
 
   return (
     <Center>
@@ -73,8 +116,11 @@ export const ConfirmationScreen = ({
         </Text>
       </HStack>
 
-      <Text fontSize='52px' fontWeight='semibold' pt='6px'>
+      <Text fontSize='39px' fontWeight='semibold' pt='6px'>
         Ð{formData.dogeAmount}
+      </Text>
+      <Text fontSize='13px' fontWeight='semibold' pt='6px'>
+        Network fee Ð{formData.fee}
       </Text>
       <HStack alignItems='center' mt='60px' space='12px'>
         <Button

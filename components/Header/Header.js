@@ -186,8 +186,8 @@ export const Header = ({ withBackButton, backRoute }) => {
           </VStack>
           <Divider my='6px' w='100%' />
           <MenuItem onPress={() => setOpenModal('WALLET_DETAIL')}>
-            <MdQrCode2 size='20px' alt='Receive dogecoin' />
-            Receive dogecoin
+            <MdQrCode2 size='20px' alt='Receive Dogecoin' />
+            Receive Dogecoin
           </MenuItem>
           <Divider my='6px' w='100%' />
           <MenuItem onPress={onGenerateAddress}>
@@ -199,10 +199,15 @@ export const Header = ({ withBackButton, backRoute }) => {
             />
             Create address
           </MenuItem>
-          <MenuItem onPress={() => setOpenModal('DELETE_ADDRESS')}>
+          {/* <MenuItem
+            onPress={() => setOpenModal('DELETE_ADDRESS')}
+            isDisabled={
+              wallet.addresses.length === 1 || selectedAddressIndex === 0
+            }
+          >
             <FiTrash2 size='20px' alt='Delete address' />
             Delete address
-          </MenuItem>
+          </MenuItem> */}
           <Divider my='6px' w='100%' />
           <MenuItem onPress={() => setOpenModal('BACKUP_SECURITY')}>
             <FiSettings size='20px' alt='Backup & security' />
