@@ -116,7 +116,7 @@ export const ConfirmationScreen = ({
         </Text>
       </HStack>
 
-      <Text fontSize='39px' fontWeight='semibold' pt='6px'>
+      <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
         Ð{formData.dogeAmount}
       </Text>
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
