@@ -181,6 +181,7 @@ export function Connect() {
         origin={origin}
         originTabId={originTabId}
         selectedAddress={wallet.addresses[selectedAddressIndex]}
+        balance={addressBalances[selectedAddressIndex]}
       />
     </Layout>
   );
@@ -192,6 +193,7 @@ const ConfirmationModal = ({
   selectedAddress,
   origin,
   originTabId,
+  balance,
 }) => {
   const cancelRef = useRef();
   const { navigate } = useAppContext();
@@ -199,7 +201,13 @@ const ConfirmationModal = ({
     sendMessage(
       {
         message: MESSAGE_TYPES.APPROVE_CONNECTION,
-        data: { approved: true, selectedAddress, originTabId, origin },
+        data: {
+          approved: true,
+          address: selectedAddress,
+          balance,
+          originTabId,
+          origin,
+        },
       },
       () => {
         onClose?.();
@@ -219,7 +227,7 @@ const ConfirmationModal = ({
       },
       []
     );
-  }, [selectedAddress, originTabId, origin, onClose, navigate]);
+  }, [selectedAddress, balance, originTabId, origin, onClose, navigate]);
 
   return (
     <AlertDialog
