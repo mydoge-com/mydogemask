@@ -23,7 +23,7 @@ import { DeleteAddressModal } from './DeleteAddressModal';
 import { SecurityModal } from './SecurityModal';
 import { WalletDetailModal } from './WalletDetailModal';
 
-export const Header = ({ withBackButton, backRoute }) => {
+export const Header = ({ withBackButton, backRoute, onBack }) => {
   const { wallet, selectedAddressIndex, dispatch, navigate } = useAppContext();
   const onSignOut = useCallback(() => {
     sendMessage(
@@ -109,7 +109,13 @@ export const Header = ({ withBackButton, backRoute }) => {
           position='absolute'
           left='12px'
           pt='8px'
-          onPress={() => navigate(backRoute)}
+          onPress={() => {
+            if (onBack) {
+              onBack();
+            } else {
+              navigate(backRoute);
+            }
+          }}
         />
       ) : null}
       <Menu

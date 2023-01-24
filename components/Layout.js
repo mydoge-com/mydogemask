@@ -7,6 +7,7 @@ export const Layout = ({
   withHeader,
   withBackButton,
   backRoute,
+  onBack,
   children,
   ...props
 }) => {
@@ -21,7 +22,11 @@ export const Layout = ({
       shadow='2'
     >
       {withHeader ? (
-        <Header withBackButton={withBackButton} backRoute={backRoute} />
+        <Header
+          withBackButton={withBackButton}
+          backRoute={backRoute}
+          onBack={onBack}
+        />
       ) : null}
       {children}
     </Box>
