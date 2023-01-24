@@ -25,26 +25,58 @@ export const CreateWallet = () => {
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
 
-  const validate = useCallback(() => {
-    if (!formData.password) {
-      setErrors({ ...errors, password: true });
-      return false;
-    } else if (!formData.confirm || formData.confirm !== formData.password) {
-      setErrors({ ...errors, confirm: "Password fields don't match" });
-      return false;
-    } else if (formData.password.length < 10) {
-      setErrors({
-        ...errors,
-        confirm: 'Password must be at least 10 characters',
-      });
-      return false;
-    }
-    setErrors({});
-    return true;
-  }, [errors, formData.confirm, formData.password]);
+  const validatePassword = useCallback(
+    (value) => {
+      const toValidate = value !== undefined ? value : formData.password;
+      let noErrors = true;
+
+      if (value === undefined) {
+        if (!formData.password) {
+          setErrors({ ...errors, password: true });
+          noErrors = false;
+        }
+      }
+
+      if (toValidate) {
+        if (toValidate.length < 10) {
+          setErrors({
+            ...errors,
+            confirm1: 'Password must be at least 10 characters',
+          });
+          noErrors = false;
+        }
+      }
+
+      if (noErrors) {
+        setErrors({ ...errors, password: false, confirm1: false });
+      }
+
+      return noErrors;
+    },
+    [errors, formData.password]
+  );
+
+  const validateConfirm = useCallback(
+    (value) => {
+      const toValidate = value !== undefined ? value : formData.confirm;
+      let noErrors = true;
+
+      if (toValidate && toValidate !== formData.password) {
+        setErrors({ ...errors, confirm2: "Password fields don't match" });
+        noErrors = false;
+      }
+
+      if (noErrors) {
+        setErrors({ ...errors, confirm2: false });
+      }
+
+      return noErrors;
+    },
+    [errors, formData.confirm, formData.password]
+  );
 
   const onSubmit = useCallback(() => {
-    if (validate()) {
+    if (validatePassword() && validateConfirm()) {
       sendMessage(
         {
           message: MESSAGE_TYPES.CREATE_WALLET,
@@ -64,7 +96,7 @@ export const CreateWallet = () => {
         }
       );
     }
-  }, [dispatch, formData.password, validate]);
+  }, [dispatch, formData.password, validatePassword, validateConfirm]);
 
   return (
     <OnboardingLayout>
@@ -107,10 +139,11 @@ export const CreateWallet = () => {
                   color='gray.500'
                 />
               }
-              isInvalid={'password' in errors}
-              onChangeText={(value) =>
-                setFormData({ ...formData, password: value })
-              }
+              isInvalid={errors.password || errors.confirm1}
+              onChangeText={(value) => {
+                setFormData({ ...formData, password: value });
+                validatePassword(value);
+              }}
               onSubmitEditing={onSubmit}
             />
             <Input
@@ -143,15 +176,21 @@ export const CreateWallet = () => {
                 />
               }
               mt='12px'
-              isInvalid={'confirm' in errors}
-              onChangeText={(value) =>
-                setFormData({ ...formData, confirm: value })
-              }
+              isInvalid={errors.confirm2}
+              onChangeText={(value) => {
+                setFormData({ ...formData, confirm: value });
+                validateConfirm(value);
+              }}
               onSubmitEditing={onSubmit}
             />
-            {'confirm' in errors ? (
+            {errors.confirm1 ? (
               <Text fontSize='10px' color='red.500' pt='6px'>
-                {errors.confirm}
+                {errors.confirm1}
+              </Text>
+            ) : null}
+            {errors.confirm2 ? (
+              <Text fontSize='10px' color='red.500' pt='6px'>
+                {errors.confirm2}
               </Text>
             ) : null}
           </VStack>
