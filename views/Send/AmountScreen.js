@@ -22,6 +22,48 @@ export const AmountScreen = ({
   walletAddress,
   selectedAddressIndex,
 }) => {
+  const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
+  const [dogecoinPrice, setDogecoinPrice] = useState(0);
+  const [addressBalance, setAddressBalance] = useState();
+  const dogeInputRef = useRef(null);
+  const fiatInputRef = useRef(null);
+
+  const getDogecoinPrice = useCallback(() => {
+    sendMessage({ message: MESSAGE_TYPES.GET_DOGECOIN_PRICE }, ({ usd }) => {
+      if (usd) {
+        setDogecoinPrice(usd);
+        onChangeTextDoge(formData.dogeAmount);
+      }
+    });
+  }, [formData.dogeAmount, onChangeTextDoge]);
+
+  useEffect(() => {
+    getAddressBalance();
+  }, [getAddressBalance, walletAddress]);
+
+  const getAddressBalance = useCallback(() => {
+    sendMessage(
+      {
+        message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
+        data: { address: walletAddress },
+      },
+      (balance) => {
+        if (balance) {
+          setAddressBalance(balance);
+        }
+      }
+    );
+  }, [walletAddress]);
+
+  useInterval(
+    () => {
+      getDogecoinPrice();
+      getAddressBalance();
+    },
+    REFRESH_INTERVAL,
+    true
+  );
+
   const onChangeTextDoge = useCallback(
     (text) => {
       if (Number.isNaN(Number(text))) {
@@ -68,48 +110,6 @@ export const AmountScreen = ({
     },
     [dogecoinPrice, errors, formData, setErrors, setFormData]
   );
-
-  const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
-  const [dogecoinPrice, setDogecoinPrice] = useState(0);
-  const [addressBalance, setAddressBalance] = useState();
-
-  const getDogecoinPrice = useCallback(() => {
-    sendMessage({ message: MESSAGE_TYPES.GET_DOGECOIN_PRICE }, ({ usd }) => {
-      if (usd) {
-        setDogecoinPrice(usd);
-      }
-    });
-  }, []);
-
-  useEffect(() => {
-    getAddressBalance();
-  }, [getAddressBalance, walletAddress]);
-
-  const getAddressBalance = useCallback(() => {
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
-        data: { address: walletAddress },
-      },
-      (balance) => {
-        if (balance) {
-          setAddressBalance(balance);
-        }
-      }
-    );
-  }, [walletAddress]);
-
-  useInterval(
-    () => {
-      getDogecoinPrice();
-      getAddressBalance();
-    },
-    REFRESH_INTERVAL,
-    { immediate: true }
-  );
-
-  const dogeInputRef = useRef(null);
-  const fiatInputRef = useRef(null);
 
   const swapInput = useCallback(() => {
     setIsCurrencySwapped((state) => !state);
@@ -195,6 +195,7 @@ export const AmountScreen = ({
       >
         {!isCurrencySwapped ? (
           <Input
+            isDisabled={dogecoinPrice === 0}
             variant='filled'
             placeholder='0'
             focusOutlineColor='brandYellow.500'
