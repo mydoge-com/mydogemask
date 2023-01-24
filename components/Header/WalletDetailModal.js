@@ -1,4 +1,4 @@
-import { Box, HStack, Image, Modal, Text } from 'native-base';
+import { Box, HStack, Image, Modal, Text, VStack } from 'native-base';
 import { FiCopy } from 'react-icons/fi';
 
 import { useCopyText } from '../../hooks/useCopyText';
@@ -51,19 +51,17 @@ export const WalletDetailModal = ({
               />
             </Box>
           </Box>
-          <HStack
-            alignItems='center'
-            pt='20px'
-            w='100%'
-            justifyContent='center'
-          >
-            <Text pr='12px' noOfLines={3}>
-              {address}
-            </Text>
-            <BigButton px='16px' py='4px' onPress={copyTextToClipboard}>
+          <VStack alignItems='center' pt='20px' justifyContent='center'>
+            <Text fontSize='12px'>{address}</Text>
+            <BigButton
+              px='16px'
+              py='4px'
+              mt='15px'
+              onPress={copyTextToClipboard}
+            >
               <FiCopy />
             </BigButton>
-          </HStack>
+          </VStack>
           <Text fontSize='12px' color='gray.500'>
             {textCopied ? 'Address copied' : ' '}
           </Text>
