@@ -34,14 +34,14 @@ const reducer = (state, { type, payload }) => {
         ...state,
         authenticated: payload?.authenticated,
         wallet: payload?.wallet,
-        currentRoute: state.connect
+        currentRoute: state.connectionRequest
           ? 'Connect'
           : payload?.navigate ?? 'Transactions',
       };
     case 'SELECT_WALLET':
       return { ...state, selectedAddressIndex: payload.index };
     case 'SET_CONNECTION_REQUESTED':
-      return { ...state, connect: payload.connect };
+      return { ...state, connectionRequest: payload.connectionRequest };
     default:
       return state;
   }
@@ -72,21 +72,23 @@ export const AppContextProvider = ({ children }) => {
           sendMessage(
             { message: MESSAGE_TYPES.IS_SESSION_AUTHENTICATED },
             async ({ wallet, authenticated }) => {
-              let connect;
-              let url;
+              let connectionRequest;
+              let url = null;
               if (chrome?.windows) {
                 const extPopupWindow = await chrome.tabs.getCurrent();
-                url = new URL(extPopupWindow.url);
+                if (extPopupWindow?.url) {
+                  url = new URL(extPopupWindow?.url);
+                }
               } else {
                 url = new URL(window.location.href);
               }
-              const tabId = url.searchParams.get('tabId');
-              const origin = url.searchParams.get('origin');
-              if (tabId && origin) {
-                connect = { tabId, origin };
+              const originTabId = Number(url?.searchParams.get('originTabId'));
+              const origin = url?.searchParams.get('origin');
+              if (originTabId && origin) {
+                connectionRequest = { originTabId, origin };
                 dispatch({
                   type: 'SET_CONNECTION_REQUESTED',
-                  payload: { connect },
+                  payload: { connectionRequest },
                 });
               }
               if (authenticated && wallet) {

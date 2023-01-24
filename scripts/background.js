@@ -3,6 +3,7 @@ import { nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
+  CONNECTED_CLIENTS,
   MESSAGE_TYPES,
   ONBOARDING_COMPLETE,
   PASSWORD,
@@ -112,7 +113,6 @@ function onGetDogecoinPrice({ sendResponse } = {}) {
 
 function onGetAddressBalance({ data, sendResponse } = {}) {
   if (data.addresses) {
-    console.log('data.addresses', data.addresses);
     Promise.all(
       data.addresses.map((address) =>
         nownodes.get(`/address/${address}`).json((response) => response.balance)
@@ -212,20 +212,53 @@ function onGenerateAddress({ sendResponse } = {}) {
   return true;
 }
 
-function onConnect({ sendResponse, sender } = {}) {
-  console.log({ sender });
+// Open the extension popup window for thew user to approve a connection request, passing url params so the popup knows the origin of the connection request
+function onConnectionRequest({ sendResponse, sender } = {}) {
   chrome.windows
     .create({
-      url: `index.html?tabId=${sender.tab.id}&origin=${sender.origin}#connect`,
+      url: `index.html?originTabId=${sender.tab.id}&origin=${sender.origin}#connect`,
       type: 'popup',
     })
     .then((tab) => {
       if (tab) {
-        sendResponse?.(tab);
+        sendResponse?.({ originTabId: sender.tab.id });
       } else {
         sendResponse?.(false);
       }
     });
+  return true;
+}
+
+// Handle the user's response to the connection request popup and send a message to the content script with the response
+async function onApproveConnection({
+  sendResponse,
+  data: { approved, selectedAddressIndex, originTabId, origin },
+} = {}) {
+  if (approved) {
+    const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || [];
+    setSessionValue({
+      [CONNECTED_CLIENTS]: {
+        ...connectedClients,
+        [origin]: { selectedAddressIndex, originTabId, origin },
+      },
+    });
+    chrome.tabs.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.APPROVE_CONNECTION,
+      data: {
+        connected: true,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.APPROVE_CONNECTION,
+      data: {
+        connected: false,
+      },
+    });
+    sendResponse(false);
+  }
   return true;
 }
 
@@ -357,8 +390,11 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.GET_TRANSACTIONS:
       onGetTransactions({ data, sendResponse, sender });
       break;
-    case MESSAGE_TYPES.CONNECT:
-      onConnect({ sender, sendResponse, data });
+    case MESSAGE_TYPES.CONNECTION_REQUEST:
+      onConnectionRequest({ sender, sendResponse, data });
+      break;
+    case MESSAGE_TYPES.APPROVE_CONNECTION:
+      onApproveConnection({ sender, sendResponse, data });
       break;
     default:
   }

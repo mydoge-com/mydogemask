@@ -1,6 +1,7 @@
 export const PASSWORD = '@mydoge_PASSWORD';
 export const WALLET = '@mydoge_WALLET';
 export const ONBOARDING_COMPLETE = '@mydoge_ONBOARDING_COMPLETE';
+export const CONNECTED_CLIENTS = '@mydoge_CONNECTED_CLIENTS';
 export const AUTHENTICATED = '@mydoge_AUTHENTICATED';
 export const NOWNODES_BASE_URL = 'https://dogebook.nownodes.io/api/v2';
 export const MESSAGE_TYPES = {
@@ -17,5 +18,6 @@ export const MESSAGE_TYPES = {
   GET_DOGECOIN_PRICE: 'getDogecoinPrice',
   GET_ADDRESS_BALANCE: 'getAddressBalance',
   GET_TRANSACTIONS: 'getTransactions',
-  CONNECT: 'connect',
+  CONNECTION_REQUEST: 'connectionRequest',
+  APPROVE_CONNECTION: 'approveConnection',
 };

@@ -1,29 +1,36 @@
 import { MESSAGE_TYPES } from './helpers/constants';
 
+function onConnectionRequestResponse({ data, error, resolve, reject }) {
+  if (error) {
+    reject(new Error('Unable to connect to MyDogeMask'));
+  } else {
+    console.log({ data });
+    resolve(data);
+  }
+}
+
 // API we expose to allow websites to detect & interact with extension
 window.doge = {
   isMyDogeMask: true,
   async connect() {
-    return new Promise((resolve) => {
-      window.postMessage({ type: MESSAGE_TYPES.CONNECT }, '*');
+    return new Promise((resolve, reject) => {
+      window.postMessage(
+        { type: MESSAGE_TYPES.CONNECTION_REQUEST },
+        window.location.origin
+      );
 
-      window.addEventListener('message', (event) => {
-        console.log('from contentScript.js', event);
-        resolve(event);
-      });
-      // chrome.runtime.sendMessage(
-      //   {
-      //     message: MESSAGE_TYPES.CONNECT,
-      //     data: { origin: window.location.origin },
-      //   },
-      //   (response) => {
-      //     if (response) {
-      //       resolve(response);
-      //     } else {
-      //       reject(new Error('Failed to connect'));
-      //     }
-      //   }
-      // );
+      window.addEventListener(
+        'message',
+        function listener({ data: { data, error, type } }) {
+          switch (type) {
+            case MESSAGE_TYPES.APPROVE_CONNECTION:
+              onConnectionRequestResponse({ data, error, resolve, reject });
+              break;
+            default:
+          }
+          window.removeEventListener('message', listener);
+        }
+      );
     });
   },
   getAddress: () => {
