@@ -54,3 +54,4 @@ yarn-error.log*
 # @end @expo/next-adapter
 
 .env
+build.zip
