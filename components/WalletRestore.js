@@ -17,6 +17,10 @@ import { BigButton } from './Button';
 
 const wordList = require('../constants/wordList.json');
 
+function cleanSeed(seed) {
+  return seed.replace(/\s+/g, ' ').trim().split(' ');
+}
+
 export const WalletRestore = ({
   onRestoreComplete = () => {},
   confirmBefore = false,
@@ -42,7 +46,7 @@ export const WalletRestore = ({
       let noErrors = true;
 
       if (toValidate) {
-        const phraseTokens = toValidate.replace(/\s+/g, ' ').trim().split(' ');
+        const phraseTokens = cleanSeed(toValidate);
         if (phraseTokens.length !== 12) {
           setErrors({
             ...errors,
@@ -143,7 +147,10 @@ export const WalletRestore = ({
     sendMessage(
       {
         message: MESSAGE_TYPES.RESET_WALLET,
-        data: { password: formData.password, seedPhrase: formData.seedPhrase },
+        data: {
+          password: formData.password,
+          seedPhrase: cleanSeed(formData.seedPhrase).join(' '),
+        },
       },
       ({ authenticated, wallet }) => {
         if (authenticated && wallet) {
