@@ -74,13 +74,9 @@ export const AppContextProvider = ({ children }) => {
             async ({ wallet, authenticated }) => {
               let connectionRequest;
               let url = null;
-              if (chrome?.windows) {
-                const extPopupWindow = await chrome.tabs.getCurrent();
-                if (extPopupWindow?.url) {
-                  url = new URL(extPopupWindow?.url);
-                }
-              } else {
-                url = new URL(window.location.href);
+              const extPopupWindow = await chrome?.tabs?.getCurrent();
+              if (extPopupWindow?.url) {
+                url = new URL(extPopupWindow?.url);
               }
               const originTabId = Number(url?.searchParams.get('originTabId'));
               const origin = url?.searchParams.get('origin');

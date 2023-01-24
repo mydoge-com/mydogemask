@@ -37,7 +37,7 @@ export function Connect() {
     sendMessage(
       {
         message: MESSAGE_TYPES.APPROVE_CONNECTION,
-        data: { approved: false },
+        data: { approved: false, originTabId, origin },
       },
       () => {
         Toast.show({
@@ -56,7 +56,7 @@ export function Connect() {
       },
       []
     );
-  }, [navigate, origin]);
+  }, [navigate, origin, originTabId]);
 
   const [addressBalances, setAddressBalances] = useState([]);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);

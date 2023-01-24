@@ -1,11 +1,22 @@
 import { MESSAGE_TYPES } from './helpers/constants';
 
-function onConnectionResponse({ data, error, resolve, reject, listener }) {
+function onConnectionResponse({
+  data,
+  error,
+  resolve,
+  reject,
+  listener,
+  onSuccess,
+  onError,
+}) {
   if (error) {
+    onError?.(new Error('Unable to connect to MyDogeMask'));
     reject(new Error('Unable to connect to MyDogeMask'));
   } else if (data.approved && data.address) {
+    onSuccess?.(data);
     resolve(data);
   } else {
+    onError?.(new Error('Unable to connect to MyDogeMask'));
     reject(new Error('User rejected connection request'));
   }
   window.removeEventListener('message', listener);
@@ -14,7 +25,7 @@ function onConnectionResponse({ data, error, resolve, reject, listener }) {
 // API we expose to allow websites to detect & interact with extension
 window.doge = {
   isMyDogeMask: true,
-  async connect() {
+  async connect(onSuccess, onError) {
     return new Promise((resolve, reject) => {
       window.postMessage(
         { type: MESSAGE_TYPES.CONNECTION_REQUEST },
@@ -27,7 +38,15 @@ window.doge = {
           if (origin !== window.location.origin) return;
           switch (type) {
             case MESSAGE_TYPES.APPROVE_CONNECTION:
-              onConnectionResponse({ data, error, resolve, reject, listener });
+              onConnectionResponse({
+                data,
+                error,
+                resolve,
+                reject,
+                listener,
+                onSuccess,
+                onError,
+              });
               break;
             default:
           }
