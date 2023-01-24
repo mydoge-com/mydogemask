@@ -28,6 +28,7 @@ import {
   signRawTx,
 } from './helpers/wallet';
 
+const SENDER_ID = process.env.NEXT_PUBLIC_EXTENSION_ID;
 const TRANSACTION_PAGE_SIZE = 10;
 
 // Build a raw transaction and determine fee
@@ -127,43 +128,40 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
     });
 }
 
-function onSendTransaction({ data = {}, sender, sendResponse } = {}) {
-  // TODO Confirm that the sender is the extension
-  if (process.env.NODE_ENV === 'development' || sender?.id) {
-    Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-      ([wallet, password]) => {
-        const decryptedWallet = decrypt({
-          data: wallet,
-          password,
-        });
-        if (!decryptedWallet) {
-          sendResponse?.(false);
-        }
-        const signed = signRawTx(
-          data.rawTx,
-          decryptedWallet.children[data.selectedAddressIndex]
-        );
-        // console.log('signed tx', data.selectedAddressIndex, signed);
-        const jsonrpcReq = {
-          API_key: apiKey,
-          jsonrpc: '2.0',
-          id: `${data.senderAddress}_send_${Date.now()}`,
-          method: 'sendrawtransaction',
-          params: [signed],
-        };
-        node
-          .post(jsonrpcReq)
-          .json((jsonrpcRes) => {
-            // console.log('sendrawtransaction', jsonrpcRes);
-            sendResponse(jsonrpcRes.result);
-          })
-          .catch((err) => {
-            logError(err);
-            sendResponse?.(false);
-          });
+function onSendTransaction({ data = {}, sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+      if (!decryptedWallet) {
+        sendResponse?.(false);
       }
-    );
-  }
+      const signed = signRawTx(
+        data.rawTx,
+        decryptedWallet.children[data.selectedAddressIndex]
+      );
+      // console.log('signed tx', data.selectedAddressIndex, signed);
+      const jsonrpcReq = {
+        API_key: apiKey,
+        jsonrpc: '2.0',
+        id: `${data.senderAddress}_send_${Date.now()}`,
+        method: 'sendrawtransaction',
+        params: [signed],
+      };
+      node
+        .post(jsonrpcReq)
+        .json((jsonrpcRes) => {
+          // console.log('sendrawtransaction', jsonrpcRes);
+          sendResponse(jsonrpcRes.result);
+        })
+        .catch((err) => {
+          logError(err);
+          sendResponse?.(false);
+        });
+    }
+  );
 }
 
 // onRequestTransaction: Launch notification popup
@@ -499,6 +497,8 @@ function signOut({ sendResponse } = {}) {
 
 export const messageHandler = ({ message, data }, sender, sendResponse) => {
   if (!message) return;
+  // if (process.env.NODE_ENV === 'production' && sender?.id !== SENDER_ID) return;
+
   switch (message) {
     case MESSAGE_TYPES.CREATE_WALLET:
     case MESSAGE_TYPES.RESET_WALLET:
