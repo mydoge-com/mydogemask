@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "mydogemask",
+  "name": "MyDogeMask",
   "version": "0.1.0",
   "description": "Dogecoin wallet for Chrome browser",
   "permissions": ["storage", "tabs", "activeTab", "contextMenus"],
@@ -28,7 +28,7 @@
     }
   ],
   "action": {
-    "default_title": "mydogemask",
+    "default_title": "MyDogeMask",
     "default_popup": "index.html"
   }
 }
