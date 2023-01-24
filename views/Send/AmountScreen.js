@@ -195,6 +195,7 @@ export const AmountScreen = ({
       >
         {!isCurrencySwapped ? (
           <Input
+            keyboardType='numeric'
             isDisabled={dogecoinPrice === 0}
             variant='filled'
             placeholder='0'
@@ -234,6 +235,7 @@ export const AmountScreen = ({
           />
         ) : (
           <Input
+            keyboardType='numeric'
             variant='filled'
             placeholder='0'
             focusOutlineColor='brandYellow.500'
