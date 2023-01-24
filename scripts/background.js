@@ -232,30 +232,32 @@ function onConnectionRequest({ sendResponse, sender } = {}) {
 // Handle the user's response to the connection request popup and send a message to the content script with the response
 async function onApproveConnection({
   sendResponse,
-  data: { approved, selectedAddressIndex, originTabId, origin },
+  data: { approved, selectedAddress, originTabId, origin },
 } = {}) {
   if (approved) {
     const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || [];
     setSessionValue({
       [CONNECTED_CLIENTS]: {
         ...connectedClients,
-        [origin]: { selectedAddressIndex, originTabId, origin },
+        [origin]: { selectedAddress, originTabId, origin },
       },
     });
-    chrome.tabs.sendMessage(originTabId, {
+    chrome.tabs?.sendMessage(originTabId, {
       type: MESSAGE_TYPES.APPROVE_CONNECTION,
       data: {
-        connected: true,
+        approved: true,
+        address: selectedAddress,
       },
       origin,
     });
     sendResponse(true);
   } else {
-    chrome.tabs.sendMessage(originTabId, {
+    chrome.tabs?.sendMessage(originTabId, {
       type: MESSAGE_TYPES.APPROVE_CONNECTION,
       data: {
-        connected: false,
+        approved: false,
       },
+      origin,
     });
     sendResponse(false);
   }

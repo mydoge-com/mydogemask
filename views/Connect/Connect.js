@@ -8,17 +8,17 @@ import {
   HStack,
   Pressable,
   Text,
-  // Toast,
+  Toast,
   VStack,
 } from 'native-base';
-import { Fragment, useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
 import { FiCheck } from 'react-icons/fi';
 import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { Layout } from '../../components/Layout';
-// import { ToastRender } from '../../components/ToastRender';
+import { ToastRender } from '../../components/ToastRender';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useInterval } from '../../hooks/useInterval';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
@@ -30,7 +30,33 @@ export function Connect() {
   const {
     connectionRequest: { originTabId, origin },
     wallet,
+    navigate,
   } = useAppContext();
+
+  const onRejectConnection = useCallback(() => {
+    sendMessage(
+      {
+        message: MESSAGE_TYPES.APPROVE_CONNECTION,
+        data: { approved: false },
+      },
+      () => {
+        Toast.show({
+          duration: 3000,
+          render: () => {
+            return (
+              <ToastRender
+                title='Connection Failed'
+                description={`MyDogeMask failed to connected to ${origin}`}
+                status='error'
+              />
+            );
+          },
+        });
+        navigate('Transactions');
+      },
+      []
+    );
+  }, [navigate, origin]);
 
   const [addressBalances, setAddressBalances] = useState([]);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
@@ -79,78 +105,82 @@ export function Connect() {
       <Text fontSize='sm' color='gray.600'>
         Select the address you want to use with this site
       </Text>
-      <VStack
-        style={{
-          scrollbarWidth: 'none',
-        }}
-        mt='20px'
-        flexShrink={1}
-        overflowY='scroll'
-      >
-        {wallet.addresses.map((address, i) => {
-          return (
-            <Box key={address}>
-              <Pressable
-                px='12px'
-                onPress={() => onSelectAddress(i)}
-                _hover={{
-                  bg: 'rgba(0,0,0, 0.1)',
-                }}
-                py='6px'
-              >
-                <HStack alignItems='center'>
-                  <Box w='30px'>
-                    {i === selectedAddressIndex ? (
-                      <FiCheck color='#54a937' size='26px' />
-                    ) : null}
-                  </Box>
-                  <Avatar
-                    source={{
-                      uri: '/assets/default-avatar.png',
-                    }}
-                    size='28px'
-                    mr='12px'
-                  />
-                  <VStack>
-                    <HStack alignItems='center'>
-                      <Text fontSize='sm' fontWeight='medium'>
-                        Address {i + 1}
+      <VStack justifyContent='space-between' flex={1}>
+        <VStack
+          style={{
+            scrollbarWidth: 'none',
+          }}
+          mt='20px'
+          flexShrink={1}
+          overflowY='scroll'
+        >
+          {wallet.addresses.map((address, i) => {
+            return (
+              <Box key={address}>
+                <Pressable
+                  px='12px'
+                  onPress={() => onSelectAddress(i)}
+                  _hover={{
+                    bg: 'rgba(0,0,0, 0.1)',
+                  }}
+                  py='6px'
+                >
+                  <HStack alignItems='center'>
+                    <Box w='30px'>
+                      {i === selectedAddressIndex ? (
+                        <FiCheck color='#54a937' size='26px' />
+                      ) : null}
+                    </Box>
+                    <Avatar
+                      source={{
+                        uri: '/assets/default-avatar.png',
+                      }}
+                      size='28px'
+                      mr='12px'
+                    />
+                    <VStack>
+                      <HStack alignItems='center'>
+                        <Text fontSize='sm' fontWeight='medium'>
+                          Address {i + 1}
+                        </Text>
+                        <Text fontSize='sm' color='gray.500'>
+                          {' '}
+                          ({address.slice(0, 8)}...{address.slice(-4)})
+                        </Text>
+                      </HStack>
+                      <Text color='gray.400' fontSize='xs'>
+                        {addressBalances[i] ? (
+                          <>
+                            <Text fontWeight='bold'>Balance: </Text>Ð
+                            {sb.toBitcoin(addressBalances[i])}
+                          </>
+                        ) : (
+                          ' '
+                        )}
                       </Text>
-                      <Text fontSize='sm' color='gray.500'>
-                        {' '}
-                        ({address.slice(0, 8)}...{address.slice(-4)})
-                      </Text>
-                    </HStack>
-                    <Text color='gray.400' fontSize='xs'>
-                      {addressBalances[i] ? (
-                        <>
-                          <Text fontWeight='bold'>Balance: </Text>Ð
-                          {sb.toBitcoin(addressBalances[i])}
-                        </>
-                      ) : (
-                        ' '
-                      )}
-                    </Text>
-                  </VStack>
-                </HStack>
-              </Pressable>
-              <Divider />
-            </Box>
-          );
-        })}
+                    </VStack>
+                  </HStack>
+                </Pressable>
+                <Divider />
+              </Box>
+            );
+          })}
+        </VStack>
+        <HStack mb='20px' mt='20px' justifyContent='center' space='12px'>
+          <BigButton onPress={onRejectConnection} variant='secondary' px='20px'>
+            Cancel
+          </BigButton>
+          <BigButton onPress={() => setConfirmationModalOpen(true)} px='20px'>
+            Connect
+          </BigButton>
+        </HStack>
       </VStack>
-      <BigButton
-        onPress={() => setConfirmationModalOpen(true)}
-        mb='20px'
-        mt='16px'
-      >
-        Connect
-      </BigButton>
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
         origin={origin}
         originTabId={originTabId}
+        selectedAddress={wallet.addresses[selectedAddressIndex]}
       />
     </Layout>
   );
@@ -159,85 +189,37 @@ export function Connect() {
 const ConfirmationModal = ({
   showModal,
   onClose,
-  selectedAddressIndex,
+  selectedAddress,
   origin,
   originTabId,
 }) => {
   const cancelRef = useRef();
+  const { navigate } = useAppContext();
   const onConnect = useCallback(() => {
     sendMessage(
       {
         message: MESSAGE_TYPES.APPROVE_CONNECTION,
-        data: { approved: true, selectedAddressIndex, originTabId, origin },
+        data: { approved: true, selectedAddress, originTabId, origin },
       },
-      (response) => {
-        if (response) {
-          console.log({ response });
-          // onClose?.();
-          // Toast.show({
-          //   duration: 3000,
-          //   render: () => {
-          //     return (
-          //       <ToastRender description='Address deleted' status='info' />
-          //     );
-          //   },
-          // });
-        } else {
-          // Toast.show({
-          //   duration: 3000,
-          //   render: () => {
-          //     return (
-          //       <ToastRender
-          //         title='Error'
-          //         description='There was an error deleting the address'
-          //         status='error'
-          //       />
-          //     );
-          //   },
-          // });
-        }
+      () => {
+        onClose?.();
+        Toast.show({
+          duration: 3000,
+          render: () => {
+            return (
+              <ToastRender
+                title='Connection Success'
+                description={`MyDogeMask has connected to ${origin}`}
+                status='success'
+              />
+            );
+          },
+        });
+        navigate('Transactions');
       },
       []
     );
-  }, [origin, selectedAddressIndex, originTabId]);
-
-  const onCancel = useCallback(() => {
-    onClose();
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.APPROVE_CONNECTION,
-        data: { approved: false },
-      },
-      (response) => {
-        if (response) {
-          console.log({ response });
-          // onClose?.();
-          // Toast.show({
-          //   duration: 3000,
-          //   render: () => {
-          //     return (
-          //       <ToastRender description='Address deleted' status='info' />
-          //     );
-          //   },
-          // });
-        } else {
-          // Toast.show({
-          //   duration: 3000,
-          //   render: () => {
-          //     return (
-          //       <ToastRender
-          //         title='Error'
-          //         description='There was an error deleting the address'
-          //         status='error'
-          //       />
-          //     );
-          //   },
-          // });
-        }
-      },
-      []
-    );
-  }, [onClose]);
+  }, [selectedAddress, originTabId, origin, onClose, navigate]);
 
   return (
     <AlertDialog
@@ -268,7 +250,7 @@ const ConfirmationModal = ({
             <Button
               variant='unstyled'
               colorScheme='coolGray'
-              onPress={onCancel}
+              onPress={onClose}
               ref={cancelRef}
             >
               Cancel

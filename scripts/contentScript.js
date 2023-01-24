@@ -94,7 +94,7 @@ import { MESSAGE_TYPES } from './helpers/constants';
   );
 
   // Listen to messages from the background script and pass to the injected script
-  chrome.runtime.onMessage.addListener(({ type, data }, sender) => {
+  chrome.runtime.onMessage.addListener(({ type, data, origin }, sender) => {
     // Confirm that message is coming from the extension
     if (sender.id !== chrome.runtime.id) return;
     // Pass message to injected script
