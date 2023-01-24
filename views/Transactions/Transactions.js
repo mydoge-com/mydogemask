@@ -74,7 +74,7 @@ export function Transactions() {
         />
         <Center mt='52px'>
           <Text
-            fontSize='6xl'
+            fontSize='4xl'
             fontWeight='medium'
             color='white'
             lineHeight='xs'
