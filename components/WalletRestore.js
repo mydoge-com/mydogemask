@@ -8,7 +8,7 @@ import {
   TextArea,
   VStack,
 } from 'native-base';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 import { MESSAGE_TYPES } from '../scripts/helpers/constants';
@@ -16,6 +16,10 @@ import { sendMessage } from '../scripts/helpers/message';
 import { BigButton } from './Button';
 
 const wordList = require('../constants/wordList.json');
+
+function cleanSeed(seed) {
+  return seed.replace(/\s+/g, ' ').trim().split(' ');
+}
 
 export const WalletRestore = ({
   onRestoreComplete = () => {},
@@ -36,60 +40,117 @@ export const WalletRestore = ({
   const closeDialog = useCallback(() => setDialogIsOpen(false), []);
   const cancelRef = useRef();
 
-  const validate = useCallback(() => {
-    const phraseTokens = formData.seedPhrase
-      .replace(/\s+/g, ' ')
-      .trim()
-      .split(' ');
-    if (phraseTokens.length !== 12) {
-      setErrors({
-        ...errors,
-        seedPhrase: 'Invalid Seed Phrase',
-      });
-      return false;
-    } else if (!formData.password) {
-      setErrors({ ...errors, password: true });
-      return false;
-    } else if (!formData.confirm || formData.confirm !== formData.password) {
-      setErrors({ ...errors, confirm: "Password fields don't match" });
-      return false;
-    } else if (formData.password.length < 10) {
-      setErrors({
-        ...errors,
-        confirm: 'Password must be at least 10 characters',
-      });
-      return false;
-    }
+  const validateSeed = useCallback(
+    (value) => {
+      const toValidate = value !== undefined ? value : formData.seedPhrase;
+      let noErrors = true;
 
-    for (let i = 0; i < phraseTokens.length; ++i) {
-      const word = phraseTokens[i];
-      if (wordList.indexOf(word) === -1 && word !== '') {
-        setErrors({
-          ...errors,
-          seedPhrase: `'${word}' is not a MyDoge seed phrase word`,
-        });
-        return false;
+      if (toValidate) {
+        const phraseTokens = cleanSeed(toValidate);
+        if (phraseTokens.length !== 12) {
+          setErrors({
+            ...errors,
+            seedPhrase: 'Invalid Seed Phrase',
+          });
+          noErrors = false;
+        }
+
+        for (let i = 0; i < phraseTokens.length; ++i) {
+          const word = phraseTokens[i];
+          if (wordList.indexOf(word) === -1 && word !== '') {
+            setErrors({
+              ...errors,
+              seedPhrase: `'${word}' is not a MyDoge seed phrase word`,
+            });
+            noErrors = false;
+          }
+        }
       }
-    }
-    setErrors({});
-    return true;
-  }, [errors, formData.confirm, formData.password, formData.seedPhrase]);
+
+      if (noErrors) {
+        setErrors({ ...errors, seedPhrase: false });
+      }
+
+      return noErrors;
+    },
+    [errors, formData.seedPhrase]
+  );
+
+  const validatePassword = useCallback(
+    (value) => {
+      const toValidate = value !== undefined ? value : formData.password;
+      let noErrors = true;
+
+      if (value === undefined) {
+        if (!formData.password) {
+          setErrors({ ...errors, password: true });
+          noErrors = false;
+        }
+      }
+
+      if (toValidate) {
+        if (toValidate.length < 10) {
+          setErrors({
+            ...errors,
+            confirm1: 'Password must be at least 10 characters',
+          });
+          noErrors = false;
+        }
+      }
+
+      if (noErrors) {
+        setErrors({ ...errors, password: false, confirm1: false });
+      }
+
+      return noErrors;
+    },
+    [errors, formData.password]
+  );
+
+  const validateConfirm = useCallback(
+    (value) => {
+      const toValidate = value !== undefined ? value : formData.confirm;
+      let noErrors = true;
+
+      if (toValidate && toValidate !== formData.password) {
+        setErrors({ ...errors, confirm2: "Password fields don't match" });
+        noErrors = false;
+      }
+
+      if (noErrors) {
+        setErrors({ ...errors, confirm2: false });
+      }
+
+      return noErrors;
+    },
+    [errors, formData.confirm, formData.password]
+  );
 
   const onSubmit = useCallback(() => {
-    if (validate()) {
+    if (validateSeed() && validatePassword() && validateConfirm()) {
       if (confirmBefore) {
         openDialog();
       } else {
         onReset();
       }
     }
-  }, [confirmBefore, onReset, openDialog, validate]);
+  }, [
+    confirmBefore,
+    onReset,
+    openDialog,
+    validateSeed,
+    validatePassword,
+    validateConfirm,
+  ]);
 
   const onReset = useCallback(() => {
     sendMessage(
       {
         message: MESSAGE_TYPES.RESET_WALLET,
-        data: { password: formData.password, seedPhrase: formData.seedPhrase },
+        data: {
+          password: formData.password,
+          seedPhrase: cleanSeed(formData.seedPhrase).join(' '),
+        },
       },
       ({ authenticated, wallet }) => {
         if (authenticated && wallet) {
@@ -116,8 +177,9 @@ export const WalletRestore = ({
         numberOfLines={2}
         placeholder='Enter Seed Phrase'
         onChangeText={(value) => {
-          setFormData({ ...formData, seedPhrase: value });
-          setErrors({ ...errors, seedPhrase: false });
+          const lower = value.toLowerCase();
+          setFormData({ ...formData, seedPhrase: lower });
+          validateSeed(lower);
         }}
         onSubmitEditing={onSubmit}
         _invalid={{
@@ -163,7 +225,7 @@ export const WalletRestore = ({
           isInvalid={errors.password}
           onChangeText={(value) => {
             setFormData({ ...formData, password: value });
-            setErrors({ ...errors, password: false });
+            validatePassword(value);
           }}
           onSubmitEditing={onSubmit}
         />
@@ -196,13 +258,18 @@ export const WalletRestore = ({
           isInvalid={errors.confirm}
           onChangeText={(value) => {
             setFormData({ ...formData, confirm: value });
-            setErrors({ ...errors, confirm: false });
+            validateConfirm(value);
           }}
           onSubmitEditing={onSubmit}
         />
-        {errors.confirm ? (
+        {errors.confirm1 ? (
           <Text fontSize='10px' color='red.500' pt='6px'>
-            {errors.confirm}
+            {errors.confirm1}
+          </Text>
+        ) : null}
+        {errors.confirm2 ? (
+          <Text fontSize='10px' color='red.500' pt='6px'>
+            {errors.confirm2}
           </Text>
         ) : null}
       </VStack>

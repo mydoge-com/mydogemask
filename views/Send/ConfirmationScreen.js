@@ -1,5 +1,5 @@
 import { Avatar, Button, Center, HStack, Text, Toast } from 'native-base';
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
@@ -87,6 +87,12 @@ export const ConfirmationScreen = ({
     walletAddress,
   ]);
 
+  useEffect(() => {
+    if (walletAddress !== formData.address) {
+      setErrors({});
+    }
+  }, [walletAddress, formData.address, setErrors]);
+
   return (
     <Center>
       <Text fontSize='2xl' pb='24px' textAlign='center' fontWeight='semibold'>
@@ -115,8 +121,7 @@ export const ConfirmationScreen = ({
           {formData.address.slice(0, 8)}...{formData.address.slice(-4)}
         </Text>
       </HStack>
-
-      <Text fontSize='39px' fontWeight='semibold' pt='6px'>
+      <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
         Ð{formData.dogeAmount}
       </Text>
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
@@ -140,6 +145,11 @@ export const ConfirmationScreen = ({
           Pay
         </BigButton>
       </HStack>
+      {errors.confirmation ? (
+        <Text fontSize='10px' color='red.500' mt='20px'>
+          {errors.confirmation}
+        </Text>
+      ) : null}
     </Center>
   );
 };
