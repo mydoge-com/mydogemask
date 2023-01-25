@@ -30,8 +30,12 @@ export function Connect() {
   const {
     connectionRequest: { originTabId, origin },
     wallet,
-    navigate,
+    dispatch,
   } = useAppContext();
+
+  const handleWindowClose = useCallback(() => {
+    dispatch({ type: 'CLEAR_CONNECTION_REQUEST' });
+  }, [dispatch]);
 
   const onRejectConnection = useCallback(() => {
     sendMessage(
@@ -52,11 +56,11 @@ export function Connect() {
             );
           },
         });
-        navigate('Transactions');
+        handleWindowClose();
       },
       []
     );
-  }, [navigate, origin, originTabId]);
+  }, [handleWindowClose, origin, originTabId]);
 
   const [addressBalances, setAddressBalances] = useState([]);
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
@@ -182,6 +186,7 @@ export function Connect() {
         originTabId={originTabId}
         selectedAddress={wallet.addresses[selectedAddressIndex]}
         balance={addressBalances[selectedAddressIndex]}
+        handleWindowClose={handleWindowClose}
       />
     </Layout>
   );
@@ -194,9 +199,9 @@ const ConfirmationModal = ({
   origin,
   originTabId,
   balance,
+  handleWindowClose,
 }) => {
   const cancelRef = useRef();
-  const { navigate } = useAppContext();
   const onConnect = useCallback(() => {
     sendMessage(
       {
@@ -223,11 +228,18 @@ const ConfirmationModal = ({
             );
           },
         });
-        navigate('Transactions');
+        handleWindowClose();
       },
       []
     );
-  }, [selectedAddress, balance, originTabId, origin, onClose, navigate]);
+  }, [
+    selectedAddress,
+    balance,
+    originTabId,
+    origin,
+    onClose,
+    handleWindowClose,
+  ]);
 
   return (
     <AlertDialog

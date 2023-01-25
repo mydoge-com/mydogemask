@@ -42,6 +42,9 @@ const reducer = (state, { type, payload }) => {
       return { ...state, selectedAddressIndex: payload.index };
     case 'SET_CONNECTION_REQUESTED':
       return { ...state, connectionRequest: payload.connectionRequest };
+    case 'CLEAR_CONNECTION_REQUEST':
+      setTimeout(() => window?.close(), 1000);
+      return { ...state };
     default:
       return state;
   }
@@ -72,7 +75,6 @@ export const AppContextProvider = ({ children }) => {
           sendMessage(
             { message: MESSAGE_TYPES.IS_SESSION_AUTHENTICATED },
             async ({ wallet, authenticated }) => {
-              let connectionRequest;
               let url = null;
               const extPopupWindow = await chrome?.tabs?.getCurrent();
               if (extPopupWindow?.url) {
@@ -81,7 +83,29 @@ export const AppContextProvider = ({ children }) => {
               const originTabId = Number(url?.searchParams.get('originTabId'));
               const origin = url?.searchParams.get('origin');
               if (originTabId && origin) {
-                connectionRequest = { originTabId, origin };
+                // Add event listener to handle window close
+                window.addEventListener(
+                  'beforeunload',
+                  function handleWindowClose() {
+                    if (state.connectionRequest) {
+                      sendMessage(
+                        {
+                          message: MESSAGE_TYPES.APPROVE_CONNECTION,
+                          data: { approved: false, originTabId, origin },
+                        },
+                        () => {
+                          window.removeEventListener(
+                            'beforeunload',
+                            handleWindowClose
+                          );
+                          dispatch({ type: 'CLEAR_CONNECTION_REQUEST' });
+                        }
+                      );
+                    }
+                    return null;
+                  }
+                );
+                const connectionRequest = { originTabId, origin };
                 dispatch({
                   type: 'SET_CONNECTION_REQUESTED',
                   payload: { connectionRequest },
@@ -105,7 +129,7 @@ export const AppContextProvider = ({ children }) => {
         }
       }
     );
-  }, [navigate]);
+  }, [navigate, state.connectionRequest]);
 
   const providerValue = useMemo(
     () => ({
