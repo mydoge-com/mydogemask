@@ -1,7 +1,9 @@
 import { AlertDialog, Button, Text, Toast } from 'native-base';
 import { useCallback, useRef } from 'react';
 
+import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { BigButton } from '../Button';
 import { ToastRender } from '../ToastRender';
@@ -15,12 +17,18 @@ export const DeleteAddressModal = ({
   const { dispatch, wallet } = useAppContext();
   const onDeleteAddress = useCallback(() => {
     sendMessage(
-      { message: 'deleteAddress', data: { index: selectedAddressIndex } },
+      {
+        message: MESSAGE_TYPES.DELETE_ADDRESS,
+        data: { index: selectedAddressIndex },
+      },
       ({ wallet: updatedWallet }) => {
         if (updatedWallet) {
-          dispatch({ type: 'SET_WALLET', payload: { wallet: updatedWallet } });
           dispatch({
-            type: 'SELECT_WALLET',
+            type: DISPATCH_TYPES.SET_WALLET,
+            payload: { wallet: updatedWallet },
+          });
+          dispatch({
+            type: DISPATCH_TYPES.SELECT_WALLET,
             payload: { index: Math.max(selectedAddressIndex - 1, 0) },
           });
           onClose?.();

@@ -11,6 +11,7 @@ import {
 import { useCallback, useRef, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
+import { MESSAGE_TYPES } from '../scripts/helpers/constants';
 import { sendMessage } from '../scripts/helpers/message';
 import { BigButton } from './Button';
 
@@ -87,7 +88,7 @@ export const WalletRestore = ({
   const onReset = useCallback(() => {
     sendMessage(
       {
-        message: 'resetWallet',
+        message: MESSAGE_TYPES.RESET_WALLET,
         data: { password: formData.password, seedPhrase: formData.seedPhrase },
       },
       ({ authenticated, wallet }) => {

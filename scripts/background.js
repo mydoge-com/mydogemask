@@ -5,6 +5,8 @@ import { apiKey, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
+  CONNECTED_CLIENTS,
+  MESSAGE_TYPES,
   ONBOARDING_COMPLETE,
   PASSWORD,
   WALLET,
@@ -249,6 +251,22 @@ function onGetDogecoinPrice({ sendResponse } = {}) {
 }
 
 function onGetAddressBalance({ data, sendResponse } = {}) {
+  if (data.addresses) {
+    Promise.all(
+      data.addresses.map((address) =>
+        nownodes.get(`/address/${address}`).json((response) => response.balance)
+      )
+    )
+      .then((balances) => {
+        sendResponse?.(balances);
+      })
+      .catch((err) => {
+        logError(err);
+        sendResponse?.(false);
+      });
+
+    return true;
+  }
   nownodes
     .get(`/address/${data.address}`)
     .json((response) => {
@@ -330,6 +348,63 @@ function onGenerateAddress({ sendResponse } = {}) {
         .catch(() => sendResponse?.(false));
     }
   );
+  return true;
+}
+
+// Open the extension popup window for the user to approve a connection request, passing url params so the popup knows the origin of the connection request
+async function onConnectionRequest({ sendResponse, sender } = {}) {
+  // Hack for setting the right popup window size. Need to fetch the onboarding status to determine the correct size
+  const onboardingComplete = await getLocalValue(ONBOARDING_COMPLETE);
+  chrome.windows
+    .create({
+      url: `index.html?originTabId=${sender.tab.id}&origin=${sender.origin}#connect`,
+      type: 'popup',
+      width: onboardingComplete ? 357 : 800,
+      height: 640,
+    })
+    .then((tab) => {
+      if (tab) {
+        sendResponse?.({ originTabId: sender.tab.id });
+      } else {
+        sendResponse?.(false);
+      }
+    });
+  return true;
+}
+
+// Handle the user's response to the connection request popup and send a message to the content script with the response
+async function onApproveConnection({
+  sendResponse,
+  data: { approved, address, balance, originTabId, origin },
+} = {}) {
+  if (approved) {
+    const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || [];
+    setSessionValue({
+      [CONNECTED_CLIENTS]: {
+        ...connectedClients,
+        [origin]: { address, originTabId, origin },
+      },
+    });
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.APPROVE_CONNECTION,
+      data: {
+        approved: true,
+        address,
+        balance,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.APPROVE_CONNECTION,
+      data: {
+        approved: false,
+      },
+      origin,
+    });
+    sendResponse(false);
+  }
   return true;
 }
 
@@ -425,48 +500,54 @@ function signOut({ sendResponse } = {}) {
 export const messageHandler = ({ message, data }, sender, sendResponse) => {
   if (!message) return;
   switch (message) {
-    case 'createTransaction':
+    case MESSAGE_TYPES.CREATE_WALLET:
+    case MESSAGE_TYPES.RESET_WALLET:
+      onCreateWallet({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.AUTHENTICATE:
+      onAuthenticate({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CREATE_TRANSACTION:
       onCreateTransaction({ data, sendResponse });
       break;
-    case 'sendTransaction':
+    case MESSAGE_TYPES.SEND_TRANSACTION:
       onSendTransaction({ data, sender, sendResponse });
       break;
-    case 'requestTransaction':
+    case MESSAGE_TYPES.REQUEST_TRANSACTION:
       onRequestTransaction({ data, sendResponse });
       break;
-    case 'createWallet':
-    case 'resetWallet':
-      onCreateWallet({ data, sendResponse });
+    case MESSAGE_TYPES.IS_ONBOARDING_COMPLETE:
+      getOnboardingStatus({ data, sendResponse, sender });
       break;
-    case 'authenticate':
-      onAuthenticate({ data, sendResponse });
+    case MESSAGE_TYPES.IS_SESSION_AUTHENTICATED:
+      getAuthStatus({ data, sendResponse, sender });
       break;
-    case 'isOnboardingComplete':
-      getOnboardingStatus({ sendResponse });
+    case MESSAGE_TYPES.SIGN_OUT:
+      signOut({ data, sendResponse, sender });
       break;
-    case 'isSessionAuthenticated':
-      getAuthStatus({ sendResponse });
+    case MESSAGE_TYPES.DELETE_WALLET:
+      onDeleteWallet({ data, sendResponse, sender });
       break;
-    case 'signOut':
-      signOut({ sendResponse });
+    case MESSAGE_TYPES.GENERATE_ADDRESS:
+      onGenerateAddress({ data, sendResponse, sender });
       break;
-    case 'deleteWallet':
-      onDeleteWallet({ sendResponse });
+    case MESSAGE_TYPES.DELETE_ADDRESS:
+      onDeleteAddress({ data, sendResponse, sender });
       break;
-    case 'generateAddress':
-      onGenerateAddress({ sendResponse });
+    case MESSAGE_TYPES.GET_DOGECOIN_PRICE:
+      onGetDogecoinPrice({ data, sendResponse, sender });
       break;
-    case 'deleteAddress':
-      onDeleteAddress({ data, sendResponse });
+    case MESSAGE_TYPES.GET_ADDRESS_BALANCE:
+      onGetAddressBalance({ data, sendResponse, sender });
       break;
-    case 'getDogecoinPrice':
-      onGetDogecoinPrice({ sendResponse });
+    case MESSAGE_TYPES.GET_TRANSACTIONS:
+      onGetTransactions({ data, sendResponse, sender });
       break;
-    case 'getAddressBalance':
-      onGetAddressBalance({ data, sendResponse });
+    case MESSAGE_TYPES.CONNECTION_REQUEST:
+      onConnectionRequest({ sender, sendResponse, data });
       break;
-    case 'getTransactions':
-      onGetTransactions({ data, sendResponse });
+    case MESSAGE_TYPES.APPROVE_CONNECTION:
+      onApproveConnection({ sender, sendResponse, data });
       break;
     default:
   }

@@ -5,7 +5,7 @@ const listeners = [];
 export const sendMessage = ({ message, data }, sendResponse) => {
   if (process.env.NODE_ENV === 'development') {
     listeners.forEach((listener) => {
-      listener({ message, data }, '', sendResponse);
+      listener({ message, data }, { origin: 'localhost' }, sendResponse);
     });
     return;
   }

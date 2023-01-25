@@ -11,10 +11,12 @@ import {
   VStack,
 } from 'native-base';
 import { useCallback, useRef, useState } from 'react';
-import { FiCheck, FiLock, FiSettings, FiTrash2 } from 'react-icons/fi';
+import { FiCheck, FiLock, FiSettings } from 'react-icons/fi';
 import { MdQrCode2 } from 'react-icons/md';
 
+import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { BackButton } from '../BackButton';
 import { ToastRender } from '../ToastRender';
@@ -26,9 +28,9 @@ export const Header = ({ withBackButton, backRoute }) => {
   const { wallet, selectedAddressIndex, dispatch, navigate } = useAppContext();
   const onSignOut = useCallback(() => {
     sendMessage(
-      { message: 'signOut' },
+      { message: MESSAGE_TYPES.SIGN_OUT },
       () => {
-        dispatch({ type: 'SIGN_OUT' });
+        dispatch({ type: DISPATCH_TYPES.SIGN_OUT });
       },
       []
     );
@@ -43,12 +45,15 @@ export const Header = ({ withBackButton, backRoute }) => {
 
   const onGenerateAddress = useCallback(() => {
     sendMessage(
-      { message: 'generateAddress' },
+      { message: MESSAGE_TYPES.GENERATE_ADDRESS },
       ({ wallet: updatedWallet }) => {
         if (updatedWallet) {
-          dispatch({ type: 'SET_WALLET', payload: { wallet: updatedWallet } });
           dispatch({
-            type: 'SELECT_WALLET',
+            type: DISPATCH_TYPES.SET_WALLET,
+            payload: { wallet: updatedWallet },
+          });
+          dispatch({
+            type: DISPATCH_TYPES.SELECT_WALLET,
             payload: { index: updatedWallet.addresses.length - 1 },
           });
           Toast.show({
@@ -84,7 +89,7 @@ export const Header = ({ withBackButton, backRoute }) => {
 
   const onSelectAddress = useCallback(
     (index) => {
-      dispatch({ type: 'SELECT_WALLET', payload: { index } });
+      dispatch({ type: DISPATCH_TYPES.SELECT_WALLET, payload: { index } });
     },
     [dispatch]
   );

@@ -3,6 +3,7 @@ import sb from 'satoshi-bitcoin';
 
 import { useAppContext } from '../../hooks/useAppContext';
 import { useInterval } from '../../hooks/useInterval';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
 import { formatTransaction } from '../../utils/transactions';
@@ -25,7 +26,10 @@ export const useTransactions = () => {
   const usdValue = balance ? sb.toBitcoin(balance) * usdPrice : 0;
   const getAddressBalance = useCallback(() => {
     sendMessage(
-      { message: 'getAddressBalance', data: { address: walletAddress } },
+      {
+        message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
+        data: { address: walletAddress },
+      },
       (walletBalance) => {
         if (walletBalance) {
           setBalance(Number(walletBalance));
@@ -37,7 +41,7 @@ export const useTransactions = () => {
   }, [walletAddress]);
 
   const getDogecoinPrice = useCallback(() => {
-    sendMessage({ message: 'getDogecoinPrice' }, ({ usd }) => {
+    sendMessage({ message: MESSAGE_TYPES.GET_DOGECOIN_PRICE }, ({ usd }) => {
       if (usd) {
         setUSDPrice(usd);
       } else {
@@ -50,7 +54,7 @@ export const useTransactions = () => {
     setLoading(true);
     sendMessage(
       {
-        message: 'getTransactions',
+        message: MESSAGE_TYPES.GET_TRANSACTIONS,
         data: {
           address: walletAddress,
           page: currentPage.current,
