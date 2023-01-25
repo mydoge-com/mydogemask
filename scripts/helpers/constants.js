@@ -4,7 +4,16 @@ export const ONBOARDING_COMPLETE = '@mydoge_ONBOARDING_COMPLETE';
 export const CONNECTED_CLIENTS = '@mydoge_CONNECTED_CLIENTS';
 export const AUTHENTICATED = '@mydoge_AUTHENTICATED';
 export const NOWNODES_BASE_URL = 'https://dogebook.nownodes.io/api/v2';
+
+const CLIENT_MESSAGE_TYPES = {
+  CLIENT_REQUEST_CONNECTION: 'clientRequestConnection',
+  CLIENT_REQUEST_CONNECTION_RESPONSE: 'clientRequestConnectionResponse',
+  CLIENT_GET_BALANCE: 'clientRequestBalance',
+  CLIENT_GET_BALANCE_RESPONSE: 'clientGetBalanceResponse',
+};
+
 export const MESSAGE_TYPES = {
+  ...CLIENT_MESSAGE_TYPES,
   REQUEST_TRANSACTION: 'requestTransaction',
   CREATE_WALLET: 'createWallet',
   RESET_WALLET: 'resetWallet',
@@ -18,9 +27,8 @@ export const MESSAGE_TYPES = {
   GET_DOGECOIN_PRICE: 'getDogecoinPrice',
   GET_ADDRESS_BALANCE: 'getAddressBalance',
   GET_TRANSACTIONS: 'getTransactions',
-  CONNECTION_REQUEST: 'connectionRequest',
-  APPROVE_CONNECTION: 'approveConnection',
   CREATE_TRANSACTION: 'createTransaction',
   SEND_TRANSACTION: 'sendTransaction',
+  GET_CONNECTED_CLIENTS: 'getConnectedClients',
 };
 export const NODE_BASE_URL = 'https://doge.nownodes.io';

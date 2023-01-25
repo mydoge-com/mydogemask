@@ -105,7 +105,8 @@ export const AppContextProvider = ({ children }) => {
                     if (state.connectionRequest) {
                       sendMessage(
                         {
-                          message: MESSAGE_TYPES.APPROVE_CONNECTION,
+                          message:
+                            MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
                           data: { approved: false, originTabId, origin },
                         },
                         () => {

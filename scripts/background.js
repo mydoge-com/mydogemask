@@ -386,7 +386,7 @@ async function onApproveConnection({
       },
     });
     chrome.tabs?.sendMessage(originTabId, {
-      type: MESSAGE_TYPES.APPROVE_CONNECTION,
+      type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
       data: {
         approved: true,
         address,
@@ -397,14 +397,18 @@ async function onApproveConnection({
     sendResponse(true);
   } else {
     chrome.tabs?.sendMessage(originTabId, {
-      type: MESSAGE_TYPES.APPROVE_CONNECTION,
-      data: {
-        approved: false,
-      },
+      type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+      error: 'User rejected connection request',
       origin,
     });
     sendResponse(false);
   }
+  return true;
+}
+
+async function onGetConnectedClients({ sendResponse } = {}) {
+  const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || [];
+  sendResponse(connectedClients);
   return true;
 }
 
@@ -543,11 +547,14 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.GET_TRANSACTIONS:
       onGetTransactions({ data, sendResponse, sender });
       break;
-    case MESSAGE_TYPES.CONNECTION_REQUEST:
+    case MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION:
       onConnectionRequest({ sender, sendResponse, data });
       break;
-    case MESSAGE_TYPES.APPROVE_CONNECTION:
+    case MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE:
       onApproveConnection({ sender, sendResponse, data });
+      break;
+    case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
+      onGetConnectedClients({ sender, sendResponse, data });
       break;
     default:
   }

@@ -41,7 +41,7 @@ export function Connect() {
   const onRejectConnection = useCallback(() => {
     sendMessage(
       {
-        message: MESSAGE_TYPES.APPROVE_CONNECTION,
+        message: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
         data: { approved: false, originTabId, origin },
       },
       () => {
@@ -206,7 +206,7 @@ const ConfirmationModal = ({
   const onConnect = useCallback(() => {
     sendMessage(
       {
-        message: MESSAGE_TYPES.APPROVE_CONNECTION,
+        message: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
         data: {
           approved: true,
           address: selectedAddress,
@@ -215,21 +215,23 @@ const ConfirmationModal = ({
           origin,
         },
       },
-      () => {
-        onClose?.();
-        Toast.show({
-          duration: 3000,
-          render: () => {
-            return (
-              <ToastRender
-                title='Connection Success'
-                description={`MyDogeMask has connected to ${origin}`}
-                status='success'
-              />
-            );
-          },
-        });
-        handleWindowClose();
+      (response) => {
+        if (response) {
+          onClose?.();
+          Toast.show({
+            duration: 3000,
+            render: () => {
+              return (
+                <ToastRender
+                  title='Connection Success'
+                  description={`MyDogeMask has connected to ${origin}`}
+                  status='success'
+                />
+              );
+            },
+          });
+          handleWindowClose();
+        }
       },
       []
     );

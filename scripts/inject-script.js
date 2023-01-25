@@ -1,70 +1,57 @@
 import { MESSAGE_TYPES } from './helpers/constants';
 
-function onConnectionResponse({
-  data,
-  error,
-  resolve,
-  reject,
-  listener,
-  onSuccess,
-  onError,
-}) {
+function responseHandler({ data, error, resolve, reject, onSuccess, onError }) {
   if (error) {
-    onError?.(new Error('Unable to connect to MyDogeMask'));
-    reject(new Error('Unable to connect to MyDogeMask'));
-  } else if (data.approved && data.address) {
+    onError?.(new Error(error));
+    reject(new Error(error));
+  } else if (data) {
     onSuccess?.(data);
     resolve(data);
   } else {
     onError?.(new Error('Unable to connect to MyDogeMask'));
-    reject(new Error('User rejected connection request'));
+    reject(new Error('Unable to connect to MyDogeMask'));
   }
-  window.removeEventListener('message', listener);
 }
+
+const SUPPORTED_RESPONSE_TYPES = [
+  MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+  MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
+];
+
+const onResponse = ({ resolve, reject, onSuccess, onError }) => {
+  function listener({ data: { type, data, error }, origin }) {
+    // only accept messages from the same origin
+    if (origin !== window.location.origin) return;
+
+    if (SUPPORTED_RESPONSE_TYPES.includes(type)) {
+      responseHandler({ data, error, resolve, reject, onSuccess, onError });
+      window.removeEventListener('message', listener);
+    }
+  }
+  window.addEventListener('message', listener);
+};
 
 // API we expose to allow websites to detect & interact with extension
 window.doge = {
   isMyDogeMask: true,
+
   async connect(onSuccess, onError) {
     return new Promise((resolve, reject) => {
       window.postMessage(
-        { type: MESSAGE_TYPES.CONNECTION_REQUEST },
+        { type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION },
         window.location.origin
       );
-      window.addEventListener(
-        'message',
-        function listener({ data: { type, data, error }, origin }) {
-          // only accept messages from the same origin
-          if (origin !== window.location.origin) return;
-          switch (type) {
-            case MESSAGE_TYPES.APPROVE_CONNECTION:
-              onConnectionResponse({
-                data,
-                error,
-                resolve,
-                reject,
-                listener,
-                onSuccess,
-                onError,
-              });
-              break;
-            default:
-          }
-        }
-      );
+      onResponse({ resolve, reject, onSuccess, onError });
     });
   },
-  getAddress: () => {
-    // TODO
-  },
-  getBalance: () => {
-    // TODO
-  },
-  requestTransaction: () => {
-    window.postMessage({
-      type: 'FROM_PAGE',
-      message: 'requestTransaction',
-      data: {},
+
+  async getBalance(onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_GET_BALANCE },
+        window.location.origin
+      );
+      onResponse({ resolve, reject, onSuccess, onError });
     });
   },
 };
