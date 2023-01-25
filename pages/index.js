@@ -1,5 +1,3 @@
-// import Head from 'next/head';
-
 import { useAppContext } from '../hooks/useAppContext';
 import { Password, ResetWallet } from '../views/Auth';
 import { Connect } from '../views/Connect';

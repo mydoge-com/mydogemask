@@ -351,7 +351,7 @@ function onGenerateAddress({ sendResponse } = {}) {
   return true;
 }
 
-// Open the extension popup window for thew user to approve a connection request, passing url params so the popup knows the origin of the connection request
+// Open the extension popup window for the user to approve a connection request, passing url params so the popup knows the origin of the connection request
 async function onConnectionRequest({ sendResponse, sender } = {}) {
   // Hack for setting the right popup window size. Need to fetch the onboarding status to determine the correct size
   const onboardingComplete = await getLocalValue(ONBOARDING_COMPLETE);
