@@ -352,11 +352,15 @@ function onGenerateAddress({ sendResponse } = {}) {
 }
 
 // Open the extension popup window for thew user to approve a connection request, passing url params so the popup knows the origin of the connection request
-function onConnectionRequest({ sendResponse, sender } = {}) {
+async function onConnectionRequest({ sendResponse, sender } = {}) {
+  // Hack for setting the right popup window size. Need to fetch the onboarding status to determine the correct size
+  const onboardingComplete = await getLocalValue(ONBOARDING_COMPLETE);
   chrome.windows
     .create({
       url: `index.html?originTabId=${sender.tab.id}&origin=${sender.origin}#connect`,
       type: 'popup',
+      width: onboardingComplete ? 357 : 800,
+      height: 640,
     })
     .then((tab) => {
       if (tab) {
