@@ -19,6 +19,7 @@ import sb from 'satoshi-bitcoin';
 import { BigButton } from '../../components/Button';
 import { Layout } from '../../components/Layout';
 import { ToastRender } from '../../components/ToastRender';
+import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useInterval } from '../../hooks/useInterval';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
@@ -34,7 +35,7 @@ export function Connect() {
   } = useAppContext();
 
   const handleWindowClose = useCallback(() => {
-    dispatch({ type: 'CLEAR_CONNECTION_REQUEST' });
+    dispatch({ type: DISPATCH_TYPES.CLEAR_CONNECTION_REQUEST });
   }, [dispatch]);
 
   const onRejectConnection = useCallback(() => {

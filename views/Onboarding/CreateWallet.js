@@ -5,6 +5,7 @@ import { FaEye, FaEyeSlash } from 'react-icons/fa';
 import { BackButton } from '../../components/BackButton';
 import { BigButton } from '../../components/Button';
 import { Footer } from '../../components/Footer';
+import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
@@ -53,11 +54,11 @@ export const CreateWallet = () => {
         ({ authenticated, wallet }) => {
           if (authenticated && wallet) {
             dispatch({
-              type: 'SIGN_IN',
+              type: DISPATCH_TYPES.SIGN_IN,
               payload: { authenticated, wallet, navigate: 'Success' },
             });
             dispatch({
-              type: 'SET_ONBOARDING_COMPLETE',
+              type: DISPATCH_TYPES.SET_ONBOARDING_COMPLETE,
               payload: true,
             });
           }

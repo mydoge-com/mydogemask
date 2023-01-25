@@ -5,6 +5,7 @@ import { CgDanger } from 'react-icons/cg';
 import { BackButton } from '../../components/BackButton';
 import { Layout } from '../../components/Layout';
 import { WalletRestore } from '../../components/WalletRestore';
+import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 
 export const ResetWallet = () => {
@@ -13,7 +14,7 @@ export const ResetWallet = () => {
   const onRestoreComplete = useCallback(
     ({ authenticated, wallet }) => {
       dispatch({
-        type: 'SIGN_IN',
+        type: DISPATCH_TYPES.SIGN_IN,
         payload: { authenticated, wallet, navigate: 'Success' },
       });
       navigate('Success');

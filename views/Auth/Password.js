@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { Layout } from '../../components/Layout';
+import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -13,7 +14,10 @@ export const Password = () => {
     ({ authenticated, wallet }) => {
       if (authenticated && wallet) {
         setErrors({});
-        dispatch({ type: 'SIGN_IN', payload: { authenticated, wallet } });
+        dispatch({
+          type: DISPATCH_TYPES.SIGN_IN,
+          payload: { authenticated, wallet },
+        });
       } else {
         setErrors({ ...errors, password: 'Incorrect password' });
       }

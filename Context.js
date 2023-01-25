@@ -12,24 +12,36 @@ import { addListener, sendMessage } from './scripts/helpers/message';
 
 export const AppContext = createContext(null);
 
+export const DISPATCH_TYPES = {
+  SET_CURRENT_ROUTE: 'SET_CURRENT_ROUTE',
+  SET_ONBOARDING_COMPLETE: 'SET_ONBOARDING_COMPLETE',
+  SET_AUTHENTICATED: 'SET_AUTHENTICATED',
+  SET_WALLET: 'SET_WALLET',
+  SIGN_OUT: 'SIGN_OUT',
+  SIGN_IN: 'SIGN_IN',
+  SELECT_WALLET: 'SELECT_WALLET',
+  SET_CONNECTION_REQUEST: 'SET_CONNECTION_REQUEST',
+  CLEAR_CONNECTION_REQUEST: 'CLEAR_CONNECTION_REQUEST',
+};
+
 const reducer = (state, { type, payload }) => {
   switch (type) {
-    case 'SET_CURRENT_ROUTE':
+    case DISPATCH_TYPES.SET_CURRENT_ROUTE:
       return { ...state, currentRoute: payload.route };
-    case 'SET_ONBOARDING_COMPLETE':
+    case DISPATCH_TYPES.SET_ONBOARDING_COMPLETE:
       return { ...state, onboardingComplete: payload };
-    case 'SET_AUTHENTICATED':
+    case DISPATCH_TYPES.SET_AUTHENTICATED:
       return { ...state, authenticated: payload };
-    case 'SET_WALLET':
+    case DISPATCH_TYPES.SET_WALLET:
       return { ...state, wallet: payload.wallet };
-    case 'SIGN_OUT':
+    case DISPATCH_TYPES.SIGN_OUT:
       return {
         ...state,
         authenticated: false,
         wallet: undefined,
         currentRoute: payload?.navigate ?? 'Password',
       };
-    case 'SIGN_IN':
+    case DISPATCH_TYPES.SIGN_IN:
       return {
         ...state,
         authenticated: payload?.authenticated,
@@ -38,11 +50,11 @@ const reducer = (state, { type, payload }) => {
           ? 'Connect'
           : payload?.navigate ?? 'Transactions',
       };
-    case 'SELECT_WALLET':
+    case DISPATCH_TYPES.SELECT_WALLET:
       return { ...state, selectedAddressIndex: payload.index };
-    case 'SET_CONNECTION_REQUESTED':
+    case DISPATCH_TYPES.SET_CONNECTION_REQUEST:
       return { ...state, connectionRequest: payload.connectionRequest };
-    case 'CLEAR_CONNECTION_REQUEST':
+    case DISPATCH_TYPES.CLEAR_CONNECTION_REQUEST:
       setTimeout(() => window?.close(), 1000);
       return { ...state };
     default:
@@ -60,7 +72,7 @@ export const AppContextProvider = ({ children }) => {
   });
 
   const navigate = useCallback((route) => {
-    dispatch({ type: 'SET_CURRENT_ROUTE', payload: { route } });
+    dispatch({ type: DISPATCH_TYPES.SET_CURRENT_ROUTE, payload: { route } });
   }, []);
 
   useEffect(() => {
@@ -71,7 +83,10 @@ export const AppContextProvider = ({ children }) => {
       { message: MESSAGE_TYPES.IS_ONBOARDING_COMPLETE },
       (response) => {
         if (response) {
-          dispatch({ type: 'SET_ONBOARDING_COMPLETE', payload: response });
+          dispatch({
+            type: DISPATCH_TYPES.SET_ONBOARDING_COMPLETE,
+            payload: response,
+          });
           sendMessage(
             { message: MESSAGE_TYPES.IS_SESSION_AUTHENTICATED },
             async ({ wallet, authenticated }) => {
@@ -98,7 +113,9 @@ export const AppContextProvider = ({ children }) => {
                             'beforeunload',
                             handleWindowClose
                           );
-                          dispatch({ type: 'CLEAR_CONNECTION_REQUEST' });
+                          dispatch({
+                            type: DISPATCH_TYPES.CLEAR_CONNECTION_REQUEST,
+                          });
                         }
                       );
                     }
@@ -107,13 +124,13 @@ export const AppContextProvider = ({ children }) => {
                 );
                 const connectionRequest = { originTabId, origin };
                 dispatch({
-                  type: 'SET_CONNECTION_REQUESTED',
+                  type: DISPATCH_TYPES.SET_CONNECTION_REQUEST,
                   payload: { connectionRequest },
                 });
               }
               if (authenticated && wallet) {
                 dispatch({
-                  type: 'SIGN_IN',
+                  type: DISPATCH_TYPES.SIGN_IN,
                   payload: {
                     authenticated,
                     wallet,

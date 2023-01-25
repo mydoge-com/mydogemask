@@ -10,6 +10,7 @@ import {
 import { useCallback, useRef, useState } from 'react';
 import { FiCopy } from 'react-icons/fi';
 
+import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useAuth } from '../../hooks/useAuth';
 import { useCopyText } from '../../hooks/useCopyText';
@@ -66,7 +67,10 @@ const DeleteWallet = () => {
 
   const onConfirm = useCallback(() => {
     sendMessage({ message: MESSAGE_TYPES.DELETE_WALLET }, () => {
-      dispatch({ type: 'SIGN_OUT', payload: { navigate: 'Intro' } });
+      dispatch({
+        type: DISPATCH_TYPES.SIGN_OUT,
+        payload: { navigate: 'Intro' },
+      });
     });
   }, [dispatch]);
   return (
