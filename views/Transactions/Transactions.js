@@ -277,7 +277,11 @@ const Transaction = ({
               _light={{ color: 'gray.400' }}
               _dark={{ color: 'gray.500' }}
             >
-              {confirmations === 0 ? 'PENDING' : <TimeAgo datetime={blockTime * 1000} />}
+              {confirmations === 0 ? (
+                'PENDING'
+              ) : (
+                <TimeAgo datetime={blockTime * 1000} />
+              )}
             </Text>
           </VStack>
           <VStack flexDirection='row' alignItems='flex-start' ml='8px'>
