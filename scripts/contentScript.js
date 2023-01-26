@@ -88,7 +88,7 @@ import { MESSAGE_TYPES } from './helpers/constants';
                 window.postMessage(
                   {
                     type: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
-                    data: { dogeAmount: balance },
+                    data: { balance },
                   },
                   origin
                 );
