@@ -1,4 +1,4 @@
-# mydogemask
+# MyDogeMask
 
 ## 🚀 Quick start
 
