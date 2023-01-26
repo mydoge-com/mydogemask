@@ -24,7 +24,13 @@ export function Send() {
     }[formPage] ?? null;
 
   return (
-    <Layout withHeader p={0} withCancelButton cancelRoute='Transactions'>
+    <Layout
+      withHeader
+      p={0}
+      withCancelButton
+      cancelRoute='Transactions'
+      addressColor='black'
+    >
       <Box pt='72px' px='12px'>
         <RenderScreen
           walletAddress={walletAddress}

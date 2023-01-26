@@ -24,7 +24,7 @@ import { DeleteAddressModal } from './DeleteAddressModal';
 import { SecurityModal } from './SecurityModal';
 import { WalletDetailModal } from './WalletDetailModal';
 
-export const Header = ({ withCancelButton, cancelRoute, onBack }) => {
+export const Header = ({ withCancelButton, cancelRoute, addressColor }) => {
   const { wallet, selectedAddressIndex, dispatch, navigate } = useAppContext();
   const onSignOut = useCallback(() => {
     sendMessage(
@@ -100,7 +100,7 @@ export const Header = ({ withCancelButton, cancelRoute, onBack }) => {
   return (
     <HStack
       alignItems='center'
-      bg='rgba(255,255,255, 0.1)'
+      // bg='rgba(255,255,255, 0.1)'
       position='absolute'
       zIndex={1}
       w='100%'
@@ -113,15 +113,17 @@ export const Header = ({ withCancelButton, cancelRoute, onBack }) => {
           position='absolute'
           left='12px'
           pt='8px'
-          onPress={() => {
-            if (onBack) {
-              onBack();
-            } else {
-              navigate(cancelRoute);
-            }
-          }}
+          onPress={() => navigate(cancelRoute)}
         />
       ) : null}
+      <Text
+        fontWeight='medium'
+        fontSize='lg'
+        pb='12px'
+        px='12px'
+        color={addressColor || 'white'}
+        mt='10px'
+      >{`Address ${selectedAddressIndex + 1}`}</Text>
       <Menu
         minW='250px'
         trigger={({ onPress, ...triggerProps }) => {
