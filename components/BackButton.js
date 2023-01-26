@@ -1,5 +1,5 @@
 import { Button, HStack, Icon, IconButton, Text } from 'native-base';
-import { FaAngleLeft } from 'react-icons/fa';
+import { FaWindowClose } from 'react-icons/fa';
 
 export const BackButton = ({ onPress, ...props }) => {
   return (
@@ -14,7 +14,7 @@ export const BackButton = ({ onPress, ...props }) => {
     >
       <HStack alignItems='center'>
         <IconButton
-          icon={<Icon as={FaAngleLeft} />}
+          icon={<Icon as={FaWindowClose} />}
           rounded='full'
           alignSelf='flex-start'
           borderWidth='1px'
@@ -24,7 +24,7 @@ export const BackButton = ({ onPress, ...props }) => {
           onPress={onPress}
         />
         <Text ml='6px' color='gray.500'>
-          Back
+          Cancel
         </Text>
       </HStack>
     </Button>

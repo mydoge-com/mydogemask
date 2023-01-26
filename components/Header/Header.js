@@ -24,7 +24,7 @@ import { DeleteAddressModal } from './DeleteAddressModal';
 import { SecurityModal } from './SecurityModal';
 import { WalletDetailModal } from './WalletDetailModal';
 
-export const Header = ({ withBackButton, backRoute, onBack }) => {
+export const Header = ({ withCancelButton, cancelRoute, onBack }) => {
   const { wallet, selectedAddressIndex, dispatch, navigate } = useAppContext();
   const onSignOut = useCallback(() => {
     sendMessage(
@@ -108,7 +108,7 @@ export const Header = ({ withBackButton, backRoute, onBack }) => {
       px='12px'
       justifyContent='flex-end'
     >
-      {withBackButton ? (
+      {withCancelButton ? (
         <BackButton
           position='absolute'
           left='12px'
@@ -117,7 +117,7 @@ export const Header = ({ withBackButton, backRoute, onBack }) => {
             if (onBack) {
               onBack();
             } else {
-              navigate(backRoute);
+              navigate(cancelRoute);
             }
           }}
         />

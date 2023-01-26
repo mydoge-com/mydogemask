@@ -5,8 +5,8 @@ import { Header } from './Header/Header';
 
 export const Layout = ({
   withHeader,
-  withBackButton,
-  backRoute,
+  withCancelButton,
+  cancelRoute,
   onBack,
   children,
   w,
@@ -28,8 +28,8 @@ export const Layout = ({
     >
       {withHeader ? (
         <Header
-          withBackButton={withBackButton}
-          backRoute={backRoute}
+          withCancelButton={withCancelButton}
+          cancelRoute={cancelRoute}
           onBack={onBack}
         />
       ) : null}
