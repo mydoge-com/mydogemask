@@ -127,43 +127,40 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
     });
 }
 
-function onSendTransaction({ data = {}, sender, sendResponse } = {}) {
-  // TODO Confirm that the sender is the extension
-  if (process.env.NODE_ENV === 'development' || sender?.id) {
-    Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-      ([wallet, password]) => {
-        const decryptedWallet = decrypt({
-          data: wallet,
-          password,
-        });
-        if (!decryptedWallet) {
-          sendResponse?.(false);
-        }
-        const signed = signRawTx(
-          data.rawTx,
-          decryptedWallet.children[data.selectedAddressIndex]
-        );
-        // console.log('signed tx', data.selectedAddressIndex, signed);
-        const jsonrpcReq = {
-          API_key: apiKey,
-          jsonrpc: '2.0',
-          id: `${data.senderAddress}_send_${Date.now()}`,
-          method: 'sendrawtransaction',
-          params: [signed],
-        };
-        node
-          .post(jsonrpcReq)
-          .json((jsonrpcRes) => {
-            // console.log('sendrawtransaction', jsonrpcRes);
-            sendResponse(jsonrpcRes.result);
-          })
-          .catch((err) => {
-            logError(err);
-            sendResponse?.(false);
-          });
+function onSendTransaction({ data = {}, sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+      if (!decryptedWallet) {
+        sendResponse?.(false);
       }
-    );
-  }
+      const signed = signRawTx(
+        data.rawTx,
+        decryptedWallet.children[data.selectedAddressIndex]
+      );
+      // console.log('signed tx', data.selectedAddressIndex, signed);
+      const jsonrpcReq = {
+        API_key: apiKey,
+        jsonrpc: '2.0',
+        id: `${data.senderAddress}_send_${Date.now()}`,
+        method: 'sendrawtransaction',
+        params: [signed],
+      };
+      node
+        .post(jsonrpcReq)
+        .json((jsonrpcRes) => {
+          // console.log('sendrawtransaction', jsonrpcRes);
+          sendResponse(jsonrpcRes.result);
+        })
+        .catch((err) => {
+          logError(err);
+          sendResponse?.(false);
+        });
+    }
+  );
 }
 
 // onRequestTransaction: Launch notification popup
