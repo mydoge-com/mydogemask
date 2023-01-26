@@ -3,6 +3,7 @@ import { useCallback, useEffect } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
+import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
@@ -15,6 +16,7 @@ export const ConfirmationScreen = ({
   walletAddress,
   selectedAddressIndex,
 }) => {
+  const { navigate } = useAppContext();
   const onSubmit = useCallback(() => {
     let addressBalance;
     sendMessage(
@@ -52,12 +54,14 @@ export const ConfirmationScreen = ({
                 render: () => {
                   return (
                     <ToastRender
-                      description={`Sent Transaction: ${txId}`}
+                      description='Trasaction Pending'
                       status='success'
                     />
                   );
                 },
               });
+
+              navigate('Transactions');
             } else {
               Toast.show({
                 title: 'Error',
