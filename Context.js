@@ -137,7 +137,10 @@ export const AppContextProvider = ({ children }) => {
                 );
                 const clientRequest = {
                   requestType,
-                  params,
+                  params: {
+                    ...params,
+                    originTabId: Number(params.originTabId),
+                  },
                 };
                 // const connectionRequest = { originTabId, origin };
                 dispatch({

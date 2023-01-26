@@ -187,7 +187,9 @@ async function onRequestTransaction({
   });
   chrome.windows
     .create({
-      url: `index.html?${params.toString()}#transaction`,
+      url: `index.html?${params.toString()}#${
+        MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION
+      }`,
       type: 'popup',
       width: 357,
       height: 640,
@@ -372,7 +374,9 @@ async function onConnectionRequest({ sendResponse, sender } = {}) {
   params.append('origin', sender.origin);
   chrome.windows
     .create({
-      url: `index.html?${params.toString()}#connect`,
+      url: `index.html?${params.toString()}#${
+        MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION
+      }`,
       type: 'popup',
       width: onboardingComplete ? 357 : 800,
       height: 640,
@@ -392,6 +396,7 @@ async function onApproveConnection({
   sendResponse,
   data: { approved, address, balance, originTabId, origin },
 } = {}) {
+  console.log({ approved, address, balance, originTabId, origin });
   if (approved) {
     const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || [];
     setSessionValue({

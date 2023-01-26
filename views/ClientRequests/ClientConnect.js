@@ -29,13 +29,15 @@ const REFRESH_INTERVAL = 10000;
 
 export function ClientConnect() {
   const {
-    connectionRequest: { originTabId, origin },
+    clientRequest: {
+      params: { originTabId, origin },
+    },
     wallet,
     dispatch,
   } = useAppContext();
 
   const handleWindowClose = useCallback(() => {
-    dispatch({ type: DISPATCH_TYPES.CLEAR_CONNECTION_REQUEST });
+    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
   }, [dispatch]);
 
   const onRejectConnection = useCallback(() => {
