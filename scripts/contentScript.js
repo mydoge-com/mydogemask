@@ -1,9 +1,6 @@
 import { MESSAGE_TYPES } from './helpers/constants';
 
 (() => {
-  // window.addEventListener('message', (event) => {
-  //   console.log('from inject-script.js', event);
-  // });
   const initEvent = new Event('doge#initialized');
   window.dispatchEvent(initEvent);
 
@@ -52,26 +49,60 @@ import { MESSAGE_TYPES } from './helpers/constants';
 
   injectScript(chrome.runtime.getURL('scripts/inject-script.js'), 'body');
 
-  // // Listen to messages from injected script
-  // function onRequestTransaction(data) {
-  //   chrome.runtime.sendMessage(
-  //     { message: 'requestTransaction', data },
-  //     (response) => {
-  //       console.log(response);
-  //     }
-  //   );
-  // }
-
   // Handle connection requests from injected script by sending a message to the background script. The background script will handle the connection request and send a response back to the content script.
-  function onRequestConnection({ type, data }) {
+  function onRequestConnection({ data, origin }) {
     chrome.runtime.sendMessage(
       {
-        message: type,
+        message: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION,
         data,
       },
       (response) => {
         if (!response) {
-          window.postMessage({ type, error: true }, origin);
+          window.postMessage(
+            {
+              type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+              error: 'Unable to connect to MyDogeMask',
+            },
+            origin
+          );
+        }
+      }
+    );
+  }
+
+  async function onGetBalance({ origin }) {
+    chrome.runtime.sendMessage(
+      {
+        message: MESSAGE_TYPES.GET_CONNECTED_CLIENTS,
+      },
+      (connectedClients) => {
+        const client = connectedClients?.[origin];
+        if (client) {
+          chrome.runtime.sendMessage(
+            {
+              message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
+              data: { address: client.address },
+            },
+            (balance) => {
+              if (balance) {
+                window.postMessage(
+                  {
+                    type: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
+                    data: { balance },
+                  },
+                  origin
+                );
+              }
+            }
+          );
+        } else {
+          window.postMessage(
+            {
+              type: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
+              error: 'MyDogeMask is not connected to this website',
+            },
+            origin
+          );
         }
       }
     );
@@ -80,12 +111,15 @@ import { MESSAGE_TYPES } from './helpers/constants';
   // Listen to messages from injected script and pass to the respective handler functions tro forward to the background script
   window.addEventListener(
     'message',
-    ({ source, data: { type, data } }) => {
+    ({ source, data: { type } }) => {
       // only accept messages from the current tab
       if (source !== window) return;
       switch (type) {
-        case MESSAGE_TYPES.CONNECTION_REQUEST:
-          onRequestConnection({ type, data });
+        case MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION:
+          onRequestConnection({ origin: source.origin });
+          break;
+        case MESSAGE_TYPES.CLIENT_GET_BALANCE:
+          onGetBalance({ origin: source.origin });
           break;
         default:
       }
@@ -94,10 +128,12 @@ import { MESSAGE_TYPES } from './helpers/constants';
   );
 
   // Listen to messages from the background script and pass to the injected script
-  chrome.runtime.onMessage.addListener(({ type, data, origin }, sender) => {
-    // Confirm that message is coming from the extension
-    if (sender.id !== chrome.runtime.id) return;
-    // Pass message to injected script
-    window.postMessage({ type, data }, origin);
-  });
+  chrome.runtime.onMessage.addListener(
+    ({ type, data, error, origin }, sender) => {
+      // Confirm that message is coming from the extension
+      if (sender.id !== chrome.runtime.id) return;
+      // Pass message to injected script
+      window.postMessage({ type, data, error }, origin);
+    }
+  );
 })();
