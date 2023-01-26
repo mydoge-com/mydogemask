@@ -10,6 +10,8 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_CONNECTION_RESPONSE: 'clientRequestConnectionResponse',
   CLIENT_GET_BALANCE: 'clientRequestBalance',
   CLIENT_GET_BALANCE_RESPONSE: 'clientGetBalanceResponse',
+  CLIENT_GENERATE_TRANSACTION: 'clientGenerateTransaction',
+  CLIENT_GENERATE_TRANSACTION_RESPONSE: 'clientGenerateTransactionResponse',
 };
 
 export const MESSAGE_TYPES = {

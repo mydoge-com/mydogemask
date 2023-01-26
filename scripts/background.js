@@ -167,27 +167,43 @@ function onSendTransaction({ data = {}, sender, sendResponse } = {}) {
 }
 
 // onRequestTransaction: Launch notification popup
-function onRequestTransaction({ data = {}, sendResponse } = {}) {
-  chrome.windows.getCurrent((w) => {
-    const width = 360;
-    const height = 540;
-    chrome.windows.create(
-      {
-        url: `notification.html?amount=${data.amount}`,
-        type: 'popup',
-        width,
-        height,
-        left: w.width + w.left - width,
-        top: w.top,
-      },
-      (newWindow) => {
-        console.log(
-          `can use ${newWindow.id} to set up listener for transaction success/fail maybe?`
-        );
-        if (sendResponse) sendResponse('success');
+async function onRequestTransaction({ data = {}, sendResponse, sender } = {}) {
+  const onboardingComplete = await getLocalValue(ONBOARDING_COMPLETE);
+  chrome.windows
+    .create({
+      url: `index.html?originTabId=${sender.tab.id}&origin=${sender.origin}#transaction`,
+      type: 'popup',
+      width: onboardingComplete ? 357 : 800,
+      height: 640,
+    })
+    .then((tab) => {
+      if (tab) {
+        sendResponse?.({ originTabId: sender.tab.id });
+      } else {
+        sendResponse?.(false);
       }
-    );
-  });
+    });
+  return true;
+  // chrome.windows.getCurrent((w) => {
+  //   const width = 360;
+  //   const height = 540;
+  //   chrome.windows.create(
+  //     {
+  //       url: `notification.html?amount=${data.amount}`,
+  //       type: 'popup',
+  //       width,
+  //       height,
+  //       left: w.width + w.left - width,
+  //       top: w.top,
+  //     },
+  //     (newWindow) => {
+  //       console.log(
+  //         `can use ${newWindow.id} to set up listener for transaction success/fail maybe?`
+  //       );
+  //       if (sendResponse) sendResponse('success');
+  //     }
+  //   );
+  // });
 }
 
 // Generates a seed phrase, root keypair, child keypair + address 0
@@ -518,7 +534,7 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       onSendTransaction({ data, sender, sendResponse });
       break;
     case MESSAGE_TYPES.REQUEST_TRANSACTION:
-      onRequestTransaction({ data, sendResponse });
+      onRequestTransaction({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.IS_ONBOARDING_COMPLETE:
       getOnboardingStatus({ data, sendResponse, sender });

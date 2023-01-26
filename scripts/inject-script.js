@@ -35,7 +35,7 @@ const onResponse = ({ resolve, reject, onSuccess, onError }) => {
 window.doge = {
   isMyDogeMask: true,
 
-  async connect(onSuccess, onError) {
+  connect(onSuccess, onError) {
     return new Promise((resolve, reject) => {
       window.postMessage(
         { type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION },
@@ -45,10 +45,25 @@ window.doge = {
     });
   },
 
-  async getBalance(onSuccess, onError) {
+  getBalance(onSuccess, onError) {
     return new Promise((resolve, reject) => {
       window.postMessage(
         { type: MESSAGE_TYPES.CLIENT_GET_BALANCE },
+        window.location.origin
+      );
+      onResponse({ resolve, reject, onSuccess, onError });
+    });
+  },
+
+  generateTransaction(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.recipientAddress || !data?.dogeAmount) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_GENERATE_TRANSACTION, data },
         window.location.origin
       );
       onResponse({ resolve, reject, onSuccess, onError });
