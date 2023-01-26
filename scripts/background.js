@@ -164,13 +164,32 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
 }
 
 // onRequestTransaction: Launch notification popup
-async function onRequestTransaction({ data = {}, sendResponse, sender } = {}) {
-  const onboardingComplete = await getLocalValue(ONBOARDING_COMPLETE);
+async function onRequestTransaction({
+  data: { recipientAddress, dogeAmount } = {},
+  sendResponse,
+  sender,
+} = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  const params = new URLSearchParams();
+  Object.entries({
+    originTabId: sender.tab.id,
+    origin: sender.origin,
+    recipientAddress,
+    dogeAmount,
+  }).forEach(([key, value]) => {
+    params.append(key, value);
+  });
   chrome.windows
     .create({
-      url: `index.html?originTabId=${sender.tab.id}&origin=${sender.origin}#transaction`,
+      url: `index.html?${params.toString()}#transaction`,
       type: 'popup',
-      width: onboardingComplete ? 357 : 800,
+      width: 357,
       height: 640,
     })
     .then((tab) => {
@@ -181,26 +200,6 @@ async function onRequestTransaction({ data = {}, sendResponse, sender } = {}) {
       }
     });
   return true;
-  // chrome.windows.getCurrent((w) => {
-  //   const width = 360;
-  //   const height = 540;
-  //   chrome.windows.create(
-  //     {
-  //       url: `notification.html?amount=${data.amount}`,
-  //       type: 'popup',
-  //       width,
-  //       height,
-  //       left: w.width + w.left - width,
-  //       top: w.top,
-  //     },
-  //     (newWindow) => {
-  //       console.log(
-  //         `can use ${newWindow.id} to set up listener for transaction success/fail maybe?`
-  //       );
-  //       if (sendResponse) sendResponse('success');
-  //     }
-  //   );
-  // });
 }
 
 // Generates a seed phrase, root keypair, child keypair + address 0
@@ -368,9 +367,12 @@ function onGenerateAddress({ sendResponse } = {}) {
 async function onConnectionRequest({ sendResponse, sender } = {}) {
   // Hack for setting the right popup window size. Need to fetch the onboarding status to determine the correct size
   const onboardingComplete = await getLocalValue(ONBOARDING_COMPLETE);
+  const params = new URLSearchParams();
+  params.append('originTabId', sender.tab.id);
+  params.append('origin', sender.origin);
   chrome.windows
     .create({
-      url: `index.html?originTabId=${sender.tab.id}&origin=${sender.origin}#connect`,
+      url: `index.html?${params.toString()}#connect`,
       type: 'popup',
       width: onboardingComplete ? 357 : 800,
       height: 640,
@@ -530,9 +532,6 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.SEND_TRANSACTION:
       onSendTransaction({ data, sender, sendResponse });
       break;
-    case MESSAGE_TYPES.REQUEST_TRANSACTION:
-      onRequestTransaction({ data, sendResponse, sender });
-      break;
     case MESSAGE_TYPES.IS_ONBOARDING_COMPLETE:
       getOnboardingStatus({ data, sendResponse, sender });
       break;
@@ -565,6 +564,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE:
       onApproveConnection({ sender, sendResponse, data });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
+      onRequestTransaction({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });

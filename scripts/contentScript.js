@@ -1,5 +1,5 @@
 import { MESSAGE_TYPES } from './helpers/constants';
-import { validateTransaction } from './helpers/wallet';
+// import { validateTransaction } from './helpers/wallet';
 
 (() => {
   const initEvent = new Event('doge#initialized');
@@ -160,42 +160,42 @@ import { validateTransaction } from './helpers/wallet';
     }
   }
 
-  async function onGenerateTransaction({ origin, data }) {
+  async function onRequestTransaction({ origin, data }) {
     let client;
-    let balance;
-    let addressIndex;
+    // let balance;
+    // let addressIndex;
     try {
       client = await getConnectedClient(origin);
-      balance = await getAddressBalance(client?.address);
-      const wallet = await getWallet();
-      addressIndex = wallet.addresses.indexOf(client.address);
+      // balance = await getAddressBalance(client?.address);
+      // const wallet = await getWallet();
+      // addressIndex = wallet.addresses.indexOf(client.address);
     } catch (e) {
       handleError({
         errorMessage: e.message,
         origin,
-        messageType: MESSAGE_TYPES.CLIENT_GENERATE_TRANSACTION_RESPONSE,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
       });
       return;
     }
-    if (client && balance) {
-      const error = validateTransaction({
-        senderAddress: client.address,
-        recipientAddress: data.recipientAddress,
-        dogeAmount: data.dogeAmount,
-        addressBalance: balance,
-      });
-      if (error) {
-        handleError({
-          errorMessage: error,
-          origin,
-          messageType: MESSAGE_TYPES.CLIENT_GENERATE_TRANSACTION_RESPONSE,
-        });
-      }
+    if (client) {
+      // const error = validateTransaction({
+      //   senderAddress: client.address,
+      //   recipientAddress: data.recipientAddress,
+      //   dogeAmount: data.dogeAmount,
+      //   addressBalance: balance,
+      // });
+      // if (error) {
+      //   handleError({
+      //     errorMessage: error,
+      //     origin,
+      //     messageType: MESSAGE_TYPES.CLIENT_GENERATE_TRANSACTION_RESPONSE,
+      //   });
+      // }
 
-      // chrome.runtime.sendMessage({
-      //   message: MESSAGE_TYPES.SEND_TRANSACTION,
-      //   data: { rawTx, selectedAddressIndex: addressIndex },
-      // })
+      chrome.runtime.sendMessage({
+        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+        data,
+      });
     }
   }
 
@@ -213,8 +213,8 @@ import { validateTransaction } from './helpers/wallet';
         case MESSAGE_TYPES.CLIENT_GET_BALANCE:
           onGetBalance({ origin: source.origin });
           break;
-        case MESSAGE_TYPES.CLIENT_GENERATE_TRANSACTION:
-          onGenerateTransaction({ origin: source.origin, data });
+        case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
+          onRequestTransaction({ origin: source.origin, data });
           break;
         default:
       }

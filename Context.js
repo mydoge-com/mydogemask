@@ -20,8 +20,13 @@ export const DISPATCH_TYPES = {
   SIGN_OUT: 'SIGN_OUT',
   SIGN_IN: 'SIGN_IN',
   SELECT_WALLET: 'SELECT_WALLET',
-  SET_CONNECTION_REQUEST: 'SET_CONNECTION_REQUEST',
-  CLEAR_CONNECTION_REQUEST: 'CLEAR_CONNECTION_REQUEST',
+  SET_CLIENT_REQUEST: 'SET_CLIENT_REQUEST',
+  CLEAR_CLIENT_REQUEST: 'CLEAR_CLIENT_REQUEST',
+};
+
+const CLIENT_REQUEST_ROUTES = {
+  [MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION]: 'ClientConnect',
+  [MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION]: 'ClientTransaction',
 };
 
 const reducer = (state, { type, payload }) => {
@@ -46,15 +51,15 @@ const reducer = (state, { type, payload }) => {
         ...state,
         authenticated: payload?.authenticated,
         wallet: payload?.wallet,
-        currentRoute: state.connectionRequest
-          ? 'Connect'
+        currentRoute: state.clientRequest
+          ? CLIENT_REQUEST_ROUTES[state.clientRequest.requestType]
           : payload?.navigate ?? 'Transactions',
       };
     case DISPATCH_TYPES.SELECT_WALLET:
       return { ...state, selectedAddressIndex: payload.index };
-    case DISPATCH_TYPES.SET_CONNECTION_REQUEST:
-      return { ...state, connectionRequest: payload.connectionRequest };
-    case DISPATCH_TYPES.CLEAR_CONNECTION_REQUEST:
+    case DISPATCH_TYPES.SET_CLIENT_REQUEST:
+      return { ...state, clientRequest: payload.clientRequest };
+    case DISPATCH_TYPES.CLEAR_CLIENT_REQUEST:
       setTimeout(() => window?.close(), 1000);
       return { ...state };
     default:
@@ -95,9 +100,14 @@ export const AppContextProvider = ({ children }) => {
               if (extPopupWindow?.url) {
                 url = new URL(extPopupWindow?.url);
               }
-              const originTabId = Number(url?.searchParams.get('originTabId'));
-              const origin = url?.searchParams.get('origin');
-              if (originTabId && origin) {
+              const { hash, searchParams } = url;
+              // strip # from hash
+              const requestType = hash?.substring(1);
+              const params = {};
+              searchParams?.forEach((value, key) => {
+                params[key] = value;
+              });
+              if (requestType && params.originTabId && params.origin) {
                 // Add event listener to handle window close
                 window.addEventListener(
                   'beforeunload',
@@ -105,9 +115,11 @@ export const AppContextProvider = ({ children }) => {
                     if (state.connectionRequest) {
                       sendMessage(
                         {
-                          message:
-                            MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
-                          data: { approved: false, originTabId, origin },
+                          message: `${requestType}Response`,
+                          data: {
+                            originTabId: params.originTabId,
+                            origin: params.origin,
+                          },
                         },
                         () => {
                           window.removeEventListener(
@@ -115,7 +127,7 @@ export const AppContextProvider = ({ children }) => {
                             handleWindowClose
                           );
                           dispatch({
-                            type: DISPATCH_TYPES.CLEAR_CONNECTION_REQUEST,
+                            type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST,
                           });
                         }
                       );
@@ -123,10 +135,14 @@ export const AppContextProvider = ({ children }) => {
                     return null;
                   }
                 );
-                const connectionRequest = { originTabId, origin };
+                const clientRequest = {
+                  requestType,
+                  params,
+                };
+                // const connectionRequest = { originTabId, origin };
                 dispatch({
-                  type: DISPATCH_TYPES.SET_CONNECTION_REQUEST,
-                  payload: { connectionRequest },
+                  type: DISPATCH_TYPES.SET_CLIENT_REQUEST,
+                  payload: { clientRequest },
                 });
               }
               if (authenticated && wallet) {

@@ -27,7 +27,7 @@ import { sendMessage } from '../../scripts/helpers/message';
 
 const REFRESH_INTERVAL = 10000;
 
-export function Connect() {
+export function ClientConnect() {
   const {
     connectionRequest: { originTabId, origin },
     wallet,

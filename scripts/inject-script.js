@@ -16,6 +16,7 @@ function responseHandler({ data, error, resolve, reject, onSuccess, onError }) {
 const SUPPORTED_RESPONSE_TYPES = [
   MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
   MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
+  MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
 ];
 
 const onResponse = ({ resolve, reject, onSuccess, onError }) => {
@@ -55,7 +56,7 @@ window.doge = {
     });
   },
 
-  generateTransaction(data, onSuccess, onError) {
+  requestTransaction(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
       if (!data?.recipientAddress || !data?.dogeAmount) {
         onError?.(new Error('Invalid data'));
@@ -63,7 +64,7 @@ window.doge = {
         return;
       }
       window.postMessage(
-        { type: MESSAGE_TYPES.CLIENT_GENERATE_TRANSACTION, data },
+        { type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION, data },
         window.location.origin
       );
       onResponse({ resolve, reject, onSuccess, onError });
