@@ -99,7 +99,7 @@ import { validateTransaction } from './helpers/wallet';
         {
           type: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
           data: {
-            dogeAmount: balance,
+            balance,
             address: client.address,
           },
         },
