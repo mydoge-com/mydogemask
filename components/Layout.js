@@ -4,10 +4,10 @@ import React, { useEffect } from 'react';
 import { Header } from './Header/Header';
 
 export const Layout = ({
+  addressColor,
   withHeader,
-  withBackButton,
-  backRoute,
-  onBack,
+  withCancelButton,
+  cancelRoute,
   children,
   w,
   width,
@@ -28,9 +28,9 @@ export const Layout = ({
     >
       {withHeader ? (
         <Header
-          withBackButton={withBackButton}
-          backRoute={backRoute}
-          onBack={onBack}
+          withCancelButton={withCancelButton}
+          cancelRoute={cancelRoute}
+          addressColor={addressColor}
         />
       ) : null}
       {children}

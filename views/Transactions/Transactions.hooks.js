@@ -8,7 +8,7 @@ import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
 import { formatTransaction } from '../../utils/transactions';
 
-const QUERY_INTERVAL = 30000;
+const QUERY_INTERVAL = 5000;
 
 export const useTransactions = () => {
   const { wallet, selectedAddressIndex } = useAppContext();
@@ -50,6 +50,44 @@ export const useTransactions = () => {
     });
   }, []);
 
+  const getRecentTransactions = useCallback(() => {
+    if (currentPage.current > 0 && !loading) {
+      sendMessage(
+        {
+          message: MESSAGE_TYPES.GET_TRANSACTIONS,
+          data: {
+            address: walletAddress,
+            page: 0,
+          },
+        },
+        ({ transactions: transactions_ }) => {
+          if (transactions_) {
+            let formattedTransactions = [];
+            transactions_.forEach((transaction) => {
+              formattedTransactions.push(
+                formatTransaction({ transaction, walletAddress })
+              );
+            });
+            // Find new transactions
+            formattedTransactions = formattedTransactions.filter((tx) => {
+              return (
+                (transactions || []).findIndex((t) => t.id === tx.id) === -1
+              );
+            });
+            // Append and sort
+            setTransactions((state = []) =>
+              [...state, ...formattedTransactions].sort(
+                (a, b) => b.blockTime - a.blockTime
+              )
+            );
+          } else {
+            logError(new Error('Failed to get recent transactions'));
+          }
+        }
+      );
+    }
+  }, [loading, transactions, walletAddress]);
+
   const getTransactions = useCallback(() => {
     setLoading(true);
     sendMessage(
@@ -89,15 +127,6 @@ export const useTransactions = () => {
     }
   }, [getTransactions, hasMore]);
 
-  useInterval(
-    () => {
-      getAddressBalance();
-      getDogecoinPrice();
-    },
-    QUERY_INTERVAL,
-    true
-  );
-
   const currentAddress = useRef(walletAddress);
 
   useEffect(() => {
@@ -109,6 +138,16 @@ export const useTransactions = () => {
     getTransactions();
     getAddressBalance();
   }, [getAddressBalance, getTransactions, walletAddress]);
+
+  useInterval(
+    () => {
+      getAddressBalance();
+      getDogecoinPrice();
+      getRecentTransactions();
+    },
+    QUERY_INTERVAL,
+    true
+  );
 
   return {
     balance,

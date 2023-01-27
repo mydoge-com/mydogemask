@@ -8,7 +8,7 @@ import { AmountScreen } from './AmountScreen';
 import { ConfirmationScreen } from './ConfirmationScreen';
 
 export function Send() {
-  const { wallet, selectedAddressIndex, navigate } = useAppContext();
+  const { wallet, selectedAddressIndex } = useAppContext();
 
   const walletAddress = wallet.addresses[selectedAddressIndex];
 
@@ -27,16 +27,9 @@ export function Send() {
     <Layout
       withHeader
       p={0}
-      withBackButton
-      onBack={() => {
-        if (formPage === 'address') {
-          navigate('Transactions');
-        } else if (formPage === 'amount') {
-          setFormPage('address');
-        } else if (formPage === 'confirmation') {
-          setFormPage('amount');
-        }
-      }}
+      withCancelButton
+      cancelRoute='Transactions'
+      addressColor='black'
     >
       <Box pt='72px' px='12px'>
         <RenderScreen
