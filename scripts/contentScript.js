@@ -1,4 +1,6 @@
 import { MESSAGE_TYPES } from './helpers/constants';
+import { getAddressBalance, getConnectedClient } from './helpers/data';
+import { validateTransaction } from './helpers/wallet';
 
 (() => {
   const initEvent = new Event('doge#initialized');
@@ -49,6 +51,16 @@ import { MESSAGE_TYPES } from './helpers/constants';
 
   injectScript(chrome.runtime.getURL('scripts/inject-script.js'), 'body');
 
+  const handleError = ({ errorMessage, origin, messageType }) => {
+    window.postMessage(
+      {
+        type: messageType,
+        error: errorMessage,
+      },
+      origin
+    );
+  };
+
   // Handle connection requests from injected script by sending a message to the background script. The background script will handle the connection request and send a response back to the content script.
   function onRequestConnection({ data, origin }) {
     chrome.runtime.sendMessage(
@@ -58,68 +70,108 @@ import { MESSAGE_TYPES } from './helpers/constants';
       },
       (response) => {
         if (!response) {
-          window.postMessage(
-            {
-              type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
-              error: 'Unable to connect to MyDogeMask',
-            },
-            origin
-          );
+          handleError({
+            errorMessage: 'Unable to connect to MyDogeMask',
+            origin,
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+          });
         }
       }
     );
   }
 
   async function onGetBalance({ origin }) {
-    chrome.runtime.sendMessage(
-      {
-        message: MESSAGE_TYPES.GET_CONNECTED_CLIENTS,
-      },
-      (connectedClients) => {
-        const client = connectedClients?.[origin];
-        if (client) {
-          chrome.runtime.sendMessage(
-            {
-              message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
-              data: { address: client.address },
-            },
-            (balance) => {
-              if (balance) {
-                window.postMessage(
-                  {
-                    type: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
-                    data: { balance },
-                  },
-                  origin
-                );
-              }
-            }
-          );
-        } else {
-          window.postMessage(
-            {
-              type: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
-              error: 'MyDogeMask is not connected to this website',
-            },
-            origin
-          );
-        }
+    let client;
+    let balance;
+    try {
+      client = await getConnectedClient(origin);
+      balance = await getAddressBalance(client?.address);
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
+      });
+      return;
+    }
+    if (client && balance) {
+      window.postMessage(
+        {
+          type: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
+          data: {
+            balance,
+            address: client.address,
+          },
+        },
+        origin
+      );
+    }
+  }
+
+  async function onRequestTransaction({ origin, data }) {
+    try {
+      const client = await getConnectedClient(origin);
+      const balance = await getAddressBalance(client?.address);
+
+      const txData = {
+        senderAddress: client.address,
+        recipientAddress: data.recipientAddress,
+        dogeAmount: data.dogeAmount,
+      };
+
+      const error = validateTransaction({
+        ...txData,
+        addressBalance: balance,
+      });
+      if (error) {
+        throw new Error(error);
       }
-    );
+      chrome.runtime.sendMessage(
+        {
+          message: 'createTransaction',
+          data: txData,
+        },
+        ({ rawTx, fee, amount }) => {
+          if (rawTx && fee && amount) {
+            chrome.runtime.sendMessage({
+              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+              data: {
+                ...data,
+                rawTx,
+                fee,
+                dogeAmount: amount,
+              },
+            });
+          } else {
+            throw new Error('Unable to create transaction');
+          }
+        }
+      );
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      });
+    }
   }
 
   // Listen to messages from injected script and pass to the respective handler functions tro forward to the background script
   window.addEventListener(
     'message',
-    ({ source, data: { type } }) => {
+    ({ source, data: { type, data } }) => {
       // only accept messages from the current tab
       if (source !== window) return;
+
       switch (type) {
         case MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION:
           onRequestConnection({ origin: source.origin });
           break;
         case MESSAGE_TYPES.CLIENT_GET_BALANCE:
           onGetBalance({ origin: source.origin });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
+          onRequestTransaction({ origin: source.origin, data });
           break;
         default:
       }

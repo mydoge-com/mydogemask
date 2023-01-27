@@ -10,11 +10,12 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_CONNECTION_RESPONSE: 'clientRequestConnectionResponse',
   CLIENT_GET_BALANCE: 'clientRequestBalance',
   CLIENT_GET_BALANCE_RESPONSE: 'clientGetBalanceResponse',
+  CLIENT_REQUEST_TRANSACTION: 'clientRequestTransaction',
+  CLIENT_REQUEST_TRANSACTION_RESPONSE: 'clientRequestTransactionResponse',
 };
 
 export const MESSAGE_TYPES = {
   ...CLIENT_MESSAGE_TYPES,
-  REQUEST_TRANSACTION: 'requestTransaction',
   CREATE_WALLET: 'createWallet',
   RESET_WALLET: 'resetWallet',
   AUTHENTICATE: 'authenticate',
