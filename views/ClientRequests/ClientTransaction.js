@@ -202,7 +202,7 @@ const ConfirmationModal = ({
                 render: () => {
                   return (
                     <ToastRender
-                      description={`Transaction Sent`}
+                      description='Transaction Sent'
                       status='success'
                     />
                   );

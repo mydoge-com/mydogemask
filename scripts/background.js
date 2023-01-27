@@ -396,10 +396,10 @@ async function onConnectionRequest({ sendResponse, sender } = {}) {
 // Handle the user's response to the connection request popup and send a message to the content script with the response
 async function onApproveConnection({
   sendResponse,
-  data: { approved, address, balance, originTabId, origin },
+  data: { approved, address, balance, originTabId, origin, error },
 } = {}) {
   if (approved) {
-    const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || [];
+    const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || {};
     setSessionValue({
       [CONNECTED_CLIENTS]: {
         ...connectedClients,
@@ -419,11 +419,22 @@ async function onApproveConnection({
   } else {
     chrome.tabs?.sendMessage(originTabId, {
       type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
-      error: 'User rejected connection request',
+      error: error || 'User rejected connection request',
       origin,
     });
     sendResponse(false);
   }
+  return true;
+}
+
+async function onDisconnectClient({ sendResponse, data: { origin } } = {}) {
+  const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || {};
+  delete connectedClients[origin];
+  setSessionValue({
+    [CONNECTED_CLIENTS]: { ...connectedClients },
+  });
+  sendResponse(true);
+
   return true;
 }
 
@@ -452,7 +463,7 @@ async function onApproveTransaction({
 }
 
 async function onGetConnectedClients({ sendResponse } = {}) {
-  const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || [];
+  const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || {};
   sendResponse(connectedClients);
   return true;
 }
@@ -603,6 +614,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });
+      break;
+    case MESSAGE_TYPES.CLIENT_DISCONNECT:
+      onDisconnectClient({ sender, sendResponse, data });
       break;
     default:
   }

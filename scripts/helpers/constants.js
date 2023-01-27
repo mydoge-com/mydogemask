@@ -12,6 +12,8 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_GET_BALANCE_RESPONSE: 'clientGetBalanceResponse',
   CLIENT_REQUEST_TRANSACTION: 'clientRequestTransaction',
   CLIENT_REQUEST_TRANSACTION_RESPONSE: 'clientRequestTransactionResponse',
+  CLIENT_DISCONNECT: 'clientDisconnect',
+  CLIENT_DISCONNECT_RESPONSE: 'clientDisconnectResponse',
 };
 
 export const MESSAGE_TYPES = {
