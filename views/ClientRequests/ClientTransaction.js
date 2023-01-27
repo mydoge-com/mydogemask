@@ -160,6 +160,8 @@ export function ClientTransaction() {
         rawTx={rawTx}
         addressIndex={addressIndex}
         handleWindowClose={handleWindowClose}
+        recipientAddress={recipientAddress}
+        dogeAmount={dogeAmount}
       />
     </Layout>
   );
@@ -173,6 +175,8 @@ const ConfirmationModal = ({
   addressIndex,
   originTabId,
   handleWindowClose,
+  recipientAddress,
+  dogeAmount,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
@@ -267,8 +271,11 @@ const ConfirmationModal = ({
             >
               {origin}
             </Badge>
-            Allow this website be see your address, account balance, activity
-            and suggest transactions to approve?
+            <Text>
+              Confirm transaction to send{' '}
+              <Text fontWeight='bold'>Ð{dogeAmount}</Text> to{' '}
+              <Text fontWeight='bold'>{recipientAddress}</Text>?
+            </Text>
           </AlertDialog.Body>
           <AlertDialog.Footer>
             <Button.Group space={2}>
@@ -281,7 +288,7 @@ const ConfirmationModal = ({
                 Cancel
               </Button>
               <BigButton onPress={onSubmit} px='24px'>
-                Connect
+                Confirm
               </BigButton>
             </Button.Group>
           </AlertDialog.Footer>
