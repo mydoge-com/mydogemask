@@ -1,6 +1,7 @@
 import '../styles/globals.css';
 
 import { extendTheme, NativeBaseProvider } from 'native-base';
+import Head from 'next/head';
 import NoSSR from 'react-no-ssr';
 
 import { AppContextProvider } from '../Context';
@@ -26,6 +27,9 @@ function MyApp({ Component, pageProps }) {
     <NoSSR>
       <AppContextProvider>
         <NativeBaseProvider isSSR={false} theme={theme}>
+          <Head>
+            <title>MyDogeMask</title>
+          </Head>
           <Component {...pageProps} />
         </NativeBaseProvider>
       </AppContextProvider>

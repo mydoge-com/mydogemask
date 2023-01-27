@@ -177,7 +177,11 @@ export function ClientConnect() {
           <BigButton onPress={onRejectConnection} variant='secondary' px='20px'>
             Cancel
           </BigButton>
-          <BigButton onPress={() => setConfirmationModalOpen(true)} px='20px'>
+          <BigButton
+            onPress={() => setConfirmationModalOpen(true)}
+            px='20px'
+            isDisabled={!addressBalances.length}
+          >
             Connect
           </BigButton>
         </HStack>

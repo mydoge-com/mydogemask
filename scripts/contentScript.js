@@ -1,5 +1,6 @@
 import { MESSAGE_TYPES } from './helpers/constants';
-// import { validateTransaction } from './helpers/wallet';
+import { getAddressBalance, getConnectedClient } from './helpers/data';
+import { validateTransaction } from './helpers/wallet';
 
 (() => {
   const initEvent = new Event('doge#initialized');
@@ -79,59 +80,6 @@ import { MESSAGE_TYPES } from './helpers/constants';
     );
   }
 
-  function getConnectedClient(origin) {
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.GET_CONNECTED_CLIENTS,
-        },
-        (connectedClients) => {
-          const client = connectedClients?.[origin];
-          if (client) {
-            resolve(client);
-          } else {
-            reject(new Error('MyDogeMask is not connected to this website'));
-          }
-        }
-      );
-    });
-  }
-
-  function getAddressBalance(address) {
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
-          data: { address },
-        },
-        (balance) => {
-          if (balance) {
-            resolve(balance);
-          } else {
-            reject(new Error('Unable to get address balance'));
-          }
-        }
-      );
-    });
-  }
-
-  function getWallet() {
-    return new Promise((resolve, reject) => {
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.IS_SESSION_AUTHENTICATED,
-        },
-        ({ wallet }) => {
-          if (wallet) {
-            resolve(wallet);
-          } else {
-            reject(new Error('Unable to get wallet'));
-          }
-        }
-      );
-    });
-  }
-
   async function onGetBalance({ origin }) {
     let client;
     let balance;
@@ -161,40 +109,49 @@ import { MESSAGE_TYPES } from './helpers/constants';
   }
 
   async function onRequestTransaction({ origin, data }) {
-    let client;
-    // let balance;
-    // let addressIndex;
     try {
-      client = await getConnectedClient(origin);
-      // balance = await getAddressBalance(client?.address);
-      // const wallet = await getWallet();
-      // addressIndex = wallet.addresses.indexOf(client.address);
+      const client = await getConnectedClient(origin);
+      const balance = await getAddressBalance(client?.address);
+
+      const txData = {
+        senderAddress: client.address,
+        recipientAddress: data.recipientAddress,
+        dogeAmount: data.dogeAmount,
+      };
+
+      const error = validateTransaction({
+        ...txData,
+        addressBalance: balance,
+      });
+      if (error) {
+        throw new Error(error);
+      }
+      chrome.runtime.sendMessage(
+        {
+          message: 'createTransaction',
+          data: txData,
+        },
+        ({ rawTx, fee, amount }) => {
+          if (rawTx && fee && amount) {
+            chrome.runtime.sendMessage({
+              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+              data: {
+                ...data,
+                rawTx,
+                fee,
+                dogeAmount: amount,
+              },
+            });
+          } else {
+            throw new Error('Unable to create transaction');
+          }
+        }
+      );
     } catch (e) {
       handleError({
         errorMessage: e.message,
         origin,
         messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-      });
-      return;
-    }
-    if (client) {
-      // const error = validateTransaction({
-      //   senderAddress: client.address,
-      //   recipientAddress: data.recipientAddress,
-      //   dogeAmount: data.dogeAmount,
-      //   addressBalance: balance,
-      // });
-      // if (error) {
-      //   handleError({
-      //     errorMessage: error,
-      //     origin,
-      //     messageType: MESSAGE_TYPES.CLIENT_GENERATE_TRANSACTION_RESPONSE,
-      //   });
-      // }
-
-      chrome.runtime.sendMessage({
-        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
-        data,
       });
     }
   }

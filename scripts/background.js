@@ -165,7 +165,7 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
 
 // onRequestTransaction: Launch notification popup
 async function onRequestTransaction({
-  data: { recipientAddress, dogeAmount } = {},
+  data: { recipientAddress, dogeAmount, rawTx, fee } = {},
   sendResponse,
   sender,
 } = {}) {
@@ -182,6 +182,8 @@ async function onRequestTransaction({
     origin: sender.origin,
     recipientAddress,
     dogeAmount,
+    rawTx,
+    fee,
   }).forEach(([key, value]) => {
     params.append(key, value);
   });

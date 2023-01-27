@@ -22,6 +22,7 @@ module.exports = withNativebase({
         '.web.tsx',
         ...config.resolve.extensions,
       ];
+      config.devtool = 'cheap-module-source-map';
       return config;
     },
     images: {

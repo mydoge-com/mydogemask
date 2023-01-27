@@ -99,42 +99,17 @@ export const AppContextProvider = ({ children }) => {
               const extPopupWindow = await chrome?.tabs?.getCurrent();
               if (extPopupWindow?.url) {
                 url = new URL(extPopupWindow?.url);
+              } else {
+                // Dev environment
+                url = new URL(window?.location?.href);
               }
-              const { hash, searchParams } = url;
-              // strip # from hash
-              const requestType = hash?.substring(1);
+
+              const requestType = url?.hash?.substring(1);
               const params = {};
-              searchParams?.forEach((value, key) => {
+              url?.searchParams?.forEach((value, key) => {
                 params[key] = value;
               });
-              if (requestType && params.originTabId && params.origin) {
-                // Add event listener to handle window close
-                window.addEventListener(
-                  'beforeunload',
-                  function handleWindowClose() {
-                    if (state.connectionRequest) {
-                      sendMessage(
-                        {
-                          message: `${requestType}Response`,
-                          data: {
-                            originTabId: params.originTabId,
-                            origin: params.origin,
-                          },
-                        },
-                        () => {
-                          window.removeEventListener(
-                            'beforeunload',
-                            handleWindowClose
-                          );
-                          dispatch({
-                            type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST,
-                          });
-                        }
-                      );
-                    }
-                    return null;
-                  }
-                );
+              if (requestType && params?.originTabId && params?.origin) {
                 const clientRequest = {
                   requestType,
                   params: {
@@ -142,11 +117,28 @@ export const AppContextProvider = ({ children }) => {
                     originTabId: Number(params.originTabId),
                   },
                 };
-                // const connectionRequest = { originTabId, origin };
+
                 dispatch({
                   type: DISPATCH_TYPES.SET_CLIENT_REQUEST,
                   payload: { clientRequest },
                 });
+                // Add event listener to handle window close
+                window.addEventListener(
+                  'beforeunload',
+                  function handleWindowClose() {
+                    sendMessage(
+                      {
+                        message: `${requestType}Response`,
+                        data: {
+                          originTabId: params.originTabId,
+                          origin: params.origin,
+                        },
+                      },
+                      () => null
+                    );
+                    return null;
+                  }
+                );
               }
               if (authenticated && wallet) {
                 dispatch({
@@ -166,7 +158,7 @@ export const AppContextProvider = ({ children }) => {
         }
       }
     );
-  }, [navigate, state.connectionRequest]);
+  }, [navigate]);
 
   const providerValue = useMemo(
     () => ({
