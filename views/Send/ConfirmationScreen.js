@@ -54,7 +54,7 @@ export const ConfirmationScreen = ({
                 render: () => {
                   return (
                     <ToastRender
-                      description='Trasaction Pending'
+                      description='Trasaction Sent'
                       status='success'
                     />
                   );
