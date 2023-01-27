@@ -108,6 +108,34 @@ import { validateTransaction } from './helpers/wallet';
     }
   }
 
+  async function onDisconnectClient({ origin }) {
+    try {
+      chrome.runtime.sendMessage(
+        {
+          message: MESSAGE_TYPES.CLIENT_DISCONNECT,
+          data: { origin },
+        },
+        () => {
+          window.postMessage(
+            {
+              type: MESSAGE_TYPES.CLIENT_DISCONNECT_RESPONSE,
+              data: {
+                disconnected: true,
+              },
+            },
+            origin
+          );
+        }
+      );
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_DISCONNECT_RESPONSE,
+      });
+    }
+  }
+
   async function onRequestTransaction({ origin, data }) {
     try {
       const client = await getConnectedClient(origin);
@@ -172,6 +200,9 @@ import { validateTransaction } from './helpers/wallet';
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
           onRequestTransaction({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_DISCONNECT:
+          onDisconnectClient({ origin: source.origin });
           break;
         default:
       }

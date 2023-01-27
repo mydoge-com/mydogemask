@@ -109,13 +109,11 @@ export const AppContextProvider = ({ children }) => {
               url?.searchParams?.forEach((value, key) => {
                 params[key] = value;
               });
+              params.originTabId = Number(params.originTabId);
               if (requestType && params?.originTabId && params?.origin) {
                 const clientRequest = {
                   requestType,
-                  params: {
-                    ...params,
-                    originTabId: Number(params.originTabId),
-                  },
+                  params,
                 };
 
                 dispatch({
@@ -132,6 +130,7 @@ export const AppContextProvider = ({ children }) => {
                         data: {
                           originTabId: params.originTabId,
                           origin: params.origin,
+                          error: 'Request rejected by user',
                         },
                       },
                       () => null
