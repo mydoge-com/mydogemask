@@ -1,6 +1,9 @@
 import {
+  AlertDialog,
   Avatar,
+  Badge,
   Box,
+  Button,
   Divider,
   HStack,
   Image,
@@ -10,21 +13,28 @@ import {
   Toast,
   VStack,
 } from 'native-base';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiCheck, FiLock, FiSettings } from 'react-icons/fi';
 import { MdQrCode2 } from 'react-icons/md';
 
 import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import { getConnectedClient } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
+import { logError } from '../../utils/error';
 import { BackButton } from '../BackButton';
 import { ToastRender } from '../ToastRender';
 import { DeleteAddressModal } from './DeleteAddressModal';
 import { SecurityModal } from './SecurityModal';
 import { WalletDetailModal } from './WalletDetailModal';
 
-export const Header = ({ withCancelButton, cancelRoute, addressColor }) => {
+export const Header = ({
+  withCancelButton,
+  cancelRoute,
+  addressColor,
+  withConnectStatus,
+}) => {
   const { wallet, selectedAddressIndex, dispatch, navigate } = useAppContext();
   const onSignOut = useCallback(() => {
     sendMessage(
@@ -108,6 +118,7 @@ export const Header = ({ withCancelButton, cancelRoute, addressColor }) => {
       px='12px'
       justifyContent='flex-end'
     >
+      {withConnectStatus ? <ConnectionStatus /> : null}
       {withCancelButton ? (
         <BackButton
           position='absolute'
@@ -256,3 +267,128 @@ const MenuItem = ({ children, ...props }) => (
     {children}
   </Menu.Item>
 );
+
+const ConnectionStatus = () => {
+  const [connectedClients, setConnectedClients] = useState({});
+  const [currentOrigin, setCurrentOrigin] = useState('');
+
+  const getClientsAndTab = useCallback(() => {
+    try {
+      getConnectedClient().then((clients) => {
+        setConnectedClients(clients);
+      });
+      chrome?.tabs
+        ?.query({ active: true, currentWindow: true })
+        .then((tabs) => {
+          setCurrentOrigin(new URL(tabs[0].url).origin);
+        });
+    } catch (e) {
+      logError(e);
+    }
+  }, []);
+
+  const client = connectedClients[currentOrigin];
+
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    getClientsAndTab();
+  }, [getClientsAndTab]);
+  return (
+    <>
+      <DetailPopup
+        isOpen={isOpen}
+        onClose={() => setIsOpen(false)}
+        client={client}
+      />
+      <Button
+        position='absolute'
+        left='12px'
+        alignSelf='center'
+        variant='unstyled'
+        _hover={{ opacity: 0.7 }}
+        _pressed={{ opacity: 0.5 }}
+        onPress={() => setIsOpen(true)}
+      >
+        <Badge
+          flexDirection='row'
+          px='4px'
+          bg={!client ? 'gray.400' : 'gray.200'}
+        >
+          <Text fontSize='xs'>
+            {client ? (
+              <>
+                <Box bg='green.600' w='8px' h='8px' rounded='full' mr='6px' />
+                Connected
+              </>
+            ) : (
+              <>
+                <Box
+                  borderWidth='1px'
+                  w='8px'
+                  h='8px'
+                  rounded='full'
+                  mr='6px'
+                />
+                Not connected
+              </>
+            )}
+          </Text>
+        </Badge>
+      </Button>
+    </>
+  );
+};
+
+const DetailPopup = ({ isOpen, onClose, client }) => {
+  return (
+    <AlertDialog isOpen={isOpen} onClose={onClose}>
+      <AlertDialog.Content>
+        <AlertDialog.CloseButton />
+        <AlertDialog.Header>
+          {client ? new URL(client?.origin).hostname : null}
+        </AlertDialog.Header>
+        <AlertDialog.Body>
+          {client ? (
+            <>
+              <Text>You have 1 account connected to this site.</Text>
+              <HStack
+                alignItems='center'
+                space='12px'
+                pb='28px'
+                pt='20px'
+                justifyContent='center'
+              >
+                <Avatar
+                  size='sm'
+                  bg='brandYellow.500'
+                  _text={{ color: 'gray.800' }}
+                >
+                  {client.address.substring(0, 2)}
+                </Avatar>
+                <Text
+                  fontSize='md'
+                  fontWeight='semibold'
+                  color='gray.500'
+                  textAlign='center'
+                >
+                  {client.address.slice(0, 8)}...
+                  {client.address.slice(-4)}
+                </Text>
+              </HStack>
+              <Text fontSize='12px' color='gray.500'>
+                This website can see your address, account balance, activity,
+                and suggest transactions to approve
+              </Text>
+            </>
+          ) : (
+            <Text>
+              MyDogeMask is not connected to this website. To connect, find and
+              click the Connect button on the site.
+            </Text>
+          )}
+        </AlertDialog.Body>
+      </AlertDialog.Content>
+    </AlertDialog>
+  );
+};
