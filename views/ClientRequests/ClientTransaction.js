@@ -10,6 +10,7 @@ import {
   Spinner,
   Text,
   Toast,
+  VStack,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
@@ -271,11 +272,15 @@ const ConfirmationModal = ({
             >
               {origin}
             </Badge>
-            <Text>
-              Confirm transaction to send{' '}
-              <Text fontWeight='bold'>Ð{dogeAmount}</Text> to{' '}
-              <Text fontWeight='bold'>{recipientAddress}</Text>?
-            </Text>
+            <VStack alignItems='center'>
+              <Text>
+                Confirm transaction to send{' '}
+                <Text fontWeight='bold'>Ð{dogeAmount}</Text> to{' '}
+              </Text>
+              <Text fontSize='10px' fontWeight='bold'>
+                {recipientAddress}
+              </Text>
+            </VStack>
           </AlertDialog.Body>
           <AlertDialog.Footer>
             <Button.Group space={2}>
