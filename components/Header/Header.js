@@ -24,6 +24,7 @@ import { getConnectedClient } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
 import { BackButton } from '../BackButton';
+import { BigButton } from '../Button';
 import { ToastRender } from '../ToastRender';
 import { DeleteAddressModal } from './DeleteAddressModal';
 import { SecurityModal } from './SecurityModal';
@@ -269,27 +270,37 @@ const MenuItem = ({ children, ...props }) => (
 );
 
 const ConnectionStatus = () => {
-  const [connectedClients, setConnectedClients] = useState({});
+  const [client, setClient] = useState(null);
   const [currentOrigin, setCurrentOrigin] = useState('');
+  const [isOpen, setIsOpen] = useState(false);
 
   const getClientsAndTab = useCallback(() => {
     try {
-      getConnectedClient().then((clients) => {
-        setConnectedClients(clients);
-      });
       chrome?.tabs
         ?.query({ active: true, currentWindow: true })
         .then((tabs) => {
           setCurrentOrigin(new URL(tabs[0].url).origin);
+          getConnectedClient().then((connectedClients) => {
+            setClient(connectedClients[currentOrigin]);
+          });
         });
     } catch (e) {
       logError(e);
     }
-  }, []);
+  }, [currentOrigin]);
 
-  const client = connectedClients[currentOrigin];
-
-  const [isOpen, setIsOpen] = useState(false);
+  const onDisconnect = useCallback(() => {
+    sendMessage(
+      {
+        message: MESSAGE_TYPES.CLIENT_DISCONNECT,
+        data: { origin: currentOrigin },
+      },
+      () => {
+        setClient(null);
+        setIsOpen(false);
+      }
+    );
+  }, [currentOrigin]);
 
   useEffect(() => {
     getClientsAndTab();
@@ -300,6 +311,8 @@ const ConnectionStatus = () => {
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
         client={client}
+        currentOrigin={currentOrigin}
+        onDisconnect={onDisconnect}
       />
       <Button
         position='absolute'
@@ -340,47 +353,40 @@ const ConnectionStatus = () => {
   );
 };
 
-const DetailPopup = ({ isOpen, onClose, client }) => {
+const DetailPopup = ({
+  isOpen,
+  onClose,
+  client,
+  currentOrigin,
+  onDisconnect,
+}) => {
   return (
-    <AlertDialog isOpen={isOpen} onClose={onClose}>
+    <AlertDialog isOpen={isOpen} onClose={onClose} size='lg'>
       <AlertDialog.Content>
         <AlertDialog.CloseButton />
         <AlertDialog.Header>
-          {client ? new URL(client?.origin).hostname : null}
+          {currentOrigin ? new URL(currentOrigin).hostname : ' '}
         </AlertDialog.Header>
         <AlertDialog.Body>
           {client ? (
-            <>
+            <VStack>
               <Text>You have 1 account connected to this site.</Text>
-              <HStack
-                alignItems='center'
-                space='12px'
-                pb='28px'
-                pt='20px'
-                justifyContent='center'
+              <Text
+                fontSize='sm'
+                fontWeight='semibold'
+                color='gray.500'
+                textAlign='center'
+                pb='8px'
+                pt='8px'
               >
-                <Avatar
-                  size='sm'
-                  bg='brandYellow.500'
-                  _text={{ color: 'gray.800' }}
-                >
-                  {client.address.substring(0, 2)}
-                </Avatar>
-                <Text
-                  fontSize='md'
-                  fontWeight='semibold'
-                  color='gray.500'
-                  textAlign='center'
-                >
-                  {client.address.slice(0, 8)}...
-                  {client.address.slice(-4)}
-                </Text>
-              </HStack>
-              <Text fontSize='12px' color='gray.500'>
+                {client.address.slice(0, 8)}...
+                {client.address.slice(-4)}
+              </Text>
+              <Text fontSize='10px' color='gray.500'>
                 This website can see your address, account balance, activity,
                 and suggest transactions to approve
               </Text>
-            </>
+            </VStack>
           ) : (
             <Text>
               MyDogeMask is not connected to this website. To connect, find and
@@ -388,6 +394,13 @@ const DetailPopup = ({ isOpen, onClose, client }) => {
             </Text>
           )}
         </AlertDialog.Body>
+        {client ? (
+          <AlertDialog.Footer>
+            <BigButton variant='danger' onPress={onDisconnect} px='24px'>
+              Disconnect
+            </BigButton>
+          </AlertDialog.Footer>
+        ) : null}
       </AlertDialog.Content>
     </AlertDialog>
   );
