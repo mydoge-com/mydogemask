@@ -108,6 +108,73 @@ import { validateTransaction } from './helpers/wallet';
     }
   }
 
+  async function onGetConnectionStatus({ origin }) {
+    try {
+      const client = await getConnectedClient(origin);
+      if (client) {
+        window.postMessage(
+          {
+            type: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS_RESPONSE,
+            data: {
+              connected: true,
+              address: client.address,
+            },
+          },
+          origin
+        );
+      } else {
+        throw new Error('MyDogeMask is not connected to this website');
+      }
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS_RESPONSE,
+      });
+    }
+  }
+
+  async function onGetTransactionStatus({ origin, data }) {
+    try {
+      const client = await getConnectedClient(origin);
+      if (client) {
+        chrome.runtime.sendMessage(
+          {
+            message: MESSAGE_TYPES.GET_TRANSACTION_DETAILS,
+            data: { txId: data.txId },
+          },
+          (transaction) => {
+            if (transaction) {
+              window.postMessage(
+                {
+                  type: MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS_RESPONSE,
+                  data: {
+                    txId: transaction.txid,
+                    confirmations: transaction.confirmations,
+                    status:
+                      transaction.confirmations > 0 ? 'confirmed' : 'pending',
+                    dogeAmount: transaction.vout[0].value,
+                    blockTime: transaction.blockTime,
+                    address: transaction.vout[0].addresses[0],
+                  },
+                },
+                origin
+              );
+            } else {
+              throw new Error('Unable to get transaction details');
+            }
+          }
+        );
+      }
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS_RESPONSE,
+      });
+    }
+  }
+
   async function onDisconnectClient({ origin }) {
     try {
       chrome.runtime.sendMessage(
@@ -203,6 +270,12 @@ import { validateTransaction } from './helpers/wallet';
           break;
         case MESSAGE_TYPES.CLIENT_DISCONNECT:
           onDisconnectClient({ origin: source.origin });
+          break;
+        case MESSAGE_TYPES.CLIENT_CONNECTION_STATUS:
+          onGetConnectionStatus({ origin: source.origin });
+          break;
+        case MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS:
+          onGetTransactionStatus({ origin: source.origin, data });
           break;
         default:
       }

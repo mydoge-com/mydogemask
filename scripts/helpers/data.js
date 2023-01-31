@@ -8,6 +8,10 @@ export const getConnectedClient = (origin) => {
         message: MESSAGE_TYPES.GET_CONNECTED_CLIENTS,
       },
       (connectedClients) => {
+        if (!origin) {
+          resolve(connectedClients);
+          return;
+        }
         const client = connectedClients?.[origin];
         if (client) {
           resolve(client);
