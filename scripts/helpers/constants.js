@@ -14,6 +14,8 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_TRANSACTION_RESPONSE: 'clientRequestTransactionResponse',
   CLIENT_DISCONNECT: 'clientDisconnect',
   CLIENT_DISCONNECT_RESPONSE: 'clientDisconnectResponse',
+  CLIENT_CONNECTION_STATUS: 'clientConnectionStatus',
+  CLIENT_CONNECTION_STATUS_RESPONSE: 'clientConnectionStatusResponse',
   CLIENT_TRANSACTION_STATUS: 'clientTransactionStatus',
   CLIENT_TRANSACTION_STATUS_RESPONSE: 'clientTransactionStatusResponse',
 };

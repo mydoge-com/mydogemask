@@ -108,6 +108,32 @@ import { validateTransaction } from './helpers/wallet';
     }
   }
 
+  async function onGetConnectionStatus({ origin }) {
+    try {
+      const client = await getConnectedClient(origin);
+      if (client) {
+        window.postMessage(
+          {
+            type: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS_RESPONSE,
+            data: {
+              connected: true,
+              address: client.address,
+            },
+          },
+          origin
+        );
+      } else {
+        throw new Error('MyDogeMask is not connected to this website');
+      }
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS_RESPONSE,
+      });
+    }
+  }
+
   async function onGetTransactionStatus({ origin, data }) {
     try {
       const client = await getConnectedClient(origin);
@@ -244,6 +270,9 @@ import { validateTransaction } from './helpers/wallet';
           break;
         case MESSAGE_TYPES.CLIENT_DISCONNECT:
           onDisconnectClient({ origin: source.origin });
+          break;
+        case MESSAGE_TYPES.CLIENT_CONNECTION_STATUS:
+          onGetConnectionStatus({ origin: source.origin });
           break;
         case MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS:
           onGetTransactionStatus({ origin: source.origin, data });
