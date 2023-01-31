@@ -17,9 +17,8 @@ export const ResetWallet = () => {
         type: DISPATCH_TYPES.SIGN_IN,
         payload: { authenticated, wallet, navigate: 'Success' },
       });
-      navigate('Success');
     },
-    [dispatch, navigate]
+    [dispatch]
   );
 
   const onBack = useCallback(() => {

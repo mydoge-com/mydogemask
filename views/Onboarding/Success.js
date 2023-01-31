@@ -3,14 +3,17 @@ import { useCallback } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { Footer } from '../../components/Footer';
+import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { OnboardingLayout } from './OnboardingLayout';
 
 export const Success = () => {
-  const { navigate } = useAppContext();
+  const { dispatch } = useAppContext();
   const onComplete = useCallback(() => {
-    navigate('Transactions');
-  }, [navigate]);
+    dispatch({
+      type: DISPATCH_TYPES.COMPLETE_ONBOARDING,
+    });
+  }, [dispatch]);
 
   return (
     <OnboardingLayout>
