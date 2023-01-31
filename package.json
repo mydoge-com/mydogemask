@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build && next export && mv out/_next out/next && sed -i -e 's=/_next/=/next/=g' out/**.html && mv out/*.html build && cd scripts && yarn build && cd .. &&  rsync -va --delete-after scripts/compiled/ build/scripts/ && rm -rf scripts/compiled && rsync -va --delete-after out/next/ build/next/ && rm -rf out && rsync -va public/ build/ && open -a \"Google Chrome\" http://reload.extensions",
+    "build": "./build.sh",
     "start": "yarn dev",
     "lint": "next lint",
     "postinstall": "cd scripts && yarn install && cd ..",
