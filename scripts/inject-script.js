@@ -18,6 +18,7 @@ const SUPPORTED_RESPONSE_TYPES = [
   MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
   MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
   MESSAGE_TYPES.CLIENT_DISCONNECT_RESPONSE,
+  MESSAGE_TYPES.CLIENT_CONNECTION_STATUS_RESPONSE,
   MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS_RESPONSE,
 ];
 
@@ -83,6 +84,16 @@ window.doge = {
     });
   },
 
+  getConnectionStatus(onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS },
+        window.location.origin
+      );
+      onResponse({ resolve, reject, onSuccess, onError });
+    });
+  },
+
   getTransactionStatus(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
       if (!data?.txId) {
@@ -98,5 +109,6 @@ window.doge = {
     });
   },
 };
+
 const initEvent = new Event('doge#initialized');
 window.dispatchEvent(initEvent);
