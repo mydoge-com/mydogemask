@@ -14,6 +14,8 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_TRANSACTION_RESPONSE: 'clientRequestTransactionResponse',
   CLIENT_DISCONNECT: 'clientDisconnect',
   CLIENT_DISCONNECT_RESPONSE: 'clientDisconnectResponse',
+  CLIENT_TRANSACTION_STATUS: 'clientTransactionStatus',
+  CLIENT_TRANSACTION_STATUS_RESPONSE: 'clientTransactionStatusResponse',
 };
 
 export const MESSAGE_TYPES = {
@@ -30,6 +32,7 @@ export const MESSAGE_TYPES = {
   GET_DOGECOIN_PRICE: 'getDogecoinPrice',
   GET_ADDRESS_BALANCE: 'getAddressBalance',
   GET_TRANSACTIONS: 'getTransactions',
+  GET_TRANSACTION_DETAILS: 'getTransactionDetails',
   CREATE_TRANSACTION: 'createTransaction',
   SEND_TRANSACTION: 'sendTransaction',
   GET_CONNECTED_CLIENTS: 'getConnectedClients',

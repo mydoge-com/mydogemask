@@ -163,7 +163,6 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
   );
 }
 
-// onRequestTransaction: Launch notification popup
 async function onRequestTransaction({
   data: { recipientAddress, dogeAmount, rawTx, fee } = {},
   sendResponse,
@@ -324,6 +323,19 @@ async function onGetTransactions({ data, sendResponse } = {}) {
         )
       ).sort((a, b) => b.blockTime - a.blockTime);
       sendResponse?.({ transactions, totalPages, page });
+    })
+    .catch((err) => {
+      logError(err);
+      sendResponse?.(false);
+    });
+  return true;
+}
+
+function onGetTransactionDetails({ data, sendResponse } = {}) {
+  nownodes
+    .get(`/tx/${data.txId}`)
+    .json((transaction) => {
+      sendResponse?.(transaction);
     })
     .catch((err) => {
       logError(err);
@@ -617,6 +629,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CLIENT_DISCONNECT:
       onDisconnectClient({ sender, sendResponse, data });
+      break;
+    case MESSAGE_TYPES.GET_TRANSACTION_DETAILS:
+      onGetTransactionDetails({ sender, sendResponse, data });
       break;
     default:
   }
