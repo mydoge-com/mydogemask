@@ -19,6 +19,7 @@ const SUPPORTED_RESPONSE_TYPES = [
   MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
   MESSAGE_TYPES.CLIENT_DISCONNECT_RESPONSE,
   MESSAGE_TYPES.CLIENT_CONNECTION_STATUS_RESPONSE,
+  MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS_RESPONSE,
 ];
 
 const onResponse = ({ resolve, reject, onSuccess, onError }) => {
@@ -92,6 +93,22 @@ window.doge = {
       onResponse({ resolve, reject, onSuccess, onError });
     });
   },
+
+  getTransactionStatus(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.txId) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS, data },
+        window.location.origin
+      );
+      onResponse({ resolve, reject, onSuccess, onError });
+    });
+  },
 };
+
 const initEvent = new Event('doge#initialized');
 window.dispatchEvent(initEvent);
