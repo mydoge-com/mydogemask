@@ -13,6 +13,9 @@ const common = {
     format: 'iife',
     dir: './compiled',
   },
+  moduleContext: {
+    'node_modules/@mydogeofficial/dogecoin-js/dist/index.js': 'globalThis',
+  },
   plugins: [
     resolve({
       browser: true,
