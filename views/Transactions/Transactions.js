@@ -64,7 +64,7 @@ export function Transactions() {
   }, [walletAddress]);
 
   return (
-    <Layout withHeader p={0}>
+    <Layout withHeader withConnectStatus p={0}>
       <Box>
         <Image
           width={imageWidth}
@@ -72,7 +72,7 @@ export function Transactions() {
           source={SpaceBg}
           position='absolute'
         />
-        <Center mt='52px'>
+        <Center mt='76px'>
           <Text
             fontSize='4xl'
             fontWeight='medium'

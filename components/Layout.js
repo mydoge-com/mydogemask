@@ -11,6 +11,7 @@ export const Layout = ({
   children,
   w,
   width,
+  withConnectStatus,
   ...props
 }) => {
   const xtWidth = w || width || '357px';
@@ -31,6 +32,7 @@ export const Layout = ({
           withCancelButton={withCancelButton}
           cancelRoute={cancelRoute}
           addressColor={addressColor}
+          withConnectStatus={withConnectStatus}
         />
       ) : null}
       {children}

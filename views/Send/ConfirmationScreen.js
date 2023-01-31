@@ -86,6 +86,7 @@ export const ConfirmationScreen = ({
     formData.address,
     formData.dogeAmount,
     formData.rawTx,
+    navigate,
     selectedAddressIndex,
     setErrors,
     walletAddress,

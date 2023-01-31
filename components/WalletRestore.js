@@ -8,7 +8,7 @@ import {
   TextArea,
   VStack,
 } from 'native-base';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 import { MESSAGE_TYPES } from '../scripts/helpers/constants';
