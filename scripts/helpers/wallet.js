@@ -1,4 +1,4 @@
-// import { DogecoinJS } from '@mydogeofficial/dogecoin-js';
+import DogecoinJS from '@mydogeofficial/dogecoin-js';
 import * as bip32 from 'bip32';
 import * as bip39 from 'bip39';
 import * as bitcoin from 'bitcoinjs-lib';
@@ -20,6 +20,14 @@ const network = {
   scriptHash: 0x16,
   wif: 0x80,
 };
+let libdogecoin = null;
+
+export async function initDogecoinJS() {
+  if (libdogecoin === null) {
+    console.log('bundled dogecoin-js:', DogecoinJS);
+    libdogecoin = await DogecoinJS.init();
+  }
+}
 
 export function generatePhrase() {
   return bip39.generateMnemonic(128);
@@ -78,36 +86,59 @@ export function signRawTx(rawTx, wif) {
   return txb.build().toHex();
 }
 
-// export async function generateRawTx(sender, recipient, amount, utxos) {
-//   const dogecoin = await DogecoinJS.init();
-//   const index = dogecoin.startTransaction();
-//   let total = 0;
-//   const fee = 0.01;
+export async function generateRawTx(sender, recipient, amount, utxos) {
+  const index = libdogecoin.startTransaction();
+  const minFee = 0.0015;
+  let fee = 0;
+  let total = 0;
 
-//   for (let i = 0; i < utxos.length; i++) {
-//     const utxo = utxos[i];
-//     console.log('utxo', utxo);
-//     const value = sb.toBitcoin(utxo.value);
-//     total += value;
-//     console.log(
-//       `added tx value ${value} for total ${total} > ${amount} + ${fee}`
-//     );
-//     dogecoin.addUTXO(index, utxo.txid, utxo.vout);
+  for (let i = 0; i < utxos.length; i++) {
+    const utxo = utxos[i];
+    console.log('utxo', utxo);
+    const value = sb.toBitcoin(utxo.value);
+    total += value;
+    fee += minFee;
+    console.log(
+      `added tx value ${value} for total ${total} > ${amount} + ${fee}`
+    );
+    libdogecoin.addUTXO(index, utxo.txid, utxo.vout);
 
-//     if (total > amount + fee) {
-//       break;
-//     }
-//   }
+    if (total >= amount + fee) {
+      break;
+    }
+  }
 
-//   dogecoin.addOutput(index, recipient, `${amount}`);
-//   const rawTx = dogecoin.finalizeTransaction(
-//     index,
-//     recipient,
-//     `${fee}`,
-//     `${total}`,
-//     sender
-//   );
+  // Check for max send and update amount and fee
+  if (total >= amount + fee) {
+    libdogecoin.addOutput(index, recipient, `${amount}`);
 
-//   console.log('rawTx', rawTx);
-//   return { rawTx, fee };
-// }
+    let rawTx = libdogecoin.finalizeTransaction(
+      index,
+      recipient,
+      `${fee}`.toFixed(8), // estimated fee
+      `${total}`,
+      sender
+    );
+
+    const size = rawTx.length / 2;
+
+    console.log('estimated fee', fee);
+
+    fee = Math.max(parseFloat(((size / 1000) * 0.01).toFixed(8)), minFee);
+
+    console.log('actual fee', fee);
+
+    rawTx = libdogecoin.finalizeTransaction(
+      index,
+      recipient,
+      `${fee}`, // actual fee
+      `${total}`,
+      sender
+    );
+
+    console.log('rawTx', rawTx);
+    return { rawTx, fee };
+  }
+
+  return { rawTx: '0', fee: 0 };
+}

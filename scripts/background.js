@@ -25,7 +25,9 @@ import {
   generateAddress,
   generateChild,
   generatePhrase,
+  generateRawTx,
   generateRoot,
+  initDogecoinJS,
   signRawTx,
 } from './helpers/wallet';
 
@@ -50,14 +52,21 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
 
   nownodes
     .get(`/utxo/${data.senderAddress}`)
-    .json((response) => {
+    .json(async (response) => {
       // Sort by smallest + oldest
       const utxos = response.sort((a, b) => {
         const aValue = sb.toBitcoin(a.value);
         const bValue = sb.toBitcoin(b.value);
         return aValue > bValue ? 1 : aValue < bValue ? -1 : a.height - b.height;
       });
-
+      // DEBUG bundling of libdogecoin wrapper
+      await initDogecoinJS();
+      // await generateRawTx(
+      //   data.senderAddress,
+      //   data.recipientAddress,
+      //   amount,
+      //   utxos
+      // );
       const feePerInput = 0.0012; // estimate fee per input
       let fee = feePerInput;
       let total = 0;
