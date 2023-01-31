@@ -8,7 +8,7 @@ import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
 import { formatTransaction } from '../../utils/transactions';
 
-const QUERY_INTERVAL = 5000;
+const QUERY_INTERVAL = 30000;
 
 export const useTransactions = () => {
   const { wallet, selectedAddressIndex } = useAppContext();
@@ -70,9 +70,21 @@ export const useTransactions = () => {
             });
             // Find new transactions
             formattedTransactions = formattedTransactions.filter((tx) => {
-              return (
-                (transactions || []).findIndex((t) => t.id === tx.id) === -1
-              );
+              const idx = (transactions || []).findIndex((t) => t.id === tx.id);
+              if (idx === -1) {
+                return true;
+              } else if (
+                tx.confirmations > 0 &&
+                transactions[idx].confirmations === 0
+              ) {
+                // Replace the updated tx
+                setTransactions((state = []) => {
+                  const nextState = [...state];
+                  nextState[idx] = tx;
+                  return nextState;
+                });
+              }
+              return false;
             });
             // Append and sort
             setTransactions((state = []) =>
