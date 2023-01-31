@@ -22,6 +22,7 @@ export const DISPATCH_TYPES = {
   SELECT_WALLET: 'SELECT_WALLET',
   SET_CLIENT_REQUEST: 'SET_CLIENT_REQUEST',
   CLEAR_CLIENT_REQUEST: 'CLEAR_CLIENT_REQUEST',
+  COMPLETE_ONBOARDING: 'COMPLETE_ONBOARDING',
 };
 
 const CLIENT_REQUEST_ROUTES = {
@@ -51,9 +52,18 @@ const reducer = (state, { type, payload }) => {
         ...state,
         authenticated: payload?.authenticated,
         wallet: payload?.wallet,
-        currentRoute: state.clientRequest
-          ? CLIENT_REQUEST_ROUTES[state.clientRequest.requestType]
-          : payload?.navigate ?? 'Transactions',
+        currentRoute:
+          payload?.navigate ??
+          CLIENT_REQUEST_ROUTES[state.clientRequest?.requestType] ??
+          'Transactions',
+      };
+    case DISPATCH_TYPES.COMPLETE_ONBOARDING:
+      return {
+        ...state,
+        currentRoute:
+          payload?.navigate ??
+          CLIENT_REQUEST_ROUTES[state.clientRequest?.requestType] ??
+          'Transactions',
       };
     case DISPATCH_TYPES.SELECT_WALLET:
       return { ...state, selectedAddressIndex: payload.index };
@@ -86,7 +96,48 @@ export const AppContextProvider = ({ children }) => {
     }
     sendMessage(
       { message: MESSAGE_TYPES.IS_ONBOARDING_COMPLETE },
-      (response) => {
+      async (response) => {
+        const popupTab = chrome?.tabs?.getCurrent();
+        let url = null;
+        if (popupTab?.url) {
+          url = new URL(popupTab?.url);
+        } else {
+          // Dev environment
+          url = new URL(window?.location?.href);
+        }
+
+        const requestType = url?.hash?.substring(1);
+        const params = {};
+        url?.searchParams?.forEach((value, key) => {
+          params[key] = value;
+        });
+        params.originTabId = Number(params.originTabId);
+        if (requestType && params?.originTabId && params?.origin) {
+          const clientRequest = {
+            requestType,
+            params,
+          };
+
+          dispatch({
+            type: DISPATCH_TYPES.SET_CLIENT_REQUEST,
+            payload: { clientRequest },
+          });
+          // Add event listener to handle window close
+          window.addEventListener('beforeunload', function handleWindowClose() {
+            sendMessage(
+              {
+                message: `${requestType}Response`,
+                data: {
+                  originTabId: params.originTabId,
+                  origin: params.origin,
+                  error: 'Request rejected by user',
+                },
+              },
+              () => null
+            );
+            return null;
+          });
+        }
         if (response) {
           dispatch({
             type: DISPATCH_TYPES.SET_ONBOARDING_COMPLETE,
@@ -95,50 +146,6 @@ export const AppContextProvider = ({ children }) => {
           sendMessage(
             { message: MESSAGE_TYPES.IS_SESSION_AUTHENTICATED },
             async ({ wallet, authenticated }) => {
-              let url = null;
-              const extPopupWindow = await chrome?.tabs?.getCurrent();
-              if (extPopupWindow?.url) {
-                url = new URL(extPopupWindow?.url);
-              } else {
-                // Dev environment
-                url = new URL(window?.location?.href);
-              }
-
-              const requestType = url?.hash?.substring(1);
-              const params = {};
-              url?.searchParams?.forEach((value, key) => {
-                params[key] = value;
-              });
-              params.originTabId = Number(params.originTabId);
-              if (requestType && params?.originTabId && params?.origin) {
-                const clientRequest = {
-                  requestType,
-                  params,
-                };
-
-                dispatch({
-                  type: DISPATCH_TYPES.SET_CLIENT_REQUEST,
-                  payload: { clientRequest },
-                });
-                // Add event listener to handle window close
-                window.addEventListener(
-                  'beforeunload',
-                  function handleWindowClose() {
-                    sendMessage(
-                      {
-                        message: `${requestType}Response`,
-                        data: {
-                          originTabId: params.originTabId,
-                          origin: params.origin,
-                          error: 'Request rejected by user',
-                        },
-                      },
-                      () => null
-                    );
-                    return null;
-                  }
-                );
-              }
               if (authenticated && wallet) {
                 dispatch({
                   type: DISPATCH_TYPES.SIGN_IN,
