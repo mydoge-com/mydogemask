@@ -18,6 +18,7 @@ const SUPPORTED_RESPONSE_TYPES = [
   MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
   MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
   MESSAGE_TYPES.CLIENT_DISCONNECT_RESPONSE,
+  MESSAGE_TYPES.CLIENT_CONNECTION_STATUS_RESPONSE,
 ];
 
 const onResponse = ({ resolve, reject, onSuccess, onError }) => {
@@ -76,6 +77,16 @@ window.doge = {
     return new Promise((resolve, reject) => {
       window.postMessage(
         { type: MESSAGE_TYPES.CLIENT_DISCONNECT },
+        window.location.origin
+      );
+      onResponse({ resolve, reject, onSuccess, onError });
+    });
+  },
+
+  getConnectionStatus(onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS },
         window.location.origin
       );
       onResponse({ resolve, reject, onSuccess, onError });
