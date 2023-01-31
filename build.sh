@@ -4,5 +4,5 @@ next build && next export && mv out/_next out/next && sed -i -e 's=/_next/=/next
 if [[ "$OSTYPE" == "linux-gnu"* ]]; then
   echo "Open Chrome and browse to http://reload.extensions to reload the built extension"
 elif [[ "$OSTYPE" == "darwin"* ]]; then
-  open -a \"Google Chrome\" http://reload.extensions
+  open -a "Google Chrome" http://reload.extensions
 fi
