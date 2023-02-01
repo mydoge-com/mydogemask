@@ -1,25 +1,146 @@
-import { Box, HStack, Image, Modal, Text, VStack } from 'native-base';
-import { FiCopy } from 'react-icons/fi';
+import {
+  Box,
+  Button,
+  HStack,
+  Image,
+  Input,
+  Modal,
+  Text,
+  VStack,
+} from 'native-base';
+import { useCallback, useEffect, useState } from 'react';
+import { FiCheck, FiCopy, FiEdit3 } from 'react-icons/fi';
 
+import { useAppContext } from '../../hooks/useAppContext';
 import { useCopyText } from '../../hooks/useCopyText';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import { sendMessage } from '../../scripts/helpers/message';
 import { BigButton } from '../Button';
 import { QRCode } from './QRCode';
 
 export const WalletDetailModal = ({
   showModal,
   onClose,
-  walletName,
+  addressNickname,
   address,
+  wallet,
+  allowEdit,
 }) => {
   const { copyTextToClipboard, textCopied } = useCopyText({ text: address });
+  const [editingNickname, setEditingNickname] = useState(false);
+  const [error, setError] = useState('');
+  const [nicknameInput, setNicknameInput] = useState(addressNickname);
+  const { dispatch } = useAppContext();
+
+  const onChangeText = useCallback((text) => {
+    setError('');
+    setNicknameInput(text);
+  }, []);
+
+  const onSubmit = useCallback(() => {
+    if (!nicknameInput) {
+      setError('Enter a nickname');
+      return;
+    }
+    if (Object.values(wallet.nicknames ?? {}).includes(nicknameInput)) {
+      setError('Nickname already exists');
+      return;
+    }
+    sendMessage(
+      {
+        message: MESSAGE_TYPES.UPDATE_ADDRESS_NICKNAME,
+        data: {
+          address,
+          nickname: nicknameInput,
+        },
+      },
+      (updatedWallet) => {
+        if (updatedWallet) {
+          dispatch({ type: 'SET_WALLET', payload: updatedWallet });
+          setError('');
+          setEditingNickname(false);
+        } else {
+          setError('Error updating nickname');
+        }
+      }
+    );
+  }, [address, dispatch, nicknameInput, wallet?.nicknames]);
+
+  useEffect(() => {
+    setNicknameInput(addressNickname);
+  }, [addressNickname]);
+
   return (
     <Modal isOpen={showModal} onClose={onClose}>
       <Modal.Content maxWidth='500px' width='90%' h='auto' maxH='750px'>
         <Modal.CloseButton />
         <Modal.Body alignItems='center'>
-          <Text textAlign='center' fontWeight='medium' fontSize='xl'>
-            {walletName}
-          </Text>
+          <HStack alignItems='center'>
+            {!editingNickname ? (
+              <>
+                <Text
+                  textAlign='center'
+                  fontWeight='medium'
+                  fontSize='xl'
+                  maxW='180px'
+                  noOfLines={1}
+                >
+                  {nicknameInput}
+                </Text>
+                {allowEdit ? (
+                  <Button
+                    variant='unstyled'
+                    ml='auto'
+                    onPress={() => setEditingNickname(true)}
+                  >
+                    <FiEdit3 size={18} color='gray' />
+                  </Button>
+                ) : null}
+              </>
+            ) : (
+              <VStack>
+                <Input
+                  placeholder='Enter nickname'
+                  variant='outline'
+                  w='200px'
+                  focusOutlineColor='brandYellow.500'
+                  _hover={{
+                    borderColor: 'brandYellow.500',
+                  }}
+                  _focus={{
+                    borderColor: 'brandYellow.500',
+                  }}
+                  onChangeText={onChangeText}
+                  _invalid={{
+                    borderColor: 'red.500',
+                    focusOutlineColor: 'red.500',
+                    _hover: {
+                      borderColor: 'red.500',
+                    },
+                  }}
+                  isInvalid={error}
+                  value={nicknameInput}
+                />
+                <Text
+                  fontSize='10px'
+                  color='red.500'
+                  pt='2px'
+                  textAlign='center'
+                >
+                  {error}
+                </Text>
+                <Button
+                  variant='unstyled'
+                  onPress={onSubmit}
+                  position='absolute'
+                  top={0}
+                  right={0}
+                >
+                  <FiCheck size={18} color='gray' />
+                </Button>
+              </VStack>
+            )}
+          </HStack>
           <Box bg='white' rounded='44px' p='16px' pb='28px'>
             <Box
               p={{ base: '12px', sm: '12px' }}

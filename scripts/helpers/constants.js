@@ -38,5 +38,6 @@ export const MESSAGE_TYPES = {
   CREATE_TRANSACTION: 'createTransaction',
   SEND_TRANSACTION: 'sendTransaction',
   GET_CONNECTED_CLIENTS: 'getConnectedClients',
+  UPDATE_ADDRESS_NICKNAME: 'updateAddressNickname',
 };
 export const NODE_BASE_URL = 'https://doge.nownodes.io';

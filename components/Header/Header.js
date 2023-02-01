@@ -108,10 +108,13 @@ export const Header = ({
   const scrollRef = useRef(null);
   const openMenu = useRef(null);
 
+  const activeAddress = wallet.addresses[selectedAddressIndex];
+  const activeAddressNickname =
+    wallet.nicknames?.[activeAddress] ?? `Address ${selectedAddressIndex + 1}`;
+
   return (
     <HStack
       alignItems='center'
-      // bg='rgba(255,255,255, 0.1)'
       position='absolute'
       zIndex={1}
       w='100%'
@@ -135,7 +138,9 @@ export const Header = ({
         px='12px'
         color={addressColor || 'white'}
         mt='10px'
-      >{`Address ${selectedAddressIndex + 1}`}</Text>
+      >
+        {activeAddressNickname}
+      </Text>
       <Menu
         minW='250px'
         trigger={({ onPress, ...triggerProps }) => {
@@ -196,7 +201,7 @@ export const Header = ({
                     />
                     <VStack>
                       <Text fontSize='md' fontWeight='medium'>
-                        Address {i + 1}
+                        {wallet.nicknames?.[address] ?? `Address ${i + 1}`}
                       </Text>
                       <Text fontSize='sm' color='gray.500'>
                         {address.slice(0, 8)}...{address.slice(-4)}
@@ -211,7 +216,7 @@ export const Header = ({
           <Divider my='6px' w='100%' />
           <MenuItem onPress={() => setOpenModal('WALLET_DETAIL')}>
             <MdQrCode2 size='20px' alt='Receive Dogecoin' />
-            Receive Dogecoin
+            Account Details
           </MenuItem>
           <Divider my='6px' w='100%' />
           <MenuItem onPress={onGenerateAddress}>
@@ -247,8 +252,10 @@ export const Header = ({
       <WalletDetailModal
         showModal={openModal === 'WALLET_DETAIL'}
         onClose={onCloseModal}
-        walletName={`Address ${selectedAddressIndex + 1}`}
-        address={wallet.addresses[selectedAddressIndex]}
+        addressNickname={activeAddressNickname}
+        wallet={wallet}
+        address={activeAddress}
+        allowEdit
       />
       <SecurityModal
         showModal={openModal === 'BACKUP_SECURITY'}
@@ -405,3 +412,11 @@ const DetailPopup = ({
     </AlertDialog>
   );
 };
+
+// const getAddressNickname = (wallet, address) => {
+//   const addressIndex = wallet.addresses.indexOf(address);
+//   if (addressIndex >= 0) {
+//     return wallet.nicknames?.[address] ?? `Address ${addressIndex + 1}`;
+//   }
+//   return '';
+// };

@@ -219,6 +219,7 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
       root: root.toWIF(),
       children: [child.toWIF()],
       addresses: [address0],
+      nicknames: { [address0]: 'Address 1' },
     };
 
     const encryptedPassword = encrypt({
@@ -360,6 +361,40 @@ function onGenerateAddress({ sendResponse } = {}) {
       const address = generateAddress(child);
       decryptedWallet.children.push(child.toWIF());
       decryptedWallet.addresses.push(address);
+      const encryptedWallet = encrypt({
+        data: decryptedWallet,
+        password,
+      });
+      Promise.all([
+        setSessionValue({ [WALLET]: decryptedWallet }),
+        setLocalValue({
+          [WALLET]: encryptedWallet,
+        }),
+      ])
+        .then(() => {
+          sendResponse?.({ wallet: decryptedWallet });
+        })
+        .catch(() => sendResponse?.(false));
+    }
+  );
+  return true;
+}
+
+function onUpdateAddressNickname({ sendResponse, data } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+        return;
+      }
+      decryptedWallet.nicknames = {
+        ...decryptedWallet.nicknames,
+        [data.address]: data.nickname,
+      };
       const encryptedWallet = encrypt({
         data: decryptedWallet,
         password,
@@ -632,6 +667,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.GET_TRANSACTION_DETAILS:
       onGetTransactionDetails({ sender, sendResponse, data });
+      break;
+    case MESSAGE_TYPES.UPDATE_ADDRESS_NICKNAME:
+      onUpdateAddressNickname({ sender, sendResponse, data });
       break;
     default:
   }
