@@ -18,3 +18,7 @@
 - Install [Extensions Reloader](https://chrome.google.com/webstore/detail/extensions-reloader/fimgfedafeadlieiabdeeaodndnlbhid?hl=en) Chrome extension to enable automatic extension reload after every build.
 
 - Run `yarn watch` to build and reload the extension with every file change.
+
+## Integration
+
+- See our [ingegration example](https://github.com/mydoge-com/mydogemask-next-example) for instrunctions on how to use MyDogeMask to accept Dogecoin payments on your own website.
