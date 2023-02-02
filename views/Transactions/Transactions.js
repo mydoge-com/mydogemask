@@ -131,7 +131,11 @@ export function Transactions() {
               </Center>
               <Box px='10px'>
                 <VStack space='10px'>
-                  <FlatList data={transactions} renderItem={renderItem} />
+                  <FlatList
+                    data={transactions}
+                    renderItem={renderItem}
+                    keyExtractor={(item) => item.id}
+                  />
                   {hasMore ? (
                     <Button
                       variant='unstyled'

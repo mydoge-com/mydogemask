@@ -5,6 +5,8 @@ import * as bitcoin from 'bitcoinjs-lib';
 import * as Validator from 'multicoin-address-validator';
 import sb from 'satoshi-bitcoin';
 
+import { MIN_TX_AMOUNT } from '../../constants/Doge';
+
 // Dogecoin mainnet
 const network = {
   messagePrefix: '\x19Dogecoin Signed Message:\n',
@@ -56,7 +58,7 @@ export const validateTransaction = ({
     return 'Invalid address';
   } else if (senderAddress.trim() === recipientAddress.trim()) {
     return 'Cannot send to yourself';
-  } else if (!Number(dogeAmount)) {
+  } else if (!Number(dogeAmount) || Number(dogeAmount) < MIN_TX_AMOUNT) {
     return 'Invalid Doge amount';
   } else if (Number(dogeAmount) > sb.toBitcoin(addressBalance)) {
     return 'Insufficient balance';
