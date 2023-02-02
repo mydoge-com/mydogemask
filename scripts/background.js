@@ -1,5 +1,6 @@
 import sb from 'satoshi-bitcoin';
 
+import { MIN_TX_AMOUNT } from '../constants/Doge';
 import { logError } from '../utils/error';
 import { apiKey, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
@@ -95,7 +96,7 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
         // console.log('calculated change', changeSatoshi);
         if (changeSatoshi >= 0) {
           const changeAmount = sb.toBitcoin(changeSatoshi);
-          if (changeAmount > feePerInput) {
+          if (changeAmount >= MIN_TX_AMOUNT) {
             jsonrpcReq.params[1][data.senderAddress] = changeAmount;
           } else {
             delete jsonrpcReq.params[1][data.senderAddress];
