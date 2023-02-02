@@ -63,6 +63,10 @@ export function Transactions() {
     window.open(`https://buy.getdoge.com/?addr=${walletAddress}`);
   }, [walletAddress]);
 
+  const activeAddress = wallet.addresses[selectedAddressIndex];
+  const activeAddressNickname =
+    wallet.nicknames?.[activeAddress] ?? `Address ${selectedAddressIndex + 1}`;
+
   return (
     <Layout withHeader withConnectStatus p={0}>
       <Box>
@@ -164,8 +168,10 @@ export function Transactions() {
       <WalletDetailModal
         showModal={addressDetailOpen}
         onClose={() => setAddressDetailOpen(false)}
-        walletName={`Address ${selectedAddressIndex + 1}`}
-        address={wallet.addresses[selectedAddressIndex]}
+        addressNickname={activeAddressNickname}
+        wallet={wallet}
+        allowEdit={false}
+        address={activeAddress}
       />
     </Layout>
   );
