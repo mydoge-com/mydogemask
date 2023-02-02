@@ -4,7 +4,7 @@
   "version": "0.1.1",
   "description": "Dogecoin wallet for Chrome browser",
   "permissions": ["storage", "tabs", "activeTab"],
-  "host_permissions": ["https://*/*"],
+  "host_permissions": ["http://*/*", "https://*/*"],
   "background": {
     "service_worker": "scripts/background.js",
     "type": "module"
