@@ -345,7 +345,7 @@ function onGetTransactionDetails({ data, sendResponse } = {}) {
   return true;
 }
 
-function onGenerateAddress({ sendResponse } = {}) {
+function onGenerateAddress({ sendResponse, data } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
     ([wallet, password]) => {
       const decryptedWallet = decrypt({
@@ -361,6 +361,12 @@ function onGenerateAddress({ sendResponse } = {}) {
       const address = generateAddress(child);
       decryptedWallet.children.push(child.toWIF());
       decryptedWallet.addresses.push(address);
+      decryptedWallet.nicknames = {
+        ...decryptedWallet.nicknames,
+        [address]: data.nickname.length
+          ? data.nickname
+          : `Address ${decryptedWallet.addresses.length}`,
+      };
       const encryptedWallet = encrypt({
         data: decryptedWallet,
         password,

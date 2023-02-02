@@ -10,7 +10,6 @@ import {
   Menu,
   Pressable,
   Text,
-  Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -25,7 +24,7 @@ import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
 import { BackButton } from '../BackButton';
 import { BigButton } from '../Button';
-import { ToastRender } from '../ToastRender';
+import { CreateAddressModal } from './CreateAddressModal';
 import { DeleteAddressModal } from './DeleteAddressModal';
 import { SecurityModal } from './SecurityModal';
 import { WalletDetailModal } from './WalletDetailModal';
@@ -49,54 +48,15 @@ export const Header = ({
 
   const [openModal, setOpenModal] = useState(null);
 
-  const onCloseModal = useCallback(() => {
+  const onCloseModal = useCallback((callback) => {
     setOpenModal(null);
     openMenu.current?.();
+    callback?.();
   }, []);
 
-  const onGenerateAddress = useCallback(() => {
-    sendMessage(
-      { message: MESSAGE_TYPES.GENERATE_ADDRESS },
-      ({ wallet: updatedWallet }) => {
-        if (updatedWallet) {
-          dispatch({
-            type: DISPATCH_TYPES.SET_WALLET,
-            payload: { wallet: updatedWallet },
-          });
-          dispatch({
-            type: DISPATCH_TYPES.SELECT_WALLET,
-            payload: { index: updatedWallet.addresses.length - 1 },
-          });
-          Toast.show({
-            duration: 3000,
-            render: () => {
-              return (
-                <ToastRender description='Address Generated' status='success' />
-              );
-            },
-          });
-        } else {
-          Toast.show({
-            title: 'Error',
-            description: 'Failed to generate address',
-            duration: 3000,
-            render: () => {
-              return (
-                <ToastRender
-                  title='Error'
-                  description='Failed to generate address'
-                  status='error'
-                />
-              );
-            },
-          });
-        }
-        scrollRef.current.scrollIntoView({ behavior: 'smooth', block: 'end' });
-        openMenu.current?.();
-      },
-      []
-    );
-  }, [dispatch]);
+  const onCreateAddress = useCallback(() => {
+    setOpenModal('CREATE_ADDRESS');
+  }, []);
 
   const onSelectAddress = useCallback(
     (index) => {
@@ -219,7 +179,7 @@ export const Header = ({
             Account Details
           </MenuItem>
           <Divider my='6px' w='100%' />
-          <MenuItem onPress={onGenerateAddress}>
+          <MenuItem onPress={onCreateAddress}>
             <Image
               source={{ uri: '/assets/wallet-create.png' }}
               size='18px'
@@ -265,6 +225,13 @@ export const Header = ({
         showModal={openModal === 'DELETE_ADDRESS'}
         onClose={onCloseModal}
         selectedAddressIndex={selectedAddressIndex}
+      />
+      <CreateAddressModal
+        showModal={openModal === 'CREATE_ADDRESS'}
+        onClose={onCloseModal}
+        wallet={wallet}
+        scrollRef={scrollRef}
+        openMenu={openMenu}
       />
     </HStack>
   );
