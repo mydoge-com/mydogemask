@@ -3,9 +3,6 @@ import { getAddressBalance, getConnectedClient } from './helpers/data';
 import { validateTransaction } from './helpers/wallet';
 
 (() => {
-  const initEvent = new Event('doge#initialized');
-  window.dispatchEvent(initEvent);
-
   // const loadSendTipFloating = async () => {
   //   const sendTipFloatingBtnExists = document.getElementsByClassName(
   //     'sendTipFloating-btn'

@@ -36,7 +36,7 @@ const onResponse = ({ resolve, reject, onSuccess, onError }) => {
 };
 
 // API we expose to allow websites to detect & interact with extension
-window.doge = {
+const doge = {
   isMyDogeMask: true,
 
   connect(onSuccess, onError) {
@@ -110,5 +110,7 @@ window.doge = {
   },
 };
 
-const initEvent = new Event('doge#initialized');
-window.dispatchEvent(initEvent);
+window.onload = () => {
+  window.doge = doge;
+  window.dispatchEvent(new Event('doge#initialized'));
+};
