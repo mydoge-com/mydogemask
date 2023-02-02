@@ -4,6 +4,7 @@ export const ONBOARDING_COMPLETE = '@mydoge_ONBOARDING_COMPLETE';
 export const CONNECTED_CLIENTS = '@mydoge_CONNECTED_CLIENTS';
 export const AUTHENTICATED = '@mydoge_AUTHENTICATED';
 export const NOWNODES_BASE_URL = 'https://dogebook.nownodes.io/api/v2';
+export const MAX_NICKNAME_LENGTH = 18;
 
 const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_CONNECTION: 'clientRequestConnection',

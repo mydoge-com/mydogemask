@@ -13,7 +13,10 @@ import { FiCheck, FiCopy, FiEdit3 } from 'react-icons/fi';
 
 import { useAppContext } from '../../hooks/useAppContext';
 import { useCopyText } from '../../hooks/useCopyText';
-import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import {
+  MAX_NICKNAME_LENGTH,
+  MESSAGE_TYPES,
+} from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { BigButton } from '../Button';
 import { QRCode } from './QRCode';
@@ -198,6 +201,7 @@ const NicknameUpdate = ({
         }}
         isInvalid={error}
         value={nicknameInput}
+        maxLength={MAX_NICKNAME_LENGTH}
       />
       <Text fontSize='10px' color='red.500' pt='2px' textAlign='center'>
         {error}

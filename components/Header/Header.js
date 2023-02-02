@@ -98,6 +98,8 @@ export const Header = ({
         px='12px'
         color={addressColor || 'white'}
         mt='10px'
+        maxW='180px'
+        noOfLines={1}
       >
         {activeAddressNickname}
       </Text>
@@ -160,7 +162,12 @@ export const Header = ({
                       mr='12px'
                     />
                     <VStack>
-                      <Text fontSize='md' fontWeight='medium'>
+                      <Text
+                        fontSize='md'
+                        fontWeight='medium'
+                        maxW='180px'
+                        noOfLines={1}
+                      >
                         {wallet.nicknames?.[address] ?? `Address ${i + 1}`}
                       </Text>
                       <Text fontSize='sm' color='gray.500'>

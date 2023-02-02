@@ -3,7 +3,10 @@ import { useCallback, useState } from 'react';
 
 import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
-import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import {
+  MAX_NICKNAME_LENGTH,
+  MESSAGE_TYPES,
+} from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { BigButton } from '../Button';
 import { ToastRender } from '../ToastRender';
@@ -120,6 +123,7 @@ export const CreateAddressModal = ({
               value={nicknameInput}
               mt='12px'
               size='lg'
+              maxLength={MAX_NICKNAME_LENGTH}
               autoFocus
             />
             <Text fontSize='10px' color='red.500' pt='2px' textAlign='center'>
