@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "MyDogeMask",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Dogecoin wallet for Chrome browser",
   "permissions": ["storage", "tabs", "activeTab"],
   "host_permissions": ["http://*/*", "https://*/*"],
