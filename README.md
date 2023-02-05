@@ -21,4 +21,4 @@
 
 ## Integration
 
-- See our [ingegration example](https://github.com/mydoge-com/mydogemask-next-example) for instrunctions on how to use MyDogeMask to accept Dogecoin payments on your own website.
+- See our [integration example](https://github.com/mydoge-com/mydogemask-next-example) for instructions on how to use MyDogeMask to accept Dogecoin payments on your own website.
