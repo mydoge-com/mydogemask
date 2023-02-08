@@ -1,5 +1,5 @@
-import { Button, HStack, Icon, IconButton, Text } from 'native-base';
-import { FaWindowClose } from 'react-icons/fa';
+import { Button, HStack, Text } from 'native-base';
+import { ImCancelCircle } from 'react-icons/im';
 
 export const BackButton = ({ onPress, ...props }) => {
   return (
@@ -13,19 +13,10 @@ export const BackButton = ({ onPress, ...props }) => {
       {...props}
     >
       <HStack alignItems='center'>
-        <IconButton
-          icon={<Icon as={FaWindowClose} />}
-          rounded='full'
-          alignSelf='flex-start'
-          borderWidth='1px'
-          borderColor='gray.500'
-          color='gray.500'
-          size='24px'
-          onPress={onPress}
-        />
-        <Text ml='6px' color='gray.500'>
-          Cancel
-        </Text>
+        <Button variant='ghost' rounded='full' p='8px' onPress={onPress}>
+          <ImCancelCircle size='20px' color='#808080' />
+        </Button>
+        <Text color='gray.500'>Cancel</Text>
       </HStack>
     </Button>
   );

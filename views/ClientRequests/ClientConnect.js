@@ -1,7 +1,6 @@
 import {
   AlertDialog,
   Avatar,
-  Badge,
   Box,
   Button,
   Divider,
@@ -18,6 +17,7 @@ import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { Layout } from '../../components/Layout';
+import { OriginBadge } from '../../components/OriginBadge';
 import { ToastRender } from '../../components/ToastRender';
 import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -94,15 +94,8 @@ export function ClientConnect() {
   }, []);
   return (
     <Layout pt='32px' alignItems='center'>
-      <Badge
-        px='20px'
-        py='4px'
-        colorScheme='gray'
-        rounded='full'
-        _text={{ fontSize: '14px' }}
-      >
-        {origin}
-      </Badge>
+      <OriginBadge origin={origin} />
+
       <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
         <FaLink />
       </Box>
@@ -260,17 +253,7 @@ const ConfirmationModal = ({
         <AlertDialog.CloseButton />
         <AlertDialog.Header>Connect Wallet</AlertDialog.Header>
         <AlertDialog.Body>
-          <Badge
-            px='10px'
-            py='4px'
-            mb='8px'
-            bg='gray.200'
-            rounded='full'
-            _text={{ fontSize: '13px' }}
-            alignSelf='center'
-          >
-            {origin}
-          </Badge>
+          <OriginBadge origin={origin} mb='12px' />
           Allow this website be see your address, account balance, activity and
           suggest transactions to approve?
         </AlertDialog.Body>
