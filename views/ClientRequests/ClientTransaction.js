@@ -1,7 +1,7 @@
 import {
   AlertDialog,
   Avatar,
-  Badge,
+  // Badge,
   Box,
   Button,
   Center,
@@ -17,6 +17,7 @@ import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
 import { Layout } from '../../components/Layout';
+import { OriginBadge } from '../../components/OriginBadge';
 import { ToastRender } from '../../components/ToastRender';
 import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -79,15 +80,6 @@ export function ClientTransaction() {
 
   return (
     <Layout pt='32px' alignItems='center'>
-      <Badge
-        px='20px'
-        py='4px'
-        colorScheme='gray'
-        rounded='full'
-        _text={{ fontSize: '14px' }}
-      >
-        {origin}
-      </Badge>
       <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
         <FaLink />
       </Box>
@@ -105,17 +97,7 @@ export function ClientTransaction() {
         <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
           Paying
         </Text>
-        <Badge
-          px='12px'
-          py='2px'
-          mt='12px'
-          mb='6px'
-          colorScheme='gray'
-          rounded='full'
-          _text={{ fontSize: '14px' }}
-        >
-          {origin}
-        </Badge>
+        <OriginBadge origin={origin} mb='6px' mt='12px' />
         <HStack alignItems='center' space='12px' pb='28px'>
           <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
             {recipientAddress.substring(0, 2)}
@@ -261,17 +243,7 @@ const ConfirmationModal = ({
           <AlertDialog.CloseButton />
           <AlertDialog.Header>Confirm Transaction</AlertDialog.Header>
           <AlertDialog.Body>
-            <Badge
-              px='10px'
-              py='4px'
-              mb='8px'
-              bg='gray.200'
-              rounded='full'
-              _text={{ fontSize: '13px' }}
-              alignSelf='center'
-            >
-              {origin}
-            </Badge>
+            <OriginBadge origin={origin} mb='8px' />
             <VStack alignItems='center'>
               <Text>
                 Confirm transaction to send{' '}
