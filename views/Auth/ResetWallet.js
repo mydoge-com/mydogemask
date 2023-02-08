@@ -55,7 +55,11 @@ export const ResetWallet = () => {
               </Text>
             </Text>
           </VStack>
-          <WalletRestore confirmBefore onRestoreComplete={onRestoreComplete} />
+          <WalletRestore
+            submitLabel='Reset'
+            confirmBefore
+            onRestoreComplete={onRestoreComplete}
+          />
         </VStack>
       </VStack>
     </Layout>

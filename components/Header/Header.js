@@ -14,7 +14,7 @@ import {
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FiCheck, FiLock, FiSettings } from 'react-icons/fi';
-import { MdQrCode2 } from 'react-icons/md';
+import { MdInfoOutline, MdQrCode2 } from 'react-icons/md';
 
 import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
@@ -24,6 +24,7 @@ import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
 import { BackButton } from '../BackButton';
 import { BigButton } from '../Button';
+import { AboutModal } from './AboutModal';
 import { CreateAddressModal } from './CreateAddressModal';
 import { DeleteAddressModal } from './DeleteAddressModal';
 import { SecurityModal } from './SecurityModal';
@@ -209,6 +210,11 @@ export const Header = ({
             <FiSettings size='20px' alt='Backup & security' />
             Backup & security
           </MenuItem>
+          <MenuItem onPress={() => setOpenModal('ABOUT')}>
+            <MdInfoOutline size='20px' alt='Lock' />
+            About
+          </MenuItem>
+          <Divider my='6px' w='100%' />
           <MenuItem onPress={onSignOut}>
             <FiLock size='20px' alt='Lock' />
             Lock
@@ -235,6 +241,13 @@ export const Header = ({
       />
       <CreateAddressModal
         showModal={openModal === 'CREATE_ADDRESS'}
+        onClose={onCloseModal}
+        wallet={wallet}
+        scrollRef={scrollRef}
+        openMenu={openMenu}
+      />
+      <AboutModal
+        showModal={openModal === 'ABOUT'}
         onClose={onCloseModal}
         wallet={wallet}
         scrollRef={scrollRef}

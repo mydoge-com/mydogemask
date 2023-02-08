@@ -272,7 +272,7 @@ export const WalletRestore = ({
           !formData.seedPhrase || !formData.password || !formData.confirm
         }
       >
-        Reset
+        {submitLabel}
       </BigButton>
       <AlertDialog
         leastDestructiveRef={cancelRef}
@@ -284,7 +284,8 @@ export const WalletRestore = ({
           <AlertDialog.Header>Reset Wallet</AlertDialog.Header>
           <AlertDialog.Body>
             This will delete your current wallet and Seed Phrase from this
-            device. This action cannot be reversed.
+            device. This action cannot be reversed.{'\n'}Note that individual
+            addresses must be recreated manually.
           </AlertDialog.Body>
           <AlertDialog.Footer>
             <Button.Group space={2}>
