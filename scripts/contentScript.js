@@ -220,7 +220,7 @@ import { validateTransaction } from './helpers/wallet';
       }
       chrome.runtime.sendMessage(
         {
-          message: 'createTransaction',
+          message: MESSAGE_TYPES.CREATE_TRANSACTION,
           data: txData,
         },
         ({ rawTx, fee, amount }) => {

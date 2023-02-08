@@ -134,7 +134,7 @@ export const AmountScreen = ({
     } else {
       sendMessage(
         {
-          message: 'createTransaction',
+          message: MESSAGE_TYPES.CREATE_TRANSACTION,
           data: txData,
         },
         ({ rawTx, fee, amount }) => {
