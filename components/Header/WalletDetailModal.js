@@ -202,6 +202,7 @@ const NicknameUpdate = ({
         isInvalid={error}
         value={nicknameInput}
         maxLength={MAX_NICKNAME_LENGTH}
+        autoFocus
       />
       <Text fontSize='10px' color='red.500' pt='2px' textAlign='center'>
         {error}

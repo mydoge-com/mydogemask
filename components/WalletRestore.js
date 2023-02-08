@@ -190,13 +190,14 @@ export const WalletRestore = ({
           },
         }}
         isInvalid={errors.seedPhrase}
+        autoFocus
       />
       {errors.seedPhrase ? (
         <Text fontSize='10px' color='red.500' pt='6px'>
           {errors.seedPhrase}
         </Text>
       ) : null}
-      <VStack pt='12px'>
+      <VStack mt='12px'>
         <Input
           variant='filled'
           placeholder='Enter Password'
@@ -213,15 +214,6 @@ export const WalletRestore = ({
               borderColor: 'red.500',
             },
           }}
-          InputRightElement={
-            <IconButton
-              icon={
-                showPassword ? <Icon as={FaEye} /> : <Icon as={FaEyeSlash} />
-              }
-              onPress={toggleShowPassword}
-              color='gray.500'
-            />
-          }
           isInvalid={errors.password}
           onChangeText={(value) => {
             setFormData({ ...formData, password: value });
@@ -245,15 +237,6 @@ export const WalletRestore = ({
               borderColor: 'red.500',
             },
           }}
-          InputRightElement={
-            <IconButton
-              icon={
-                showPassword ? <Icon as={FaEye} /> : <Icon as={FaEyeSlash} />
-              }
-              onPress={toggleShowPassword}
-              color='gray.500'
-            />
-          }
           mt='12px'
           isInvalid={errors.confirm}
           onChangeText={(value) => {
@@ -261,6 +244,14 @@ export const WalletRestore = ({
             validateConfirm(value);
           }}
           onSubmitEditing={onSubmit}
+        />
+        <IconButton
+          icon={showPassword ? <Icon as={FaEye} /> : <Icon as={FaEyeSlash} />}
+          onPress={toggleShowPassword}
+          color='gray.500'
+          position='absolute'
+          right={0}
+          top='6px'
         />
         {errors.confirm1 ? (
           <Text fontSize='10px' color='red.500' pt='6px'>

@@ -110,7 +110,7 @@ export const CreateWallet = () => {
           <Text color='gray.500' fontSize='14px'>
             You will need this password to access your wallet
           </Text>
-          <VStack pt='40px'>
+          <VStack mt='40px'>
             <Input
               variant='filled'
               placeholder='Password (10 characters minimum)'
@@ -127,25 +127,13 @@ export const CreateWallet = () => {
                   borderColor: 'red.500',
                 },
               }}
-              InputRightElement={
-                <IconButton
-                  icon={
-                    showPassword ? (
-                      <Icon as={FaEye} />
-                    ) : (
-                      <Icon as={FaEyeSlash} />
-                    )
-                  }
-                  onPress={toggleShowPassword}
-                  color='gray.500'
-                />
-              }
               isInvalid={errors.password || errors.confirm1}
               onChangeText={(value) => {
                 setFormData({ ...formData, password: value });
                 validatePassword(value);
               }}
               onSubmitEditing={onSubmit}
+              autoFocus
             />
             <Input
               variant='filled'
@@ -163,19 +151,6 @@ export const CreateWallet = () => {
                   borderColor: 'red.500',
                 },
               }}
-              InputRightElement={
-                <IconButton
-                  icon={
-                    showPassword ? (
-                      <Icon as={FaEye} />
-                    ) : (
-                      <Icon as={FaEyeSlash} />
-                    )
-                  }
-                  onPress={toggleShowPassword}
-                  color='gray.500'
-                />
-              }
               mt='12px'
               isInvalid={errors.confirm2}
               onChangeText={(value) => {
@@ -183,6 +158,16 @@ export const CreateWallet = () => {
                 validateConfirm(value);
               }}
               onSubmitEditing={onSubmit}
+            />
+            <IconButton
+              icon={
+                showPassword ? <Icon as={FaEye} /> : <Icon as={FaEyeSlash} />
+              }
+              onPress={toggleShowPassword}
+              color='gray.500'
+              position='absolute'
+              right={0}
+              top='6px'
             />
             {errors.confirm1 ? (
               <Text fontSize='10px' color='red.500' pt='6px'>
