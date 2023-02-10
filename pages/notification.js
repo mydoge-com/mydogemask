@@ -4,6 +4,7 @@ import { useInterval } from '../hooks/useInterval';
 import { MESSAGE_TYPES } from '../scripts/helpers/constants';
 
 const TRANSACTION_POLLING_INTERVAL = 10000;
+const MAX_INTERVALS = 30;
 
 export default function Offscreen() {
   const messageCount = useRef(0);
@@ -16,8 +17,8 @@ export default function Offscreen() {
 
   useInterval(
     () => {
-      if (messageCount.current > 20) {
-        // Close offscreen window after 20 messages
+      if (messageCount.current > MAX_INTERVALS) {
+        // Close offscreen window after MAX_INTERVALS messages
         window?.close();
         return;
       }

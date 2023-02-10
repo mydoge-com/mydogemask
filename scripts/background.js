@@ -648,7 +648,7 @@ async function onNotifyTransactionSuccess({ data: { txId } } = {}) {
         } else if (!transaction) {
           chrome.notifications.create({
             type: 'basic',
-            title: 'Transaction not Confirmed',
+            title: 'Transaction Unconfirmed',
             iconUrl: '../assets/mydoge128.png',
             message: `Transaction details could not be retrieved for \`${txId}\`.`,
           });
