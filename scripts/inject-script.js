@@ -1,39 +1,26 @@
 import { MESSAGE_TYPES } from './helpers/constants';
 
-function responseHandler({ data, error, resolve, reject, onSuccess, onError }) {
-  if (error) {
-    onError?.(new Error(error));
-    reject(new Error(error));
-  } else if (data) {
-    onSuccess?.(data);
-    resolve(data);
-  } else {
-    onError?.(new Error('Unable to connect to MyDogeMask'));
-    reject(new Error('Unable to connect to MyDogeMask'));
-  }
-}
+const createResponseHandler =
+  () =>
+  ({ resolve, reject, onSuccess, onError, messageType }) => {
+    function listener({ data: { type, data, error }, origin }) {
+      // only accept messages from the same origin and message type of this context
+      if (origin !== window.location.origin || type !== messageType) return;
 
-const SUPPORTED_RESPONSE_TYPES = [
-  MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
-  MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
-  MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-  MESSAGE_TYPES.CLIENT_DISCONNECT_RESPONSE,
-  MESSAGE_TYPES.CLIENT_CONNECTION_STATUS_RESPONSE,
-  MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS_RESPONSE,
-];
-
-const onResponse = ({ resolve, reject, onSuccess, onError }) => {
-  function listener({ data: { type, data, error }, origin }) {
-    // only accept messages from the same origin
-    if (origin !== window.location.origin) return;
-
-    if (SUPPORTED_RESPONSE_TYPES.includes(type)) {
-      responseHandler({ data, error, resolve, reject, onSuccess, onError });
+      if (error) {
+        onError?.(new Error(error));
+        reject(new Error(error));
+      } else if (data) {
+        onSuccess?.(data);
+        resolve(data);
+      } else {
+        onError?.(new Error('Unable to connect to MyDogeMask'));
+        reject(new Error('Unable to connect to MyDogeMask'));
+      }
       window.removeEventListener('message', listener);
     }
-  }
-  window.addEventListener('message', listener);
-};
+    window.addEventListener('message', listener);
+  };
 
 // API we expose to allow websites to detect & interact with extension
 const doge = {
@@ -45,7 +32,14 @@ const doge = {
         { type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION },
         window.location.origin
       );
-      onResponse({ resolve, reject, onSuccess, onError });
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+      });
     });
   },
 
@@ -55,7 +49,14 @@ const doge = {
         { type: MESSAGE_TYPES.CLIENT_GET_BALANCE },
         window.location.origin
       );
-      onResponse({ resolve, reject, onSuccess, onError });
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
+      });
     });
   },
 
@@ -70,7 +71,14 @@ const doge = {
         { type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION, data },
         window.location.origin
       );
-      onResponse({ resolve, reject, onSuccess, onError });
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      });
     });
   },
 
@@ -80,7 +88,14 @@ const doge = {
         { type: MESSAGE_TYPES.CLIENT_DISCONNECT },
         window.location.origin
       );
-      onResponse({ resolve, reject, onSuccess, onError });
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_DISCONNECT_RESPONSE,
+      });
     });
   },
 
@@ -90,7 +105,14 @@ const doge = {
         { type: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS },
         window.location.origin
       );
-      onResponse({ resolve, reject, onSuccess, onError });
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS_RESPONSE,
+      });
     });
   },
 
@@ -105,7 +127,14 @@ const doge = {
         { type: MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS, data },
         window.location.origin
       );
-      onResponse({ resolve, reject, onSuccess, onError });
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS_RESPONSE,
+      });
     });
   },
 };
