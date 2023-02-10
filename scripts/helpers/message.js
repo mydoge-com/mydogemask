@@ -19,5 +19,8 @@ export const addListener = (callback) => {
   }
   if (typeof chrome !== 'undefined') {
     chrome?.runtime?.onMessage?.addListener?.(callback);
+    chrome?.runtime?.onConnect?.addListener((port) => {
+      port.onMessage.addListener(callback);
+    });
   }
 };

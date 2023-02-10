@@ -142,7 +142,7 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
         data.rawTx,
         decryptedWallet.children[data.selectedAddressIndex]
       );
-      // console.log('signed tx', data.selectedAddressIndex, signed);
+
       const jsonrpcReq = {
         API_key: apiKey,
         jsonrpc: '2.0',
@@ -153,7 +153,17 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
       node
         .post(jsonrpcReq)
         .json((jsonrpcRes) => {
-          // console.log('sendrawtransaction', jsonrpcRes);
+          // Open offscreen notification page to handle transaction status notifications
+          chrome.offscreen
+            .createDocument({
+              url: chrome.runtime.getURL(
+                `notification.html/?txId=${jsonrpcRes.result}`
+              ),
+              reasons: ['BLOBS'],
+              justification: 'Handle transaction status notifications',
+            })
+            .catch(() => {});
+
           sendResponse(jsonrpcRes.result);
         })
         .catch((err) => {
@@ -611,6 +621,46 @@ function signOut({ sendResponse } = {}) {
   clearSessionStorage().then(() => sendResponse?.(true));
 }
 
+const TRANSACTION_CONFIRMATIONS = 1;
+
+async function onNotifyTransactionSuccess({ data: { txId } } = {}) {
+  try {
+    onGetTransactionDetails({
+      data: { txId },
+      sendResponse: (transaction) => {
+        if (transaction?.confirmations >= TRANSACTION_CONFIRMATIONS) {
+          chrome.notifications.onClicked.addListener(async (notificationId) => {
+            chrome.tabs.create({
+              url: `https://sochain.com/tx/DOGE/${notificationId}`,
+            });
+            await chrome.notifications.clear(notificationId).catch(() => {});
+          });
+          chrome.notifications.create(txId, {
+            type: 'basic',
+            title: 'Transaction Confirmed',
+            iconUrl: '../assets/mydoge128.png',
+            message: `${sb.toBitcoin(transaction.vout[0].value)} DOGE sent to ${
+              transaction.vout[0].addresses[0]
+            }.`,
+          });
+
+          chrome.offscreen.closeDocument().catch(() => {});
+        } else if (!transaction) {
+          chrome.notifications.create({
+            type: 'basic',
+            title: 'Transaction not Confirmed',
+            iconUrl: '../assets/mydoge128.png',
+            message: `Transaction details could not be retrieved for \`${txId}\`.`,
+          });
+          chrome.offscreen.closeDocument();
+        }
+      },
+    });
+  } catch (e) {
+    logError(e);
+  }
+}
+
 export const messageHandler = ({ message, data }, sender, sendResponse) => {
   if (!message) return;
   switch (message) {
@@ -677,6 +727,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.UPDATE_ADDRESS_NICKNAME:
       onUpdateAddressNickname({ sender, sendResponse, data });
+      break;
+    case MESSAGE_TYPES.NOTIFY_TRANSACTION_SUCCESS:
+      onNotifyTransactionSuccess({ sender, sendResponse, data });
       break;
     default:
   }
