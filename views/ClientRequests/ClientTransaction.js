@@ -172,7 +172,6 @@ const ConfirmationModal = ({
         data: { rawTx, selectedAddressIndex: addressIndex },
       },
       (txId) => {
-        setLoading(false);
         if (txId) {
           sendMessage(
             {
