@@ -139,7 +139,7 @@ const doge = {
   },
 };
 
-window.onload = () => {
+window.addEventListener('load', () => {
   window.doge = doge;
   window.dispatchEvent(new Event('doge#initialized'));
-};
+});
