@@ -16,7 +16,7 @@ export const Layout = ({
 }) => {
   const xtWidth = w || width || '357px';
   useEffect(() => {
-    window?.resizeTo(Number(xtWidth.replace(/[^0-9]/g, '')), 640);
+    document.body.style.width = xtWidth;
   }, [xtWidth]);
   return (
     <Box
