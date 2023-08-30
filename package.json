@@ -10,7 +10,7 @@
     "watch": "nodemon --exec \"yarn run build\""
   },
   "dependencies": {
-    "@mydogeofficial/dogecoin-js": "0.1.1-dev.0",
+    "@mydogeofficial/dogecoin-js": "0.1.2-dev.0",
     "@native-base/icons": "^0.0.11",
     "@native-base/next-adapter": "^1.1.9",
     "axios": "^1.2.2",

@@ -1537,11 +1537,10 @@
     "@jridgewell/resolve-uri" "3.1.0"
     "@jridgewell/sourcemap-codec" "1.4.14"
 
-"@mydogeofficial/dogecoin-js@0.1.1-dev.0":
-  version "0.1.1-dev.0"
-  resolved "https://registry.yarnpkg.com/@mydogeofficial/dogecoin-js/-/dogecoin-js-0.1.1-dev.0.tgz#121cf18dedd25d3c497ece9a2246618603e2babd"
-  integrity sha512-a5owk56YKXwy9H/ch3C8bYN9UWMVgzw/VtlAhUWGqK8/Ekxi+JfiNmcKwig0pK2wMU9pLW0HcA+ZYQp/5k4BbA==
-
+"@mydogeofficial/dogecoin-js@0.1.2-dev.0":
+  version "0.1.2-dev.0"
+  resolved "https://registry.yarnpkg.com/@mydogeofficial/dogecoin-js/-/dogecoin-js-0.1.2-dev.0.tgz#448ec079deb4b33ebfea218dea110e0c9942e0f5"
+  integrity sha512-d5Wn9734CuhDYpKFvJ+k/NIoP+OusBgdT5qfL3xiz1cUUmzRocGNmKNRH0vCSMCxbluZ0wVCgIbUZSu1wUiXoQ==
 "@napi-rs/triples@1.0.3":
   version "1.0.3"
   resolved "https://registry.yarnpkg.com/@napi-rs/triples/-/triples-1.0.3.tgz#76d6d0c3f4d16013c61e45dfca5ff1e6c31ae53c"
