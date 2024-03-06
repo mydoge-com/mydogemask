@@ -16,7 +16,6 @@ import {
 } from 'native-base';
 import { Fragment, useCallback, useState } from 'react';
 import { FiArrowUpRight, FiCopy } from 'react-icons/fi';
-import { IoArrowDown, IoArrowUp, IoWalletOutline } from 'react-icons/io5';
 import TimeAgo from 'timeago-react';
 
 import { BigButton } from '../../components/Button';
@@ -24,17 +23,16 @@ import { WalletDetailModal } from '../../components/Header/WalletDetailModal';
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
 import { useCopyText } from '../../hooks/useCopyText';
-import {
-  asFiat,
-  formatSatoshisAsDoge,
-  is69,
-  is420,
-} from '../../utils/formatters';
+import { formatSatoshisAsDoge, is69, is420 } from '../../utils/formatters';
 import { ActionButton } from './components/ActionButton';
+import { Balance } from './components/Balance';
 import { useTransactions } from './Transactions.hooks';
 
 const DogecoinLogo = 'assets/dogecoin-logo-300.png';
-const SpaceBg = 'assets/milkyway-vector-bg-rounded.png';
+
+const Buy = 'assets/buy.svg';
+const Receive = 'assets/receive.svg';
+const Send = 'assets/send.svg';
 
 export function Transactions() {
   const { balance, usdValue, transactions, loading, hasMore, fetchMore } =
@@ -43,10 +41,6 @@ export function Transactions() {
   const { wallet, selectedAddressIndex, navigate } = useAppContext();
 
   const [addressDetailOpen, setAddressDetailOpen] = useState(false);
-
-  const imageRatio = 1601 / 1158;
-  const imageWidth = 360;
-  const imageHeight = imageWidth / imageRatio;
 
   const renderItem = useCallback(
     ({ item }) => <Transaction transaction={item} />,
@@ -69,37 +63,23 @@ export function Transactions() {
 
   return (
     <Layout withHeader withConnectStatus p={0}>
-      <Box>
-        <Image
-          width={imageWidth}
-          height={imageHeight}
-          source={SpaceBg}
-          position='absolute'
-        />
-        <Center mt='76px'>
-          <Text
-            fontSize='4xl'
-            fontWeight='medium'
-            color='white'
-            lineHeight='xs'
-          >
-            {typeof balance === 'number'
-              ? `Ɖ${formatSatoshisAsDoge(balance, 3)}`
-              : ' '}
-          </Text>
-          <Text color='#b0e4ff' fontSize='xl' fontWeight='semibold' pt={0}>
-            {typeof usdValue === 'number' ? `$${asFiat(usdValue, 2)}` : ' '}
-          </Text>
-          <HStack space='24px' pt='20px'>
-            <Pressable onPress={onBuy}>
-              <ActionButton Icon={<IoWalletOutline />} title='Buy' />
-            </Pressable>
-            <Pressable onPress={openReceiveModal}>
-              <ActionButton Icon={<IoArrowDown />} title='Receive' />
-            </Pressable>
-            <Pressable onPress={() => navigate('Send')}>
-              <ActionButton Icon={<IoArrowUp />} title='Send' />
-            </Pressable>
+      <Box pt='60px'>
+        <Balance balance={balance} usdValue={usdValue} />
+        <Center>
+          <HStack space='24px' pt='16px'>
+            <ActionButton icon={Buy} label='Buy' onPress={onBuy} />
+
+            <ActionButton
+              icon={Receive}
+              label='Receive'
+              onPress={openReceiveModal}
+            />
+
+            <ActionButton
+              icon={Send}
+              label='Send'
+              onPress={() => navigate('Send')}
+            />
           </HStack>
         </Center>
         <Box flex={1}>
