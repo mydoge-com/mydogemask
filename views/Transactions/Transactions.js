@@ -7,7 +7,6 @@ import {
   FlatList,
   Heading,
   HStack,
-  Image,
   Modal,
   Pressable,
   Spinner,
@@ -27,8 +26,6 @@ import { formatSatoshisAsDoge, is69, is420 } from '../../utils/formatters';
 import { ActionButton } from './components/ActionButton';
 import { Balance } from './components/Balance';
 import { useTransactions } from './Transactions.hooks';
-
-const DogecoinLogo = 'assets/dogecoin-logo-300.png';
 
 const Buy = 'assets/buy.svg';
 const Receive = 'assets/receive.svg';
@@ -104,10 +101,13 @@ export function Transactions() {
             </VStack>
           ) : (
             <>
-              <Center alignItems='center' justifyContent='center' mt='50px'>
-                <Heading size='md' pt='6px' mb='20px'>
-                  Transactions
-                </Heading>
+              <Center
+                alignItems='center'
+                justifyContent='center'
+                mt='24px'
+                mb='24px'
+              >
+                <Heading size='md'>Transactions</Heading>
               </Center>
               <Box px='10px'>
                 <VStack space='10px'>
@@ -251,10 +251,16 @@ const Transaction = ({
   const [isOpen, setIsOpen] = useState(false);
   return (
     <Fragment key={id}>
-      <Pressable onPress={() => setIsOpen(true)}>
+      <Pressable onPress={() => setIsOpen(true)} paddingTop='10px'>
         <HStack p='2px'>
           <VStack mr='12px'>
-            <Image src={DogecoinLogo} height='40px' width='40px' alt='doge' />
+            <Avatar
+              size='sm'
+              bg='brandYellow.500'
+              _text={{ color: 'gray.800' }}
+            >
+              {address.substring(0, 2)}
+            </Avatar>
           </VStack>
           <VStack flex={1}>
             <Text fontSize='xs' fontWeight='medium'>
