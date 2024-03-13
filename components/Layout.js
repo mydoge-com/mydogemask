@@ -1,7 +1,9 @@
-import { Box } from 'native-base';
+import { Box, Image } from 'native-base';
 import React, { useEffect } from 'react';
 
 import { Header } from './Header/Header';
+
+const BGPattern = 'assets/bg-pattern.png';
 
 export const Layout = ({
   addressColor,
@@ -36,6 +38,19 @@ export const Layout = ({
         />
       ) : null}
       {children}
+
+      <Image
+        source={BGPattern}
+        position='fixed'
+        top='0px'
+        left='0px'
+        zIndex={-100}
+        resizeMode='cover'
+        width={xtWidth}
+        height='600px'
+        opacity={0.7}
+        pointerEvents='none'
+      />
     </Box>
   );
 };

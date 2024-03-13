@@ -268,7 +268,7 @@ const Transaction = ({
             </Text>
 
             <Text
-              fontSize='xs'
+              fontSize='12px'
               fontWeight='semibold'
               _light={{ color: 'gray.400' }}
               _dark={{ color: 'gray.500' }}
@@ -288,12 +288,12 @@ const Transaction = ({
               _dark={{
                 bg: type === 'outgoing' ? '#000643' : '#001109',
               }}
-              px='14px'
-              py='4px'
+              px='12px'
+              py='3px'
               rounded='2xl'
             >
               <Text
-                fontSize='sm'
+                fontSize='12px'
                 fontWeight='bold'
                 _light={{
                   color: is420(formatSatoshisAsDoge(amount, 3))
