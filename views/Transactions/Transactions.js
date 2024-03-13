@@ -105,11 +105,11 @@ export function Transactions() {
                 alignItems='center'
                 justifyContent='center'
                 mt='24px'
-                mb='24px'
+                mb='6px'
               >
                 <Heading size='md'>Transactions</Heading>
               </Center>
-              <Box px='10px'>
+              <Box px='20px'>
                 <VStack space='10px'>
                   <FlatList
                     data={transactions}
