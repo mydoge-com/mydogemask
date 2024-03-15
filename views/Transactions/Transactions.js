@@ -5,16 +5,17 @@ import {
   Button,
   Center,
   FlatList,
-  Heading,
   HStack,
   Modal,
   Pressable,
   Spinner,
   Text,
+  View,
   VStack,
 } from 'native-base';
-import { Fragment, useCallback, useState } from 'react';
+import { Fragment, useCallback, useMemo, useState } from 'react';
 import { FiArrowUpRight, FiCopy } from 'react-icons/fi';
+import { SceneMap, TabBar, TabView } from 'react-native-tab-view';
 import TimeAgo from 'timeago-react';
 
 import { BigButton } from '../../components/Button';
@@ -30,6 +31,8 @@ import { useTransactions } from './Transactions.hooks';
 const Buy = 'assets/buy.svg';
 const Receive = 'assets/receive.svg';
 const Send = 'assets/send.svg';
+
+const NFTRoute = () => <View style={{ flex: 1, backgroundColor: '#673ab7' }} />;
 
 export function Transactions() {
   const { balance, usdValue, transactions, loading, hasMore, fetchMore } =
@@ -58,12 +61,95 @@ export function Transactions() {
   const activeAddressNickname =
     wallet.nicknames?.[activeAddress] ?? `Address ${selectedAddressIndex + 1}`;
 
+  const [index, setIndex] = useState(0);
+  const [routes] = useState([
+    { key: 'first', title: 'Transactions' },
+    { key: 'second', title: 'NFTs' },
+  ]);
+
+  const TransactionsRoute = useCallback(() => {
+    return (
+      <Box flex={1}>
+        {transactions === undefined ? (
+          <Center pt='40px'>
+            <Spinner color='amber.400' />
+          </Center>
+        ) : transactions.length <= 0 ? (
+          <VStack pt='48px' alignItems='center'>
+            <Text color='gray.500' pt='24px' pb='32px'>
+              No transactions found
+            </Text>
+            <Text fontSize='16px'>
+              To get started, send DOGE to your wallet
+            </Text>
+            <BigButton mt='24px' onPress={onBuy}>
+              Buy DOGE
+            </BigButton>
+            <BigButton mt='18px' onPress={openReceiveModal}>
+              Deposit DOGE
+            </BigButton>
+          </VStack>
+        ) : (
+          <Box px='20px'>
+            <VStack space='10px'>
+              <FlatList
+                data={transactions}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+              />
+              {hasMore ? (
+                <Button
+                  variant='unstyled'
+                  my='12px'
+                  _hover={{ bg: 'gray.200' }}
+                  alignSelf='center'
+                  bg='gray.100'
+                  onPress={fetchMore}
+                  isDisabled={loading}
+                  alignItems='center'
+                >
+                  <Text color='gray.500' alignItems='center'>
+                    View more
+                    {loading ? (
+                      <Spinner
+                        color='amber.400'
+                        pl='8px'
+                        transform={[{ translateY: 4 }]}
+                      />
+                    ) : null}
+                  </Text>
+                </Button>
+              ) : null}
+            </VStack>
+          </Box>
+        )}
+      </Box>
+    );
+  }, [
+    transactions,
+    hasMore,
+    loading,
+    fetchMore,
+    renderItem,
+    onBuy,
+    openReceiveModal,
+  ]);
+
+  const renderScene = useMemo(
+    () =>
+      SceneMap({
+        first: TransactionsRoute,
+        second: NFTRoute,
+      }),
+    [TransactionsRoute]
+  );
+
   return (
     <Layout withHeader withConnectStatus p={0}>
       <Box pt='60px'>
         <Balance balance={balance} usdValue={usdValue} />
         <Center>
-          <HStack space='24px' pt='16px'>
+          <HStack space='24px' pt='14px' pb='16px'>
             <ActionButton icon={Buy} label='Buy' onPress={onBuy} />
 
             <ActionButton
@@ -79,71 +165,33 @@ export function Transactions() {
             />
           </HStack>
         </Center>
-        <Box flex={1}>
-          {transactions === undefined ? (
-            <Center pt='40px'>
-              <Spinner color='amber.400' />
-            </Center>
-          ) : transactions.length <= 0 ? (
-            <VStack pt='48px' alignItems='center'>
-              <Text color='gray.500' pt='24px' pb='32px'>
-                No transactions found
-              </Text>
-              <Text fontSize='16px'>
-                To get started, send DOGE to your wallet
-              </Text>
-              <BigButton mt='24px' onPress={onBuy}>
-                Buy DOGE
-              </BigButton>
-              <BigButton mt='18px' onPress={openReceiveModal}>
-                Deposit DOGE
-              </BigButton>
-            </VStack>
-          ) : (
-            <>
-              <Center
-                alignItems='center'
-                justifyContent='center'
-                mt='24px'
-                mb='6px'
-              >
-                <Heading size='md'>Transactions</Heading>
-              </Center>
-              <Box px='20px'>
-                <VStack space='10px'>
-                  <FlatList
-                    data={transactions}
-                    renderItem={renderItem}
-                    keyExtractor={(item) => item.id}
-                  />
-                  {hasMore ? (
-                    <Button
-                      variant='unstyled'
-                      my='12px'
-                      _hover={{ bg: 'gray.200' }}
-                      alignSelf='center'
-                      bg='gray.100'
-                      onPress={fetchMore}
-                      isDisabled={loading}
-                      alignItems='center'
-                    >
-                      <Text color='gray.500' alignItems='center'>
-                        View more
-                        {loading ? (
-                          <Spinner
-                            color='amber.400'
-                            pl='8px'
-                            transform={[{ translateY: 4 }]}
-                          />
-                        ) : null}
-                      </Text>
-                    </Button>
-                  ) : null}
-                </VStack>
-              </Box>
-            </>
+        <TabView
+          navigationState={{ index, routes }}
+          renderScene={renderScene}
+          onIndexChange={setIndex}
+          initialLayout={{ width: 375 }}
+          renderTabBar={(props) => (
+            <TabBar
+              indicatorStyle={{
+                backgroundColor: '#e3ab02',
+              }}
+              style={{ backgroundColor: 'transparent' }}
+              renderLabel={({ route, focused }) => (
+                <Text
+                  fontWeight='bold'
+                  fontSize='14px'
+                  color={focused ? 'black' : '#A1A1AA'}
+                  numberOfLines={1}
+                  adjustsFontSizeToFit
+                >
+                  {route.title}
+                </Text>
+              )}
+              {...props}
+            />
           )}
-        </Box>
+          lazy
+        />
       </Box>
       <WalletDetailModal
         showModal={addressDetailOpen}
