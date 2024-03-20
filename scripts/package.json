@@ -6,7 +6,7 @@
     "build": "rollup --config"
   },
   "dependencies": {
-    "@mydogeofficial/dogecoin-js": "^0.1.0-beta.4",
+    "@mydogeofficial/dogecoin-js": "0.1.1-dev.0",
     "@rollup/plugin-commonjs": "^24.0.0",
     "@rollup/plugin-json": "^6.0.0",
     "@rollup/plugin-node-resolve": "^15.0.1",
