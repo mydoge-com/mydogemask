@@ -70,6 +70,7 @@ export const AddressScreen = ({
         autoFocus
         type='number'
         value={formData.address}
+        backgroundColor='gray.100'
       />
       <Text fontSize='10px' color='red.500' pt='6px'>
         {errors.address || ' '}

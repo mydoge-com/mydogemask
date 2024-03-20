@@ -30,6 +30,8 @@ import { DeleteAddressModal } from './DeleteAddressModal';
 import { SecurityModal } from './SecurityModal';
 import { WalletDetailModal } from './WalletDetailModal';
 
+const User = 'assets/user.svg';
+
 export const Header = ({
   withCancelButton,
   cancelRoute,
@@ -114,13 +116,7 @@ export const Header = ({
               {...triggerProps}
               onPress={openMenu.current}
             >
-              <Avatar
-                source={{
-                  uri: '/assets/default-avatar.png',
-                }}
-                size='36px'
-                alt='Avatar'
-              />
+              <Image source={User} width='20px' height='25px' />
             </Pressable>
           );
         }}
@@ -155,13 +151,21 @@ export const Header = ({
                         <FiCheck color='#54a937' size='22px' />
                       ) : null}
                     </Box>
-                    <Avatar
+                    {/* <Avatar
                       source={{
                         uri: '/assets/default-avatar.png',
                       }}
                       size='30px'
                       mr='12px'
-                    />
+                    /> */}
+                    <Avatar
+                      size='30px'
+                      bg='brandYellow.500'
+                      _text={{ color: 'gray.800' }}
+                      mr='12px'
+                    >
+                      {address.substring(0, 2)}
+                    </Avatar>
                     <VStack>
                       <Text
                         fontSize='md'
