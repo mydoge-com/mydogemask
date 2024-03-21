@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "MyDoge Wallet",
+  "name": "MyDoge - Dogecoin Wallet",
   "version": "1.0.0",
   "description": "Dogecoin wallet for Chrome browser",
   "permissions": ["storage", "tabs", "notifications", "offscreen"],
