@@ -16,7 +16,7 @@ import { NFT } from './NFT';
 export const CollectiblesTab = () => {
   const renderItem = useCallback(({ item }) => <NFT nft={item} />, []);
 
-  const { loading, NFTs, hasMoreNFTs, fetchMoreNFTs } = useTransactions();
+  const { NFTs, hasMoreNFTs, fetchMoreNFTs, NFTsLoading } = useTransactions();
 
   return (
     <Box flex={1}>
@@ -48,12 +48,12 @@ export const CollectiblesTab = () => {
                 alignSelf='center'
                 bg='gray.100'
                 onPress={fetchMoreNFTs}
-                isDisabled={loading}
+                isDisabled={NFTsLoading}
                 alignItems='center'
               >
                 <Text color='gray.500' alignItems='center'>
                   View more
-                  {loading ? (
+                  {NFTsLoading ? (
                     <Spinner
                       color='amber.400'
                       pl='8px'
