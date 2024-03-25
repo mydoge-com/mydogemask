@@ -42,7 +42,7 @@ export function Transactions() {
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'first', title: 'Transactions' },
-    { key: 'second', title: 'NFTs' },
+    { key: 'second', title: 'Doginals' },
   ]);
 
   const NFTsRoute = useCallback(() => {
