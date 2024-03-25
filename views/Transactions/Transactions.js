@@ -41,8 +41,9 @@ export function Transactions() {
 
   const [index, setIndex] = useState(0);
   const [routes] = useState([
-    { key: 'first', title: 'Transactions' },
-    { key: 'second', title: 'Doginals' },
+    { key: 'transactions', title: 'Transactions' },
+    { key: 'tokens', title: 'Tokens' },
+    { key: 'doginals', title: 'Doginals' },
   ]);
 
   const NFTsRoute = useCallback(() => {
@@ -65,8 +66,9 @@ export function Transactions() {
   const renderScene = useMemo(
     () =>
       SceneMap({
-        first: TransactionsRoute,
-        second: NFTsRoute,
+        transactions: TransactionsRoute,
+        tokens: TransactionsRoute,
+        doginals: NFTsRoute,
       }),
     [NFTsRoute, TransactionsRoute]
   );

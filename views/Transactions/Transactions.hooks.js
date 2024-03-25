@@ -23,10 +23,15 @@ export const useTransactions = () => {
   const [NFTs, setNFTs] = useState();
   const [NFTsTotal, setNFTsTotal] = useState();
 
+  const [tokensLoading, setTokensLoading] = useState(true);
+  const [tokens, setTokens] = useState();
+  const [tokensTotal, setTokensTotal] = useState();
+
   const [hasMore, setHasMore] = useState(true);
 
   const currentPage = useRef(0);
   const currentNFTPage = useRef(0);
+  const currentTokensPage = useRef(0);
 
   const fetchNFTs = useCallback(
     ({ cursor } = {}) => {
@@ -47,6 +52,27 @@ export const useTransactions = () => {
         })
         .catch(logError)
         .finally(() => setNFTsLoading(false));
+    },
+    [walletAddress]
+  );
+
+  const fetchTokens = useCallback(
+    ({ cursor } = {}) => {
+      setTokensLoading(true);
+      doginals
+        .get(
+          `/brc20/tokens?address=${walletAddress}&cursor=${cursor || 0}&size=25`
+        )
+        .json((res) => {
+          setTokens(res?.result?.list);
+          setTokensTotal(res?.result?.total);
+          // Don't increment page on initial fetch, where cursor is undefined
+          if (typeof cursor === 'number') {
+            currentTokensPage.current = cursor;
+          }
+        })
+        .catch(logError)
+        .finally(() => setTokensLoading(false));
     },
     [walletAddress]
   );
@@ -172,6 +198,7 @@ export const useTransactions = () => {
   }, [getTransactions, hasMore]);
 
   const hasMoreNFTs = NFTs?.length < NFTsTotal;
+  const hasMoreTokens = tokens?.length < tokensTotal;
 
   const fetchMoreNFTs = useCallback(() => {
     if (hasMoreNFTs) {
@@ -212,5 +239,9 @@ export const useTransactions = () => {
     hasMoreNFTs,
     fetchMoreNFTs,
     NFTsLoading,
+    tokens,
+    fetchTokens,
+    tokensLoading,
+    hasMoreTokens,
   };
 };
