@@ -3,6 +3,7 @@ import sb from 'satoshi-bitcoin';
 
 import { useAppContext } from '../../hooks/useAppContext';
 import { useInterval } from '../../hooks/useInterval';
+import { doginals } from '../../scripts/api';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
@@ -18,10 +19,41 @@ export const useTransactions = () => {
   const [usdPrice, setUSDPrice] = useState(0);
   const [transactions, setTransactions] = useState();
   const [loading, setLoading] = useState(true);
+  const [NFTsLoading, setNFTsLoading] = useState(true);
+  const [NFTs, setNFTs] = useState();
+  const [NFTsTotal, setNFTsTotal] = useState();
 
   const [hasMore, setHasMore] = useState(true);
 
   const currentPage = useRef(0);
+  const currentNFTPage = useRef(0);
+
+  const fetchNFTs = useCallback(
+    ({ cursor } = {}) => {
+      setNFTsLoading(true);
+      doginals
+        .get(
+          `/address/inscriptions?address=${walletAddress}&cursor=${
+            cursor || 0
+          }&size=25`
+        )
+        .json((res) => {
+          setNFTs(res?.result?.list);
+          setNFTsTotal(res?.result?.total);
+          // Don't increment page on initial fetch, where cursor is undefined
+          if (typeof cursor === 'number') {
+            currentNFTPage.current = cursor;
+          }
+        })
+        .catch(logError)
+        .finally(() => setNFTsLoading(false));
+    },
+    [walletAddress]
+  );
+
+  useEffect(() => {
+    fetchNFTs();
+  }, [fetchNFTs]);
 
   const usdValue = balance ? sb.toBitcoin(balance) * usdPrice : 0;
   const getAddressBalance = useCallback(() => {
@@ -139,6 +171,14 @@ export const useTransactions = () => {
     }
   }, [getTransactions, hasMore]);
 
+  const hasMoreNFTs = NFTs?.length < NFTsTotal;
+
+  const fetchMoreNFTs = useCallback(() => {
+    if (hasMoreNFTs) {
+      fetchNFTs({ cursor: currentNFTPage.current + 1 });
+    }
+  }, [fetchNFTs, hasMoreNFTs]);
+
   const currentAddress = useRef(walletAddress);
 
   useEffect(() => {
@@ -168,5 +208,9 @@ export const useTransactions = () => {
     transactions,
     hasMore,
     fetchMore,
+    NFTs,
+    hasMoreNFTs,
+    fetchMoreNFTs,
+    NFTsLoading,
   };
 };

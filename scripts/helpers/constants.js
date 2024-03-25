@@ -42,4 +42,6 @@ export const MESSAGE_TYPES = {
   UPDATE_ADDRESS_NICKNAME: 'updateAddressNickname',
   NOTIFY_TRANSACTION_SUCCESS: 'notifyTransactionSuccess',
 };
+
 export const NODE_BASE_URL = 'https://doge.nownodes.io';
+export const DOGINALS_API_URL = 'https://wallet-api.dogeord.io';

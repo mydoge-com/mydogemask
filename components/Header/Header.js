@@ -115,6 +115,12 @@ export const Header = ({
               accessibilityLabel='Accounts menu'
               {...triggerProps}
               onPress={openMenu.current}
+              borderRadius='1000px'
+              h='36px'
+              w='36px'
+              alignItems='center'
+              justifyContent='center'
+              backgroundColor='gray.100'
             >
               <Image source={User} width='20px' height='25px' />
             </Pressable>
