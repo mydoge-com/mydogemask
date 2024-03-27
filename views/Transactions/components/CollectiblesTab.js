@@ -10,13 +10,15 @@ import {
 import { useCallback } from 'react';
 
 import { BigButton } from '../../../components/Button';
-import { useTransactions } from '../Transactions.hooks';
 import { NFT } from './NFT';
 
-export const CollectiblesTab = () => {
+export const CollectiblesTab = ({
+  NFTs,
+  hasMoreNFTs,
+  fetchMoreNFTs,
+  NFTsLoading,
+}) => {
   const renderItem = useCallback(({ item }) => <NFT nft={item} />, []);
-
-  const { NFTs, hasMoreNFTs, fetchMoreNFTs, NFTsLoading } = useTransactions();
 
   return (
     <Box flex={1}>

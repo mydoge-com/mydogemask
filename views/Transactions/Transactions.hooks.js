@@ -10,6 +10,7 @@ import { logError } from '../../utils/error';
 import { formatTransaction } from '../../utils/transactions';
 
 const QUERY_INTERVAL = 30000;
+const QUERY_PAGE_SIZE = 10;
 
 export const useTransactions = () => {
   const { wallet, selectedAddressIndex } = useAppContext();
@@ -23,10 +24,15 @@ export const useTransactions = () => {
   const [NFTs, setNFTs] = useState();
   const [NFTsTotal, setNFTsTotal] = useState();
 
+  const [tokensLoading, setTokensLoading] = useState(true);
+  const [tokens, setTokens] = useState();
+  const [tokensTotal, setTokensTotal] = useState();
+
   const [hasMore, setHasMore] = useState(true);
 
   const currentPage = useRef(0);
   const currentNFTPage = useRef(0);
+  const currentTokensPage = useRef(0);
 
   const fetchNFTs = useCallback(
     ({ cursor } = {}) => {
@@ -35,7 +41,7 @@ export const useTransactions = () => {
         .get(
           `/address/inscriptions?address=${walletAddress}&cursor=${
             cursor || 0
-          }&size=25`
+          }&size=${QUERY_PAGE_SIZE}`
         )
         .json((res) => {
           setNFTs(res?.result?.list);
@@ -51,9 +57,37 @@ export const useTransactions = () => {
     [walletAddress]
   );
 
+  const fetchTokens = useCallback(
+    ({ cursor } = {}) => {
+      setTokensLoading(true);
+      doginals
+        .get(
+          `/brc20/tokens?address=${walletAddress}&cursor=${
+            cursor || 0
+          }&size=${QUERY_PAGE_SIZE}`
+        )
+        .json((res) => {
+          setTokens(res?.result?.list);
+          console.log(res?.result?.list);
+          setTokensTotal(res?.result?.total);
+          // Don't increment page on initial fetch, where cursor is undefined
+          if (typeof cursor === 'number') {
+            currentTokensPage.current = cursor;
+          }
+        })
+        .catch(logError)
+        .finally(() => setTokensLoading(false));
+    },
+    [walletAddress]
+  );
+
   useEffect(() => {
     fetchNFTs();
   }, [fetchNFTs]);
+
+  useEffect(() => {
+    fetchTokens();
+  }, [fetchTokens]);
 
   const usdValue = balance ? sb.toBitcoin(balance) * usdPrice : 0;
   const getAddressBalance = useCallback(() => {
@@ -172,6 +206,7 @@ export const useTransactions = () => {
   }, [getTransactions, hasMore]);
 
   const hasMoreNFTs = NFTs?.length < NFTsTotal;
+  const hasMoreTokens = tokens?.length < tokensTotal;
 
   const fetchMoreNFTs = useCallback(() => {
     if (hasMoreNFTs) {
@@ -212,5 +247,8 @@ export const useTransactions = () => {
     hasMoreNFTs,
     fetchMoreNFTs,
     NFTsLoading,
+    tokens,
+    tokensLoading,
+    hasMoreTokens,
   };
 };

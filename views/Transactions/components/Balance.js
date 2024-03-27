@@ -36,7 +36,7 @@ export function Balance({ balance, usdValue }) {
         ) : (
           <>
             <Text secondary fontWeight='700' color='black' fontSize='35px'>
-              {balanceVisible
+              {!balanceVisible
                 ? typeof balance === 'number'
                   ? `Ɖ${formatSatoshisAsDoge(balance, 3)}`
                   : ' '
@@ -44,7 +44,7 @@ export function Balance({ balance, usdValue }) {
             </Text>
             <HStack alignItems='center' justifyContent='center'>
               <Text secondary color='gray.500' fontWeight='500'>
-                {balanceVisible
+                {!balanceVisible
                   ? typeof usdValue === 'number'
                     ? `$${asFiat(usdValue, 2)}`
                     : ' '
@@ -54,10 +54,10 @@ export function Balance({ balance, usdValue }) {
               {balance === null ? null : (
                 <Pressable onPress={toggleBalanceVisibility} p='8px'>
                   <VStack justifyContent='center'>
-                    {!balanceVisible ? (
+                    {balanceVisible ? (
                       <Image source={EyeEnabled} width='16px' height='12px' />
                     ) : null}
-                    {balanceVisible ? (
+                    {!balanceVisible ? (
                       <Image source={EyeDisabled} width='16px' height='16px' />
                     ) : null}
                   </VStack>
