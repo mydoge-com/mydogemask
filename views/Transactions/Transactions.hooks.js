@@ -10,6 +10,7 @@ import { logError } from '../../utils/error';
 import { formatTransaction } from '../../utils/transactions';
 
 const QUERY_INTERVAL = 30000;
+const QUERY_PAGE_SIZE = 10;
 
 export const useTransactions = () => {
   const { wallet, selectedAddressIndex } = useAppContext();
@@ -40,7 +41,7 @@ export const useTransactions = () => {
         .get(
           `/address/inscriptions?address=${walletAddress}&cursor=${
             cursor || 0
-          }&size=25`
+          }&size=${QUERY_PAGE_SIZE}`
         )
         .json((res) => {
           setNFTs(res?.result?.list);
@@ -61,10 +62,13 @@ export const useTransactions = () => {
       setTokensLoading(true);
       doginals
         .get(
-          `/brc20/tokens?address=${walletAddress}&cursor=${cursor || 0}&size=25`
+          `/brc20/tokens?address=${walletAddress}&cursor=${
+            cursor || 0
+          }&size=${QUERY_PAGE_SIZE}`
         )
         .json((res) => {
           setTokens(res?.result?.list);
+          console.log(res?.result?.list);
           setTokensTotal(res?.result?.total);
           // Don't increment page on initial fetch, where cursor is undefined
           if (typeof cursor === 'number') {
@@ -80,6 +84,10 @@ export const useTransactions = () => {
   useEffect(() => {
     fetchNFTs();
   }, [fetchNFTs]);
+
+  useEffect(() => {
+    fetchTokens();
+  }, [fetchTokens]);
 
   const usdValue = balance ? sb.toBitcoin(balance) * usdPrice : 0;
   const getAddressBalance = useCallback(() => {
@@ -240,7 +248,6 @@ export const useTransactions = () => {
     fetchMoreNFTs,
     NFTsLoading,
     tokens,
-    fetchTokens,
     tokensLoading,
     hasMoreTokens,
   };
