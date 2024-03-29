@@ -1,7 +1,8 @@
 import wretch from 'wretch';
 
 import {
-  DOGINALS_API_URL,
+  DOGINALS_MARKETPLACE_API_URL,
+  DOGINALS_WALLET_API_URL,
   NODE_BASE_URL,
   NOWNODES_BASE_URL,
 } from './helpers/constants';
@@ -15,8 +16,10 @@ export const nownodes = wretch(NOWNODES_BASE_URL, {
   redirect: 'follow',
 });
 
-export const doginals = wretch(DOGINALS_API_URL, {
+export const doginals = wretch(DOGINALS_WALLET_API_URL, {
   // redirect: 'follow',
 });
+
+export const doginalsMarketplace = wretch(DOGINALS_MARKETPLACE_API_URL);
 
 export const node = wretch(NODE_BASE_URL);

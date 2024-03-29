@@ -68,7 +68,6 @@ export const useTransactions = () => {
         )
         .json((res) => {
           setTokens(res?.result?.list);
-          console.log(res?.result?.list);
           setTokensTotal(res?.result?.total);
           // Don't increment page on initial fetch, where cursor is undefined
           if (typeof cursor === 'number') {

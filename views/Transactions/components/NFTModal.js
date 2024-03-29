@@ -65,7 +65,7 @@ export const NFTModal = ({
                 paddingY='1px'
               >
                 <Text fontWeight='semibold'>
-                  {formatSatoshisAsDoge(outputValue, 3)} Doge
+                  Ɖ {formatSatoshisAsDoge(outputValue, 3)}
                 </Text>
               </Box>
             </Box>
