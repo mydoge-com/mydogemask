@@ -1,14 +1,4 @@
-import dayjs from 'dayjs';
-import {
-  Avatar,
-  Box,
-  Button,
-  HStack,
-  Modal,
-  Spinner,
-  Text,
-  VStack,
-} from 'native-base';
+import { Avatar, Box, HStack, Modal, Spinner, Text, VStack } from 'native-base';
 import { useCallback, useEffect, useState } from 'react';
 import { BiTransfer } from 'react-icons/bi';
 
@@ -30,7 +20,6 @@ export const TokenModal = ({
       .get(`/drc20/data?tick=${ticker}`)
       .json((res) => {
         setTokenDetails(res);
-        console.log(res);
       })
       .catch(logError);
   }, [ticker]);
@@ -59,7 +48,7 @@ export const TokenModal = ({
                 {ticker.substring(0, 2).toUpperCase()}
               </Avatar>
               <Text fontSize='24px' fontWeight='semibold'>
-                {availableBalance} {ticker}
+                {Number(overallBalance).toLocaleString()} {ticker}
               </Text>
             </VStack>
             {tokenDetails ? (
@@ -71,11 +60,14 @@ export const TokenModal = ({
               >
                 <Pill
                   label='Price'
-                  value={formatSatoshisAsDoge(tokenDetails.floorPrice, 3)}
+                  value={`Ɖ ${formatSatoshisAsDoge(
+                    tokenDetails.floorPrice,
+                    3
+                  )}`}
                 />
                 <Pill
                   label='Volume'
-                  value={formatSatoshisAsDoge(tokenDetails.volume, 3)}
+                  value={`Ɖ ${formatSatoshisAsDoge(tokenDetails.volume, 3)}`}
                 />
                 <Pill
                   label='Minted/Supply'
@@ -93,22 +85,32 @@ export const TokenModal = ({
                 transform={[{ translateY: 4 }]}
               />
             )}
-            <HStack justifyContent='space-between' w='100%'>
-              <Text color='gray.500'>Confirmations </Text>
-            </HStack>
-            <HStack justifyContent='space-between' w='100%' pt='6px'>
-              <Text color='gray.500'>Timestamp </Text>
-            </HStack>
-            <Box pt='32px'>
-              <BigButton variant='secondary' px='28px'>
-                Transfer{' '}
-                <BiTransfer
-                  style={{
-                    paddingTop: '1px',
-                  }}
-                />
-              </BigButton>
-            </Box>
+            <VStack space='12px' w='100%' alignItems='flex-start' py='30px'>
+              <HStack justifyContent='space-between' w='100%'>
+                <Text color='gray.700' fontSize='16px' fontWeight='semibold'>
+                  Available balance:{' '}
+                </Text>
+                <Text color='gray.700' ontSize='16px'>
+                  {Number(availableBalance).toLocaleString()}
+                </Text>
+              </HStack>
+              <HStack justifyContent='space-between' w='100%'>
+                <Text color='gray.700' fontSize='16px' fontWeight='semibold'>
+                  Transferable balance:{' '}
+                </Text>
+                <Text color='gray.700' fontSize='16px'>
+                  {Number(transferableBalance).toLocaleString()}
+                </Text>
+              </HStack>
+            </VStack>
+            <BigButton variant='secondary' px='28px' mt='30px'>
+              Transfer{' '}
+              <BiTransfer
+                style={{
+                  paddingTop: '1px',
+                }}
+              />
+            </BigButton>
           </VStack>
         </Modal.Body>
       </Modal.Content>
@@ -127,10 +129,10 @@ function Pill({ label, value }) {
       flexDir='row'
       my='2px'
     >
-      <Text fontWeight='bold' fontSize='12px'>
+      <Text fontWeight='bold' fontSize='11px'>
         {label}:{' '}
       </Text>
-      <Text fontWeight='medium' fontSize='12px'>
+      <Text fontWeight='medium' fontSize='11px'>
         {value}
       </Text>
     </Box>

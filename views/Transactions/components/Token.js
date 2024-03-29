@@ -7,7 +7,7 @@ import { TokenModal } from './TokenModal';
 
 export const Token = ({
   token,
-  token: { availableBalance, overallBalance, ticker, transferableBalance },
+  token: { overallBalance, ticker, transferableBalance },
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   return (
@@ -30,7 +30,7 @@ export const Token = ({
           </Text>
           <VStack alignItems='flex-end' ml='8px'>
             <Text fontSize='sm' fontWeight='bold'>
-              {overallBalance}
+              {Number(overallBalance).toLocaleString()}
             </Text>
             <HStack>
               <Text
