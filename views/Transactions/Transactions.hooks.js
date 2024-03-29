@@ -213,6 +213,12 @@ export const useTransactions = () => {
     }
   }, [fetchNFTs, hasMoreNFTs]);
 
+  const fetchMoreTokens = useCallback(() => {
+    if (hasMoreTokens) {
+      fetchTokens({ cursor: currentTokensPage.current + 1 });
+    }
+  }, [fetchTokens, hasMoreTokens]);
+
   const currentAddress = useRef(walletAddress);
 
   useEffect(() => {
@@ -249,5 +255,6 @@ export const useTransactions = () => {
     tokens,
     tokensLoading,
     hasMoreTokens,
+    fetchMoreTokens,
   };
 };

@@ -10,9 +10,13 @@ import {
 import { useCallback } from 'react';
 
 import { Token } from './Token';
-// import { BigButton } from '../../../components/Button';
 
-export const TokensTab = ({ tokens, tokensLoading, hasMoreTokens }) => {
+export const TokensTab = ({
+  tokens,
+  tokensLoading,
+  hasMoreTokens,
+  fetchMoreTokens,
+}) => {
   const renderItem = useCallback(({ item }) => <Token token={item} />, []);
 
   return (
@@ -26,13 +30,6 @@ export const TokensTab = ({ tokens, tokensLoading, hasMoreTokens }) => {
           <Text color='gray.500' pt='24px' pb='32px'>
             No transactions found
           </Text>
-          {/* <Text fontSize='16px'>To get started, send DOGE to your wallet</Text> */}
-          {/* <BigButton mt='24px' onPress={onBuy}>
-            Buy DOGE
-          </BigButton> */}
-          {/* <BigButton mt='18px' onPress={toggleReceiveModal}>
-            Deposit DOGE
-          </BigButton> */}
         </VStack>
       ) : (
         <Box px='20px'>
@@ -49,7 +46,7 @@ export const TokensTab = ({ tokens, tokensLoading, hasMoreTokens }) => {
                 _hover={{ bg: 'gray.200' }}
                 alignSelf='center'
                 bg='gray.100'
-                // onPress={fetchMore}
+                onPress={fetchMoreTokens}
                 isDisabled={tokensLoading}
                 alignItems='center'
               >

@@ -3,7 +3,6 @@ import { Fragment, useState } from 'react';
 
 import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
 import { TokenModal } from './TokenModal';
-// import TimeAgo from 'timeago-react';
 
 export const Token = ({
   token,

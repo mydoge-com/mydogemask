@@ -1,13 +1,4 @@
-import {
-  Box,
-  // Button,
-  Center,
-  // FlatList,
-  HStack,
-  // Spinner,
-  Text,
-  // VStack,
-} from 'native-base';
+import { Box, Center, HStack, Text } from 'native-base';
 import { useCallback, useMemo, useState } from 'react';
 import { SceneMap, TabBar, TabView } from 'react-native-tab-view';
 
@@ -18,7 +9,6 @@ import { ActionButton } from './components/ActionButton';
 import { Balance } from './components/Balance';
 import { CollectiblesTab } from './components/CollectiblesTab';
 import { TokensTab } from './components/TokensTab';
-// import { Transaction } from './components/Transaction';
 import { TransactionsTab } from './components/TransactionsTab';
 import { useTransactions } from './Transactions.hooks';
 
@@ -41,6 +31,7 @@ export function Transactions() {
     tokens,
     tokensLoading,
     hasMoreTokens,
+    fetchMoreTokens,
   } = useTransactions();
 
   const { wallet, navigate, selectedAddressIndex } = useAppContext();
@@ -98,9 +89,10 @@ export function Transactions() {
         tokens={tokens}
         tokensLoading={tokensLoading}
         hasMoreTokens={hasMoreTokens}
+        fetchMoreTokens={fetchMoreTokens}
       />
     ),
-    [hasMoreTokens, tokens, tokensLoading]
+    [fetchMoreTokens, hasMoreTokens, tokens, tokensLoading]
   );
 
   const renderScene = useMemo(
