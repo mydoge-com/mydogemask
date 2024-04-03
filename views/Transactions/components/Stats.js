@@ -8,7 +8,7 @@ export function Stats({ usdPrice, dogeStats, ...props }) {
     <HStack justifyContent='space-between' px={6} {...props}>
       <HStack ai='center' space='12px'>
         <HStack p='8px' bg='yellow.50' borderRadius={7}>
-          <Image src={DogecoinIcon} width='24px' height='24px' />
+          <Image src={DogecoinIcon} width='24px' height='24px' alt='dogecoin' />
         </HStack>
         <Stack>
           <Text fontSize={11}>Price (USD)</Text>
@@ -18,7 +18,7 @@ export function Stats({ usdPrice, dogeStats, ...props }) {
       <Divider orientation='vertical' />
       <HStack ai='center' space='12px'>
         <HStack p='8px' bg='yellow.50' borderRadius={7}>
-          <Image src={ChartIcon} width='24px' height='24px' />
+          <Image src={ChartIcon} width='24px' height='24px' alt='chart' />
         </HStack>
         <HStack>
           <Text fontSize={11}>Txs (24hr)</Text>

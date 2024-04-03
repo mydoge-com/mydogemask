@@ -1,13 +1,4 @@
-import {
-  Box,
-  // Button,
-  Center,
-  // FlatList,
-  HStack,
-  // Spinner,
-  Text,
-  // VStack,
-} from 'native-base';
+import { Box, Center, HStack, Text } from 'native-base';
 import { useCallback, useMemo, useState } from 'react';
 import { SceneMap, TabBar, TabView } from 'react-native-tab-view';
 
@@ -17,7 +8,7 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { ActionButton } from './components/ActionButton';
 import { Balance } from './components/Balance';
 import { CollectiblesTab } from './components/CollectiblesTab';
-// import { Transaction } from './components/Transaction';
+import { TokensTab } from './components/TokensTab';
 import { TransactionsTab } from './components/TransactionsTab';
 import { useTransactions } from './Transactions.hooks';
 
@@ -26,7 +17,22 @@ const Receive = 'assets/receive.svg';
 const Send = 'assets/send.svg';
 
 export function Transactions() {
-  const { balance, usdValue } = useTransactions();
+  const {
+    balance,
+    usdValue,
+    NFTs,
+    hasMoreNFTs,
+    fetchMoreNFTs,
+    NFTsLoading,
+    transactions,
+    loading,
+    hasMore,
+    fetchMore,
+    tokens,
+    tokensLoading,
+    hasMoreTokens,
+    fetchMoreTokens,
+  } = useTransactions();
 
   const { wallet, navigate, selectedAddressIndex } = useAppContext();
 
@@ -41,13 +47,21 @@ export function Transactions() {
 
   const [index, setIndex] = useState(0);
   const [routes] = useState([
-    { key: 'first', title: 'Transactions' },
-    { key: 'second', title: 'Doginals' },
+    { key: 'transactions', title: 'Transactions' },
+    { key: 'doginals', title: 'Doginals' },
+    { key: 'tokens', title: 'Tokens' },
   ]);
 
   const NFTsRoute = useCallback(() => {
-    return <CollectiblesTab />;
-  }, []);
+    return (
+      <CollectiblesTab
+        NFTs={NFTs}
+        hasMoreNFTs={hasMoreNFTs}
+        fetchMoreNFTs={fetchMoreNFTs}
+        NFTsLoading={NFTsLoading}
+      />
+    );
+  }, [NFTs, NFTsLoading, fetchMoreNFTs, hasMoreNFTs]);
 
   const [addressDetailOpen, setAddressDetailOpen] = useState(false);
 
@@ -57,18 +71,38 @@ export function Transactions() {
 
   const TransactionsRoute = useCallback(
     () => (
-      <TransactionsTab toggleReceiveModal={toggleReceiveModal} onBuy={onBuy} />
+      <TransactionsTab
+        toggleReceiveModal={toggleReceiveModal}
+        onBuy={onBuy}
+        transactions={transactions}
+        loading={loading}
+        hasMore={hasMore}
+        fetchMore={fetchMore}
+      />
     ),
-    [toggleReceiveModal, onBuy]
+    [toggleReceiveModal, onBuy, transactions, loading, hasMore, fetchMore]
+  );
+
+  const TokensRoute = useCallback(
+    () => (
+      <TokensTab
+        tokens={tokens}
+        tokensLoading={tokensLoading}
+        hasMoreTokens={hasMoreTokens}
+        fetchMoreTokens={fetchMoreTokens}
+      />
+    ),
+    [fetchMoreTokens, hasMoreTokens, tokens, tokensLoading]
   );
 
   const renderScene = useMemo(
     () =>
       SceneMap({
-        first: TransactionsRoute,
-        second: NFTsRoute,
+        transactions: TransactionsRoute,
+        tokens: TokensRoute,
+        doginals: NFTsRoute,
       }),
-    [NFTsRoute, TransactionsRoute]
+    [NFTsRoute, TokensRoute, TransactionsRoute]
   );
 
   return (
@@ -117,7 +151,6 @@ export function Transactions() {
               {...props}
             />
           )}
-          lazy
         />
       </Box>
 
