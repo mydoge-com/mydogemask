@@ -1,6 +1,7 @@
 import wretch from 'wretch';
 
 import {
+  DOGECHAIN_API_URL,
   DOGINALS_MARKETPLACE_API_URL,
   DOGINALS_WALLET_API_URL,
   NODE_BASE_URL,
@@ -21,3 +22,5 @@ export const doginals = wretch(DOGINALS_WALLET_API_URL);
 export const doginalsMarketplace = wretch(DOGINALS_MARKETPLACE_API_URL);
 
 export const node = wretch(NODE_BASE_URL);
+
+export const dogechain = wretch(DOGECHAIN_API_URL);
