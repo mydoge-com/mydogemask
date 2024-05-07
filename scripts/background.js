@@ -42,7 +42,7 @@ const TRANSACTION_PAGE_SIZE = 10;
 function onCreateTransaction({ data = {}, sendResponse } = {}) {
   const amountSatoshi = sb.toSatoshi(data.dogeAmount);
   const amount = sb.toBitcoin(amountSatoshi);
-  console.log('tx data', data);
+  // console.log('tx data', data);
   // const jsonrpcReq = {
   //   API_key: apiKey,
   //   jsonrpc: '2.0',
@@ -56,73 +56,85 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
   //   ],
   // };
 
-  dogechain
-    .get(`/address/unspent/${data.senderAddress}`)
-    .json((response) => {
-      // Fetch utxos
-      const utxos = response.data.unspent_outputs.map((output) => {
-        return {
-          txid: output.tx_hash,
-          vout: output.tx_output_n,
-          script: output.script,
-          satoshis: output.value,
+  // dogechain
+  //   .get(`/address/unspent/${data.senderAddress}`)
+  //   .json((response) => {
+  nownodes.get(`/utxo/${data.senderAddress}`).json((response) => {
+    // Fetch utxos
+    // const utxos = response.data.unspent_outputs.map((output) => {
+    Promise.all(
+      response.map((output) => {
+        return new Promise((resolve) => {
+          // lookup script
+          nownodes.get(`/tx/${output.txid}`).json((tx) => {
+            // console.log('tx', tx);
+
+            resolve({
+              txid: output.txid, // output.tx_hash,
+              vout: output.vout, // output.tx_output_n,
+              script: tx.vout[output.vout].hex,
+              satoshis: parseInt(output.value, 10),
+            });
+          });
+        });
+      })
+    )
+      .then((utxos) => {
+        console.log('utxos', utxos[0]);
+
+        // estimate fee
+        const smartfeeReq = {
+          API_key: apiKey,
+          jsonrpc: '2.0',
+          id: `${data.senderAddress}_estimatesmartfee_${Date.now()}`,
+          method: 'estimatesmartfee',
+          params: [2], // confirm within x blocks
         };
-      });
 
-      console.log('utxos', utxos);
+        node.post(smartfeeReq).json((feeData) => {
+          console.log('smartfee data', feeData);
 
-      // estimate fee
-      const smartfeeReq = {
-        API_key: apiKey,
-        jsonrpc: '2.0',
-        id: `${data.senderAddress}_estimatesmartfee_${Date.now()}`,
-        method: 'estimatesmartfee',
-        params: [2], // confirm within x blocks
-      };
-
-      node.post(smartfeeReq).json((feeData) => {
-        console.log('smartfee data', feeData);
-
-        const tx = new Transaction();
-        tx.setFeePerKb(sb.toSatoshi(feeData.result.feerate));
-        tx.to(new Address(data.recipientAddress), amountSatoshi);
-        tx.change(data.senderAddress);
-
-        delete tx._fee;
-
-        for (let i = 0; i < utxos.length; i++) {
-          const utxo = utxos[i];
-
-          if (
-            tx.inputs.length &&
-            tx.outputs.length &&
-            tx.inputAmount >= tx.outputAmount + tx.getFee()
-          ) {
-            break;
-          }
+          const tx = new Transaction();
+          tx.feePerKb(sb.toSatoshi(feeData.result.feerate));
+          tx.to(new Address(data.recipientAddress), amountSatoshi);
+          tx.change(data.senderAddress);
 
           delete tx._fee;
-          tx.from(utxo);
-          tx.change(data.senderAddress);
-        }
 
-        if (tx.inputAmount < tx.outputAmount + tx.getFee()) {
-          throw new Error('not enough funds');
-        }
+          for (let i = 0; i < utxos.length; i++) {
+            const utxo = utxos[i];
 
-        console.log('tx', tx.toObject());
+            if (
+              tx.inputs.length &&
+              tx.outputs.length &&
+              tx.inputAmount >= tx.outputAmount + tx.getFee()
+            ) {
+              break;
+            }
 
-        sendResponse?.({
-          rawTx: tx.serialize(),
-          fee: sb.toBitcoin(tx.getFee()),
-          amount,
+            delete tx._fee;
+            tx.from(utxo);
+            tx.change(data.senderAddress);
+          }
+
+          if (tx.inputAmount < tx.outputAmount + tx.getFee()) {
+            throw new Error('not enough funds');
+          }
+
+          console.log('tx', tx.serialize(true));
+
+          sendResponse?.({
+            rawTx: tx.serialize(true),
+            fee: sb.toBitcoin(tx.getFee()),
+            amount,
+          });
         });
+      })
+      .catch((err) => {
+        logError(err);
+        sendResponse?.(false);
       });
-    })
-    .catch((err) => {
-      logError(err);
-      sendResponse?.(false);
-    });
+  });
 
   // nownodes
   //   .get(`/utxo/${data.senderAddress}`)

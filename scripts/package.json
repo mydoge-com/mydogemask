@@ -13,6 +13,7 @@
     "bip32": "2.0.4",
     "bip39": "^3.0.4",
     "bitcoinjs-lib": "4.0.5",
+    "bitcore-lib-doge": "^10.0.32",
     "crypto-js": "^4.1.1",
     "dogecoin-bip84": "0.0.5",
     "ky": "^0.33.1",
