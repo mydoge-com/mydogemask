@@ -42,6 +42,7 @@ const TRANSACTION_PAGE_SIZE = 10;
 function onCreateTransaction({ data = {}, sendResponse } = {}) {
   const amountSatoshi = sb.toSatoshi(data.dogeAmount);
   const amount = sb.toBitcoin(amountSatoshi);
+  console.log('tx data', data);
   // const jsonrpcReq = {
   //   API_key: apiKey,
   //   jsonrpc: '2.0',
@@ -56,7 +57,7 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
   // };
 
   dogechain
-    .get(`https://dogechain.info/api/v1/address/unspent/${data.seenderAddress}`)
+    .get(`/address/unspent/${data.senderAddress}`)
     .json((response) => {
       // Fetch utxos
       const utxos = response.data.unspent_outputs.map((output) => {
@@ -67,6 +68,8 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
           satoshis: output.value,
         };
       });
+
+      console.log('utxos', utxos);
 
       // estimate fee
       const smartfeeReq = {

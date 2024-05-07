@@ -31,7 +31,6 @@
     "no-console": "off",
     "no-else-return": "off",
     "import/prefer-default-export": "off",
-    "import/no-extraneous-dependencies": "off",
     "react/function-component-definition": "off",
     "react/no-unstable-nested-components": ["error", { "allowAsProps": true }],
     "no-nested-ternary": "off",
