@@ -56,3 +56,5 @@ yarn-error.log*
 
 .env
 build.zip
+
+/scripts/node_modules

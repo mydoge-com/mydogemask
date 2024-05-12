@@ -1,5 +1,5 @@
 import { Avatar, Button, Center, HStack, Text, Toast } from 'native-base';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
@@ -17,8 +17,11 @@ export const ConfirmationScreen = ({
   selectedAddressIndex,
 }) => {
   const { navigate } = useAppContext();
+  const [loading, setLoading] = useState(false);
   const onSubmit = useCallback(() => {
     let addressBalance;
+
+    setLoading(true);
     sendMessage(
       {
         message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
@@ -39,6 +42,8 @@ export const ConfirmationScreen = ({
         });
         if (error) {
           setErrors({ confirmation: error });
+          setLoading(false);
+
           return;
         }
         // Process transaction
@@ -49,6 +54,7 @@ export const ConfirmationScreen = ({
           },
           (txId) => {
             if (txId) {
+              setLoading(false);
               Toast.show({
                 duration: 3000,
                 render: () => {
@@ -63,6 +69,7 @@ export const ConfirmationScreen = ({
 
               navigate('Transactions');
             } else {
+              setLoading(false);
               Toast.show({
                 title: 'Error',
                 description: 'Transaction Failed',
@@ -146,6 +153,7 @@ export const ConfirmationScreen = ({
           role='button'
           px='28px'
           isDisabled={errors.confirmation}
+          loading={loading}
         >
           Pay
         </BigButton>
