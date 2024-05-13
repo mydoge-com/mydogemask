@@ -9,7 +9,7 @@ import sb from 'satoshi-bitcoin';
 
 // import { MIN_TX_AMOUNT } from '../constants/Doge';
 import { logError } from '../utils/error';
-import { apiKey, dogechain, node, nownodes } from './api';
+import { apiKey, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
