@@ -7,7 +7,6 @@ import {
 } from 'bitcore-lib-doge';
 import sb from 'satoshi-bitcoin';
 
-// import { MIN_TX_AMOUNT } from '../constants/Doge';
 import { logError } from '../utils/error';
 import { apiKey, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
@@ -42,23 +41,7 @@ const TRANSACTION_PAGE_SIZE = 10;
 function onCreateTransaction({ data = {}, sendResponse } = {}) {
   const amountSatoshi = sb.toSatoshi(data.dogeAmount);
   const amount = sb.toBitcoin(amountSatoshi);
-  // console.log('tx data', data);
-  // const jsonrpcReq = {
-  //   API_key: apiKey,
-  //   jsonrpc: '2.0',
-  //   id: `${data.senderAddress}_create_${Date.now()}`,
-  //   method: 'createrawtransaction',
-  //   params: [
-  //     [],
-  //     {
-  //       [data.recipientAddress]: amount,
-  //     },
-  //   ],
-  // };
 
-  // dogechain
-  //   .get(`/address/unspent/${data.senderAddress}`)
-  //   .json((response) => {
   nownodes.get(`/utxo/${data.senderAddress}`).json((response) => {
     // Fetch utxos
     // const utxos = response.data.unspent_outputs.map((output) => {
@@ -135,98 +118,6 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
         sendResponse?.(false);
       });
   });
-
-  // nownodes
-  //   .get(`/utxo/${data.senderAddress}`)
-  //   .json((response) => {
-  //     // Sort by smallest + oldest
-  //     const utxos = response.sort((a, b) => {
-  //       const aValue = sb.toBitcoin(a.value);
-  //       const bValue = sb.toBitcoin(b.value);
-  //       return aValue > bValue ? 1 : aValue < bValue ? -1 : a.height - b.height;
-  //     });
-
-  //     // estimate fee
-  //     const smartfeeReq = {
-  //       API_key: apiKey,
-  //       jsonrpc: '2.0',
-  //       id: `${data.senderAddress}_estimatesmartfee_${Date.now()}`,
-  //       method: 'estimatesmartfee',
-  //       params: [2], // confirm within x blocks
-  //     };
-  //     node.post(smartfeeReq).json((feeData) => {
-  //       console.log('smartfee data', feeData);
-  //     });
-
-  //     // console.log('smart fee', feeData.result.feerate)
-  //     const feePerInput = 0.0012; // estimate fee per input
-  //     let fee = feePerInput;
-  //     let total = 0;
-
-  //     for (let i = 0; i < utxos.length; i++) {
-  //       const utxo = utxos[i];
-  //       const value = sb.toBitcoin(utxo.value);
-  //       total += value;
-  //       fee = feePerInput * (i + 1);
-
-  //       jsonrpcReq.params[0].push({
-  //         txid: utxo.txid,
-  //         vout: utxo.vout,
-  //       });
-
-  //       if (total >= amount + fee) {
-  //         break;
-  //       }
-  //     }
-  //     // Set a dummy amount in the change address
-  //     jsonrpcReq.params[1][data.senderAddress] = feePerInput;
-  //     // console.log('estimated fee', fee);
-  //     // Get the raw transaction to determine actual size
-  //     return node.post(jsonrpcReq).json((estimateRes) => {
-  //       const size = estimateRes.result.length / 2;
-  //       // console.log('estimated size', size);
-  //       fee = Math.max(
-  //         parseFloat(((size / 1000) * 0.01).toFixed(8)),
-  //         feePerInput
-  //       );
-  //       // console.log('calculated fee', fee);
-  //       // Add change address and amount if enough, otherwise add to fee
-  //       const changeSatoshi = Math.trunc(
-  //         sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee)
-  //       );
-  //       // console.log('calculated change', changeSatoshi);
-  //       if (changeSatoshi >= 0) {
-  //         const changeAmount = sb.toBitcoin(changeSatoshi);
-  //         if (changeAmount >= MIN_TX_AMOUNT) {
-  //           jsonrpcReq.params[1][data.senderAddress] = changeAmount;
-  //         } else {
-  //           delete jsonrpcReq.params[1][data.senderAddress];
-  //           fee += changeAmount;
-  //         }
-  //       } else {
-  //         delete jsonrpcReq.params[1][data.senderAddress];
-  //         // All inputs can't cover fee, send max
-  //         jsonrpcReq.params[1][data.recipientAddress] = sb.toBitcoin(
-  //           sb.toSatoshi(amount) - sb.toSatoshi(fee)
-  //         );
-  //       }
-  //       // console.log('createrawtransaction req', jsonrpcReq);
-  //       // Return the raw tx and the fee
-  //       node.post(jsonrpcReq).json((jsonrpcRes) => {
-  //         // console.log('actual size', jsonrpcRes.result.length / 2);
-  //         // console.log('raw tx', jsonrpcRes.result);
-  //         sendResponse?.({
-  //           rawTx: jsonrpcRes.result,
-  //           fee,
-  //           amount: jsonrpcReq.params[1][data.recipientAddress],
-  //         });
-  //       });
-  //     });
-  //   })
-  //   .catch((err) => {
-  //     logError(err);
-  //     sendResponse?.(false);
-  //   });
 }
 
 function onSendTransaction({ data = {}, sendResponse } = {}) {
