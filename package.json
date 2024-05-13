@@ -16,6 +16,7 @@
     "bip32": "2.0.4",
     "bip39": "^3.0.4",
     "bitcoinjs-lib": "4.0.5",
+    "bitcore-lib-doge": "^10.0.32",
     "crypto-js": "^4.1.1",
     "dayjs": "^1.11.7",
     "expo-font": "^10.0.3",
