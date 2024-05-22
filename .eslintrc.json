@@ -38,7 +38,8 @@
     "simple-import-sort/exports": "error",
     "simple-import-sort/imports": "error",
     "import/no-relative-packages": "off",
-    "no-underscore-dangle": "off"
+    "no-underscore-dangle": "off",
+    "no-await-in-loop": "off",
   },
   "globals": {
     "chrome": true

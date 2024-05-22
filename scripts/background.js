@@ -8,12 +8,15 @@ import {
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { apiKey, node, nownodes } from './api';
+import { apiKey, doginals, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
   CONNECTED_CLIENTS,
+  FEE_RATE_KB,
+  MAX_UTXOS,
   MESSAGE_TYPES,
+  MIN_TX_AMOUNT,
   ONBOARDING_COMPLETE,
   PASSWORD,
   WALLET,
@@ -37,10 +40,215 @@ import {
 
 const TRANSACTION_PAGE_SIZE = 10;
 
+function sanitizeFloatAmount(amount) {
+  return sb.toBitcoin(Math.trunc(sb.toSatoshi(amount)));
+}
+
+async function getInscriptions(address) {
+  let cursor = 0;
+  const size = 100;
+  const result = [];
+  const query = await doginals
+    .get(
+      `/address/inscriptions?address=${address}&cursor=${cursor}&size=${size}`
+    )
+    .json();
+
+  console.log(
+    'found',
+    query.result.list.length,
+    'inscriptions in page',
+    cursor,
+    'total',
+    query.result.total
+  );
+
+  result.push(
+    ...query.result.list.map((i) => ({
+      txid: i.output.split(':')[0],
+      vout: parseInt(i.output.split(':')[1], 10),
+      genesis: i.genesisTransaction,
+    }))
+  );
+
+  while (query.result.total !== result.length) {
+    cursor += 1;
+    query = await doginals
+      .get(
+        `/address/inscriptions?address=${address}&cursor=${cursor}&size=${size}`
+      )
+      .json();
+
+    console.log(
+      'found',
+      query.result.list.length,
+      'inscriptions in page',
+      cursor
+    );
+
+    result.push(
+      ...query.result.list.map((i) => ({
+        txid: i.output.split(':')[0],
+        vout: parseInt(i.output.split(':')[1], 10),
+        genesis: i.genesisTransaction,
+      }))
+    );
+  }
+
+  return result;
+}
+
 // Build a raw transaction and determine fee
-function onCreateTransaction({ data = {}, sendResponse } = {}) {
+async function onCreateTransaction({ data = {}, sendResponse } = {}) {
+  const amountSatoshi = sb.toSatoshi(data.dogeAmount);
+  let amount = sb.toBitcoin(amountSatoshi);
+
+  try {
+    // get utxos and inscriptions
+    const utxos = (
+      await nownodes.get(`/utxo/${data.senderAddress}`).json()
+    ).sort((a, b) => {
+      const aValue = sb.toBitcoin(a.value);
+      const bValue = sb.toBitcoin(b.value);
+      return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
+    });
+
+    console.log('found utxos', utxos.length);
+
+    const inscriptions = await getInscriptions(data.senderAddress);
+    // estimate fee
+    const smartfeeReq = {
+      API_key: apiKey,
+      jsonrpc: '2.0',
+      id: `${data.senderAddress}_estimatesmartfee_${Date.now()}`,
+      method: 'estimatesmartfee',
+      params: [2], // confirm within x blocks
+    };
+    const feeData = await node.post(smartfeeReq).json();
+    const feePerKB = feeData.result.feerate || FEE_RATE_KB;
+    const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
+    const jsonrpcReq = {
+      API_key: apiKey,
+      jsonrpc: '2.0',
+      id: `${data.senderAddress}_create_${Date.now()}`,
+      method: 'createrawtransaction',
+      params: [
+        [],
+        {
+          [data.recipientAddress]: amount,
+        },
+      ],
+    };
+    let fee = feePerInput;
+    let total = 0;
+    let i = 0;
+
+    console.log('found feerate', feeData.result.feerate);
+    console.log('using feePerKb', feePerKB);
+    console.log('estimated feePerInput', feePerInput);
+
+    for (const utxo of utxos) {
+      // Check cached utxo
+
+      // Avoid inscription UTXOs
+      if (
+        inscriptions.find((i) => i.txid === utxo.txid && i.vout === utxo.vout)
+      ) {
+        console.log('skipping inscription utxo', utxo.txid, utxo.vout);
+        continue;
+      }
+
+      const value = sb.toBitcoin(utxo.value);
+      total += value;
+      fee = feePerInput * (i + 1);
+      jsonrpcReq.params[0].push({
+        txid: utxo.txid,
+        vout: utxo.vout,
+      });
+
+      i++;
+
+      if (total >= amount + fee) {
+        break;
+      }
+
+      if (i === MAX_UTXOS) {
+        total = amount = sanitizeFloatAmount(total);
+
+        console.warn(`hit UTXO limit with ${i} inputs, sending max ${amount}`);
+        break;
+      }
+    }
+
+    total = sanitizeFloatAmount(total);
+    amount = sanitizeFloatAmount(amount);
+    fee = sanitizeFloatAmount(fee);
+
+    console.log('num utxos', i);
+    console.log('total', total);
+    console.log('amount', amount);
+    console.log('estimated fee', fee);
+
+    // Detect insufficient funds, discounting estimated fee from amount to allow for max send
+    if (total === 0 || i === 0 || total - fee < MIN_TX_AMOUNT) {
+      throw new Error(
+        `Insufficient funds ${total} < ${amount} + ${fee} with ${i}/${utxos.length} inputs`
+      );
+    }
+
+    // Set a dummy amount in the change address
+    jsonrpcReq.params[1][data.senderAddress] = feePerInput;
+    const estimateRes = await node.post(jsonrpcReq).json();
+    const size = estimateRes.result.length / 2;
+
+    console.log('tx size', size);
+
+    fee = Math.max(sanitizeFloatAmount((size / 1000) * feePerKB), feePerInput);
+
+    // Adjust for max send
+    if (total < amount + fee) {
+      amount = sanitizeFloatAmount(total - fee);
+      jsonrpcReq.params[1][data.recipientAddress] = amount;
+    }
+
+    console.log('calculated fee', fee);
+
+    // Add change address and amount if enough, otherwise add to fee
+    const changeSatoshi = Math.trunc(
+      sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee)
+    );
+
+    console.log('calculated change', changeSatoshi);
+
+    if (changeSatoshi >= 0) {
+      const changeAmount = sb.toBitcoin(changeSatoshi);
+      if (changeAmount >= MIN_TX_AMOUNT) {
+        jsonrpcReq.params[1][data.senderAddress] = changeAmount;
+      } else {
+        delete jsonrpcReq.params[1][data.senderAddress];
+        fee += changeAmount;
+      }
+    }
+
+    const rawTx = await node.post(jsonrpcReq).json();
+
+    console.log('raw tx', rawTx.result);
+
+    sendResponse?.({
+      rawTx: rawTx.result,
+      fee,
+      amount,
+    });
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+}
+
+async function onCreateTransaction_new({ data = {}, sendResponse } = {}) {
   const amountSatoshi = sb.toSatoshi(data.dogeAmount);
   const amount = sb.toBitcoin(amountSatoshi);
+  const inscriptions = await getInscriptions(data.senderAddress);
 
   nownodes.get(`/utxo/${data.senderAddress}`).json((response) => {
     // Fetch utxos
@@ -49,22 +257,34 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
       response.map((output) => {
         return new Promise((resolve) => {
           // lookup script
-          nownodes.get(`/tx/${output.txid}`).json((tx) => {
-            // console.log('tx', tx);
+          getLocalValue(output.txid).then((script) => {
+            if (script) {
+              resolve({
+                txid: output.txid,
+                vout: output.vout,
+                script,
+                satoshis: parseInt(output.value, 10),
+              });
+              return;
+            }
 
-            resolve({
-              txid: output.txid, // output.tx_hash,
-              vout: output.vout, // output.tx_output_n,
-              script: tx.vout[output.vout].hex,
-              satoshis: parseInt(output.value, 10),
+            nownodes.get(`/tx/${output.txid}`).json((tx) => {
+              setLocalValue({ [output.txid]: tx.vout[output.vout].hex }).then(
+                () => {
+                  resolve({
+                    txid: output.txid, // output.tx_hash,
+                    vout: output.vout, // output.tx_output_n,
+                    script: tx.vout[output.vout].hex,
+                    satoshis: parseInt(output.value, 10),
+                  });
+                }
+              );
             });
           });
         });
       })
     )
       .then((utxos) => {
-        console.log('utxos', utxos[0]);
-
         // estimate fee
         const smartfeeReq = {
           API_key: apiKey,
@@ -75,36 +295,52 @@ function onCreateTransaction({ data = {}, sendResponse } = {}) {
         };
 
         node.post(smartfeeReq).json((feeData) => {
-          console.log('smartfee data', feeData);
-
           const tx = new Transaction();
+          const utxoList = [];
+
           tx.feePerKb(sb.toSatoshi(feeData.result.feerate));
           tx.to(new Address(data.recipientAddress), amountSatoshi);
-          tx.change(data.senderAddress);
-
-          delete tx._fee;
 
           for (let i = 0; i < utxos.length; i++) {
             const utxo = utxos[i];
 
+            // // Avoid inscription UTXOs
             if (
+              inscriptions.find(
+                (i) => i.txid === utxo.txid && i.vout === utxo.vout
+              )
+            ) {
+              console.log('skipping inscription utxo', utxo.txid, utxo.vout);
+              continue;
+            }
+
+            utxoList.push(utxo);
+
+            delete tx._fee;
+
+            tx.from(utxoList);
+            tx.change(data.senderAddress);
+
+            if (
+              tx.getFee() > 0 &&
               tx.inputs.length &&
               tx.outputs.length &&
               tx.inputAmount >= tx.outputAmount + tx.getFee()
             ) {
               break;
             }
-
-            delete tx._fee;
-            tx.from(utxo);
-            tx.change(data.senderAddress);
           }
 
           if (tx.inputAmount < tx.outputAmount + tx.getFee()) {
             throw new Error('not enough funds');
           }
 
-          console.log('tx', tx.serialize(true));
+          console.log('fee rate', feeData.result.feerate);
+          console.log('tx size', tx._estimateSize());
+          console.log('input', sb.toBitcoin(tx.inputAmount));
+          console.log('output', sb.toBitcoin(tx.outputAmount));
+          console.log('fee', sb.toBitcoin(tx.getFee()));
+          console.log('change', sb.toBitcoin(tx.getChangeOutput() || 0));
 
           sendResponse?.({
             rawTx: tx.serialize(true),
