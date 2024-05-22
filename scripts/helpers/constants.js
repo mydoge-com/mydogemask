@@ -7,7 +7,7 @@ export const NOWNODES_BASE_URL = 'https://dogebook.nownodes.io/api/v2';
 export const MAX_NICKNAME_LENGTH = 18;
 export const FEE_RATE_KB = 0.5;
 export const MAX_UTXOS = 1000;
-export const MIN_TX_AMOUNT = 0.01;
+export const MIN_TX_AMOUNT = 0.001;
 
 const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_CONNECTION: 'clientRequestConnection',
