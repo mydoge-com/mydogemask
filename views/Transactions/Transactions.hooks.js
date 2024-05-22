@@ -9,7 +9,7 @@ import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
 import { formatTransaction } from '../../utils/transactions';
 
-const QUERY_INTERVAL = 30000;
+const QUERY_INTERVAL = 10000;
 const QUERY_PAGE_SIZE = 10;
 
 export const useTransactions = () => {
