@@ -8,6 +8,7 @@ import {
   Success,
 } from '../views/Onboarding';
 import { Send } from '../views/Send';
+import { SendNFT } from '../views/Send/SendNFT';
 import { Transactions } from '../views/Transactions';
 
 const screens = {
@@ -19,6 +20,7 @@ const screens = {
   Transactions,
   ResetWallet,
   Send,
+  SendNFT,
   ClientConnect,
   ClientTransaction,
 };

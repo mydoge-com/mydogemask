@@ -19,6 +19,7 @@ export const DISPATCH_TYPES = {
   SET_WALLET: 'SET_WALLET',
   SIGN_OUT: 'SIGN_OUT',
   SIGN_IN: 'SIGN_IN',
+  SELECT_NFT: 'SET_NFT',
   SELECT_WALLET: 'SELECT_WALLET',
   SET_CLIENT_REQUEST: 'SET_CLIENT_REQUEST',
   CLEAR_CLIENT_REQUEST: 'CLEAR_CLIENT_REQUEST',
@@ -40,6 +41,8 @@ const reducer = (state, { type, payload }) => {
       return { ...state, authenticated: payload };
     case DISPATCH_TYPES.SET_WALLET:
       return { ...state, wallet: payload.wallet };
+    case DISPATCH_TYPES.SELECT_NFT:
+      return { ...state, selectedNFT: payload.nft };
     case DISPATCH_TYPES.SIGN_OUT:
       return {
         ...state,

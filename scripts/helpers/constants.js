@@ -8,6 +8,7 @@ export const MAX_NICKNAME_LENGTH = 18;
 export const FEE_RATE_KB = 0.5;
 export const MAX_UTXOS = 1000;
 export const MIN_TX_AMOUNT = 0.001;
+export const NFT_PAGE_SIZE = 100;
 
 const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_CONNECTION: 'clientRequestConnection',
@@ -40,7 +41,9 @@ export const MESSAGE_TYPES = {
   GET_TRANSACTIONS: 'getTransactions',
   GET_TRANSACTION_DETAILS: 'getTransactionDetails',
   CREATE_TRANSACTION: 'createTransaction',
+  CREATE_NFT_TRANSACTION: 'createNFTTransaction',
   SEND_TRANSACTION: 'sendTransaction',
+  CREATE_DOGINAL_TRANSACTION: 'createDoginalTransaction',
   GET_CONNECTED_CLIENTS: 'getConnectedClients',
   UPDATE_ADDRESS_NICKNAME: 'updateAddressNickname',
   NOTIFY_TRANSACTION_SUCCESS: 'notifyTransactionSuccess',

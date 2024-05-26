@@ -10,8 +10,11 @@ import {
 } from 'native-base';
 import { FiExternalLink } from 'react-icons/fi';
 
+import { DISPATCH_TYPES } from '../../../Context';
 import { BigButton } from '../../../components/Button';
+import { useAppContext } from '../../../hooks/useAppContext';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
+import { useCallback } from 'react';
 
 export const NFTModal = ({
   isOpen,
@@ -27,7 +30,14 @@ export const NFTModal = ({
     genesisTransaction,
   },
   children,
+  nft,
 }) => {
+  const { dispatch, navigate } = useAppContext();
+  const onSend = useCallback(() => {
+    dispatch({ type: DISPATCH_TYPES.SELECT_NFT, payload: { nft } });
+    navigate('SendNFT');
+  }, [dispatch, navigate, nft]);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size='full'>
       <Modal.Content w='90%'>
@@ -133,7 +143,7 @@ export const NFTModal = ({
             </ScrollView>
 
             <Box pt='32px'>
-              <BigButton variant='secondary' px='28px'>
+              <BigButton variant='secondary' px='28px' onPress={onSend}>
                 Send
               </BigButton>
             </Box>

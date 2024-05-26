@@ -1,17 +1,22 @@
-import { Input, Text } from 'native-base';
-import { useCallback } from 'react';
+import { Input, Text, Toast } from 'native-base';
+import { useCallback, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
+import { ToastRender } from '../../components/ToastRender';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import { sendMessage } from '../../scripts/helpers/message';
 import { validateAddress } from '../../scripts/helpers/wallet';
 
 export const AddressScreen = ({
   walletAddress,
+  selectedNFT,
   setFormPage,
   errors,
   setErrors,
   setFormData,
   formData,
 }) => {
+  const [loading, setLoading] = useState(false);
   const onChangeText = useCallback(
     (text) => {
       setErrors({});
@@ -40,9 +45,47 @@ export const AddressScreen = ({
 
   const onSubmit = useCallback(() => {
     if (validate()) {
-      setFormPage('amount');
+      if (!selectedNFT) {
+        setFormPage('amount');
+      } else {
+        setLoading(true);
+        sendMessage(
+          {
+            message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
+            data: { ...selectedNFT, recipientAddress: formData.address.trim() },
+          },
+          ({ rawTx, fee, amount }) => {
+            if (rawTx && fee !== undefined && amount) {
+              setFormData({
+                ...formData,
+                rawTx,
+                fee,
+                dogeAmount: amount,
+              });
+              setFormPage('confirmation');
+              setLoading(false);
+            } else {
+              setLoading(false);
+              Toast.show({
+                title: 'Error',
+                description: 'Error creating transaction',
+                duration: 3000,
+                render: () => {
+                  return (
+                    <ToastRender
+                      title='Error'
+                      description='Error creating transaction'
+                      status='error'
+                    />
+                  );
+                },
+              });
+            }
+          }
+        );
+      }
     }
-  }, [setFormPage, validate]);
+  }, [setFormPage, selectedNFT, formData.address, validate]);
 
   return (
     <>
@@ -83,6 +126,7 @@ export const AddressScreen = ({
         role='button'
         mt='32px'
         isDisabled={!formData.address || formData.address.length <= 26}
+        loading={loading}
       >
         Next
       </BigButton>

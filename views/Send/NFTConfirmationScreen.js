@@ -8,7 +8,7 @@ import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
 
-export const ConfirmationScreen = ({
+export const NFTConfirmationScreen = ({
   setFormPage,
   errors,
   setErrors,
