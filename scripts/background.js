@@ -130,8 +130,8 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
     console.log('using feePerKb', feePerKB);
     console.log('estimated feePerInput', feePerInput);
 
-    for (const utxo of utxos) {
-      // Check cached utxo
+    for (var j = 0; j < utxos.length; j++) {
+      const utxo = utxos[j];
 
       // Avoid inscription UTXOs
       if (
@@ -154,6 +154,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
       i++;
 
       if (total >= amount + fee) {
+        console.log('utxo', i, total, '>=', amount + fee);
         break;
       }
 
