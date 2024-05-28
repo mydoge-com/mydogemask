@@ -12,7 +12,7 @@ export const ActionButton = ({ icon, onPress, label, ...props }) => {
           justifyContent='center'
           borderRadius='18px'
         >
-          <Image src={icon} width='24px' height='24px' />
+          <Image src={icon} width='24px' height='24px' alt={label} />
         </HStack>
       </Pressable>
       <Text fontSize={13} fontWeight='500'>

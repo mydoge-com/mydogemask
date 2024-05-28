@@ -2,17 +2,17 @@ const path = require('path');
 const NodePolyfillPlugin = require('node-polyfill-webpack-plugin');
 const webpack = require('webpack');
 
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: './.env' });
 
 module.exports = {
   entry: {
-    background: './background.js',
-    contentScript: './contentScript.js',
-    'inject-script': './inject-script.js',
+    background: './scripts/background.js',
+    contentScript: './scripts/contentScript.js',
+    'inject-script': './scripts/inject-script.js',
   },
   output: {
-    filename: '[name].js',
-    path: path.resolve(__dirname, 'compiled'),
+    filename: './compiled/[name].js',
+    path: path.resolve(__dirname, 'scripts'),
   },
   mode: 'production',
   module: {
