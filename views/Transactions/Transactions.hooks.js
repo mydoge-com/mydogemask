@@ -3,7 +3,7 @@ import sb from 'satoshi-bitcoin';
 
 import { useAppContext } from '../../hooks/useAppContext';
 import { useInterval } from '../../hooks/useInterval';
-import { doginals } from '../../scripts/api';
+import { doginals, doginalsV2 } from '../../scripts/api';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
@@ -37,13 +37,14 @@ export const useTransactions = () => {
   const fetchNFTs = useCallback(
     ({ cursor } = {}) => {
       setNFTsLoading(true);
-      doginals
+      doginalsV2
         .get(
           `/address/inscriptions?address=${walletAddress}&cursor=${
             cursor || 0
           }&size=${QUERY_PAGE_SIZE}`
         )
         .json((res) => {
+          console.log('res', res);
           setNFTs(res?.result?.list);
           setNFTsTotal(res?.result?.total);
           // Don't increment page on initial fetch, where cursor is undefined

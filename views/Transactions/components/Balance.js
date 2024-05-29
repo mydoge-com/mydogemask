@@ -20,6 +20,7 @@ export function Balance({ balance, usdValue }) {
         top={0}
         alignSelf='center'
         zIndex={2}
+        alt='Mydoge icon'
       />
       <VStack
         bg='yellow.100'
@@ -55,10 +56,10 @@ export function Balance({ balance, usdValue }) {
                 <Pressable onPress={toggleBalanceVisibility} p='8px'>
                   <VStack justifyContent='center'>
                     {balanceVisible ? (
-                      <Image source={EyeEnabled} width='16px' height='12px' />
+                      <Image source={EyeEnabled} width='16px' height='12px' alt='show balance' />
                     ) : null}
                     {!balanceVisible ? (
-                      <Image source={EyeDisabled} width='16px' height='16px' />
+                      <Image source={EyeDisabled} width='16px' height='16px' alt='hide balance' />
                     ) : null}
                   </VStack>
                 </Pressable>

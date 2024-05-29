@@ -12,6 +12,7 @@ import { TokensTab } from './components/TokensTab';
 import { TransactionsTab } from './components/TransactionsTab';
 import { useTransactions } from './Transactions.hooks';
 
+
 const Buy = 'assets/buy.svg';
 const Receive = 'assets/receive.svg';
 const Send = 'assets/send.svg';

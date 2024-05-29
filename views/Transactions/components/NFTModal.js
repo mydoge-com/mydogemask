@@ -26,6 +26,7 @@ export const NFTModal = ({
     inscriptionId,
     genesisTransaction,
   },
+  children,
 }) => {
   return (
     <Modal isOpen={isOpen} onClose={onClose} size='full'>
@@ -34,13 +35,7 @@ export const NFTModal = ({
         <Modal.Body alignItems='center' pt='54px' pb='36px'>
           <VStack w='100%'>
             <Box width='100%' borderRadius='12px' overflow='hidden'>
-              <img
-                src={content}
-                width='100%'
-                height='auto'
-                alt='NFT'
-                resizeMode='contain'
-              />
+              {children}
               <Pressable
                 onPress={() => window.open(content)}
                 position='absolute'
