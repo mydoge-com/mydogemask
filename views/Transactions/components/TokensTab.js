@@ -37,7 +37,7 @@ export const TokensTab = ({
             <FlatList
               data={tokens}
               renderItem={renderItem}
-              keyExtractor={(item) => item.id}
+              keyExtractor={(item) => item.ticker}
             />
             {hasMoreTokens ? (
               <Button

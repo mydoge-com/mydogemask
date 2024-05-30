@@ -35,17 +35,16 @@ export const useTransactions = () => {
   const currentTokensPage = useRef(0);
 
   const fetchNFTs = useCallback(
-    ({ cursor } = {}) => {
+    ({ currentNFTs = [], cursor } = {}) => {
       setNFTsLoading(true);
       doginalsV2
         .get(
           `/address/inscriptions?address=${walletAddress}&cursor=${
-            cursor || 0
+            cursor ?? 0
           }&size=${QUERY_PAGE_SIZE}`
         )
         .json((res) => {
-          console.log('res', res);
-          setNFTs(res?.result?.list);
+          setNFTs([...currentNFTs, ...res?.result?.list]);
           setNFTsTotal(res?.result?.total);
           // Don't increment page on initial fetch, where cursor is undefined
           if (typeof cursor === 'number') {
@@ -59,7 +58,7 @@ export const useTransactions = () => {
   );
 
   const fetchTokens = useCallback(
-    ({ cursor } = {}) => {
+    ({ cursor, currentTokens = [] } = {}) => {
       setTokensLoading(true);
       doginals
         .get(
@@ -68,7 +67,7 @@ export const useTransactions = () => {
           }&size=${QUERY_PAGE_SIZE}`
         )
         .json((res) => {
-          setTokens(res?.result?.list);
+          setTokens([...currentTokens, ...res?.result?.list]);
           setTokensTotal(res?.result?.total);
           // Don't increment page on initial fetch, where cursor is undefined
           if (typeof cursor === 'number') {
@@ -210,15 +209,15 @@ export const useTransactions = () => {
 
   const fetchMoreNFTs = useCallback(() => {
     if (hasMoreNFTs) {
-      fetchNFTs({ cursor: currentNFTPage.current + 1 });
+      fetchNFTs({ cursor: currentNFTPage.current + 1, currentNFTs: NFTs });
     }
-  }, [fetchNFTs, hasMoreNFTs]);
+  }, [fetchNFTs, hasMoreNFTs, NFTs]);
 
   const fetchMoreTokens = useCallback(() => {
     if (hasMoreTokens) {
-      fetchTokens({ cursor: currentTokensPage.current + 1 });
+      fetchTokens({ cursor: currentTokensPage.current + 1, currentTokens: tokens });
     }
-  }, [fetchTokens, hasMoreTokens]);
+  }, [fetchTokens, hasMoreTokens, tokens]);
 
   const currentAddress = useRef(walletAddress);
 

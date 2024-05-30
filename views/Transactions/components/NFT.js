@@ -40,10 +40,10 @@ export const NFT = ({
 export const NFTView = ({ content, mimeType }) => {
   switch (mimeType.type) {
     case 'image':
-      return <img src={content} width='100%' height='auto' alt='NFT' resizeMode='contain' />;
+      return <img src={content} width='100%' height='auto' alt='NFT' />;
     case 'text':
       return <iframe src={content} width='100%' height='auto' sandbox='allow-same-origin allow-scripts' allow />;
     default:
-      return <img src='./assets/default-nft.webp' width='100%' height='auto' alt='NFT' resizeMode='contain' />;
+      return <img src='./assets/default-nft.webp' width='100%' height='auto' alt='NFT' />;
   }
 }

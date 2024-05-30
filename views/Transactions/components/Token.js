@@ -9,10 +9,7 @@ export const Token = ({
   token: { overallBalance, ticker, transferableBalance },
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-
-
-
-  console.log('token', token)
+  
   return (
     <Fragment key={ticker}>
       <Pressable onPress={() => setIsOpen(true)} paddingTop='10px'>

@@ -40,7 +40,7 @@ export const CollectiblesTab = ({
             <FlatList
               data={NFTs}
               renderItem={renderItem}
-              keyExtractor={(item) => item.inscriptionId}
+              keyExtractor={(item) => item.inscriptionNumber}
               numColumns={2}
             />
             {hasMoreNFTs ? (
