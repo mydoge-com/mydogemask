@@ -7,7 +7,6 @@
     "build-scripts": "webpack --config ./webpack.config.js",
     "start": "yarn dev",
     "lint": "next lint",
-    "postinstall": "cd scripts && yarn install && cd ..",
     "watch": "nodemon --exec \"yarn run build\""
   },
   "dependencies": {
