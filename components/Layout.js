@@ -50,6 +50,7 @@ export const Layout = ({
         height='600px'
         opacity={0.7}
         pointerEvents='none'
+        alt='Background pattern'
       />
     </Box>
   );

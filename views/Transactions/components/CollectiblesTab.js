@@ -18,7 +18,7 @@ export const CollectiblesTab = ({
   fetchMoreNFTs,
   NFTsLoading,
 }) => {
-  const renderItem = useCallback(({ item }) => <NFT nft={item} />, []);
+  const renderItem = useCallback(({ item, index }) => <NFT nft={item} index={index} />, []);
 
   return (
     <Box flex={1}>
@@ -40,7 +40,8 @@ export const CollectiblesTab = ({
             <FlatList
               data={NFTs}
               renderItem={renderItem}
-              keyExtractor={(item) => item.inscriptionId}
+              keyExtractor={(item) => item.inscriptionNumber}
+              numColumns={2}
             />
             {hasMoreNFTs ? (
               <Button

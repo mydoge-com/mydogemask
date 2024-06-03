@@ -4,6 +4,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "./build.sh",
+    "build-scripts": "webpack --config ./webpack.config.js",
     "start": "yarn dev",
     "lint": "next lint",
     "postinstall": "cd scripts && yarn install && cd ..",
@@ -19,7 +20,10 @@
     "bitcore-lib-doge": "^10.0.32",
     "crypto-js": "^4.1.1",
     "dayjs": "^1.11.7",
+    "dogecoin-bip84": "0.0.5",
+    "dotenv": "^16.4.5",
     "expo-font": "^10.0.3",
+    "ky": "^0.33.1",
     "multicoin-address-validator": "0.5.10",
     "native-base": "3.4.0",
     "next": "12.0.4",
@@ -36,10 +40,16 @@
     "react-no-ssr": "^1.1.0",
     "satoshi-bitcoin": "1.0.5",
     "secure-ls": "^1.2.6",
-    "timeago-react": "^3.0.5"
+    "timeago-react": "^3.0.5",
+    "whatwg-mimetype": "^4.0.0",
+    "wretch": "^2.3.2"
   },
   "devDependencies": {
     "@babel/core": "7.18.10",
+
+    "node-polyfill-webpack-plugin": "^3.0.0",
+
+    "babel-loader": "8.3.0",
     "@babel/eslint-parser": "^7.19.1",
     "@babel/plugin-proposal-optional-chaining": "7.18.9",
     "babel-plugin-transform-inline-environment-variables": "0.4.4",
@@ -61,7 +71,9 @@
     "next-fonts": "^1.5.1",
     "next-transpile-modules": "^9.0.0",
     "nodemon": "^2.0.20",
-    "prettier": "2.7.1"
+    "prettier": "2.7.1",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4"
   },
   "watch": {
     "build": {

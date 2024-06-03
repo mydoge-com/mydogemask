@@ -122,7 +122,7 @@ export const Header = ({
               justifyContent='center'
               backgroundColor='gray.100'
             >
-              <Image source={User} width='20px' height='25px' />
+              <Image source={User} width='20px' height='25px' alt='Menu' />
             </Pressable>
           );
         }}
