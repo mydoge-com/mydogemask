@@ -8,7 +8,7 @@ import {
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { apiKey, doginals, node, nownodes } from './api';
+import { apiKey, doginalsV2, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
@@ -46,7 +46,7 @@ function sanitizeFloatAmount(amount) {
 }
 
 async function getInscriptions(address, cursor, result) {
-  const query = await doginals
+  const query = await doginalsV2
     .get(
       `/address/inscriptions?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
     )
