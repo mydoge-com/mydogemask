@@ -72,7 +72,7 @@ async function getInscriptions(address, cursor, result) {
   // console.log(`fetched ${result.length}/${query.result.total} inscriptions`);
 
   if (query.result.total !== result.length) {
-    cursor += NFT_PAGE_SIZE;
+    cursor += 1;
     return getInscriptions(address, cursor, result);
   }
 }
