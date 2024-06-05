@@ -7,7 +7,8 @@
     "build-scripts": "webpack --config ./webpack.config.js",
     "start": "yarn dev",
     "lint": "next lint",
-    "watch": "nodemon --exec \"yarn run build\""
+    "watch": "nodemon --exec \"yarn run build\"",
+    "postinstall": "npx patch-package"
   },
   "dependencies": {
     "@mydogeofficial/dogecoin-js": "^0.1.0-beta.4",
@@ -17,6 +18,7 @@
     "bip39": "^3.0.4",
     "bitcoinjs-lib": "4.0.5",
     "bitcore-lib-doge": "https://github.com/mydoge-com/bitcore-lib-doge",
+    "bn.js": "^5.2.1",
     "crypto-js": "^4.1.1",
     "dayjs": "^1.11.7",
     "dogecoin-bip84": "0.0.5",
