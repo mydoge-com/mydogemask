@@ -368,7 +368,7 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onCreateTokenTransaction({ data = {}, sendResponse } = {}) {
+async function onCreateInscribeTransfer({ data = {}, sendResponse } = {}) {
   const amountSatoshi = sb.toSatoshi(data.dogeAmount);
   const amount = sb.toBitcoin(amountSatoshi);
   const inscriptions = await getInscriptions(data.senderAddress);

@@ -41,13 +41,13 @@ export const TokenModal = ({
         token: {
           ...token,
           dogePrice: Number(
-            formatSatoshisAsDoge(Math.round(tokenDetails.floorPrice))
+            formatSatoshisAsDoge(Math.round(tokenDetails?.floorPrice))
           ),
         },
       },
     });
     navigate('TransferAvailable');
-  }, [dispatch, navigate, token, tokenDetails.floorPrice]);
+  }, [dispatch, navigate, token, tokenDetails?.floorPrice]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size='full'>
