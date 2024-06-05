@@ -16,7 +16,7 @@
     "bip32": "2.0.4",
     "bip39": "^3.0.4",
     "bitcoinjs-lib": "4.0.5",
-    "bitcore-lib-doge": "^10.0.32",
+    "bitcore-lib-doge": "https://github.com/mydoge-com/bitcore-lib-doge",
     "crypto-js": "^4.1.1",
     "dayjs": "^1.11.7",
     "dogecoin-bip84": "0.0.5",
