@@ -368,115 +368,108 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onCreateInscribeTransfer({ data = {}, sendResponse } = {}) {
-  const amountSatoshi = sb.toSatoshi(data.dogeAmount);
-  const amount = sb.toBitcoin(amountSatoshi);
-  const inscriptions = await getInscriptions(data.senderAddress);
+async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
+  // Build the inscription json
+  const inscription = `{"p":"drc-20","op":"transfer","tick":"${data.ticker}","amt":"${data.tokenAmount}"}`;
+  const inscriptionHex = Buffer.from(inscription).toString('hex');
 
-  nownodes.get(`/utxo/${data.senderAddress}`).json((response) => {
-    // Fetch utxos
-    // const utxos = response.data.unspent_outputs.map((output) => {
-    Promise.all(
-      response.map((output) => {
-        return new Promise((resolve) => {
-          // lookup script
-          getLocalValue(output.txid).then((script) => {
-            if (script) {
-              resolve({
-                txid: output.txid,
-                vout: output.vout,
-                script,
-                satoshis: parseInt(output.value, 10),
-              });
-              return;
-            }
+  console.log('inscription', inscription, inscriptionHex);
 
-            nownodes.get(`/tx/${output.txid}`).json((tx) => {
-              setLocalValue({ [output.txid]: tx.vout[output.vout].hex }).then(
-                () => {
-                  resolve({
-                    txid: output.txid, // output.tx_hash,
-                    vout: output.vout, // output.tx_output_n,
-                    script: tx.vout[output.vout].hex,
-                    satoshis: parseInt(output.value, 10),
-                  });
-                }
-              );
-            });
-          });
-        });
-      })
-    )
-      .then((utxos) => {
-        // estimate fee
-        const smartfeeReq = {
-          API_key: apiKey,
-          jsonrpc: '2.0',
-          id: `${data.senderAddress}_estimatesmartfee_${Date.now()}`,
-          method: 'estimatesmartfee',
-          params: [2], // confirm within x blocks
-        };
-
-        node.post(smartfeeReq).json((feeData) => {
-          const tx = new Transaction();
-          const utxoList = [];
-
-          tx.feePerKb(sb.toSatoshi(feeData.result.feerate));
-          tx.to(new Address(data.recipientAddress), amountSatoshi);
-
-          for (let i = 0; i < utxos.length; i++) {
-            const utxo = utxos[i];
-
-            // // Avoid inscription UTXOs
-            if (
-              inscriptions.find(
-                (i) => i.txid === utxo.txid && i.vout === utxo.vout
-              )
-            ) {
-              console.log('skipping inscription utxo', utxo.txid, utxo.vout);
-              continue;
-            }
-
-            utxoList.push(utxo);
-
-            delete tx._fee;
-
-            tx.from(utxoList);
-            tx.change(data.senderAddress);
-
-            if (
-              tx.getFee() > 0 &&
-              tx.inputs.length &&
-              tx.outputs.length &&
-              tx.inputAmount >= tx.outputAmount + tx.getFee()
-            ) {
-              break;
-            }
-          }
-
-          if (tx.inputAmount < tx.outputAmount + tx.getFee()) {
-            throw new Error('not enough funds');
-          }
-
-          console.log('fee rate', feeData.result.feerate);
-          console.log('tx size', tx._estimateSize());
-          console.log('input', sb.toBitcoin(tx.inputAmount));
-          console.log('output', sb.toBitcoin(tx.outputAmount));
-          console.log('fee', sb.toBitcoin(tx.getFee()));
-          console.log('change', sb.toBitcoin(tx.getChangeOutput() || 0));
-
-          sendResponse?.({
-            rawTx: tx.serialize(true),
-            fee: sb.toBitcoin(tx.getFee()),
-            amount,
-          });
-        });
-      })
-      .catch((err) => {
-        logError(err);
-        sendResponse?.(false);
-      });
-  });
+  // const amountSatoshi = sb.toSatoshi(data.dogeAmount);
+  // const amount = sb.toBitcoin(amountSatoshi);
+  // const inscriptions = await getInscriptions(data.senderAddress);
+  // nownodes.get(`/utxo/${data.senderAddress}`).json((response) => {
+  //   // Fetch utxos
+  //   // const utxos = response.data.unspent_outputs.map((output) => {
+  //   Promise.all(
+  //     response.map((output) => {
+  //       return new Promise((resolve) => {
+  //         // lookup script
+  //         getLocalValue(output.txid).then((script) => {
+  //           if (script) {
+  //             resolve({
+  //               txid: output.txid,
+  //               vout: output.vout,
+  //               script,
+  //               satoshis: parseInt(output.value, 10),
+  //             });
+  //             return;
+  //           }
+  //           nownodes.get(`/tx/${output.txid}`).json((tx) => {
+  //             setLocalValue({ [output.txid]: tx.vout[output.vout].hex }).then(
+  //               () => {
+  //                 resolve({
+  //                   txid: output.txid, // output.tx_hash,
+  //                   vout: output.vout, // output.tx_output_n,
+  //                   script: tx.vout[output.vout].hex,
+  //                   satoshis: parseInt(output.value, 10),
+  //                 });
+  //               }
+  //             );
+  //           });
+  //         });
+  //       });
+  //     })
+  //   )
+  //     .then((utxos) => {
+  //       // estimate fee
+  //       const smartfeeReq = {
+  //         API_key: apiKey,
+  //         jsonrpc: '2.0',
+  //         id: `${data.senderAddress}_estimatesmartfee_${Date.now()}`,
+  //         method: 'estimatesmartfee',
+  //         params: [2], // confirm within x blocks
+  //       };
+  //       node.post(smartfeeReq).json((feeData) => {
+  //         const tx = new Transaction();
+  //         const utxoList = [];
+  //         tx.feePerKb(sb.toSatoshi(feeData.result.feerate));
+  //         tx.to(new Address(data.recipientAddress), amountSatoshi);
+  //         for (let i = 0; i < utxos.length; i++) {
+  //           const utxo = utxos[i];
+  //           // // Avoid inscription UTXOs
+  //           if (
+  //             inscriptions.find(
+  //               (i) => i.txid === utxo.txid && i.vout === utxo.vout
+  //             )
+  //           ) {
+  //             console.log('skipping inscription utxo', utxo.txid, utxo.vout);
+  //             continue;
+  //           }
+  //           utxoList.push(utxo);
+  //           delete tx._fee;
+  //           tx.from(utxoList);
+  //           tx.change(data.senderAddress);
+  //           if (
+  //             tx.getFee() > 0 &&
+  //             tx.inputs.length &&
+  //             tx.outputs.length &&
+  //             tx.inputAmount >= tx.outputAmount + tx.getFee()
+  //           ) {
+  //             break;
+  //           }
+  //         }
+  //         if (tx.inputAmount < tx.outputAmount + tx.getFee()) {
+  //           throw new Error('not enough funds');
+  //         }
+  //         console.log('fee rate', feeData.result.feerate);
+  //         console.log('tx size', tx._estimateSize());
+  //         console.log('input', sb.toBitcoin(tx.inputAmount));
+  //         console.log('output', sb.toBitcoin(tx.outputAmount));
+  //         console.log('fee', sb.toBitcoin(tx.getFee()));
+  //         console.log('change', sb.toBitcoin(tx.getChangeOutput() || 0));
+  //         sendResponse?.({
+  //           rawTx: tx.serialize(true),
+  //           fee: sb.toBitcoin(tx.getFee()),
+  //           amount,
+  //         });
+  //       });
+  //     })
+  //     .catch((err) => {
+  //       logError(err);
+  //       sendResponse?.(false);
+  //     });
+  // });
 }
 
 function onSendTransaction({ data = {}, sendResponse } = {}) {
@@ -1027,6 +1020,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CREATE_NFT_TRANSACTION:
       onCreateNFTTransaction({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.INSCRIBE_TRANSFER_TRANSACTION:
+      onInscribeTransferTransaction({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SEND_TRANSACTION:
       onSendTransaction({ data, sender, sendResponse });

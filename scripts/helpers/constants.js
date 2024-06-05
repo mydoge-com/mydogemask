@@ -42,6 +42,7 @@ export const MESSAGE_TYPES = {
   GET_TRANSACTION_DETAILS: 'getTransactionDetails',
   CREATE_TRANSACTION: 'createTransaction',
   CREATE_NFT_TRANSACTION: 'createNFTTransaction',
+  INSCRIBE_TRANSFER_TRANSACTION: 'inscribeTransferTransaction',
   SEND_TRANSACTION: 'sendTransaction',
   CREATE_DOGINAL_TRANSACTION: 'createDoginalTransaction',
   GET_CONNECTED_CLIENTS: 'getConnectedClients',

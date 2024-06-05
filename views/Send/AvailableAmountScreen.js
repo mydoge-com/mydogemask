@@ -43,18 +43,20 @@ export const AvailableAmountScreen = ({
       }
 
       setErrors({ ...errors, tokenAmount: '' });
-      const cleanText = parseFloat(sanitizeDogeInput(text) || '0').toFixed(0);
+      const cleanText = parseFloat(sanitizeDogeInput(text || '0')).toFixed(0);
 
       if (cleanText.length > MAX_CHARACTERS) {
         return;
       }
 
-      const newDogeValue = parseFloat(cleanText) * selectedToken.dogePrice;
+      const dogeAmount = (
+        parseFloat(cleanText) * selectedToken.dogePrice
+      ).toFixed(8);
 
       setFormData({
         ...formData,
+        dogeAmount,
         tokenAmount: cleanText,
-        dogeAmount: newDogeValue.toFixed(8),
       });
     },
     [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
@@ -67,23 +69,20 @@ export const AvailableAmountScreen = ({
       }
 
       setErrors({ ...errors, tokenAmount: '' });
-      const isDeletion = text?.length < formData.dogeAmount?.length;
-      const cleanText = sanitizeFiat(text, formData.dogeAmount, isDeletion);
+      const cleanText = sanitizeDogeInput(text) || '0';
 
-      let newTokenValue = parseFloat(cleanText / selectedToken.dogePrice);
-      newTokenValue = parseFloat(newTokenValue.toFixed(0));
-
-      if (
-        newTokenValue.toString().length > MAX_CHARACTERS ||
-        newTokenValue === Number.POSITIVE_INFINITY ||
-        isNaN(newTokenValue)
-      )
+      if (cleanText.length > MAX_CHARACTERS) {
         return;
+      }
+
+      const tokenAmount = (
+        parseFloat(cleanText) / selectedToken.dogePrice
+      ).toFixed(0);
 
       setFormData({
         ...formData,
+        tokenAmount,
         dogeAmount: cleanText,
-        tokenAmount: String(newTokenValue),
       });
     },
     [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
@@ -97,27 +96,17 @@ export const AvailableAmountScreen = ({
     onChangeTextToken(String(selectedToken.availableBalance));
   }, [selectedToken.availableBalance, onChangeTextToken]);
 
+  const validate = useCallback(() => {
+    return selectedToken.availableBalance >= Number(formData.tokenAmount);
+  }, [selectedToken.availableBalance, formData.tokenAmount]);
+
   const onSubmit = useCallback(() => {
-    setLoading(true);
-    const txData = {
-      senderAddress: walletAddress,
-      recipientAddress: formData.address.trim(),
-      tokenAmount: formData.tokenAmount,
-    };
-
-    const error = validateTransaction({
-      ...txData,
-      dogeAmount: selectedToken.availableBalance,
-    });
-
-    if (error) {
-      setErrors({ ...errors, tokenAmount: error });
-      setLoading(false);
-    } else {
+    if (validate()) {
+      setLoading(true);
       sendMessage(
         {
-          message: MESSAGE_TYPES.CREATE_TRANSACTION,
-          data: txData,
+          message: MESSAGE_TYPES.INSCRIBE_TRANSFER_TRANSACTION,
+          data: { ...selectedToken, tokenAmount: formData.tokenAmount },
         },
         ({ rawTx, fee, amount }) => {
           if (rawTx && fee !== undefined && amount) {
@@ -148,16 +137,10 @@ export const AvailableAmountScreen = ({
           }
         }
       );
+    } else {
+      setErrors({ ...errors, tokenAmount: 'Insufficient balance' });
     }
-  }, [
-    selectedToken.availableBalance,
-    errors,
-    formData,
-    setErrors,
-    setFormData,
-    setFormPage,
-    walletAddress,
-  ]);
+  }, [errors, formData, setErrors, setFormData, setFormPage, validate]);
 
   return (
     <Center>
@@ -310,11 +293,7 @@ export const AvailableAmountScreen = ({
           type='submit'
           role='button'
           px='28px'
-          isDisabled={
-            !Number(formData.tokenAmount) ||
-            !selectedToken.availableBalance ||
-            errors.tokenAmount
-          }
+          isDisabled={!validate()}
           loading={loading}
         >
           Next
