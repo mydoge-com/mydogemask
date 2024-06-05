@@ -41,7 +41,7 @@ export const TokenModal = ({
         token: {
           ...token,
           dogePrice: Number(
-            formatSatoshisAsDoge(Math.round(tokenDetails?.floorPrice))
+            formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
           ),
         },
       },

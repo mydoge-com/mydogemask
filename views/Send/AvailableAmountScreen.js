@@ -41,15 +41,15 @@ export const AvailableAmountScreen = ({
       if (Number.isNaN(Number(text))) {
         return;
       }
+
       setErrors({ ...errors, tokenAmount: '' });
       const cleanText = sanitizeDogeInput(text) || '0';
+
       if (cleanText.length > MAX_CHARACTERS) {
         return;
       }
 
-      const newDogeValue = parseFloat(cleanText * selectedToken.dogePrice)
-        .toFixed(2)
-        .toString();
+      const newDogeValue = parseFloat(cleanText) * selectedToken.dogePrice;
 
       setFormData({
         ...formData,
@@ -65,14 +65,20 @@ export const AvailableAmountScreen = ({
       if (Number.isNaN(Number(text))) {
         return;
       }
+
       setErrors({ ...errors, tokenAmount: '' });
-      const isDeletion = text.length < formData.dogeAmount.length;
+      const isDeletion = text?.length < formData.dogeAmount?.length;
       const cleanText = sanitizeFiat(text, formData.dogeAmount, isDeletion);
 
       let newTokenValue = parseFloat(cleanText / selectedToken.dogePrice);
-      newTokenValue = parseFloat(newTokenValue.toFixed(2));
+      newTokenValue = parseFloat(newTokenValue.toFixed(0));
 
-      if (newTokenValue.toString().length > MAX_CHARACTERS) return;
+      if (
+        newTokenValue.toString().length > MAX_CHARACTERS ||
+        newTokenValue === Number.POSITIVE_INFINITY ||
+        isNaN(newTokenValue)
+      )
+        return;
 
       setFormData({
         ...formData,
