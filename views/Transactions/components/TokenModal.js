@@ -58,17 +58,8 @@ export const TokenModal = ({
                 flexWrap='wrap'
                 justifyContent='center'
               >
-                <Pill
-                  label='Price'
-                  value={`Ɖ ${formatSatoshisAsDoge(
-                    tokenDetails.floorPrice,
-                    3
-                  )}`}
-                />
-                <Pill
-                  label='Volume'
-                  value={`Ɖ ${formatSatoshisAsDoge(tokenDetails.volume, 3)}`}
-                />
+                <Pill label='Price' value={`Ɖ ${tokenDetails.floorPrice}`} />
+                <Pill label='Volume' value={`Ɖ ${tokenDetails.volume}`} />
                 <Pill
                   label='Minted/Supply'
                   value={`${Number(
