@@ -2,7 +2,9 @@ import { Avatar, Box, HStack, Modal, Spinner, Text, VStack } from 'native-base';
 import { useCallback, useEffect, useState } from 'react';
 import { BiTransfer } from 'react-icons/bi';
 
+import { DISPATCH_TYPES } from '../../../Context';
 import { BigButton } from '../../../components/Button';
+import { useAppContext } from '../../../hooks/useAppContext';
 import { doginalsMarketplace } from '../../../scripts/api';
 import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
 import { logError } from '../../../utils/error';
@@ -12,7 +14,9 @@ export const TokenModal = ({
   isOpen,
   onClose,
   token: { availableBalance, overallBalance, ticker, transferableBalance },
+  token,
 }) => {
+  const { dispatch, navigate } = useAppContext();
   const [tokenDetails, setTokenDetails] = useState();
 
   const fetchTokenDetails = useCallback(() => {
@@ -29,6 +33,21 @@ export const TokenModal = ({
       fetchTokenDetails();
     }
   }, [fetchTokenDetails, isOpen]);
+
+  const onGetAvailable = useCallback(() => {
+    dispatch({
+      type: DISPATCH_TYPES.SELECT_TOKEN,
+      payload: {
+        token: {
+          ...token,
+          dogePrice: Number(
+            formatSatoshisAsDoge(Math.round(tokenDetails.floorPrice))
+          ),
+        },
+      },
+    });
+    navigate('TransferAvailable');
+  }, [dispatch, navigate, token, tokenDetails.floorPrice]);
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size='full'>
@@ -58,8 +77,16 @@ export const TokenModal = ({
                 flexWrap='wrap'
                 justifyContent='center'
               >
-                <Pill label='Price' value={`Ɖ ${tokenDetails.floorPrice}`} />
-                <Pill label='Volume' value={`Ɖ ${tokenDetails.volume}`} />
+                <Pill
+                  label='Price'
+                  value={`Ɖ ${formatSatoshisAsDoge(
+                    Math.round(tokenDetails.floorPrice)
+                  )}`}
+                />
+                <Pill
+                  label='Volume'
+                  value={`Ɖ ${formatSatoshisAsDoge(tokenDetails.volume)}`}
+                />
                 <Pill
                   label='Minted/Supply'
                   value={`${Number(
@@ -94,7 +121,26 @@ export const TokenModal = ({
                 </Text>
               </HStack>
             </VStack>
-            <BigButton variant='secondary' px='28px' mt='30px'>
+            <BigButton
+              isDisabled={availableBalance === '0'}
+              onPress={onGetAvailable}
+              variant='secondary'
+              px='28px'
+              mt='30px'
+            >
+              Get Available{' '}
+              <BiTransfer
+                style={{
+                  paddingTop: '1px',
+                }}
+              />
+            </BigButton>
+            <BigButton
+              isDisabled={transferableBalance === '0'}
+              variant='secondary'
+              px='28px'
+              mt='30px'
+            >
               Transfer{' '}
               <BiTransfer
                 style={{

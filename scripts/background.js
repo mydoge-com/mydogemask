@@ -130,9 +130,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
     console.log('using feePerKb', feePerKB);
     console.log('estimated feePerInput', feePerInput);
 
-    for (var j = 0; j < utxos.length; j++) {
-      const utxo = utxos[j];
-
+    for (const utxo of utxos) {
       // Avoid inscription UTXOs
       if (
         inscriptions.find(
@@ -370,7 +368,7 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onCreateTransaction_new({ data = {}, sendResponse } = {}) {
+async function onCreateTokenTransaction({ data = {}, sendResponse } = {}) {
   const amountSatoshi = sb.toSatoshi(data.dogeAmount);
   const amount = sb.toBitcoin(amountSatoshi);
   const inscriptions = await getInscriptions(data.senderAddress);

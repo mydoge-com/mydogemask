@@ -9,6 +9,7 @@ import {
 } from '../views/Onboarding';
 import { Send } from '../views/Send';
 import { SendNFT } from '../views/Send/SendNFT';
+import { TransferAvailable } from '../views/Send/TransferAvailable';
 import { Transactions } from '../views/Transactions';
 
 const screens = {
@@ -21,6 +22,7 @@ const screens = {
   ResetWallet,
   Send,
   SendNFT,
+  TransferAvailable,
   ClientConnect,
   ClientTransaction,
 };

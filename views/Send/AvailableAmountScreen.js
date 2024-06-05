@@ -14,16 +14,14 @@ import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
-import { useInterval } from '../../hooks/useInterval';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
 import { sanitizeDogeInput, sanitizeFiat } from '../../utils/formatters';
 
 const MAX_CHARACTERS = 10000;
-const REFRESH_INTERVAL = 10000;
 
-export const AmountScreen = ({
+export const AvailableAmountScreen = ({
   setFormPage,
   errors,
   setErrors,
@@ -34,50 +32,32 @@ export const AmountScreen = ({
   selectedToken,
 }) => {
   const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
-  const [dogecoinPrice, setDogecoinPrice] = useState(0);
-  const [addressBalance, setAddressBalance] = useState();
+  const tokenInputRef = useRef(null);
   const dogeInputRef = useRef(null);
-  const fiatInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
-  const getDogecoinPrice = useCallback(() => {
-    sendMessage({ message: MESSAGE_TYPES.GET_DOGECOIN_PRICE }, ({ usd }) => {
-      if (usd) {
-        setDogecoinPrice(usd);
-        onChangeTextDoge(formData.dogeAmount);
+  const onChangeTextToken = useCallback(
+    (text) => {
+      if (Number.isNaN(Number(text))) {
+        return;
       }
-    });
-  }, [formData.dogeAmount, onChangeTextDoge]);
+      setErrors({ ...errors, tokenAmount: '' });
+      const cleanText = sanitizeDogeInput(text) || '0';
+      if (cleanText.length > MAX_CHARACTERS) {
+        return;
+      }
 
-  useEffect(() => {
-    getAddressBalance();
-  }, [getAddressBalance, walletAddress]);
+      const newDogeValue = parseFloat(cleanText * selectedToken.dogePrice)
+        .toFixed(2)
+        .toString();
 
-  const getAddressBalance = useCallback(() => {
-    if (!selectedToken) {
-      sendMessage(
-        {
-          message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
-          data: { address: walletAddress },
-        },
-        (balance) => {
-          if (balance) {
-            setAddressBalance(balance);
-          }
-        }
-      );
-    } else {
-      setAddressBalance(selectedToken.availableBalance);
-    }
-  }, [walletAddress]);
-
-  useInterval(
-    () => {
-      getDogecoinPrice();
-      getAddressBalance();
+      setFormData({
+        ...formData,
+        tokenAmount: cleanText,
+        dogeAmount: String(newDogeValue),
+      });
     },
-    REFRESH_INTERVAL,
-    true
+    [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
   );
 
   const onChangeTextDoge = useCallback(
@@ -85,46 +65,22 @@ export const AmountScreen = ({
       if (Number.isNaN(Number(text))) {
         return;
       }
-      setErrors({ ...errors, dogeAmount: '' });
-      const cleanText = sanitizeDogeInput(text) || '0';
-      if (cleanText.length > MAX_CHARACTERS) {
-        return;
-      }
+      setErrors({ ...errors, tokenAmount: '' });
+      const isDeletion = text.length < formData.dogeAmount.length;
+      const cleanText = sanitizeFiat(text, formData.dogeAmount, isDeletion);
 
-      const newFiatValue = parseFloat(cleanText * dogecoinPrice)
-        .toFixed(2)
-        .toString();
+      let newTokenValue = parseFloat(cleanText / selectedToken.dogePrice);
+      newTokenValue = parseFloat(newTokenValue.toFixed(2));
+
+      if (newTokenValue.toString().length > MAX_CHARACTERS) return;
 
       setFormData({
         ...formData,
         dogeAmount: cleanText,
-        fiatAmount: String(newFiatValue),
+        tokenAmount: String(newTokenValue),
       });
     },
-    [dogecoinPrice, errors, formData, setErrors, setFormData]
-  );
-
-  const onChangeTextFiat = useCallback(
-    (text) => {
-      if (Number.isNaN(Number(text))) {
-        return;
-      }
-      setErrors({ ...errors, dogeAmount: '' });
-      const isDeletion = text.length < formData.fiatAmount.length;
-      const cleanText = sanitizeFiat(text, formData.fiatAmount, isDeletion);
-
-      let newDogeValue = parseFloat(cleanText / dogecoinPrice);
-      newDogeValue = parseFloat(newDogeValue.toFixed(2));
-
-      if (newDogeValue.toString().length > MAX_CHARACTERS) return;
-
-      setFormData({
-        ...formData,
-        fiatAmount: cleanText,
-        dogeAmount: String(newDogeValue),
-      });
-    },
-    [dogecoinPrice, errors, formData, setErrors, setFormData]
+    [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
   );
 
   const swapInput = useCallback(() => {
@@ -132,22 +88,24 @@ export const AmountScreen = ({
   }, []);
 
   const onSetMax = useCallback(() => {
-    onChangeTextDoge(String(sb.toBitcoin(addressBalance)));
-  }, [addressBalance, onChangeTextDoge]);
+    onChangeTextToken(String(selectedToken.availableBalance));
+  }, [selectedToken.availableBalance, onChangeTextToken]);
 
   const onSubmit = useCallback(() => {
     setLoading(true);
     const txData = {
       senderAddress: walletAddress,
       recipientAddress: formData.address.trim(),
-      dogeAmount: formData.dogeAmount,
+      tokenAmount: formData.tokenAmount,
     };
+
     const error = validateTransaction({
       ...txData,
-      addressBalance,
+      dogeAmount: selectedToken.availableBalance,
     });
+
     if (error) {
-      setErrors({ ...errors, dogeAmount: error });
+      setErrors({ ...errors, tokenAmount: error });
       setLoading(false);
     } else {
       sendMessage(
@@ -161,7 +119,7 @@ export const AmountScreen = ({
               ...formData,
               rawTx,
               fee,
-              dogeAmount: amount,
+              tokenAmount: amount,
             });
             setFormPage('confirmation');
             setLoading(false);
@@ -186,7 +144,7 @@ export const AmountScreen = ({
       );
     }
   }, [
-    addressBalance,
+    selectedToken.availableBalance,
     errors,
     formData,
     setErrors,
@@ -202,24 +160,8 @@ export const AmountScreen = ({
           Wallet {selectedAddressIndex + 1}
         </Text>
         {'  '}
-        {walletAddress.slice(0, 8)}...{formData.address.slice(-4)}
+        {walletAddress.slice}
       </Text>
-      <Text fontSize='xl' pb='4px' textAlign='center' fontWeight='semibold'>
-        Paying
-      </Text>
-      <HStack alignItems='center' space='12px' pb='28px'>
-        <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
-          {formData.address.substring(0, 2)}
-        </Avatar>
-        <Text
-          fontSize='md'
-          fontWeight='semibold'
-          color='gray.500'
-          textAlign='center'
-        >
-          {formData.address.slice(0, 8)}...{formData.address.slice(-4)}
-        </Text>
-      </HStack>
       <Box
         justifyContent='center'
         alignItems='center'
@@ -231,7 +173,7 @@ export const AmountScreen = ({
         {!isCurrencySwapped ? (
           <Input
             keyboardType='numeric'
-            // isDisabled={dogecoinPrice === 0}
+            // isDisabled={selectedToken.dogePrice === 0}
             variant='filled'
             placeholder='0'
             focusOutlineColor='brandYellow.500'
@@ -245,7 +187,46 @@ export const AmountScreen = ({
                 borderColor: 'red.500',
               },
             }}
-            isInvalid={errors.dogeAmount}
+            isInvalid={errors.tokenAmount}
+            onChangeText={onChangeTextToken}
+            onSubmitEditing={onSubmit}
+            autoFocus
+            type='number'
+            fontSize='24px'
+            fontWeight='semibold'
+            _input={{
+              py: '10px',
+              pl: '4px',
+              type: 'number',
+            }}
+            InputLeftElement={
+              <Text fontSize='24px' fontWeight='semibold' px='4px'>
+                {selectedToken.ticker}
+              </Text>
+            }
+            textAlign='center'
+            ref={tokenInputRef}
+            value={formData.tokenAmount}
+            position='absolute'
+            top={0}
+          />
+        ) : (
+          <Input
+            keyboardType='numeric'
+            variant='filled'
+            placeholder='0'
+            focusOutlineColor='brandYellow.500'
+            _hover={{
+              borderColor: 'brandYellow.500',
+            }}
+            _invalid={{
+              borderColor: 'red.500',
+              focusOutlineColor: 'red.500',
+              _hover: {
+                borderColor: 'red.500',
+              },
+            }}
+            isInvalid={errors.tokenAmount}
             onChangeText={onChangeTextDoge}
             onSubmitEditing={onSubmit}
             autoFocus
@@ -267,45 +248,6 @@ export const AmountScreen = ({
             value={formData.dogeAmount}
             position='absolute'
             top={0}
-          />
-        ) : (
-          <Input
-            keyboardType='numeric'
-            variant='filled'
-            placeholder='0'
-            focusOutlineColor='brandYellow.500'
-            _hover={{
-              borderColor: 'brandYellow.500',
-            }}
-            _invalid={{
-              borderColor: 'red.500',
-              focusOutlineColor: 'red.500',
-              _hover: {
-                borderColor: 'red.500',
-              },
-            }}
-            isInvalid={errors.dogeAmount}
-            onChangeText={onChangeTextFiat}
-            onSubmitEditing={onSubmit}
-            autoFocus
-            type='number'
-            fontSize='24px'
-            fontWeight='semibold'
-            _input={{
-              py: '10px',
-              pl: '4px',
-              type: 'number',
-            }}
-            InputLeftElement={
-              <Text fontSize='24px' fontWeight='semibold' px='4px'>
-                $
-              </Text>
-            }
-            textAlign='center'
-            ref={fiatInputRef}
-            value={formData.fiatAmount}
-            position='absolute'
-            top={0}
             allowFontScaling
             adjustsFontSizeToFit
           />
@@ -313,7 +255,7 @@ export const AmountScreen = ({
       </Box>
 
       <Text fontSize='10px' color='red.500'>
-        {errors.dogeAmount || ' '}
+        {errors.tokenAmount || ' '}
       </Text>
       <BigButton
         variant='secondary'
@@ -327,15 +269,15 @@ export const AmountScreen = ({
         <IoSwapVerticalOutline size='22px' style={{ paddingTop: 3 }} />
       </BigButton>
       <Text fontSize='20px' fontWeight='semibold' color='gray.500' pt='6px'>
-        {!isCurrencySwapped ? '$' : 'Ð'}
+        {!isCurrencySwapped ? 'Ð' : `${selectedToken.ticker} `}
         {isCurrencySwapped
-          ? formData.dogeAmount || 0
-          : formData.fiatAmount || 0}
+          ? formData.tokenAmount || 0
+          : formData.dogeAmount || 0}
       </Text>
       <HStack alignItems='center' pt='12px' space='8px'>
-        {addressBalance ? (
+        {selectedToken.availableBalance ? (
           <Text fontSize='14px' color='gray.500'>
-            Balance: Ð{sb.toBitcoin(addressBalance)}
+            Balance: {selectedToken.ticker} {selectedToken.availableBalance}
           </Text>
         ) : null}
         <Button
@@ -363,7 +305,9 @@ export const AmountScreen = ({
           role='button'
           px='28px'
           isDisabled={
-            !Number(formData.dogeAmount) || !addressBalance || errors.dogeAmount
+            !Number(formData.tokenAmount) ||
+            !selectedToken.availableBalance ||
+            errors.tokenAmount
           }
           loading={loading}
         >
