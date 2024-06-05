@@ -43,7 +43,7 @@ export const AvailableAmountScreen = ({
       }
 
       setErrors({ ...errors, tokenAmount: '' });
-      const cleanText = sanitizeDogeInput(text) || '0';
+      const cleanText = parseFloat(sanitizeDogeInput(text) || '0').toFixed(0);
 
       if (cleanText.length > MAX_CHARACTERS) {
         return;
@@ -54,7 +54,7 @@ export const AvailableAmountScreen = ({
       setFormData({
         ...formData,
         tokenAmount: cleanText,
-        dogeAmount: String(newDogeValue),
+        dogeAmount: newDogeValue.toFixed(8),
       });
     },
     [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
