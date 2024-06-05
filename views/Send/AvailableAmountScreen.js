@@ -106,7 +106,12 @@ export const AvailableAmountScreen = ({
       sendMessage(
         {
           message: MESSAGE_TYPES.INSCRIBE_TRANSFER_TRANSACTION,
-          data: { ...selectedToken, tokenAmount: formData.tokenAmount },
+          data: {
+            ...selectedToken,
+            selectedAddressIndex,
+            walletAddress,
+            tokenAmount: formData.tokenAmount,
+          },
         },
         ({ rawTx, fee, amount }) => {
           if (rawTx && fee !== undefined && amount) {
@@ -140,7 +145,17 @@ export const AvailableAmountScreen = ({
     } else {
       setErrors({ ...errors, tokenAmount: 'Insufficient balance' });
     }
-  }, [errors, formData, setErrors, setFormData, setFormPage, validate]);
+  }, [
+    errors,
+    formData,
+    setErrors,
+    setFormData,
+    setFormPage,
+    validate,
+    walletAddress,
+    selectedAddressIndex,
+    selectedToken,
+  ]);
 
   return (
     <Center>

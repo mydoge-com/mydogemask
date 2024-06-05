@@ -1,15 +1,9 @@
-import {
-  Address,
-  // Opcode,
-  // PrivateKey,
-  // Script,
-  Transaction,
-} from 'bitcore-lib-doge';
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
 import { apiKey, doginalsV2, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
+import { inscribe } from './helpers/doginals';
 import {
   AUTHENTICATED,
   CONNECTED_CLIENTS,
@@ -72,7 +66,7 @@ async function getInscriptions(address, cursor, result) {
   // console.log(`fetched ${result.length}/${query.result.total} inscriptions`);
 
   if (query.result.total !== result.length) {
-    cursor += 1;
+    cursor += query.result.list.length;
     return getInscriptions(address, cursor, result);
   }
 }
@@ -369,107 +363,108 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
 }
 
 async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
-  // Build the inscription json
-  const inscription = `{"p":"drc-20","op":"transfer","tick":"${data.ticker}","amt":"${data.tokenAmount}"}`;
-  const inscriptionHex = Buffer.from(inscription).toString('hex');
+  try {
+    // Get utxos
+    let utxos = (await nownodes.get(`/utxo/${data.walletAddress}`).json()).sort(
+      (a, b) => {
+        const aValue = sb.toBitcoin(a.value);
+        const bValue = sb.toBitcoin(b.value);
+        return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
+      }
+    );
 
-  console.log('inscription', inscription, inscriptionHex);
+    console.log('found utxos', utxos.length);
 
-  // const amountSatoshi = sb.toSatoshi(data.dogeAmount);
-  // const amount = sb.toBitcoin(amountSatoshi);
-  // const inscriptions = await getInscriptions(data.senderAddress);
-  // nownodes.get(`/utxo/${data.senderAddress}`).json((response) => {
-  //   // Fetch utxos
-  //   // const utxos = response.data.unspent_outputs.map((output) => {
-  //   Promise.all(
-  //     response.map((output) => {
-  //       return new Promise((resolve) => {
-  //         // lookup script
-  //         getLocalValue(output.txid).then((script) => {
-  //           if (script) {
-  //             resolve({
-  //               txid: output.txid,
-  //               vout: output.vout,
-  //               script,
-  //               satoshis: parseInt(output.value, 10),
-  //             });
-  //             return;
-  //           }
-  //           nownodes.get(`/tx/${output.txid}`).json((tx) => {
-  //             setLocalValue({ [output.txid]: tx.vout[output.vout].hex }).then(
-  //               () => {
-  //                 resolve({
-  //                   txid: output.txid, // output.tx_hash,
-  //                   vout: output.vout, // output.tx_output_n,
-  //                   script: tx.vout[output.vout].hex,
-  //                   satoshis: parseInt(output.value, 10),
-  //                 });
-  //               }
-  //             );
-  //           });
-  //         });
-  //       });
-  //     })
-  //   )
-  //     .then((utxos) => {
-  //       // estimate fee
-  //       const smartfeeReq = {
-  //         API_key: apiKey,
-  //         jsonrpc: '2.0',
-  //         id: `${data.senderAddress}_estimatesmartfee_${Date.now()}`,
-  //         method: 'estimatesmartfee',
-  //         params: [2], // confirm within x blocks
-  //       };
-  //       node.post(smartfeeReq).json((feeData) => {
-  //         const tx = new Transaction();
-  //         const utxoList = [];
-  //         tx.feePerKb(sb.toSatoshi(feeData.result.feerate));
-  //         tx.to(new Address(data.recipientAddress), amountSatoshi);
-  //         for (let i = 0; i < utxos.length; i++) {
-  //           const utxo = utxos[i];
-  //           // // Avoid inscription UTXOs
-  //           if (
-  //             inscriptions.find(
-  //               (i) => i.txid === utxo.txid && i.vout === utxo.vout
-  //             )
-  //           ) {
-  //             console.log('skipping inscription utxo', utxo.txid, utxo.vout);
-  //             continue;
-  //           }
-  //           utxoList.push(utxo);
-  //           delete tx._fee;
-  //           tx.from(utxoList);
-  //           tx.change(data.senderAddress);
-  //           if (
-  //             tx.getFee() > 0 &&
-  //             tx.inputs.length &&
-  //             tx.outputs.length &&
-  //             tx.inputAmount >= tx.outputAmount + tx.getFee()
-  //           ) {
-  //             break;
-  //           }
-  //         }
-  //         if (tx.inputAmount < tx.outputAmount + tx.getFee()) {
-  //           throw new Error('not enough funds');
-  //         }
-  //         console.log('fee rate', feeData.result.feerate);
-  //         console.log('tx size', tx._estimateSize());
-  //         console.log('input', sb.toBitcoin(tx.inputAmount));
-  //         console.log('output', sb.toBitcoin(tx.outputAmount));
-  //         console.log('fee', sb.toBitcoin(tx.getFee()));
-  //         console.log('change', sb.toBitcoin(tx.getChangeOutput() || 0));
-  //         sendResponse?.({
-  //           rawTx: tx.serialize(true),
-  //           fee: sb.toBitcoin(tx.getFee()),
-  //           amount,
-  //         });
-  //       });
-  //     })
-  //     .catch((err) => {
-  //       logError(err);
-  //       sendResponse?.(false);
-  //     });
-  // });
+    const inscriptions = [];
+    await getInscriptions(data.walletAddress, 0, inscriptions);
+
+    console.log('found inscriptions', inscriptions.length);
+
+    // Map and cache scripts
+    utxos = (
+      await Promise.all(
+        utxos.map(async (utxo) => {
+          if (
+            inscriptions.find(
+              (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
+            )
+          ) {
+            console.log('skipping inscription utxo', utxo.txid, utxo.vout);
+            return;
+          }
+
+          let script = await getLocalValue(utxo.txid);
+
+          if (!script) {
+            const tx = await nownodes.get(`/tx/${utxo.txid}`).json();
+            script = tx.vout[utxo.vout].hex;
+            await setLocalValue({ [utxo.txid]: script });
+          }
+
+          return {
+            txid: utxo.txid,
+            vout: utxo.vout,
+            script,
+            satoshis: parseInt(utxo.value, 10),
+          };
+        })
+      )
+    ).filter((utxo) => utxo);
+
+    console.log('filtered utxos', utxos.length);
+
+    const smartfeeReq = {
+      API_key: apiKey,
+      jsonrpc: '2.0',
+      id: `${data.address}_estimatesmartfee_${Date.now()}`,
+      method: 'estimatesmartfee',
+      params: [2], // confirm within x blocks
+    };
+    const feeData = await node.post(smartfeeReq).json();
+    const feePerKB = sb.toSatoshi(feeData.result.feerate || FEE_RATE_KB);
+
+    console.log('found feePerKB', feePerKB);
+
+    // Build the inscription json
+    const inscription = `{"p":"drc-20","op":"transfer","tick":"${data.ticker}","amt":"${data.tokenAmount}"}`;
+    const inscriptionHex = Buffer.from(inscription).toString('hex');
+
+    console.log('inscription', inscription, inscriptionHex);
+
+    // Fetch the keys and inscribe the transactions
+    const [wallet, password] = await Promise.all([
+      getLocalValue(WALLET),
+      getSessionValue(PASSWORD),
+    ]);
+
+    const decryptedWallet = decrypt({
+      data: wallet,
+      password,
+    });
+
+    if (!decryptedWallet) {
+      sendResponse?.(false);
+    }
+
+    console.log(
+      'decrypted wallet',
+      `${decryptedWallet.children[data.selectedAddressIndex].slice(0, 5)}...`
+    );
+
+    const txs = inscribe(
+      utxos,
+      data.walletAddress,
+      decryptedWallet.children[data.selectedAddressIndex],
+      feePerKB,
+      'text/plain',
+      inscriptionHex
+    );
+
+    console.log('inscription txs', txs);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
 }
 
 function onSendTransaction({ data = {}, sendResponse } = {}) {

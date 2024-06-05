@@ -4165,9 +4165,9 @@ bitcoinjs-lib@^6.1.5:
     varuint-bitcoin "^1.1.2"
 
 bitcore-lib-doge@^10.0.32:
-  version "10.0.32"
-  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-10.0.32.tgz#50de06078fe36c5b7ca4438a68ccc4bf24cde2da"
-  integrity sha512-Z15dWzW8poNosnq8gVGX7D/RKpcmn1XDtcAFHHpXH9qzsylaZ0sU3ssMiuJ5iOA+6IK5tuTFoRpLr8K2Oes4mg==
+  version "10.0.36"
+  resolved "https://registry.yarnpkg.com/bitcore-lib-doge/-/bitcore-lib-doge-10.0.36.tgz#b4052e63cc8cf5202e111c00eb5077f87219e60c"
+  integrity sha512-/+Za53p5EsrA6xg0fUgzpmPkskEKJkVoB7RfAUlLGZEapS41XNs3B3jkC1NjK2OpkAEhYilewvtBOHjhm5tswA==
   dependencies:
     bn.js "=4.11.8"
     bs58 "^4.0.1"
