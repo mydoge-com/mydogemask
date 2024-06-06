@@ -31,7 +31,6 @@ export const AmountScreen = ({
   formData,
   walletAddress,
   selectedAddressIndex,
-  selectedToken,
 }) => {
   const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
   const [dogecoinPrice, setDogecoinPrice] = useState(0);
@@ -54,21 +53,17 @@ export const AmountScreen = ({
   }, [getAddressBalance, walletAddress]);
 
   const getAddressBalance = useCallback(() => {
-    if (!selectedToken) {
-      sendMessage(
-        {
-          message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
-          data: { address: walletAddress },
-        },
-        (balance) => {
-          if (balance) {
-            setAddressBalance(balance);
-          }
+    sendMessage(
+      {
+        message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
+        data: { address: walletAddress },
+      },
+      (balance) => {
+        if (balance) {
+          setAddressBalance(balance);
         }
-      );
-    } else {
-      setAddressBalance(selectedToken.availableBalance);
-    }
+      }
+    );
   }, [walletAddress]);
 
   useInterval(
