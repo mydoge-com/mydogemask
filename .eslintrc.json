@@ -41,7 +41,10 @@
     "no-underscore-dangle": "off",
     "no-await-in-loop": "off",
     "no-restricted-syntax": "off",
-    "no-param-reassign": "off"
+    "no-param-reassign": "off",
+    "no-multi-assign": "off",
+    "no-continue": "off",
+    "array-callback-return": "off"
   },
   "globals": {
     "chrome": true

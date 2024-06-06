@@ -1,7 +1,7 @@
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { apiKey, doginalsV2, node, nownodes } from './api';
+import { apiKey, doginals, doginalsV2, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
@@ -36,27 +36,29 @@ import {
 const TRANSACTION_PAGE_SIZE = 10;
 
 const sleep = async (time) =>
-  new Promise((resolve) => setTimeout(resolve, time));
+  new Promise((resolve) => {
+    setTimeout(resolve, time);
+  });
 
 function sanitizeFloatAmount(amount) {
   return sb.toBitcoin(Math.trunc(sb.toSatoshi(amount)));
 }
 
-async function getInscriptions(address, cursor, result) {
+async function getDoginals(address, cursor, result) {
   const query = await doginalsV2
     .get(
       `/address/inscriptions?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
     )
     .json();
 
-  // console.log(
-  //   'found',
-  //   query.result.list.length,
-  //   'inscriptions in page',
-  //   cursor,
-  //   'total',
-  //   query.result.total
-  // );
+  console.log(
+    'found',
+    query.result.list.length,
+    'doginals in page',
+    cursor,
+    'total',
+    query.result.total
+  );
 
   result.push(
     ...query.result.list.map((i) => ({
@@ -70,8 +72,108 @@ async function getInscriptions(address, cursor, result) {
 
   if (query.result.total !== result.length) {
     cursor += query.result.list.length;
-    return getInscriptions(address, cursor, result);
+    return getDoginals(address, cursor, result);
   }
+}
+
+async function getDRC20Inscriptions(address, ticker, cursor, result) {
+  const query = await doginals
+    .get(
+      `/brc20/transferable-list?address=${address}&ticker=${encodeURIComponent(
+        ticker
+      )}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
+    )
+    .json();
+
+  console.log(
+    'found',
+    query.result.list.length,
+    'drc20',
+    ticker,
+    'in page',
+    cursor,
+    'total',
+    query.result.total
+  );
+
+  result.push(
+    ...query.result.list.map((i) => ({
+      txid: i.inscriptionId.slice(0, -2),
+      vout: parseInt(i.inscriptionId.slice(-1), 10),
+      genesis: i.genesisTransaction,
+    }))
+  );
+
+  if (query.result.total !== result.length) {
+    cursor += query.result.list.length;
+    return getDRC20Inscriptions(address, cursor, result);
+  }
+}
+
+async function getDRC20Tickers(address, cursor, total, result) {
+  const query = await doginals
+    .get(
+      `/brc20/tokens?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
+    )
+    .json();
+
+  if (cursor === 0) {
+    total = query.result.total;
+  }
+
+  result.push(
+    ...query.result.list
+      .map((i) => {
+        if (i.transferableBalance !== '0') {
+          return i.ticker;
+        } else {
+          total--;
+        }
+      })
+      .filter((i) => i)
+  );
+
+  console.log(
+    'found',
+    query.result.list.length,
+    'drc20 tickers',
+    'in page',
+    cursor,
+    'total',
+    total
+  );
+
+  if (total !== result.length) {
+    cursor += query.result.list.length;
+    return getDRC20Tickers(address, cursor, total, result);
+  }
+}
+
+async function getAllDRC20(address, result) {
+  const tickers = [];
+  await getDRC20Tickers(address, 0, 0, tickers);
+
+  console.log('found tickers', tickers.length);
+
+  for await (const ticker of tickers) {
+    const tickerResult = [];
+    await getDRC20Inscriptions(address, ticker, 0, tickerResult);
+    result.push(...tickerResult);
+  }
+}
+
+async function getAllInscriptions(address) {
+  const nfts = [];
+  await getDoginals(address, 0, nfts);
+
+  console.log('found doginals', nfts.length);
+
+  const drc20 = [];
+  await getAllDRC20(address, drc20);
+
+  console.log('found drc20', drc20.length);
+
+  return [...nfts, ...drc20];
 }
 
 // Build a raw transaction and determine fee
@@ -91,8 +193,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
 
     console.log('found utxos', utxos.length);
 
-    const inscriptions = [];
-    await getInscriptions(data.senderAddress, 0, inscriptions);
+    const inscriptions = await getAllInscriptions(data.senderAddress);
 
     console.log('found inscriptions', inscriptions.length);
 
@@ -122,6 +223,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
     let fee = feePerInput;
     let total = 0;
     let i = 0;
+    let skipped = 0;
 
     console.log('found feerate', feeData.result.feerate);
     console.log('using feePerKb', feePerKB);
@@ -134,11 +236,12 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
           (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
         )
       ) {
-        console.log('skipping inscription utxo', utxo.txid, utxo.vout);
+        skipped++;
         continue;
       }
 
       const value = sb.toBitcoin(utxo.value);
+
       total += value;
       fee = feePerInput * (i + 1);
       jsonrpcReq.params[0].push({
@@ -165,6 +268,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
     amount = sanitizeFloatAmount(amount);
     fee = sanitizeFloatAmount(fee);
 
+    console.log('skipped utxos', skipped);
     console.log('num utxos', i);
     console.log('total', total);
     console.log('amount', amount);
@@ -245,10 +349,10 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
 
     console.log('found utxos', utxos.length);
 
-    const inscriptions = [];
-    await getInscriptions(data.address, 0, inscriptions);
+    const inscriptions = await getAllInscriptions(data.address);
 
     console.log('found inscriptions', inscriptions.length);
+
     // estimate fee
     const smartfeeReq = {
       API_key: apiKey,
@@ -275,6 +379,7 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
     let fee = feePerInput;
     let total = amount;
     let i = 1;
+    let skipped = 0;
 
     console.log('found feerate', feeData.result.feerate);
     console.log('using feePerKb', feePerKB);
@@ -287,7 +392,7 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
           (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
         )
       ) {
-        console.log('skipping inscription utxo', utxo.txid, utxo.vout);
+        skipped++;
         continue;
       }
 
@@ -310,6 +415,7 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
     total = sanitizeFloatAmount(total);
     fee = sanitizeFloatAmount(fee);
 
+    console.log('skipped utxos', skipped);
     console.log('num utxos', i);
     console.log('total', total);
     console.log('amount', amount);
@@ -378,10 +484,11 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
 
     console.log('found utxos', utxos.length);
 
-    const inscriptions = [];
-    await getInscriptions(data.walletAddress, 0, inscriptions);
+    const inscriptions = await getAllInscriptions(data.walletAddress);
 
     console.log('found inscriptions', inscriptions.length);
+
+    let skipped = 0;
 
     // Map and cache scripts
     utxos = (
@@ -392,7 +499,7 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
               (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
             )
           ) {
-            console.log('skipping inscription utxo', utxo.txid, utxo.vout);
+            skipped++;
             return;
           }
 
@@ -414,7 +521,8 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
       )
     ).filter((utxo) => utxo);
 
-    console.log('filtered utxos', utxos.length);
+    console.log('skipped utxos', skipped);
+    console.log('num utxos', utxos.length);
 
     const smartfeeReq = {
       API_key: apiKey,
