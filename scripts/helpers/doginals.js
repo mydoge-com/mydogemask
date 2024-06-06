@@ -227,7 +227,7 @@ export function inscribe(utxos, address, privkey, feePerKB, contentType, data) {
     });
 
     p2shInput.clearSignatures = () => {};
-    p2shInput.getSignatures = () => {};
+    p2shInput.getSignatures = () => [];
 
     lastLock = lock;
     lastPartial = partial;
