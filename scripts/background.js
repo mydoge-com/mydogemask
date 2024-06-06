@@ -568,8 +568,19 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
 
     console.log('inscription txs', txs);
 
+    let fee = 0;
+
+    for (const tx of txs) {
+      fee += tx.getFee();
+    }
+
+    fee = sb.toBitcoin(fee);
+
+    console.log('calculated fee', fee);
+
     sendResponse?.({
       txs: txs.map((tx) => tx.toString()),
+      fee,
     });
   } catch (err) {
     logError(err);

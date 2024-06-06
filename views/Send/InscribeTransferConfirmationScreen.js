@@ -1,12 +1,11 @@
-import { Avatar, Button, Center, HStack, Text, Toast } from 'native-base';
-import { useCallback, useEffect, useState } from 'react';
+import { Button, Center, HStack, Text, Toast } from 'native-base';
+import { useCallback, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
 import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
-import { validateTransaction } from '../../scripts/helpers/wallet';
 
 export const InscribeTransferConfirmationScreen = ({
   setFormPage,
@@ -21,20 +20,18 @@ export const InscribeTransferConfirmationScreen = ({
   const [loading, setLoading] = useState(false);
 
   const onSubmit = useCallback(() => {
-    let addressBalance;
-
     setLoading(true);
     sendMessage(
       {
         message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
         data: { address: walletAddress },
       },
-      (balance) => {
-        if (balance) {
-          addressBalance = balance;
-        } else {
-          setErrors({ confirmation: 'Error getting address balance' });
-        }
+      () => {
+        // if (balance) {
+        //   addressBalance = balance;
+        // } else {
+        //   setErrors({ confirmation: 'Error getting address balance' });
+        // }
 
         // Process transaction
         sendMessage(
