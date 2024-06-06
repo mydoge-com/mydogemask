@@ -8,13 +8,13 @@ import {
   Text,
   VStack,
 } from 'native-base';
+import { useCallback } from 'react';
 import { FiExternalLink } from 'react-icons/fi';
 
-import { DISPATCH_TYPES } from '../../../Context';
 import { BigButton } from '../../../components/Button';
+import { DISPATCH_TYPES } from '../../../Context';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
-import { useCallback } from 'react';
 
 export const NFTModal = ({
   isOpen,

@@ -6,7 +6,8 @@
     "build": "./build.sh",
     "build-scripts": "webpack --config ./webpack.config.js",
     "start": "yarn dev",
-    "lint": "next lint",
+    "lint": "yarn eslint .",
+    "lint-fix": "yarn eslint --fix .",
     "watch": "nodemon --exec \"yarn run build\"",
     "postinstall": "npx patch-package"
   },

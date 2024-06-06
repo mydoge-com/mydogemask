@@ -1,10 +1,10 @@
 import {
+  crypto,
   Networks,
   Opcode,
   PrivateKey,
   Script,
   Transaction,
-  crypto,
 } from 'bitcore-lib-doge';
 
 import { network } from './wallet';

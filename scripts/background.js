@@ -3,7 +3,6 @@ import sb from 'satoshi-bitcoin';
 import { logError } from '../utils/error';
 import { apiKey, doginalsV2, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
-import { inscribe } from './helpers/doginals';
 import {
   AUTHENTICATED,
   CONNECTED_CLIENTS,
@@ -11,11 +10,12 @@ import {
   MAX_UTXOS,
   MESSAGE_TYPES,
   MIN_TX_AMOUNT,
+  NFT_PAGE_SIZE,
   ONBOARDING_COMPLETE,
   PASSWORD,
   WALLET,
-  NFT_PAGE_SIZE,
 } from './helpers/constants';
+import { inscribe } from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,

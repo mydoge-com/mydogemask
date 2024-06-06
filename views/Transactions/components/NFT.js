@@ -15,9 +15,22 @@ export const NFT = ({
   const mimeType = new MIMEType(contentType);
   return (
     <Fragment key={inscriptionNumber}>
-      <Pressable onPress={() => setIsOpen(true)} paddingTop='20px' flex={1/2} paddingLeft={ index % 2 === 0 ? 0: '6px'} paddingRight={ index % 2 === 0 ? '6px': 0}>
+      <Pressable
+        onPress={() => setIsOpen(true)}
+        paddingTop='20px'
+        flex={1 / 2}
+        paddingLeft={index % 2 === 0 ? 0 : '6px'}
+        paddingRight={index % 2 === 0 ? '6px' : 0}
+      >
         <VStack p='10px' borderRadius='12px' bg='gray.100'>
-          <Box width='100%' borderRadius='6px' overflow='hidden' alignItems='center' justifyContent='center' maxH={'130px'}>
+          <Box
+            width='100%'
+            borderRadius='6px'
+            overflow='hidden'
+            alignItems='center'
+            justifyContent='center'
+            maxH='130px'
+          >
             <NFTView content={content} mimeType={mimeType} />
           </Box>
 
@@ -42,8 +55,23 @@ export const NFTView = ({ content, mimeType }) => {
     case 'image':
       return <img src={content} width='100%' height='auto' alt='NFT' />;
     case 'text':
-      return <iframe src={content} width='100%' height='auto' sandbox='allow-same-origin allow-scripts' allow />;
+      return (
+        <iframe
+          src={content}
+          width='100%'
+          height='auto'
+          sandbox='allow-same-origin allow-scripts'
+          allow
+        />
+      );
     default:
-      return <img src='./assets/default-nft.webp' width='100%' height='auto' alt='NFT' />;
+      return (
+        <img
+          src='./assets/default-nft.webp'
+          width='100%'
+          height='auto'
+          alt='NFT'
+        />
+      );
   }
-}
+};

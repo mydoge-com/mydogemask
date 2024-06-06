@@ -1,23 +1,12 @@
-import {
-  Avatar,
-  Box,
-  Button,
-  Center,
-  HStack,
-  Input,
-  Text,
-  Toast,
-} from 'native-base';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { Box, Button, Center, HStack, Input, Text, Toast } from 'native-base';
+import { useCallback, useRef, useState } from 'react';
 import { IoSwapVerticalOutline } from 'react-icons/io5';
-import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
-import { validateTransaction } from '../../scripts/helpers/wallet';
-import { sanitizeDogeInput, sanitizeFiat } from '../../utils/formatters';
+import { sanitizeDogeInput } from '../../utils/formatters';
 
 const MAX_CHARACTERS = 10000;
 

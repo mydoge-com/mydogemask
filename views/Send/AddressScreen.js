@@ -85,7 +85,7 @@ export const AddressScreen = ({
         );
       }
     }
-  }, [setFormPage, selectedNFT, formData.address, validate]);
+  }, [setFormPage, selectedNFT, formData, setFormData, validate]);
 
   return (
     <>

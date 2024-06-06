@@ -215,7 +215,10 @@ export const useTransactions = () => {
 
   const fetchMoreTokens = useCallback(() => {
     if (hasMoreTokens) {
-      fetchTokens({ cursor: currentTokensPage.current + 1, currentTokens: tokens });
+      fetchTokens({
+        cursor: currentTokensPage.current + 1,
+        currentTokens: tokens,
+      });
     }
   }, [fetchTokens, hasMoreTokens, tokens]);
 

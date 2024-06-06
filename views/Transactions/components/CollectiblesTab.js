@@ -18,7 +18,10 @@ export const CollectiblesTab = ({
   fetchMoreNFTs,
   NFTsLoading,
 }) => {
-  const renderItem = useCallback(({ item, index }) => <NFT nft={item} index={index} />, []);
+  const renderItem = useCallback(
+    ({ item, index }) => <NFT nft={item} index={index} />,
+    []
+  );
 
   return (
     <Box flex={1}>

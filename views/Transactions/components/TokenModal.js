@@ -2,8 +2,8 @@ import { Avatar, Box, HStack, Modal, Spinner, Text, VStack } from 'native-base';
 import { useCallback, useEffect, useState } from 'react';
 import { BiTransfer } from 'react-icons/bi';
 
-import { DISPATCH_TYPES } from '../../../Context';
 import { BigButton } from '../../../components/Button';
+import { DISPATCH_TYPES } from '../../../Context';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { doginalsMarketplace } from '../../../scripts/api';
 import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
