@@ -45,7 +45,6 @@ export const MESSAGE_TYPES = {
   INSCRIBE_TRANSFER_TRANSACTION: 'inscribeTransferTransaction',
   SEND_TRANSACTION: 'sendTransaction',
   SEND_INSCRIBE_TRANSFER_TRANSACTION: 'sendInscribeTransferTransaction',
-  CREATE_DOGINAL_TRANSACTION: 'createDoginalTransaction',
   GET_CONNECTED_CLIENTS: 'getConnectedClients',
   UPDATE_ADDRESS_NICKNAME: 'updateAddressNickname',
   NOTIFY_TRANSACTION_SUCCESS: 'notifyTransactionSuccess',
