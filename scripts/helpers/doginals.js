@@ -82,7 +82,7 @@ function fund(utxos, address, privkey, tx) {
 }
 
 function updateWallet(utxos, address, tx) {
-  utxos = utxos.filter((utxo) => {
+  const updated = utxos.filter((utxo) => {
     for (const input of tx.inputs) {
       if (
         input.prevTxId.toString('hex') == utxo.txid &&
@@ -96,7 +96,7 @@ function updateWallet(utxos, address, tx) {
 
   tx.outputs.forEach((output, vout) => {
     if (output.script.toAddress().toString() == address) {
-      utxos.push({
+      updated.push({
         txid: tx.hash,
         vout,
         script: output.script.toHex(),
@@ -106,7 +106,7 @@ function updateWallet(utxos, address, tx) {
     }
   });
 
-  return utxos;
+  return updated;
 }
 
 export function inscribe(
