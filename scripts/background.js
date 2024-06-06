@@ -35,6 +35,9 @@ import {
 
 const TRANSACTION_PAGE_SIZE = 10;
 
+const sleep = async (time) =>
+  new Promise((resolve) => setTimeout(resolve, time));
+
 function sanitizeFloatAmount(amount) {
   return sb.toBitcoin(Math.trunc(sb.toSatoshi(amount)));
 }
@@ -446,21 +449,20 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
       sendResponse?.(false);
     }
 
-    console.log(
-      'decrypted wallet',
-      `${decryptedWallet.children[data.selectedAddressIndex].slice(0, 5)}...`
-    );
-
     const txs = inscribe(
       utxos,
       data.walletAddress,
       decryptedWallet.children[data.selectedAddressIndex],
       feePerKB,
-      'text/plain',
+      'text/plain;charset=utf8',
       inscriptionHex
     );
 
     console.log('inscription txs', txs);
+
+    sendResponse?.({
+      txs: txs.map((tx) => tx.toString()),
+    });
   } catch (err) {
     logError(err);
     sendResponse?.(false);
@@ -494,7 +496,7 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
         .json((jsonrpcRes) => {
           // Open offscreen notification page to handle transaction status notifications
           chrome.offscreen
-            .createDocument({
+            ?.createDocument({
               url: chrome.runtime.getURL(
                 `notification.html/?txId=${jsonrpcRes.result}`
               ),
@@ -511,6 +513,52 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
         });
     }
   );
+}
+
+async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
+  try {
+    const results = [];
+    let i = 0;
+
+    for await (const signed of data.txs) {
+      if (i > 0) {
+        await sleep(10 * 1000); // Nownodes needs some time between txs
+      }
+
+      const jsonrpcReq = {
+        API_key: apiKey,
+        jsonrpc: '2.0',
+        id: `send_${Date.now()}`,
+        method: 'sendrawtransaction',
+        params: [signed],
+      };
+
+      console.log(
+        `sending inscribe transfer tx ${i + 1} of ${data.txs.length}`,
+        jsonrpcReq.params[0]
+      );
+
+      const jsonrpcRes = await node.post(jsonrpcReq).json();
+      results.push(jsonrpcRes.result);
+      i++;
+    }
+
+    console.log(`inscription id ${results[1]}i0`);
+
+    // Open offscreen notification page to handle transaction status notifications
+    chrome.offscreen
+      ?.createDocument({
+        url: chrome.runtime.getURL(`notification.html/?txId=${results[1]}`),
+        reasons: ['BLOBS'],
+        justification: 'Handle transaction status notifications',
+      })
+      .catch(() => {});
+
+    sendResponse(results[1]);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
 }
 
 async function onRequestTransaction({
@@ -983,7 +1031,7 @@ async function onNotifyTransactionSuccess({ data: { txId } } = {}) {
             }.`,
           });
 
-          chrome.offscreen.closeDocument().catch(() => {});
+          chrome.offscreen?.closeDocument().catch(() => {});
         } else if (!transaction) {
           chrome.notifications.create({
             type: 'basic',
@@ -991,7 +1039,7 @@ async function onNotifyTransactionSuccess({ data: { txId } } = {}) {
             iconUrl: '../assets/mydoge128.png',
             message: `Transaction details could not be retrieved for \`${txId}\`.`,
           });
-          chrome.offscreen.closeDocument();
+          chrome.offscreen?.closeDocument();
         }
       },
     });
@@ -1021,6 +1069,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.SEND_TRANSACTION:
       onSendTransaction({ data, sender, sendResponse });
+      break;
+    case MESSAGE_TYPES.SEND_INSCRIBE_TRANSFER_TRANSACTION:
+      onSendInscribeTransfer({ data, sender, sendResponse });
       break;
     case MESSAGE_TYPES.IS_ONBOARDING_COMPLETE:
       getOnboardingStatus({ data, sendResponse, sender });

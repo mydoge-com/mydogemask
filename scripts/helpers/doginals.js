@@ -53,6 +53,8 @@ function fund(utxos, address, privkey, tx) {
   tx.change(address);
   delete tx._fee;
 
+  // console.log('looking over', utxos.length, 'utxos');
+
   for (const utxo of utxos) {
     if (
       tx.inputs.length &&
@@ -66,10 +68,10 @@ function fund(utxos, address, privkey, tx) {
     tx.from(utxo);
     tx.change(address);
 
-    console.log('signing tx');
+    // console.log('signing tx');
     tx.sign(privkey);
 
-    console.log('funded inscription tx with utxo', utxo.txid);
+    console.log('funded inscription tx with utxo', utxo.txid, utxo.vout);
   }
 
   if (tx.inputAmount < tx.outputAmount + tx.getFee()) {
@@ -100,15 +102,25 @@ function updateWallet(utxos, address, tx) {
         script: output.script.toHex(),
         satoshis: output.satoshis,
       });
-      console.log('added inscription utxo', tx.hash);
+      console.log('added inscription utxo', tx.hash, vout);
     }
   });
+
+  return utxos;
 }
 
-export function inscribe(utxos, address, privkey, feePerKB, contentType, data) {
+export function inscribe(
+  utxos,
+  address,
+  privkey,
+  feePerKB,
+  contentType,
+  contentData
+) {
   Transaction.FEE_PER_KB = feePerKB;
+  const data = Buffer.from(contentData, 'hex');
 
-  console.log('set fee per kb', Transaction.FEE_PER_KB);
+  // console.log('set fee per kb', Transaction.FEE_PER_KB);
 
   const privateKey = new PrivateKey(privkey, 'doge');
   const publicKey = privateKey.toPublicKey();
@@ -116,7 +128,7 @@ export function inscribe(utxos, address, privkey, feePerKB, contentType, data) {
   const parts = [];
   const inscription = new Script();
 
-  console.log('setup keys');
+  // console.log('setup keys');
 
   while (data.length) {
     const part = data.slice(0, Math.min(MAX_CHUNK_LEN, data.length));
@@ -133,7 +145,7 @@ export function inscribe(utxos, address, privkey, feePerKB, contentType, data) {
     inscription.chunks.push(bufferToChunk(part));
   });
 
-  console.log('setup inscription parts');
+  // console.log('setup inscription parts');
 
   let p2shInput;
   let lastLock;
@@ -179,19 +191,19 @@ export function inscribe(utxos, address, privkey, feePerKB, contentType, data) {
       satoshis: 100000,
     });
 
-    console.log('created p2sh output');
+    // console.log('created p2sh output');
 
     const tx = new Transaction();
 
     if (p2shInput) {
-      console.log('found p2sh input');
+      // console.log('found p2sh input');
       tx.addInput(p2shInput);
-      console.log('added p2sh input');
+      // console.log('added p2sh input');
     }
 
     tx.addOutput(p2shOutput);
 
-    console.log('added p2sh output');
+    // console.log('added p2sh output');
 
     fund(utxos, address, privkey, tx);
 
@@ -215,7 +227,7 @@ export function inscribe(utxos, address, privkey, feePerKB, contentType, data) {
       tx.inputs[0].setScript(unlock);
     }
 
-    updateWallet(utxos, address, tx);
+    utxos = updateWallet(utxos, address, tx);
 
     txs.push(tx);
 
@@ -256,8 +268,6 @@ export function inscribe(utxos, address, privkey, feePerKB, contentType, data) {
   unlock.chunks.push(bufferToChunk(txsignature));
   unlock.chunks.push(bufferToChunk(lastLock.toBuffer()));
   tx.inputs[0].setScript(unlock);
-
-  updateWallet(utxos, address, tx);
 
   txs.push(tx);
 

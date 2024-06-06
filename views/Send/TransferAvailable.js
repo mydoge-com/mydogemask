@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
 import { AvailableAmountScreen } from './AvailableAmountScreen';
-import { NFTConfirmationScreen } from './NFTConfirmationScreen';
+import { InscribeTransferConfirmationScreen } from './InscribeTransferConfirmationScreen';
 
 export function TransferAvailable() {
   const { wallet, selectedAddressIndex, selectedToken } = useAppContext();
@@ -17,7 +17,7 @@ export function TransferAvailable() {
   const RenderScreen =
     {
       amount: AvailableAmountScreen,
-      confirmation: NFTConfirmationScreen,
+      confirmation: InscribeTransferConfirmationScreen,
     }[formPage] ?? null;
 
   return (

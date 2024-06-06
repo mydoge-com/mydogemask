@@ -113,13 +113,11 @@ export const AvailableAmountScreen = ({
             tokenAmount: formData.tokenAmount,
           },
         },
-        ({ rawTx, fee, amount }) => {
-          if (rawTx && fee !== undefined && amount) {
+        ({ txs }) => {
+          if (txs?.length) {
             setFormData({
               ...formData,
-              rawTx,
-              fee,
-              tokenAmount: amount,
+              txs,
             });
             setFormPage('confirmation');
             setLoading(false);
