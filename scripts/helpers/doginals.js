@@ -41,7 +41,7 @@ function numberToChunk(n) {
         ? Buffer.from([n])
         : Buffer.from([n % 256, n / 256]),
     len: n <= 16 ? 0 : n < 128 ? 1 : 2,
-    opcodenum: n == 0 ? 0 : n <= 16 ? 80 + n : n < 128 ? 1 : 2,
+    opcodenum: n === 0 ? 0 : n <= 16 ? 80 + n : n < 128 ? 1 : 2,
   };
 }
 
@@ -85,8 +85,8 @@ function updateWallet(utxos, address, tx) {
   const updated = utxos.filter((utxo) => {
     for (const input of tx.inputs) {
       if (
-        input.prevTxId.toString('hex') == utxo.txid &&
-        input.outputIndex == utxo.vout
+        input.prevTxId.toString('hex') === utxo.txid &&
+        input.outputIndex === utxo.vout
       ) {
         return false;
       }
@@ -95,7 +95,7 @@ function updateWallet(utxos, address, tx) {
   });
 
   tx.outputs.forEach((output, vout) => {
-    if (output.script.toAddress().toString() == address) {
+    if (output.script.toAddress().toString() === address) {
       updated.push({
         txid: tx.hash,
         vout,
@@ -154,7 +154,7 @@ export function inscribe(
   while (inscription.chunks.length) {
     const partial = new Script();
 
-    if (txs.length == 0) {
+    if (txs.length === 0) {
       partial.chunks.push(inscription.chunks.shift());
     }
 

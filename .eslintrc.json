@@ -40,7 +40,8 @@
     "import/no-relative-packages": "off",
     "no-underscore-dangle": "off",
     "no-await-in-loop": "off",
-    "no-restricted-syntax": "off"
+    "no-restricted-syntax": "off",
+    "no-param-reassign": "off"
   },
   "globals": {
     "chrome": true
