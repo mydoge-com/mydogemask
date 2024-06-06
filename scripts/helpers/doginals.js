@@ -118,7 +118,7 @@ export function inscribe(
   contentData
 ) {
   Transaction.FEE_PER_KB = feePerKB;
-  const data = Buffer.from(contentData, 'hex');
+  let data = Buffer.from(contentData, 'hex');
 
   // console.log('set fee per kb', Transaction.FEE_PER_KB);
 
