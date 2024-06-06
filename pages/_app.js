@@ -28,7 +28,7 @@ function MyApp({ Component, pageProps }) {
       <AppContextProvider>
         <NativeBaseProvider isSSR={false} theme={theme}>
           <Head>
-            <title>MyDogeMask</title>
+            <title>MyDoge</title>
           </Head>
           <Component {...pageProps} />
         </NativeBaseProvider>

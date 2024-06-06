@@ -66,7 +66,7 @@ export function ClientTransaction() {
             return (
               <ToastRender
                 title='Transaction Rejected'
-                description={`MyDogeMask failed to authorize the transaction to ${origin}`}
+                description={`MyDoge failed to authorize the transaction to ${origin}`}
                 status='error'
               />
             );

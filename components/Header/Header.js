@@ -393,7 +393,7 @@ const DetailPopup = ({
             </VStack>
           ) : (
             <Text>
-              MyDogeMask is not connected to this website. To connect, find and
+              MyDoge is not connected to this website. To connect, find and
               click the Connect button on the site.
             </Text>
           )}

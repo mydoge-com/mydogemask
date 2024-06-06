@@ -53,7 +53,7 @@ export function ClientConnect() {
             return (
               <ToastRender
                 title='Connection Failed'
-                description={`MyDogeMask failed to connected to ${origin}`}
+                description={`MyDoge failed to connected to ${origin}`}
                 status='error'
               />
             );
@@ -100,7 +100,7 @@ export function ClientConnect() {
         <FaLink />
       </Box>
       <Text fontSize='2xl' pb='6px'>
-        Connect with <Text fontWeight='bold'>MyDogeMask</Text>
+        Connect with <Text fontWeight='bold'>MyDoge</Text>
       </Text>
       <Text fontSize='sm' color='gray.600'>
         Select the address you want to use with this site
@@ -223,7 +223,7 @@ const ConfirmationModal = ({
               return (
                 <ToastRender
                   title='Connection Success'
-                  description={`MyDogeMask has connected to ${origin}`}
+                  description={`MyDoge has connected to ${origin}`}
                   status='success'
                 />
               );
