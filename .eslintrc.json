@@ -17,8 +17,8 @@
       "version": "detect"
     }
   },
-  "extends": ["airbnb", "airbnb/hooks", "plugin:prettier/recommended"],
-  "plugins": ["react", "react-native", "prettier", "simple-import-sort"],
+  "extends": ["airbnb", "airbnb/hooks", "plugin:prettier/recommended", "plugin:react-hooks/recommended"],
+  "plugins": ["react", "react-native", "prettier", "simple-import-sort", "react-hooks"],
   "rules": {
     "prettier/prettier": "warn",
     "consistent-return": "off",
@@ -39,7 +39,7 @@
     "simple-import-sort/imports": "error",
     "import/no-relative-packages": "off",
     "no-underscore-dangle": "off",
-    "no-await-in-loop": "off",
+    "no-await-in-loop": "off"
   },
   "globals": {
     "chrome": true
