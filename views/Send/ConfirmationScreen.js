@@ -15,7 +15,6 @@ export const ConfirmationScreen = ({
   formData,
   walletAddress,
   selectedAddressIndex,
-  selectedNFT,
 }) => {
   const { navigate } = useAppContext();
   const [loading, setLoading] = useState(false);
