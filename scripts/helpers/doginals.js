@@ -316,6 +316,6 @@ export async function getDRC20Inscriptions(address, ticker, cursor, result) {
 
   if (query.result.total !== result.length) {
     cursor += query.result.list.length;
-    return getDRC20Inscriptions(address, cursor, result);
+    return getDRC20Inscriptions(address, ticker, cursor, result);
   }
 }
