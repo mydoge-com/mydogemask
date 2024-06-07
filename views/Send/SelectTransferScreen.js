@@ -130,7 +130,7 @@ export const SelectTransferScreen = ({
         }
       }
     );
-  }, [formData, setFormData, setFormPage, selectedNFT]);
+  }, [formData, setFormData, setFormPage, selectedNFT, walletAddress]);
 
   return (
     <Center>
