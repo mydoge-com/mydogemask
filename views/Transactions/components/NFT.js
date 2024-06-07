@@ -9,6 +9,7 @@ export const NFT = ({
   nft: { content, inscriptionNumber, timestamp, contentType },
   nft,
   index,
+  onPress,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const onClose = () => setIsOpen(false);
@@ -16,7 +17,13 @@ export const NFT = ({
   return (
     <Fragment key={inscriptionNumber}>
       <Pressable
-        onPress={() => setIsOpen(true)}
+        onPress={() => {
+          if (onPress) {
+            onPress();
+          } else {
+            setIsOpen(true);
+          }
+        }}
         paddingTop='20px'
         flex={1 / 2}
         paddingLeft={index % 2 === 0 ? 0 : '6px'}
@@ -38,9 +45,11 @@ export const NFT = ({
             # {inscriptionNumber}
           </Text>
 
-          <Text fontSize='12px' fontWeight='medium' color='gray.500'>
-            {dayjs(timestamp * 1000).format('YYYY-MM-DD')}
-          </Text>
+          {timestamp && (
+            <Text fontSize='12px' fontWeight='medium' color='gray.500'>
+              {dayjs(timestamp * 1000).format('YYYY-MM-DD')}
+            </Text>
+          )}
         </VStack>
       </Pressable>
       <NFTModal isOpen={isOpen} onClose={onClose} nft={nft}>

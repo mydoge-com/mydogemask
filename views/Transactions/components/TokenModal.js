@@ -49,6 +49,21 @@ export const TokenModal = ({
     navigate('TransferAvailable');
   }, [dispatch, navigate, token, tokenDetails?.floorPrice]);
 
+  const onTransfer = useCallback(() => {
+    dispatch({
+      type: DISPATCH_TYPES.SELECT_TOKEN,
+      payload: {
+        token: {
+          ...token,
+          dogePrice: Number(
+            formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
+          ),
+        },
+      },
+    });
+    navigate('TransferToken');
+  }, [dispatch, navigate, token, tokenDetails?.floorPrice]);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size='full'>
       <Modal.Content w='90%'>
@@ -137,6 +152,7 @@ export const TokenModal = ({
             </BigButton>
             <BigButton
               isDisabled={transferableBalance === '0'}
+              onPress={onTransfer}
               variant='secondary'
               px='28px'
               mt='30px'

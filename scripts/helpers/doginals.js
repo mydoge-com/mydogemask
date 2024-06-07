@@ -7,6 +7,8 @@ import {
   Transaction,
 } from 'bitcore-lib-doge';
 
+import { doginals } from '../api';
+import { NFT_PAGE_SIZE } from './constants';
 import { network } from './wallet';
 
 const { Hash, Signature } = crypto;
@@ -272,4 +274,47 @@ export function inscribe(
   txs.push(tx);
 
   return txs;
+}
+
+export async function getDRC20Inscriptions(address, ticker, cursor, result) {
+  const query = await doginals
+    .get(
+      `/brc20/transferable-list?address=${address}&ticker=${encodeURIComponent(
+        ticker
+      )}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
+    )
+    .json();
+
+  console.log(
+    'found',
+    query.result.list.length,
+    'drc20',
+    ticker,
+    'in page',
+    cursor,
+    'total',
+    query.result.total
+  );
+
+  result.push(
+    ...query.result.list.map((i) => {
+      const txid = i.inscriptionId.slice(0, -2);
+      const vout = parseInt(i.inscriptionId.slice(-1), 10);
+
+      return {
+        txid,
+        vout,
+        // Return extra data for rendering and transfering
+        contentType: 'text/plain',
+        content: `https://wonky-ord.dogeord.io/content/${i.inscriptionId}`,
+        inscriptionNumber: i.inscriptionNumber,
+        output: `${txid}:${vout}`,
+      };
+    })
+  );
+
+  if (query.result.total !== result.length) {
+    cursor += query.result.list.length;
+    return getDRC20Inscriptions(address, cursor, result);
+  }
 }

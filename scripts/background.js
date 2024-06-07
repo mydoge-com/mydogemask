@@ -15,10 +15,11 @@ import {
   PASSWORD,
   WALLET,
 } from './helpers/constants';
-import { inscribe } from './helpers/doginals';
+import { getDRC20Inscriptions, inscribe } from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
+  getCachedTx,
   getLocalValue,
   getSessionValue,
   removeLocalValue,
@@ -51,20 +52,19 @@ async function getDoginals(address, cursor, result) {
     )
     .json();
 
-  console.log(
-    'found',
-    query.result.list.length,
-    'doginals in page',
-    cursor,
-    'total',
-    query.result.total
-  );
+  // console.log(
+  //   'found',
+  //   query.result.list.length,
+  //   'doginals in page',
+  //   cursor,
+  //   'total',
+  //   query.result.total
+  // );
 
   result.push(
     ...query.result.list.map((i) => ({
       txid: i.output.split(':')[0],
       vout: parseInt(i.output.split(':')[1], 10),
-      genesis: i.genesisTransaction,
     }))
   );
 
@@ -73,40 +73,6 @@ async function getDoginals(address, cursor, result) {
   if (query.result.total !== result.length) {
     cursor += query.result.list.length;
     return getDoginals(address, cursor, result);
-  }
-}
-
-async function getDRC20Inscriptions(address, ticker, cursor, result) {
-  const query = await doginals
-    .get(
-      `/brc20/transferable-list?address=${address}&ticker=${encodeURIComponent(
-        ticker
-      )}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
-    )
-    .json();
-
-  console.log(
-    'found',
-    query.result.list.length,
-    'drc20',
-    ticker,
-    'in page',
-    cursor,
-    'total',
-    query.result.total
-  );
-
-  result.push(
-    ...query.result.list.map((i) => ({
-      txid: i.inscriptionId.slice(0, -2),
-      vout: parseInt(i.inscriptionId.slice(-1), 10),
-      genesis: i.genesisTransaction,
-    }))
-  );
-
-  if (query.result.total !== result.length) {
-    cursor += query.result.list.length;
-    return getDRC20Inscriptions(address, cursor, result);
   }
 }
 
@@ -133,15 +99,15 @@ async function getDRC20Tickers(address, cursor, total, result) {
       .filter((i) => i)
   );
 
-  console.log(
-    'found',
-    query.result.list.length,
-    'drc20 tickers',
-    'in page',
-    cursor,
-    'total',
-    total
-  );
+  // console.log(
+  //   'found',
+  //   query.result.list.length,
+  //   'drc20 tickers',
+  //   'in page',
+  //   cursor,
+  //   'total',
+  //   total
+  // );
 
   if (total !== result.length) {
     cursor += query.result.list.length;
@@ -503,13 +469,8 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
             return;
           }
 
-          let script = await getLocalValue(utxo.txid);
-
-          if (!script) {
-            const tx = await nownodes.get(`/tx/${utxo.txid}`).json();
-            script = tx.vout[utxo.vout].hex;
-            await setLocalValue({ [utxo.txid]: script });
-          }
+          const tx = await getCachedTx(utxo.txid);
+          const script = tx.vout[utxo.vout].hex;
 
           return {
             txid: utxo.txid,
@@ -836,9 +797,7 @@ async function onGetTransactions({ data, sendResponse } = {}) {
         return;
       }
       const transactions = (
-        await Promise.all(
-          txIds.map((txId) => nownodes.get(`/tx/${txId}`).json())
-        )
+        await Promise.all(txIds.map((txId) => getCachedTx(txId)))
       ).sort((a, b) => b.blockTime - a.blockTime);
       sendResponse?.({ transactions, totalPages, page });
     })

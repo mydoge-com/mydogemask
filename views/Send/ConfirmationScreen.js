@@ -115,7 +115,7 @@ export const ConfirmationScreen = ({
           Wallet {selectedAddressIndex + 1}
         </Text>
         {'  '}
-        {walletAddress.slice(0, 8)}...{formData.address.slice(-4)}
+        {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
       </Text>
       <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
         Paying
