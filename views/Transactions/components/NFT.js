@@ -6,7 +6,7 @@ import MIMEType from 'whatwg-mimetype';
 import { NFTModal } from './NFTModal';
 
 export const NFT = ({
-  nft: { content, inscriptionNumber, timestamp, contentType },
+  nft: { content, inscriptionNumber, timestamp, contentType, amount, ticker },
   nft,
   index,
   onPress,
@@ -42,7 +42,7 @@ export const NFT = ({
           </Box>
 
           <Text fontSize='16px' fontWeight='bold' color='yellow.600' pt='10px'>
-            # {inscriptionNumber}
+            {ticker ? `${ticker} ${amount}` : `# ${inscriptionNumber}`}
           </Text>
 
           {timestamp && (

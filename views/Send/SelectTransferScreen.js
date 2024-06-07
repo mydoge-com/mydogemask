@@ -54,7 +54,7 @@ export const SelectTransferScreen = ({
             };
           })
         );
-        console.log('transfers', transfers);
+
         setNFTs(transfers);
       } catch (e) {
         Toast.show({
@@ -95,7 +95,11 @@ export const SelectTransferScreen = ({
     sendMessage(
       {
         message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
-        data: { ...selectedNFT, recipientAddress: formData.address.trim() },
+        data: {
+          ...selectedNFT,
+          address: walletAddress,
+          recipientAddress: formData.address.trim(),
+        },
       },
       ({ rawTx, fee, amount }) => {
         if (rawTx && fee !== undefined && amount) {
