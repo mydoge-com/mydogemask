@@ -66,6 +66,7 @@ export const NFTView = ({ content, mimeType }) => {
     case 'text':
       return (
         <iframe
+          title='NFT'
           src={content}
           width='100%'
           height='auto'

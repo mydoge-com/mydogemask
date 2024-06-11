@@ -109,6 +109,8 @@ export const TokenModal = ({
                   ).toLocaleString()} / ${Number(
                     tokenDetails.maxSupply
                   ).toLocaleString()}`}
+                  flexDir='column'
+                  alignItems='center'
                 />
               </HStack>
             ) : (
@@ -171,7 +173,7 @@ export const TokenModal = ({
   );
 };
 
-function Pill({ label, value }) {
+function Pill({ label, value, ...props }) {
   if (!value) return null;
   return (
     <Box
@@ -181,6 +183,7 @@ function Pill({ label, value }) {
       paddingY='1px'
       flexDir='row'
       my='2px'
+      {...props}
     >
       <Text fontWeight='bold' fontSize='11px'>
         {label}:{' '}

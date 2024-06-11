@@ -46,11 +46,14 @@ function sanitizeFloatAmount(amount) {
 }
 
 async function getDoginals(address, cursor, result) {
-  const query = await doginalsV2
+  let query;
+  await doginalsV2
     .get(
       `/address/inscriptions?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
     )
-    .json();
+    .json((res) => {
+      query = res;
+    });
 
   // console.log(
   //   'found',
@@ -70,18 +73,22 @@ async function getDoginals(address, cursor, result) {
 
   // console.log(`fetched ${result.length}/${query.result.total} inscriptions`);
 
-  if (query.result.total !== result.length) {
+  // Fixes an issue where Doginals API returns `total` less than items in `list` array.
+  if (query.result.total > result.length) {
     cursor += query.result.list.length;
     return getDoginals(address, cursor, result);
   }
 }
 
 async function getDRC20Tickers(address, cursor, total, result) {
-  const query = await doginals
+  let query;
+  await doginals
     .get(
       `/brc20/tokens?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
     )
-    .json();
+    .json((res) => {
+      query = res;
+    });
 
   if (cursor === 0) {
     total = query.result.total;
@@ -109,7 +116,7 @@ async function getDRC20Tickers(address, cursor, total, result) {
   //   total
   // );
 
-  if (total !== result.length) {
+  if (total > result.length) {
     cursor += query.result.list.length;
     return getDRC20Tickers(address, cursor, total, result);
   }
@@ -440,13 +447,14 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
 async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
   try {
     // Get utxos
-    let utxos = (await nownodes.get(`/utxo/${data.walletAddress}`).json()).sort(
-      (a, b) => {
+    let utxos;
+    await nownodes.get(`/utxo/${data.walletAddress}`).json((res) => {
+      utxos = res.sort((a, b) => {
         const aValue = sb.toBitcoin(a.value);
         const bValue = sb.toBitcoin(b.value);
         return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
-      }
-    );
+      });
+    });
 
     console.log('found utxos', utxos.length);
 
