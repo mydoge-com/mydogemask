@@ -32,6 +32,8 @@ export const DISPATCH_TYPES = {
 const CLIENT_REQUEST_ROUTES = {
   [MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION]: 'ClientConnect',
   [MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION]: 'ClientTransaction',
+  [MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION]:
+    'ClientDoginalTransaction',
 };
 
 const reducer = (state, { type, payload }) => {

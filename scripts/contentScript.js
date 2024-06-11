@@ -1,3 +1,5 @@
+import { add } from 'bitcore-lib-doge/lib/networks';
+
 import { MESSAGE_TYPES } from './helpers/constants';
 import { getAddressBalance, getConnectedClient } from './helpers/data';
 import { validateTransaction } from './helpers/wallet';
@@ -248,6 +250,40 @@ import { validateTransaction } from './helpers/wallet';
     }
   }
 
+  async function onRequestDoginalTransaction({ origin, data }) {
+    try {
+      const client = await getConnectedClient(origin);
+
+      chrome.runtime.sendMessage(
+        {
+          message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
+          data: { ...data, address: client.address },
+        },
+        ({ rawTx, fee, amount }) => {
+          if (rawTx && fee && amount) {
+            chrome.runtime.sendMessage({
+              message: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
+              data: {
+                ...data,
+                rawTx,
+                fee,
+                dogeAmount: amount,
+              },
+            });
+          } else {
+            throw new Error('Unable to create doginal transaction');
+          }
+        }
+      );
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      });
+    }
+  }
+
   // Listen to messages from injected script and pass to the respective handler functions tro forward to the background script
   window.addEventListener(
     'message',
@@ -264,6 +300,9 @@ import { validateTransaction } from './helpers/wallet';
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
           onRequestTransaction({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
+          onRequestDoginalTransaction({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_DISCONNECT:
           onDisconnectClient({ origin: source.origin });

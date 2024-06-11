@@ -691,6 +691,48 @@ async function onRequestTransaction({
   return true;
 }
 
+async function onRequestDoginalTransaction({
+  data: { recipientAddress, dogeAmount, rawTx, fee } = {},
+  sendResponse,
+  sender,
+} = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  const params = new URLSearchParams();
+  Object.entries({
+    originTabId: sender.tab.id,
+    origin: sender.origin,
+    recipientAddress,
+    dogeAmount,
+    rawTx,
+    fee,
+  }).forEach(([key, value]) => {
+    params.append(key, value);
+  });
+  chrome.windows
+    .create({
+      url: `index.html?${params.toString()}#${
+        MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION
+      }`,
+      type: 'popup',
+      width: 357,
+      height: 640,
+    })
+    .then((tab) => {
+      if (tab) {
+        sendResponse?.({ originTabId: sender.tab.id });
+      } else {
+        sendResponse?.(false);
+      }
+    });
+  return true;
+}
+
 // Generates a seed phrase, root keypair, child keypair + address 0
 // Encrypt + store the private data and address
 function onCreateWallet({ data = {}, sendResponse } = {}) {
@@ -1197,6 +1239,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE:
       onApproveTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
+      onRequestDoginalTransaction({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });

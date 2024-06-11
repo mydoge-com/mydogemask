@@ -82,6 +82,29 @@ const doge = {
     });
   },
 
+  requestDoginalTransaction(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.recipientAddress || !data?.output || !data?.outputValue) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
+
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION, data },
+        window.location.origin
+      );
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      });
+    });
+  },
+
   disconnect(onSuccess, onError) {
     return new Promise((resolve, reject) => {
       window.postMessage(
