@@ -9,6 +9,7 @@ import {
 import { messageHandler } from './scripts/background';
 import { MESSAGE_TYPES } from './scripts/helpers/constants';
 import { addListener, sendMessage } from './scripts/helpers/message';
+import { useTransactions } from './views/Transactions/Transactions.hooks';
 
 export const AppContext = createContext(null);
 
@@ -172,13 +173,16 @@ export const AppContextProvider = ({ children }) => {
     );
   }, [navigate]);
 
+  const transactions = useTransactions(state);
+
   const providerValue = useMemo(
     () => ({
       ...state,
       dispatch,
       navigate,
+      transactions,
     }),
-    [navigate, state]
+    [navigate, state, transactions]
   );
   return (
     <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>

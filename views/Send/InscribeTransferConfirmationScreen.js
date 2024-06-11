@@ -10,7 +10,7 @@ import { sendMessage } from '../../scripts/helpers/message';
 export const InscribeTransferConfirmationScreen = ({
   setFormPage,
   errors,
-  setErrors,
+  // setErrors,
   formData,
   walletAddress,
   selectedAddressIndex,
@@ -76,7 +76,7 @@ export const InscribeTransferConfirmationScreen = ({
         );
       }
     );
-  }, [formData.txs, navigate, setErrors, walletAddress]);
+  }, [formData.txs, navigate, walletAddress]);
 
   return (
     <Center>
@@ -91,7 +91,7 @@ export const InscribeTransferConfirmationScreen = ({
         {walletAddress.slice(0, 8)}
       </Text>
       <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-        Sending
+        Inscribing
       </Text>
       <HStack alignItems='center' space='12px' pb='28px'>
         <Text

@@ -10,7 +10,6 @@ import { Balance } from './components/Balance';
 import { CollectiblesTab } from './components/CollectiblesTab';
 import { TokensTab } from './components/TokensTab';
 import { TransactionsTab } from './components/TransactionsTab';
-import { useTransactions } from './Transactions.hooks';
 
 const Buy = 'assets/buy.svg';
 const Receive = 'assets/receive.svg';
@@ -18,23 +17,26 @@ const Send = 'assets/send.svg';
 
 export function Transactions() {
   const {
-    balance,
-    usdValue,
-    NFTs,
-    hasMoreNFTs,
-    fetchMoreNFTs,
-    NFTsLoading,
-    transactions,
-    loading,
-    hasMore,
-    fetchMore,
-    tokens,
-    tokensLoading,
-    hasMoreTokens,
-    fetchMoreTokens,
-  } = useTransactions();
-
-  const { wallet, navigate, selectedAddressIndex } = useAppContext();
+    wallet,
+    navigate,
+    selectedAddressIndex,
+    transactions: {
+      balance,
+      usdValue,
+      NFTs,
+      hasMoreNFTs,
+      fetchMoreNFTs,
+      NFTsLoading,
+      transactions,
+      loading,
+      hasMore,
+      fetchMore,
+      tokens,
+      tokensLoading,
+      hasMoreTokens,
+      fetchMoreTokens,
+    },
+  } = useAppContext();
 
   const activeAddress = wallet.addresses[selectedAddressIndex];
 
