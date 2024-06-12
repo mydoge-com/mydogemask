@@ -136,6 +136,7 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
           data: {
             availableBalance,
             transferableBalance,
+            ticker: data.ticker,
             address: client.address,
           },
         },
