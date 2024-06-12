@@ -1,6 +1,6 @@
 import { MESSAGE_TYPES } from './helpers/constants';
 import { getAddressBalance, getConnectedClient } from './helpers/data';
-import { getDoginals } from './helpers/doginals';
+import { getDoginals, getDRC20Balances } from './helpers/doginals';
 import { validateAddress, validateTransaction } from './helpers/wallet';
 
 (() => {
@@ -98,6 +98,44 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
           type: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
           data: {
             balance,
+            address: client.address,
+          },
+        },
+        origin
+      );
+    }
+  }
+
+  async function onGetDRC20Balance({ origin, data }) {
+    let client;
+    let availableBalance = '0';
+    let transferableBalance = '0';
+
+    try {
+      client = await getConnectedClient(origin);
+      const balances = [];
+      await getDRC20Balances(client?.address, 0, balances);
+      const balance = balances.find((ins) => ins.ticker === data.ticker);
+
+      if (balance) {
+        availableBalance = balance.availableBalance;
+        transferableBalance = balance.transferableBalance;
+      }
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE_RESPONSE,
+      });
+      return;
+    }
+    if (client) {
+      window.postMessage(
+        {
+          type: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE_RESPONSE,
+          data: {
+            availableBalance,
+            transferableBalance,
             address: client.address,
           },
         },
@@ -320,6 +358,9 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
           break;
         case MESSAGE_TYPES.CLIENT_GET_BALANCE:
           onGetBalance({ origin: source.origin });
+          break;
+        case MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE:
+          onGetDRC20Balance({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
           onRequestTransaction({ origin: source.origin, data });

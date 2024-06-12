@@ -7,7 +7,7 @@ import {
   Transaction,
 } from 'bitcore-lib-doge';
 
-import { doginalsV2 } from '../api';
+import { doginals, doginalsV2 } from '../api';
 import { NFT_PAGE_SIZE } from './constants';
 import { network } from './wallet';
 
@@ -354,5 +354,33 @@ export async function getDRC20Inscriptions(address, ticker, cursor, result) {
   if (query.result.total !== result.length) {
     cursor += query.result.list.length;
     return getDRC20Inscriptions(address, ticker, cursor, result);
+  }
+}
+
+export async function getDRC20Balances(address, cursor, result) {
+  let query;
+  await doginals
+    .get(
+      `/brc20/tokens?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
+    )
+    .json((res) => {
+      query = res;
+    });
+
+  result.push(...query.result.list);
+
+  // console.log(
+  //   'found',
+  //   query.result.list.length,
+  //   'drc20 balances',
+  //   'in page',
+  //   cursor,
+  //   'total',
+  //   total
+  // );
+
+  if (query.result.total > result.length) {
+    cursor += query.result.list.length;
+    return getDRC20Balances(address, cursor, result);
   }
 }

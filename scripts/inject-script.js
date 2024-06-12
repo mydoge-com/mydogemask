@@ -60,6 +60,29 @@ const doge = {
     });
   },
 
+  getDRC20Balance(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.ticker) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
+
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE, data },
+        window.location.origin
+      );
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE_RESPONSE,
+      });
+    });
+  },
+
   requestTransaction(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
       if (!data?.recipientAddress || !data?.dogeAmount) {

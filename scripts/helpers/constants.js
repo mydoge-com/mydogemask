@@ -15,6 +15,8 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_CONNECTION_RESPONSE: 'clientRequestConnectionResponse',
   CLIENT_GET_BALANCE: 'clientRequestBalance',
   CLIENT_GET_BALANCE_RESPONSE: 'clientGetBalanceResponse',
+  CLIENT_GET_DRC20_BALANCE: 'clientRequestDRC20Balance',
+  CLIENT_GET_DRC20_BALANCE_RESPONSE: 'clientGetDRC20BalanceResponse',
   CLIENT_REQUEST_TRANSACTION: 'clientRequestTransaction',
   CLIENT_REQUEST_TRANSACTION_RESPONSE: 'clientRequestTransactionResponse',
   CLIENT_REQUEST_DOGINAL_TRANSACTION: 'clientRequestDoginalTransaction',
