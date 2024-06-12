@@ -84,7 +84,7 @@ const doge = {
 
   requestDoginalTransaction(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
-      if (!data?.recipientAddress || !data?.output || !data?.outputValue) {
+      if (!data?.recipientAddress || !data?.output) {
         onError?.(new Error('Invalid data'));
         reject(new Error('Invalid data'));
         return;

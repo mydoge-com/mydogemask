@@ -1,7 +1,7 @@
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { apiKey, doginals, doginalsV2, node, nownodes } from './api';
+import { apiKey, doginals, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
@@ -15,7 +15,11 @@ import {
   PASSWORD,
   WALLET,
 } from './helpers/constants';
-import { getDRC20Inscriptions, inscribe } from './helpers/doginals';
+import {
+  getDoginals,
+  getDRC20Inscriptions,
+  inscribe,
+} from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
@@ -43,41 +47,6 @@ const sleep = async (time) =>
 
 function sanitizeFloatAmount(amount) {
   return sb.toBitcoin(Math.trunc(sb.toSatoshi(amount)));
-}
-
-async function getDoginals(address, cursor, result) {
-  let query;
-  await doginalsV2
-    .get(
-      `/address/inscriptions?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
-    )
-    .json((res) => {
-      query = res;
-    });
-
-  // console.log(
-  //   'found',
-  //   query.result.list.length,
-  //   'doginals in page',
-  //   cursor,
-  //   'total',
-  //   query.result.total
-  // );
-
-  result.push(
-    ...query.result.list.map((i) => ({
-      txid: i.output.split(':')[0],
-      vout: parseInt(i.output.split(':')[1], 10),
-    }))
-  );
-
-  // console.log(`fetched ${result.length}/${query.result.total} inscriptions`);
-
-  // Fixes an issue where Doginals API returns `total` less than items in `list` array.
-  if (query.result.total > result.length) {
-    cursor += query.result.list.length;
-    return getDoginals(address, cursor, result);
-  }
 }
 
 async function getDRC20Tickers(address, cursor, total, result) {
@@ -209,6 +178,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
           (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
         )
       ) {
+        // console.log('skipping inscription', utxo.txid, utxo.vout);
         skipped++;
         continue;
       }

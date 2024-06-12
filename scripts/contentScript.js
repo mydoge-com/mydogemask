@@ -1,7 +1,6 @@
-import { add } from 'bitcore-lib-doge/lib/networks';
-
 import { MESSAGE_TYPES } from './helpers/constants';
 import { getAddressBalance, getConnectedClient } from './helpers/data';
+import { getDoginals } from './helpers/doginals';
 import { validateAddress, validateTransaction } from './helpers/wallet';
 
 (() => {
@@ -256,12 +255,32 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
         throw new Error('Invalid address');
       }
 
+      const txid = data.output.split(':')[0];
+      const vout = parseInt(data.output.split(':')[1], 10);
+
+      if (txid?.length !== 64 || Number.isNaN(vout)) {
+        throw new Error('Invalid output');
+      }
+
       const client = await getConnectedClient(origin);
+      const doginals = [];
+      await getDoginals(client?.address, 0, doginals);
+      const doginal = doginals.find(
+        (ins) => ins.txid === txid && ins.vout === vout
+      );
+
+      if (!doginal) {
+        throw new Error('Doginal not found');
+      }
 
       chrome.runtime.sendMessage(
         {
           message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
-          data: { ...data, address: client?.address },
+          data: {
+            ...data,
+            address: client?.address,
+            outputValue: doginal.outputValue,
+          },
         },
         ({ rawTx, fee, amount }) => {
           if (rawTx && fee && amount) {
