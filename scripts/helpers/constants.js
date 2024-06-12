@@ -18,8 +18,6 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_TRANSACTION: 'clientRequestTransaction',
   CLIENT_REQUEST_TRANSACTION_RESPONSE: 'clientRequestTransactionResponse',
   CLIENT_REQUEST_DOGINAL_TRANSACTION: 'clientRequestDoginalTransaction',
-  CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
-    'clientRequestDoginalTransactionResponse',
   CLIENT_DISCONNECT: 'clientDisconnect',
   CLIENT_DISCONNECT_RESPONSE: 'clientDisconnectResponse',
   CLIENT_CONNECTION_STATUS: 'clientConnectionStatus',

@@ -2,7 +2,7 @@ import { add } from 'bitcore-lib-doge/lib/networks';
 
 import { MESSAGE_TYPES } from './helpers/constants';
 import { getAddressBalance, getConnectedClient } from './helpers/data';
-import { validateTransaction } from './helpers/wallet';
+import { validateAddress, validateTransaction } from './helpers/wallet';
 
 (() => {
   // const loadSendTipFloating = async () => {
@@ -252,12 +252,16 @@ import { validateTransaction } from './helpers/wallet';
 
   async function onRequestDoginalTransaction({ origin, data }) {
     try {
+      if (!validateAddress(data.recipientAddress)) {
+        throw new Error('Invalid address');
+      }
+
       const client = await getConnectedClient(origin);
 
       chrome.runtime.sendMessage(
         {
           message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
-          data: { ...data, address: client.address },
+          data: { ...data, address: client?.address },
         },
         ({ rawTx, fee, amount }) => {
           if (rawTx && fee && amount) {
@@ -279,7 +283,7 @@ import { validateTransaction } from './helpers/wallet';
       handleError({
         errorMessage: e.message,
         origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
       });
     }
   }
