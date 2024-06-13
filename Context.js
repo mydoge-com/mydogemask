@@ -34,6 +34,8 @@ const CLIENT_REQUEST_ROUTES = {
   [MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION]: 'ClientTransaction',
   [MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION]:
     'ClientDoginalTransaction',
+  [MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION]:
+    'ClientAvailableDRC20Transaction',
 };
 
 const reducer = (state, { type, payload }) => {

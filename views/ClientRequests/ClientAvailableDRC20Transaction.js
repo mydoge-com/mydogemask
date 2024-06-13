@@ -25,7 +25,7 @@ import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export function ClientDoginalTransaction() {
+export function ClientAvailableDRC20Transaction() {
   const {
     clientRequest: {
       params: { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee },

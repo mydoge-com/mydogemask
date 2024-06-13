@@ -687,7 +687,48 @@ async function onRequestDoginalTransaction({
   chrome.windows
     .create({
       url: `index.html?${params.toString()}#${
-        MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION
+        MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION
+      }`,
+      type: 'popup',
+      width: 357,
+      height: 640,
+    })
+    .then((tab) => {
+      if (tab) {
+        sendResponse?.({ originTabId: sender.tab.id });
+      } else {
+        sendResponse?.(false);
+      }
+    });
+  return true;
+}
+
+async function onRequestAvailableDRC20Transaction({
+  data: { walletAddress, txs, fee } = {},
+  sendResponse,
+  sender,
+} = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  const params = new URLSearchParams();
+  Object.entries({
+    originTabId: sender.tab.id,
+    origin: sender.origin,
+    walletAddress,
+    txs,
+    fee,
+  }).forEach(([key, value]) => {
+    params.append(key, value);
+  });
+  chrome.windows
+    .create({
+      url: `index.html?${params.toString()}#${
+        MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION
       }`,
       type: 'popup',
       width: 357,
@@ -1162,13 +1203,13 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CREATE_NFT_TRANSACTION:
       onCreateNFTTransaction({ data, sendResponse });
       break;
-    case MESSAGE_TYPES.INSCRIBE_TRANSFER_TRANSACTION:
+    case MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION:
       onInscribeTransferTransaction({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SEND_TRANSACTION:
       onSendTransaction({ data, sender, sendResponse });
       break;
-    case MESSAGE_TYPES.SEND_INSCRIBE_TRANSFER_TRANSACTION:
+    case MESSAGE_TYPES.SEND_TRANSFER_TRANSACTION:
       onSendInscribeTransfer({ data, sender, sendResponse });
       break;
     case MESSAGE_TYPES.IS_ONBOARDING_COMPLETE:
@@ -1212,6 +1253,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
       onRequestDoginalTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
+      onRequestAvailableDRC20Transaction({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });

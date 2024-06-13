@@ -104,7 +104,7 @@ export const AvailableAmountScreen = ({
       setLoading(true);
       sendMessage(
         {
-          message: MESSAGE_TYPES.INSCRIBE_TRANSFER_TRANSACTION,
+          message: MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION,
           data: {
             ...selectedToken,
             selectedAddressIndex,
