@@ -4,6 +4,7 @@ import {
   useEffect,
   useMemo,
   useReducer,
+  useState,
 } from 'react';
 
 import { messageHandler } from './scripts/background';
@@ -175,14 +176,21 @@ export const AppContextProvider = ({ children }) => {
 
   const transactions = useTransactions(state);
 
+  const [txTabIndex, setTxTabIndex] = useState(0);
+  const [selectedToken, setSelectedToken] = useState();
+
   const providerValue = useMemo(
     () => ({
       ...state,
       dispatch,
       navigate,
       transactions,
+      txTabIndex,
+      setTxTabIndex,
+      selectedToken,
+      setSelectedToken,
     }),
-    [navigate, state, transactions]
+    [navigate, selectedToken, state, transactions, txTabIndex]
   );
   return (
     <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>

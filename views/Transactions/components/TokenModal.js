@@ -1,6 +1,17 @@
-import { Avatar, Box, HStack, Modal, Spinner, Text, VStack } from 'native-base';
+import {
+  Avatar,
+  Box,
+  HStack,
+  Modal,
+  Popover,
+  Pressable,
+  Spinner,
+  Text,
+  VStack,
+} from 'native-base';
 import { useCallback, useEffect, useState } from 'react';
-import { BiTransfer } from 'react-icons/bi';
+import { BiTransferAlt } from 'react-icons/bi';
+import { BsInfoCircleFill } from 'react-icons/bs';
 
 import { BigButton } from '../../../components/Button';
 import { DISPATCH_TYPES } from '../../../Context';
@@ -10,14 +21,12 @@ import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
 import { logError } from '../../../utils/error';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
 
-export const TokenModal = ({
-  isOpen,
-  onClose,
-  token: { availableBalance, overallBalance, ticker, transferableBalance },
-  token,
-}) => {
+export const TokenModal = ({ isOpen, onClose, token = {} }) => {
   const { dispatch, navigate } = useAppContext();
   const [tokenDetails, setTokenDetails] = useState();
+
+  const { overallBalance, ticker, availableBalance, transferableBalance } =
+    token;
 
   const fetchTokenDetails = useCallback(() => {
     doginalsMarketplace
@@ -63,6 +72,8 @@ export const TokenModal = ({
     });
     navigate('TransferToken');
   }, [dispatch, navigate, token, tokenDetails?.floorPrice]);
+
+  if (!isOpen) return null;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size='full'>
@@ -138,34 +149,69 @@ export const TokenModal = ({
                 </Text>
               </HStack>
             </VStack>
-            <BigButton
-              isDisabled={availableBalance === '0'}
-              onPress={onGetAvailable}
-              variant='secondary'
-              px='28px'
-              mt='30px'
-            >
-              Get Available{' '}
-              <BiTransfer
-                style={{
-                  paddingTop: '1px',
-                }}
-              />
-            </BigButton>
-            <BigButton
-              isDisabled={transferableBalance === '0'}
-              onPress={onTransfer}
-              variant='secondary'
-              px='28px'
-              mt='30px'
-            >
-              Transfer{' '}
-              <BiTransfer
-                style={{
-                  paddingTop: '1px',
-                }}
-              />
-            </BigButton>
+            {!Number(transferableBalance) ||
+            Number(transferableBalance) < Number(availableBalance) ? (
+              <HStack space='8px' mt='30px' alignItems='center'>
+                <BigButton
+                  onPress={onGetAvailable}
+                  variant='secondary'
+                  px='28px'
+                >
+                  Inscribe Token <BiTransferAlt style={{ marginLeft: '4px' }} />
+                </BigButton>
+                <Popover
+                  trigger={(triggerProps) => {
+                    return (
+                      <Pressable {...triggerProps}>
+                        <BsInfoCircleFill color='gray' />
+                      </Pressable>
+                    );
+                  }}
+                >
+                  <Popover.Content>
+                    <Popover.Arrow />
+                    <Popover.Body>
+                      <Text fontSize='13px'>
+                        The initial step of transferring your DRC-20 tokens. The
+                        transfer inscription records the token transfer intent
+                        on the Dogecoin blockchain, making the inscribed amount
+                        of <Text fontWeight='bold'>{ticker}</Text> tokens
+                        available for transfer.
+                      </Text>
+                    </Popover.Body>
+                  </Popover.Content>
+                </Popover>
+              </HStack>
+            ) : null}
+            {Number(transferableBalance) ? (
+              <HStack space='8px' mt='10px' alignItems='center'>
+                <BigButton onPress={onTransfer} variant='primary' px='28px'>
+                  Transfer Token <BiTransferAlt style={{ marginLeft: '4px' }} />
+                </BigButton>
+                <Popover
+                  trigger={(triggerProps) => {
+                    return (
+                      <Pressable {...triggerProps}>
+                        <BsInfoCircleFill color='gray' />
+                      </Pressable>
+                    );
+                  }}
+                >
+                  <Popover.Content>
+                    <Popover.Arrow />
+                    <Popover.Body>
+                      <Text fontSize='13px'>
+                        The initial step of transferring your DRC-20 tokens. The
+                        transfer inscription records the token transfer intent
+                        on the Dogecoin blockchain, making the inscribed amount
+                        of <Text fontWeight='bold'>{ticker}</Text> tokens
+                        available for transfer.
+                      </Text>
+                    </Popover.Body>
+                  </Popover.Content>
+                </Popover>
+              </HStack>
+            ) : null}
           </VStack>
         </Modal.Body>
       </Modal.Content>

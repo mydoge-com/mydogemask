@@ -20,6 +20,8 @@ export function Transactions() {
     wallet,
     navigate,
     selectedAddressIndex,
+    txTabIndex,
+    setTxTabIndex,
     transactions: {
       balance,
       usdValue,
@@ -47,7 +49,6 @@ export function Transactions() {
     window.open(`https://buy.getdoge.com/?addr=${activeAddress}`);
   }, [activeAddress]);
 
-  const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'transactions', title: 'Transactions' },
     { key: 'doginals', title: 'Doginals' },
@@ -129,9 +130,9 @@ export function Transactions() {
           </HStack>
         </Center>
         <TabView
-          navigationState={{ index, routes }}
+          navigationState={{ index: txTabIndex, routes }}
           renderScene={renderScene}
-          onIndexChange={setIndex}
+          onIndexChange={setTxTabIndex}
           initialLayout={{ width: 375 }}
           renderTabBar={(props) => (
             <TabBar

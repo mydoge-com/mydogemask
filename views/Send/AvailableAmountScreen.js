@@ -1,7 +1,16 @@
-import { Box, Button, Center, HStack, Input, Text, Toast } from 'native-base';
+import {
+  Box,
+  Button,
+  Center,
+  HStack,
+  Input,
+  Text,
+  Toast,
+  VStack,
+} from 'native-base';
 import { useCallback, useRef, useState } from 'react';
-import { IoSwapVerticalOutline } from 'react-icons/io5';
 
+// import { IoSwapVerticalOutline } from 'react-icons/io5';
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
@@ -20,9 +29,9 @@ export const AvailableAmountScreen = ({
   selectedAddressIndex,
   selectedToken,
 }) => {
-  const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
+  // const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
   const tokenInputRef = useRef(null);
-  const dogeInputRef = useRef(null);
+  // const dogeInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
   const onChangeTextToken = useCallback(
@@ -51,35 +60,35 @@ export const AvailableAmountScreen = ({
     [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
   );
 
-  const onChangeTextDoge = useCallback(
-    (text) => {
-      if (Number.isNaN(Number(text))) {
-        return;
-      }
+  // const onChangeTextDoge = useCallback(
+  //   (text) => {
+  //     if (Number.isNaN(Number(text))) {
+  //       return;
+  //     }
 
-      setErrors({ ...errors, tokenAmount: '' });
-      const cleanText = sanitizeDogeInput(text) || '0';
+  //     setErrors({ ...errors, tokenAmount: '' });
+  //     const cleanText = sanitizeDogeInput(text) || '0';
 
-      if (cleanText.length > MAX_CHARACTERS) {
-        return;
-      }
+  //     if (cleanText.length > MAX_CHARACTERS) {
+  //       return;
+  //     }
 
-      const tokenAmount = (
-        parseFloat(cleanText) / selectedToken.dogePrice
-      ).toFixed(0);
+  //     const tokenAmount = (
+  //       parseFloat(cleanText) / selectedToken.dogePrice
+  //     ).toFixed(0);
 
-      setFormData({
-        ...formData,
-        tokenAmount,
-        dogeAmount: cleanText,
-      });
-    },
-    [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
-  );
+  //     setFormData({
+  //       ...formData,
+  //       tokenAmount,
+  //       dogeAmount: cleanText,
+  //     });
+  //   },
+  //   [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
+  // );
 
-  const swapInput = useCallback(() => {
-    setIsCurrencySwapped((state) => !state);
-  }, []);
+  // const swapInput = useCallback(() => {
+  //   setIsCurrencySwapped((state) => !state);
+  // }, []);
 
   const onSetMax = useCallback(() => {
     onChangeTextToken(String(selectedToken.availableBalance));
@@ -147,12 +156,30 @@ export const AvailableAmountScreen = ({
 
   return (
     <Center>
-      <Text fontSize='sm' color='gray.500' textAlign='center' mb='8px'>
+      <Text
+        fontWeight='semibold'
+        px='6px'
+        pb='18px'
+        rounded='md'
+        fontSize='20px'
+      >
+        Inscribe Token Transfer
+      </Text>
+      {/* <Text fontSize='sm' color='gray.500' textAlign='center' mb='8px'>
         <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          Wallet {selectedAddressIndex + 1}
+          Wallet: {selectedAddressIndex + 1}
         </Text>
-        {'  '}
-        {walletAddress.slice}
+      </Text> */}
+      <Text
+        fontSize='13px'
+        color='gray.500'
+        px='8px'
+        textAlign='center'
+        pb='16px'
+        pt='16px'
+      >
+        Inscribing your <Text fontWeight='bold'>{selectedToken.ticker}</Text>{' '}
+        token makes the inscribed amount available for transfer.
       </Text>
       <Box
         justifyContent='center'
@@ -162,47 +189,55 @@ export const AvailableAmountScreen = ({
         w='80%'
         h='70px'
       >
-        {!isCurrencySwapped ? (
-          <Input
-            keyboardType='numeric'
-            // isDisabled={selectedToken.dogePrice === 0}
-            variant='filled'
-            placeholder='0'
-            focusOutlineColor='brandYellow.500'
-            _hover={{
-              borderColor: 'brandYellow.500',
-            }}
-            _invalid={{
+        <Text
+          fontSize='15px'
+          color='gray.900'
+          px='8px'
+          // textAlign='center'
+          pb='6px'
+        >
+          Inscription amount:
+        </Text>
+        <Input
+          keyboardType='numeric'
+          // isDisabled={selectedToken.dogePrice === 0}
+          variant='filled'
+          placeholder='0'
+          focusOutlineColor='brandYellow.500'
+          _hover={{
+            borderColor: 'brandYellow.500',
+          }}
+          _invalid={{
+            borderColor: 'red.500',
+            focusOutlineColor: 'red.500',
+            _hover: {
               borderColor: 'red.500',
-              focusOutlineColor: 'red.500',
-              _hover: {
-                borderColor: 'red.500',
-              },
-            }}
-            isInvalid={errors.tokenAmount}
-            onChangeText={onChangeTextToken}
-            onSubmitEditing={onSubmit}
-            autoFocus
-            type='number'
-            fontSize='24px'
-            fontWeight='semibold'
-            _input={{
-              py: '10px',
-              pl: '4px',
-              type: 'number',
-            }}
-            InputLeftElement={
-              <Text fontSize='24px' fontWeight='semibold' px='4px'>
-                {selectedToken.ticker}
-              </Text>
-            }
-            textAlign='center'
-            ref={tokenInputRef}
-            value={formData.tokenAmount}
-            position='absolute'
-            top={0}
-          />
-        ) : (
+            },
+          }}
+          isInvalid={errors.tokenAmount}
+          onChangeText={onChangeTextToken}
+          onSubmitEditing={onSubmit}
+          autoFocus
+          type='number'
+          fontSize='24px'
+          fontWeight='semibold'
+          _input={{
+            py: '10px',
+            pl: '4px',
+            type: 'number',
+          }}
+          InputLeftElement={
+            <Text fontSize='24px' fontWeight='semibold' px='4px'>
+              {selectedToken.ticker}
+            </Text>
+          }
+          textAlign='center'
+          ref={tokenInputRef}
+          value={formData.tokenAmount}
+          // position='absolute'
+          // top={0}
+        />
+        {/* ) : (
           <Input
             keyboardType='numeric'
             variant='filled'
@@ -243,13 +278,13 @@ export const AvailableAmountScreen = ({
             allowFontScaling
             adjustsFontSizeToFit
           />
-        )}
+        )} */}
       </Box>
 
       <Text fontSize='10px' color='red.500'>
         {errors.tokenAmount || ' '}
       </Text>
-      <BigButton
+      {/* <BigButton
         variant='secondary'
         px='6px'
         py='4px'
@@ -265,11 +300,12 @@ export const AvailableAmountScreen = ({
         {isCurrencySwapped
           ? formData.tokenAmount || 0
           : formData.dogeAmount || 0}
-      </Text>
-      <HStack alignItems='center' pt='12px' space='8px'>
+      </Text> */}
+      <VStack alignItems='center' pt='12px' space='8px'>
         {selectedToken.availableBalance ? (
           <Text fontSize='14px' color='gray.500'>
-            Balance: {selectedToken.ticker} {selectedToken.availableBalance}
+            Balance: <Text fontWeight='bold'>{selectedToken.ticker}</Text>{' '}
+            {selectedToken.availableBalance}
           </Text>
         ) : null}
         <Button
@@ -282,7 +318,7 @@ export const AvailableAmountScreen = ({
         >
           Max
         </Button>
-      </HStack>
+      </VStack>
       <HStack alignItems='center' mt='60px' space='12px'>
         <Button
           variant='unstyled'

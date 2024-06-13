@@ -1,18 +1,15 @@
 import { Avatar, HStack, Pressable, Text, VStack } from 'native-base';
-import { Fragment, useState } from 'react';
+import { Fragment } from 'react';
 
 import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
-import { TokenModal } from './TokenModal';
 
 export const Token = ({
-  token,
+  openModal,
   token: { overallBalance, ticker, transferableBalance },
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
   return (
     <Fragment key={ticker}>
-      <Pressable onPress={() => setIsOpen(true)} paddingTop='10px'>
+      <Pressable onPress={openModal} paddingTop='10px'>
         <HStack p='2px' alignItems='center'>
           <Avatar
             size='sm'
@@ -52,11 +49,11 @@ export const Token = ({
           </VStack>
         </HStack>
       </Pressable>
-      <TokenModal
+      {/* <TokenModal
         isOpen={isOpen}
         token={token}
         onClose={() => setIsOpen(false)}
-      />
+      /> */}
     </Fragment>
   );
 };
