@@ -45,6 +45,8 @@ export const CollectiblesTab = ({
               renderItem={renderItem}
               keyExtractor={(item) => item.inscriptionNumber}
               numColumns={2}
+              initialNumToRender={4}
+              windowSize={4}
             />
             {hasMoreNFTs ? (
               <Button

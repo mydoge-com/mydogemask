@@ -10,7 +10,6 @@ import { sendMessage } from '../../scripts/helpers/message';
 export const InscribeTransferConfirmationScreen = ({
   setFormPage,
   errors,
-  // setErrors,
   formData,
   walletAddress,
   selectedAddressIndex,
@@ -27,12 +26,6 @@ export const InscribeTransferConfirmationScreen = ({
         data: { address: walletAddress },
       },
       () => {
-        // if (balance) {
-        //   addressBalance = balance;
-        // } else {
-        //   setErrors({ confirmation: 'Error getting address balance' });
-        // }
-
         // Process transaction
         sendMessage(
           {
@@ -90,24 +83,33 @@ export const InscribeTransferConfirmationScreen = ({
         {'  '}
         {walletAddress.slice(0, 8)}
       </Text>
-      <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
+      <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
         Inscribing
       </Text>
-      <HStack alignItems='center' space='12px' pb='28px'>
+      {/* <Box alignItems='center' space='12px' pb='28px' px='106px' bg='red.100'>
         <Text
-          fontSize='md'
+          px='106px'
+          fontSize='sm'
           fontWeight='semibold'
           color='gray.500'
           textAlign='center'
+          adjustsFontSizeToFit
+          noOfLines={1}
         >
           {formData.txs.toString()}
         </Text>
-      </HStack>
+      </Box> */}
       <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
         {selectedToken.ticker} {formData.tokenAmount}
       </Text>
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-        Network fee Ð{formData.fee}
+        Network fee: <Text fontWeight='normal'>Ð{formData.fee}</Text>
+      </Text>
+      <Text fontSize='13px' fontWeight='semibold' pt='6px'>
+        Transactions
+      </Text>
+      <Text fontSize='13px' fontWeight='semibold' pt='6px' numberOfLines={1}>
+        {formData.txs[0]}
       </Text>
       <HStack alignItems='center' mt='60px' space='12px'>
         <Button

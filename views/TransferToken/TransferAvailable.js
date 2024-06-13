@@ -38,6 +38,7 @@ export function TransferAvailable() {
           errors={errors}
           setErrors={setErrors}
           selectedAddressIndex={selectedAddressIndex}
+          walletNickname={wallet.nicknames?.[walletAddress]}
         />
       </Box>
     </Layout>

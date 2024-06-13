@@ -9,8 +9,8 @@ import {
 } from '../views/Onboarding';
 import { Send } from '../views/Send';
 import { SendNFT } from '../views/Send/SendNFT';
-import { TransferAvailable } from '../views/Send/TransferAvailable';
-import { TransferToken } from '../views/Send/TransferToken';
+import { TransferAvailable } from '../views/TransferToken/TransferAvailable';
+import { TransferToken } from '../views/TransferToken/TransferToken';
 import { Transactions } from '../views/Transactions';
 
 const screens = {

@@ -154,6 +154,7 @@ export function Transactions() {
               {...props}
             />
           )}
+          // lazy={() => true}
         />
       </Box>
 

@@ -28,6 +28,7 @@ export const AvailableAmountScreen = ({
   walletAddress,
   selectedAddressIndex,
   selectedToken,
+  walletNickname,
 }) => {
   // const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
   const tokenInputRef = useRef(null);
@@ -163,13 +164,16 @@ export const AvailableAmountScreen = ({
         rounded='md'
         fontSize='20px'
       >
-        Inscribe Token Transfer
+        Inscribe Token
       </Text>
-      {/* <Text fontSize='sm' color='gray.500' textAlign='center' mb='8px'>
+      <HStack mb='8px' space='10px'>
         <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          Wallet: {selectedAddressIndex + 1}
+          {walletNickname ?? `Wallet: ${selectedAddressIndex + 1}`}
         </Text>
-      </Text> */}
+        <Text fontSize='sm' color='gray.500'>
+          {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
+        </Text>
+      </HStack>
       <Text
         fontSize='13px'
         color='gray.500'
@@ -178,8 +182,11 @@ export const AvailableAmountScreen = ({
         pb='16px'
         pt='16px'
       >
-        Inscribing your <Text fontWeight='bold'>{selectedToken.ticker}</Text>{' '}
-        token makes the inscribed amount available for transfer.
+        Initiate the first step of transferring your{' '}
+        <Text fontWeight='bold'>{selectedToken.ticker}</Text> tokens. This step
+        makes the inscribed amount of{' '}
+        <Text fontWeight='bold'>{selectedToken.ticker}</Text> available for
+        transfer.
       </Text>
       <Box
         justifyContent='center'
@@ -189,15 +196,9 @@ export const AvailableAmountScreen = ({
         w='80%'
         h='70px'
       >
-        <Text
-          fontSize='15px'
-          color='gray.900'
-          px='8px'
-          // textAlign='center'
-          pb='6px'
-        >
+        {/* <Text fontSize='15px' color='gray.900' px='8px' pb='6px'>
           Inscription amount:
-        </Text>
+        </Text> */}
         <Input
           keyboardType='numeric'
           // isDisabled={selectedToken.dogePrice === 0}

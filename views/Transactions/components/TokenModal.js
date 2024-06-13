@@ -151,19 +151,28 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
             </VStack>
             {!Number(transferableBalance) ||
             Number(transferableBalance) < Number(availableBalance) ? (
-              <HStack space='8px' mt='30px' alignItems='center'>
+              <HStack
+                space='8px'
+                mt='30px'
+                alignItems='center'
+                // justifyContent='center'
+              >
                 <BigButton
                   onPress={onGetAvailable}
                   variant='secondary'
                   px='28px'
                 >
-                  Inscribe Token <BiTransferAlt style={{ marginLeft: '4px' }} />
+                  Inscribe <BiTransferAlt style={{ marginLeft: '4px' }} />
                 </BigButton>
                 <Popover
                   trigger={(triggerProps) => {
                     return (
-                      <Pressable {...triggerProps}>
-                        <BsInfoCircleFill color='gray' />
+                      <Pressable
+                        {...triggerProps}
+                        position='absolute'
+                        top='-6px'
+                      >
+                        <BsInfoCircleFill color='#bbbbbb' />
                       </Pressable>
                     );
                   }}
@@ -172,11 +181,12 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
                     <Popover.Arrow />
                     <Popover.Body>
                       <Text fontSize='13px'>
-                        The initial step of transferring your DRC-20 tokens. The
-                        transfer inscription records the token transfer intent
-                        on the Dogecoin blockchain, making the inscribed amount
-                        of <Text fontWeight='bold'>{ticker}</Text> tokens
-                        available for transfer.
+                        Initiate the first step of transferring your{' '}
+                        <Text fontWeight='bold'>{ticker}</Text> tokens. This
+                        inscribes the token transfer intent on the Dogecoin
+                        blockchain, making the inscribed amount of{' '}
+                        <Text fontWeight='bold'>{ticker}</Text> available for
+                        transfer.
                       </Text>
                     </Popover.Body>
                   </Popover.Content>
@@ -186,30 +196,8 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
             {Number(transferableBalance) ? (
               <HStack space='8px' mt='10px' alignItems='center'>
                 <BigButton onPress={onTransfer} variant='primary' px='28px'>
-                  Transfer Token <BiTransferAlt style={{ marginLeft: '4px' }} />
+                  Transfer <BiTransferAlt style={{ marginLeft: '4px' }} />
                 </BigButton>
-                <Popover
-                  trigger={(triggerProps) => {
-                    return (
-                      <Pressable {...triggerProps}>
-                        <BsInfoCircleFill color='gray' />
-                      </Pressable>
-                    );
-                  }}
-                >
-                  <Popover.Content>
-                    <Popover.Arrow />
-                    <Popover.Body>
-                      <Text fontSize='13px'>
-                        The initial step of transferring your DRC-20 tokens. The
-                        transfer inscription records the token transfer intent
-                        on the Dogecoin blockchain, making the inscribed amount
-                        of <Text fontWeight='bold'>{ticker}</Text> tokens
-                        available for transfer.
-                      </Text>
-                    </Popover.Body>
-                  </Popover.Content>
-                </Popover>
               </HStack>
             ) : null}
           </VStack>

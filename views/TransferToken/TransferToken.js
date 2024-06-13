@@ -3,9 +3,9 @@ import { useState } from 'react';
 
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
-import { AddressScreen } from './AddressScreen';
-import { NFTConfirmationScreen } from './NFTConfirmationScreen';
-import { SelectTransferScreen } from './SelectTransferScreen';
+import { AddressScreen } from '../Send/AddressScreen';
+import { NFTConfirmationScreen } from '../Send/NFTConfirmationScreen';
+import { SelectTransferScreen } from '../Send/SelectTransferScreen';
 
 export function TransferToken() {
   const { wallet, selectedAddressIndex, selectedToken } = useAppContext();
