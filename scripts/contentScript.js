@@ -451,6 +451,7 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
           break;
         case MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE:
           onGetDRC20Balance({ origin: source.origin, data });
+          break;
         case MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20:
           onGetTransferableDRC20({ origin: source.origin, data });
           break;
