@@ -723,7 +723,11 @@ async function onRequestAvailableDRC20Transaction({
     txs,
     fee,
   }).forEach(([key, value]) => {
-    params.append(key, value);
+    if (Array.isArray(value)) {
+      params.append(key, value.join(','));
+    } else {
+      params.append(key, value);
+    }
   });
   chrome.windows
     .create({

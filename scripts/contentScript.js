@@ -1,4 +1,4 @@
-// import BN from 'bn.js';
+import BN from 'bn.js';
 
 import { MESSAGE_TYPES } from './helpers/constants';
 import {
@@ -356,15 +356,15 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
     try {
       const client = await getConnectedClient(origin);
       const selectedAddressIndex = await getConnectedAddressIndex(origin);
-      // const balances = [];
-      // await getDRC20Balances(client?.address, 0, balances);
-      // const balance = balances.find((ins) => ins.ticker === data.ticker);
-      // const ab = new BN(balance.availableBalance);
-      // const amt = new BN(data.amount);
+      const balances = [];
+      await getDRC20Balances(client?.address, 0, balances);
+      const balance = balances.find((ins) => ins.ticker === data.ticker);
+      const ab = new BN(balance.availableBalance);
+      const amt = new BN(data.amount);
 
-      // if (!balance || ab.lt(amt)) {
-      //   throw new Error('Insufficient balance');
-      // }
+      if (!balance || ab.lt(amt)) {
+        throw new Error('Insufficient balance');
+      }
 
       chrome.runtime.sendMessage(
         {
@@ -377,8 +377,6 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
           },
         },
         ({ txs, fee }) => {
-          console.log('txs', txs);
-          console.log('fee', fee);
           if (txs?.length && fee) {
             chrome.runtime.sendMessage({
               message: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,

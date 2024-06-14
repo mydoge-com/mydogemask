@@ -1,10 +1,6 @@
 import {
   AlertDialog,
-  Avatar,
-  // Badge,
-  Box,
   Button,
-  Center,
   HStack,
   Modal,
   Spinner,
@@ -13,7 +9,6 @@ import {
   VStack,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
 import { Layout } from '../../components/Layout';
@@ -28,12 +23,20 @@ import { sendMessage } from '../../scripts/helpers/message';
 export function ClientAvailableDRC20Transaction() {
   const {
     clientRequest: {
-      params: { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee },
+      params: {
+        originTabId,
+        origin,
+        walletAddress,
+        tokenAmount,
+        ticker,
+        txs,
+        fee,
+      },
     },
-    wallet,
     dispatch,
+    clientRequest,
   } = useAppContext();
-
+  console.log('clientRequest', clientRequest);
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
   }, [dispatch]);
@@ -45,8 +48,6 @@ export function ClientAvailableDRC20Transaction() {
       setAddressIndex(index);
     });
   }, [origin]);
-
-  const senderAddress = wallet.addresses[addressIndex];
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -79,72 +80,72 @@ export function ClientAvailableDRC20Transaction() {
   }, [handleWindowClose, origin, originTabId]);
 
   return (
-    <Layout pt='32px' alignItems='center'>
-      <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
-        <FaLink />
-      </Box>
-      <Text fontSize='2xl'>
-        Confirm <Text fontWeight='bold'>Transaction</Text>
+    <Layout>
+      <Text fontSize='2xl' pb='24px' textAlign='center' fontWeight='semibold'>
+        Confirm Transaction
       </Text>
-      <Center pt='36px'>
-        <Text fontSize='sm' color='gray.500' textAlign='center' mb='20px'>
-          <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-            Wallet {addressIndex + 1}
-          </Text>
-          {'  '}
-          {senderAddress?.slice(0, 8)}...{senderAddress?.slice(-4)}
+      <Text fontSize='sm' color='gray.500' textAlign='center' mb='12px'>
+        <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
+          Wallet {addressIndex + 1}
         </Text>
-        <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-          Paying
-        </Text>
-        <OriginBadge origin={origin} mb='6px' mt='12px' />
-        <HStack alignItems='center' space='12px' pb='28px'>
-          <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
-            {recipientAddress.substring(0, 2)}
-          </Avatar>
-          <Text
-            fontSize='md'
-            fontWeight='semibold'
-            color='gray.500'
-            textAlign='center'
-          >
-            {recipientAddress.slice(0, 8)}...{recipientAddress.slice(-4)}
-          </Text>
-        </HStack>
-        <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
-          Ð{dogeAmount}
-        </Text>
-        <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-          Network fee Ð{fee}
-        </Text>
-        <HStack alignItems='center' mt='60px' space='12px'>
-          <BigButton
-            onPress={onRejectTransaction}
-            variant='secondary'
-            px='20px'
-          >
-            Cancel
-          </BigButton>
-          <BigButton
-            onPress={() => setConfirmationModalOpen(true)}
-            type='submit'
-            role='button'
-            px='28px'
-          >
-            Pay
-          </BigButton>
-        </HStack>
-      </Center>
+        {'  '}
+        {walletAddress.slice(0, 8)}
+      </Text>
+      <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
+        Inscribing
+      </Text>
+      {/* <Box alignItems='center' space='12px' pb='28px' px='106px' bg='red.100'>
+      <Text
+        px='106px'
+        fontSize='sm'
+        fontWeight='semibold'
+        color='gray.500'
+        textAlign='center'
+        adjustsFontSizeToFit
+        noOfLines={1}
+      >
+        {formData.txs.toString()}
+      </Text>
+    </Box> */}
+      <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
+        {ticker} {tokenAmount}
+      </Text>
+      <Text fontSize='13px' fontWeight='semibold' pt='6px'>
+        Network fee: <Text fontWeight='normal'>Ð{fee}</Text>
+      </Text>
+      <Text fontSize='13px' fontWeight='semibold' pt='6px'>
+        Transactions
+      </Text>
+      <Text fontSize='13px' fontWeight='semibold' pt='6px' numberOfLines={1}>
+        {txs[0]}
+      </Text>
+      <HStack alignItems='center' mt='60px' space='12px'>
+        <Button
+          variant='unstyled'
+          colorScheme='coolGray'
+          onPress={onRejectTransaction}
+        >
+          Cancel
+        </Button>
+        <BigButton
+          onPress={() => setConfirmationModalOpen(true)}
+          type='submit'
+          role='button'
+          px='28px'
+        >
+          Send
+        </BigButton>
+      </HStack>
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
         origin={origin}
         originTabId={originTabId}
-        rawTx={rawTx}
+        txs={txs}
         addressIndex={addressIndex}
         handleWindowClose={handleWindowClose}
-        recipientAddress={recipientAddress}
-        dogeAmount={dogeAmount}
+        recipientAddress={walletAddress}
+        dogeAmount={tokenAmount}
       />
     </Layout>
   );
@@ -154,7 +155,7 @@ const ConfirmationModal = ({
   showModal,
   onClose,
   origin,
-  rawTx,
+  txs,
   addressIndex,
   originTabId,
   handleWindowClose,
@@ -168,8 +169,8 @@ const ConfirmationModal = ({
     setLoading(true);
     sendMessage(
       {
-        message: 'sendTransaction',
-        data: { rawTx, selectedAddressIndex: addressIndex },
+        message: MESSAGE_TYPES.SEND_TRANSFER_TRANSACTION,
+        data: { txs },
       },
       (txId) => {
         if (txId) {
@@ -224,7 +225,7 @@ const ConfirmationModal = ({
         }
       }
     );
-  }, [addressIndex, handleWindowClose, origin, originTabId, rawTx]);
+  }, [handleWindowClose, origin, originTabId, txs]);
 
   return (
     <>
