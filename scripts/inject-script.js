@@ -128,7 +128,7 @@ const doge = {
     });
   },
 
-  requestDoginalTransaction(data, onSuccess, onError) {
+  requestInscriptionTransaction(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
       if (!data?.recipientAddress || !data?.output) {
         onError?.(new Error('Invalid data'));
