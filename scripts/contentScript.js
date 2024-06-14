@@ -6,7 +6,11 @@ import {
   getConnectedAddressIndex,
   getConnectedClient,
 } from './helpers/data';
-import { getDoginals, getDRC20Balances } from './helpers/doginals';
+import {
+  getDoginals,
+  getDRC20Balances,
+  getDRC20Inscriptions,
+} from './helpers/doginals';
 import { validateAddress, validateTransaction } from './helpers/wallet';
 
 (() => {
@@ -142,6 +146,37 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
           data: {
             availableBalance,
             transferableBalance,
+            ticker: data.ticker,
+            address: client.address,
+          },
+        },
+        origin
+      );
+    }
+  }
+
+  async function onGetTransferableDRC20({ origin, data }) {
+    let client;
+    const inscriptions = [];
+
+    try {
+      client = await getConnectedClient(origin);
+      await getDRC20Inscriptions(client?.address, data.ticker, 0, inscriptions);
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE,
+      });
+      return;
+    }
+
+    if (client) {
+      window.postMessage(
+        {
+          type: MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE,
+          data: {
+            inscriptions,
             ticker: data.ticker,
             address: client.address,
           },
@@ -416,6 +451,8 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
           break;
         case MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE:
           onGetDRC20Balance({ origin: source.origin, data });
+        case MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20:
+          onGetTransferableDRC20({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
           onRequestTransaction({ origin: source.origin, data });
