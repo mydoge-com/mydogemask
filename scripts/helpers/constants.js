@@ -47,10 +47,13 @@ export const MESSAGE_TYPES = {
 };
 
 export const NODE_BASE_URL = 'https://doge.nownodes.io';
+export const CARDINALS_WALLET_API_URL = 'https://unielon.com/v3';  
 export const DOGINALS_WALLET_API_V2_URL = 'https://wallet-api.dogeord.io/v2';
 export const DOGINALS_WALLET_API_URL = 'https://wallet-api.dogeord.io';
+export const BLOCK_STREAM_URL = 'https://blockchair.com/dogecoin'
 export const DOGINALS_MARKETPLACE_API_URL =
   'https://marketplace-api.dogeord.io';
 
 export const TICKER_ICON_URL =
   'https://drc-20-icons.s3.eu-central-1.amazonaws.com';
+  

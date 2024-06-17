@@ -5,10 +5,12 @@ import {
   CreateWallet,
   ImportWallet,
   Intro,
-  Success,
+  Success
 } from '../views/Onboarding';
 import { Send } from '../views/Send';
 import { Transactions } from '../views/Transactions';
+import { Drc20TransferHistory } from '../views/Cardinals/Drc20TransferHistory';
+import { TransferDetailScreen } from '../views/Cardinals/TransferDetailScreen';
 
 const screens = {
   Intro,
@@ -21,6 +23,8 @@ const screens = {
   Send,
   ClientConnect,
   ClientTransaction,
+  Drc20TransferHistory,
+  TransferDetailScreen
 };
 
 export default function App() {

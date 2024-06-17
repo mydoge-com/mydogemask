@@ -10,6 +10,7 @@ import { Balance } from './components/Balance';
 import { CollectiblesTab } from './components/CollectiblesTab';
 import { TokensTab } from './components/TokensTab';
 import { TransactionsTab } from './components/TransactionsTab';
+import { CardinalsTab } from '../Cardinals/components/CardinalsTab';
 import { useTransactions } from './Transactions.hooks';
 
 
@@ -49,6 +50,7 @@ export function Transactions() {
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'transactions', title: 'Transactions' },
+    { key: 'cardinals', title: 'Cardinals' },
     { key: 'doginals', title: 'Doginals' },
     { key: 'tokens', title: 'Tokens' },
   ]);
@@ -70,42 +72,101 @@ export function Transactions() {
     setAddressDetailOpen((val) => !val);
   }, []);
 
-  const TransactionsRoute = useCallback(
-    () => (
-      <TransactionsTab
-        toggleReceiveModal={toggleReceiveModal}
-        onBuy={onBuy}
-        transactions={transactions}
-        loading={loading}
-        hasMore={hasMore}
-        fetchMore={fetchMore}
-      />
-    ),
-    [toggleReceiveModal, onBuy, transactions, loading, hasMore, fetchMore]
-  );
+  // const TransactionsRoute = useCallback(
+  //   () => (
+  //     <TransactionsTab
+  //       toggleReceiveModal={toggleReceiveModal}
+  //       onBuy={onBuy}
+  //       transactions={transactions}
+  //       loading={loading}
+  //       hasMore={hasMore}
+  //       fetchMore={fetchMore}
+  //     />
+  //   ),
+  //   [toggleReceiveModal, onBuy, transactions, loading, hasMore, fetchMore]
+  // );
+  // const CardinalsRoute = useCallback(
+  //   () => (
+  //     <CardinalsTab
+  //       toggleReceiveModal={toggleReceiveModal}
+  //       onBuy={onBuy}
+  //       transactions={transactions}
+  //       loading={loading}
+  //       hasMore={hasMore}
+  //       fetchMore={fetchMore}
+  //     />
+  //   ),
+  //   [toggleReceiveModal, onBuy, transactions, loading, hasMore, fetchMore]
+  // );
+  
+  // const TokensRoute = useCallback(
+  //   () => (
+  //     <TokensTab
+  //       tokens={tokens}
+  //       tokensLoading={tokensLoading}
+  //       hasMoreTokens={hasMoreTokens}
+  //       fetchMoreTokens={fetchMoreTokens}
+  //     />
+  //   ),
+  //   [fetchMoreTokens, hasMoreTokens, tokens, tokensLoading]
+  // );
 
-  const TokensRoute = useCallback(
-    () => (
-      <TokensTab
-        tokens={tokens}
-        tokensLoading={tokensLoading}
-        hasMoreTokens={hasMoreTokens}
-        fetchMoreTokens={fetchMoreTokens}
-      />
-    ),
-    [fetchMoreTokens, hasMoreTokens, tokens, tokensLoading]
-  );
-
-  const renderScene = useMemo(
-    () =>
-      SceneMap({
-        transactions: TransactionsRoute,
-        tokens: TokensRoute,
-        doginals: NFTsRoute,
-      }),
-    [NFTsRoute, TokensRoute, TransactionsRoute]
-  );
-
+  // const renderScene = useMemo(
+  //   () =>
+  //     SceneMap({
+  //       transactions: TransactionsRoute,
+  //       tokens: TokensRoute,
+  //       doginals: NFTsRoute,
+  //       cardinals: CardinalsRoute
+  //     }),
+  //   [NFTsRoute, TokensRoute, TransactionsRoute, CardinalsRoute]
+  // );
+  const renderScene = ({ route }) => {
+    switch (route.key) {
+      case 'transactions':
+        return index === 0 ? (
+          <TransactionsTab
+            toggleReceiveModal={toggleReceiveModal}
+            onBuy={onBuy}
+            transactions={transactions}
+            loading={loading}
+            hasMore={hasMore}
+            fetchMore={fetchMore}
+          />
+        ) : null;
+      case 'tokens':
+        return index === 3 ? (
+          <TokensTab
+            tokens={tokens}
+            tokensLoading={tokensLoading}
+            hasMoreTokens={hasMoreTokens}
+            fetchMoreTokens={fetchMoreTokens}
+          />
+        ) : null;
+      case 'doginals':
+        return index === 2 ? (
+          <CollectiblesTab
+            NFTs={NFTs}
+            hasMoreNFTs={hasMoreNFTs}
+            fetchMoreNFTs={fetchMoreNFTs}
+            NFTsLoading={NFTsLoading}
+          />
+        ) : null;
+      case 'cardinals':
+        return index === 1 ? (
+          <CardinalsTab
+            toggleReceiveModal={toggleReceiveModal}
+            onBuy={onBuy}
+            transactions={transactions}
+            loading={loading}
+            hasMore={hasMore}
+            fetchMore={fetchMore}
+          />
+        ) : null;
+      default:
+        return null;
+    }
+  };
   return (
     <Layout withHeader withConnectStatus p={0}>
       <Box pt='60px'>
@@ -166,3 +227,4 @@ export function Transactions() {
     </Layout>
   );
 }
+
