@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
+import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
@@ -15,61 +16,61 @@ export const InscribeTransferConfirmationScreen = ({
   selectedAddressIndex,
   selectedToken,
 }) => {
-  const { navigate } = useAppContext();
+  const { navigate, dispatch } = useAppContext();
   const [loading, setLoading] = useState(false);
 
   const onSubmit = useCallback(() => {
     setLoading(true);
     sendMessage(
       {
-        message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
-        data: { address: walletAddress },
+        message: MESSAGE_TYPES.SEND_INSCRIBE_TRANSFER_TRANSACTION,
+        data: {
+          txs: formData.txs,
+          tokenAmount: formData.tokenAmount,
+          ...selectedToken,
+        },
       },
-      () => {
-        // Process transaction
-        sendMessage(
-          {
-            message: MESSAGE_TYPES.SEND_INSCRIBE_TRANSFER_TRANSACTION,
-            data: { txs: formData.txs },
-          },
-          (txId) => {
-            if (txId) {
-              setLoading(false);
-              Toast.show({
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      description='Trasaction Sent'
-                      status='success'
-                    />
-                  );
-                },
-              });
+      (txId) => {
+        if (txId) {
+          setLoading(false);
+          Toast.show({
+            duration: 3000,
+            render: () => {
+              return (
+                <ToastRender description='Transaction Sent' status='success' />
+              );
+            },
+          });
 
-              navigate('Transactions');
-            } else {
-              setLoading(false);
-              Toast.show({
-                title: 'Error',
-                description: 'Transaction Failed',
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      title='Error'
-                      description='Failed to send transaction.'
-                      status='error'
-                    />
-                  );
-                },
-              });
-            }
-          }
-        );
+          console.log('Transaction Sent', txId);
+          dispatch({
+            type: DISPATCH_TYPES.SELECT_TOKEN,
+            payload: { token: undefined },
+          });
+
+          navigate('Transactions');
+        } else {
+          setLoading(false);
+          Toast.show({
+            title: 'Error',
+            description: 'Transaction Failed',
+            duration: 3000,
+            render: () => {
+              return (
+                <ToastRender
+                  title='Error'
+                  description='Failed to send transaction.'
+                  status='error'
+                />
+              );
+            },
+          });
+        }
       }
     );
-  }, [formData.txs, navigate, walletAddress]);
+  }, [dispatch, formData.tokenAmount, formData.txs, navigate, selectedToken]);
+
+  if (!selectedToken) return null;
 
   return (
     <Center>
@@ -86,31 +87,13 @@ export const InscribeTransferConfirmationScreen = ({
       <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
         Inscribing
       </Text>
-      {/* <Box alignItems='center' space='12px' pb='28px' px='106px' bg='red.100'>
-        <Text
-          px='106px'
-          fontSize='sm'
-          fontWeight='semibold'
-          color='gray.500'
-          textAlign='center'
-          adjustsFontSizeToFit
-          noOfLines={1}
-        >
-          {formData.txs.toString()}
-        </Text>
-      </Box> */}
       <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
-        {selectedToken.ticker} {formData.tokenAmount}
+        {selectedToken.ticker} {Number(formData.tokenAmount).toLocaleString()}
       </Text>
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
         Network fee: <Text fontWeight='normal'>Ð{formData.fee}</Text>
       </Text>
-      <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-        Transactions
-      </Text>
-      <Text fontSize='13px' fontWeight='semibold' pt='6px' numberOfLines={1}>
-        {formData.txs[0]}
-      </Text>
+
       <HStack alignItems='center' mt='60px' space='12px'>
         <Button
           variant='unstyled'

@@ -76,7 +76,14 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size='full'>
+    <Modal
+      isOpen={isOpen}
+      onClose={() => {
+        onClose();
+        setTokenDetails(null);
+      }}
+      size='full'
+    >
       <Modal.Content w='90%'>
         <Modal.CloseButton />
         <Modal.Body alignItems='center' pt='54px' pb='36px'>
@@ -90,7 +97,7 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
                   uri: `${TICKER_ICON_URL}/${ticker}.png`,
                 }}
               >
-                {ticker.substring(0, 2).toUpperCase()}
+                {ticker?.substring(0, 2).toUpperCase()}
               </Avatar>
               <Text fontSize='24px' fontWeight='semibold'>
                 {Number(overallBalance).toLocaleString()} {ticker}
@@ -149,18 +156,21 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
                 </Text>
               </HStack>
             </VStack>
+            {Number(transferableBalance) ? (
+              <HStack space='8px' mt='10px' alignItems='center'>
+                <BigButton onPress={onTransfer} variant='primary' px='32px'>
+                  Transfer <BiTransferAlt style={{ marginLeft: '4px' }} />
+                </BigButton>
+              </HStack>
+            ) : null}
+
             {!Number(transferableBalance) ||
             Number(transferableBalance) < Number(availableBalance) ? (
-              <HStack
-                space='8px'
-                mt='30px'
-                alignItems='center'
-                // justifyContent='center'
-              >
+              <HStack space='8px' mt='10px' alignItems='center'>
                 <BigButton
                   onPress={onGetAvailable}
                   variant='secondary'
-                  px='28px'
+                  px='32px'
                 >
                   Inscribe <BiTransferAlt style={{ marginLeft: '4px' }} />
                 </BigButton>
@@ -170,7 +180,7 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
                       <Pressable
                         {...triggerProps}
                         position='absolute'
-                        top='-6px'
+                        top='-8px'
                       >
                         <BsInfoCircleFill color='#bbbbbb' />
                       </Pressable>
@@ -191,13 +201,6 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
                     </Popover.Body>
                   </Popover.Content>
                 </Popover>
-              </HStack>
-            ) : null}
-            {Number(transferableBalance) ? (
-              <HStack space='8px' mt='10px' alignItems='center'>
-                <BigButton onPress={onTransfer} variant='primary' px='28px'>
-                  Transfer <BiTransferAlt style={{ marginLeft: '4px' }} />
-                </BigButton>
               </HStack>
             ) : null}
           </VStack>

@@ -55,15 +55,6 @@ async function getDoginals(address, cursor, result) {
       query = res;
     });
 
-  // console.log(
-  //   'found',
-  //   query.result.list.length,
-  //   'doginals in page',
-  //   cursor,
-  //   'total',
-  //   query.result.total
-  // );
-
   result.push(
     ...query.result.list.map((i) => ({
       txid: i.output.split(':')[0],
@@ -613,6 +604,8 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
         await sleep(10 * 1000); // Nownodes needs some time between txs
       }
 
+      console.log({ signed });
+
       const jsonrpcReq = {
         API_key: apiKey,
         jsonrpc: '2.0',
@@ -641,6 +634,17 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
         justification: 'Handle transaction status notifications',
       })
       .catch(() => {});
+
+    const tokenCache = (await getLocalValue(data.ticker)) ?? [];
+
+    tokenCache.push({
+      txs: results,
+      txType: 'inscribe',
+      tokenAmount: data.tokenAmount,
+      timestamp: Date.now(),
+    });
+
+    setLocalValue({ [data.ticker]: tokenCache });
 
     sendResponse(results[1]);
   } catch (err) {

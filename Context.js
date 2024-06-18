@@ -92,6 +92,7 @@ export const AppContextProvider = ({ children }) => {
     wallet: undefined,
     currentRoute: undefined,
     selectedAddressIndex: 0,
+    txTabIndex: 0,
   });
 
   const navigate = useCallback((route) => {
@@ -177,7 +178,6 @@ export const AppContextProvider = ({ children }) => {
   const transactions = useTransactions(state);
 
   const [txTabIndex, setTxTabIndex] = useState(0);
-  const [selectedToken, setSelectedToken] = useState();
 
   const providerValue = useMemo(
     () => ({
@@ -187,10 +187,8 @@ export const AppContextProvider = ({ children }) => {
       transactions,
       txTabIndex,
       setTxTabIndex,
-      selectedToken,
-      setSelectedToken,
     }),
-    [navigate, selectedToken, state, transactions, txTabIndex]
+    [navigate, state, transactions, txTabIndex]
   );
   return (
     <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>

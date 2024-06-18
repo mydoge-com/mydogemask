@@ -9,6 +9,7 @@ import {
 } from 'native-base';
 import { useCallback } from 'react';
 
+import { DISPATCH_TYPES } from '../../../Context';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { Token } from './Token';
 import { TokenModal } from './TokenModal';
@@ -19,12 +20,21 @@ export const TokensTab = ({
   hasMoreTokens,
   fetchMoreTokens,
 }) => {
-  const { selectedToken, setSelectedToken } = useAppContext();
+  const { dispatch, selectedToken } = useAppContext();
+  const selectToken = useCallback(
+    (token) => {
+      dispatch({
+        type: DISPATCH_TYPES.SELECT_TOKEN,
+        payload: {
+          token,
+        },
+      });
+    },
+    [dispatch]
+  );
   const renderItem = useCallback(
-    ({ item }) => (
-      <Token token={item} openModal={() => setSelectedToken(item)} />
-    ),
-    [setSelectedToken]
+    ({ item }) => <Token token={item} selectToken={selectToken} />,
+    [selectToken]
   );
 
   return (
@@ -78,7 +88,12 @@ export const TokensTab = ({
       <TokenModal
         isOpen={!!selectedToken}
         token={selectedToken}
-        onClose={() => setSelectedToken(undefined)}
+        onClose={() => {
+          dispatch({
+            type: DISPATCH_TYPES.SELECT_TOKEN,
+            payload: { token: undefined },
+          });
+        }}
       />
     </>
   );

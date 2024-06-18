@@ -4,12 +4,13 @@ import { Fragment } from 'react';
 import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
 
 export const Token = ({
-  openModal,
+  selectToken,
   token: { overallBalance, ticker, transferableBalance },
+  token,
 }) => {
   return (
     <Fragment key={ticker}>
-      <Pressable onPress={openModal} paddingTop='10px'>
+      <Pressable onPress={() => selectToken(token)} paddingTop='10px'>
         <HStack p='2px' alignItems='center'>
           <Avatar
             size='sm'
@@ -43,17 +44,12 @@ export const Token = ({
                 _light={{ color: 'gray.400' }}
                 _dark={{ color: 'gray.500' }}
               >
-                {transferableBalance}
+                {Number(transferableBalance).toLocaleString()}
               </Text>
             </HStack>
           </VStack>
         </HStack>
       </Pressable>
-      {/* <TokenModal
-        isOpen={isOpen}
-        token={token}
-        onClose={() => setIsOpen(false)}
-      /> */}
     </Fragment>
   );
 };
