@@ -264,5 +264,6 @@ export const useTransactions = ({ wallet = {}, selectedAddressIndex = 0 }) => {
     tokensLoading,
     hasMoreTokens,
     fetchMoreTokens,
+    refreshTransactions: getRecentTransactions,
   };
 };

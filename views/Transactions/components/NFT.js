@@ -1,20 +1,19 @@
 import dayjs from 'dayjs';
-import { Box, Pressable, Text, VStack } from 'native-base';
+import { Box, Center, Pressable, Spinner, Text, VStack } from 'native-base';
 import { Fragment, useState } from 'react';
 import MIMEType from 'whatwg-mimetype';
 
-import { NFTModal } from './NFTModal';
+import { useAppContext } from '../../../hooks/useAppContext';
 
-export const NFT = ({
-  nft: { content, inscriptionNumber, timestamp, contentType, amount, ticker },
-  nft,
-  index,
-  onPress,
-  selected,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const onClose = () => setIsOpen(false);
-  const mimeType = new MIMEType(contentType);
+export const NFT = ({ nft, index, onPress, selected }) => {
+  const { inscriptionNumber, timestamp, amount, ticker } = nft ?? {};
+
+  const { navigate } = useAppContext();
+
+  const selectToken = () => {
+    navigate(`/Transactions/doginals?selectedNFT=${JSON.stringify(nft)}`);
+  };
+
   return (
     <Fragment key={inscriptionNumber}>
       <Pressable
@@ -22,7 +21,7 @@ export const NFT = ({
           if (onPress) {
             onPress();
           } else {
-            setIsOpen(true);
+            selectToken();
           }
         }}
         paddingTop='20px'
@@ -44,7 +43,7 @@ export const NFT = ({
             justifyContent='center'
             maxH='130px'
           >
-            <NFTView content={content} mimeType={mimeType} />
+            <NFTView nft={nft} />
           </Box>
 
           <Text fontSize='16px' fontWeight='bold' color='yellow.600' pt='10px'>
@@ -58,28 +57,37 @@ export const NFT = ({
           )}
         </VStack>
       </Pressable>
-      <NFTModal isOpen={isOpen} onClose={onClose} nft={nft}>
-        <NFTView content={content} mimeType={mimeType} />
-      </NFTModal>
     </Fragment>
   );
 };
 
-export const NFTView = ({ content, mimeType }) => {
+export const NFTView = ({ nft = {} }) => {
+  const { content, contentType } = nft;
+  const mimeType = new MIMEType(contentType);
+
+  const [nftLoaded, setNFTLoaded] = useState(false);
   if (mimeType.type === 'image') {
     return <img src={content} width='100%' height='auto' alt='NFT' />;
   }
   if (mimeType.type === 'text') {
     return (
-      <iframe
-        title='NFT'
-        src={content}
-        width='100%'
-        height='auto'
-        sandbox='allow-same-origin allow-scripts'
-        allow
-        style={{ pointerEvents: 'none' }}
-      />
+      <>
+        {!nftLoaded && (
+          <Center position='absolute' width='100%' height='100%'>
+            <Spinner color='amber.400' />
+          </Center>
+        )}
+        <iframe
+          title='NFT'
+          src={content}
+          width='100%'
+          height='auto'
+          sandbox='allow-same-origin allow-scripts'
+          allow
+          style={{ pointerEvents: 'none', border: 'none' }}
+          onLoad={() => setNFTLoaded(true)}
+        />
+      </>
     );
   }
   return (

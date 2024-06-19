@@ -43,7 +43,7 @@ export const InscribeTokenConfirmation = ({
 
           console.log('Transaction Sent', txId);
 
-          navigate('Transactions/tokens');
+          navigate('/Transactions/?refresh=1');
         } else {
           setLoading(false);
           Toast.show({

@@ -8,7 +8,7 @@ import {
   Success,
 } from '../views/Onboarding';
 import { Send } from '../views/Send';
-import { SendNFT } from '../views/Send/SendNFT';
+import { TransferNFT } from '../views/TransferNFT';
 import { InscribeToken } from '../views/InscribeToken';
 import { TransferToken } from '../views/TransferToken';
 import { Transactions } from '../views/Transactions';
@@ -38,7 +38,7 @@ export default function App() {
         <Route path='/Transactions/:tab?' element={<Transactions />} />
         <Route path='/ResetWallet' element={<ResetWallet />} />
         <Route path='/Send' element={<Send />} />
-        <Route path='/SendNFT' element={<SendNFT />} />
+        <Route path='/TransferNFT' element={<TransferNFT />} />
         <Route path='/InscribeToken' element={<InscribeToken />} />
         <Route path='/TransferToken' element={<TransferToken />} />
         <Route path='/ClientConnect' element={<ClientConnect />} />

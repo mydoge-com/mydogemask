@@ -1,14 +1,14 @@
 import { Box, Center, HStack, Text } from 'native-base';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SceneMap, TabBar, TabView } from 'react-native-tab-view';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import { WalletDetailModal } from '../../components/Header/WalletDetailModal';
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
 import { ActionButton } from './components/ActionButton';
 import { Balance } from './components/Balance';
-import { CollectiblesTab } from './components/CollectiblesTab';
+import { NFTsTab } from './components/NFTsTab';
 import { TokensTab } from './components/TokensTab';
 import { TransactionsTab } from './components/TransactionsTab';
 
@@ -36,8 +36,21 @@ export function Transactions() {
       tokensLoading,
       hasMoreTokens,
       fetchMoreTokens,
+      refreshTransactions,
     },
   } = useAppContext();
+
+  const [searchParams] = useSearchParams();
+
+  const shouldRefresh = searchParams.get('refresh');
+
+  console.log('shouldRefresh', shouldRefresh);
+
+  useEffect(() => {
+    if (shouldRefresh) {
+      refreshTransactions();
+    }
+  }, [shouldRefresh, refreshTransactions]);
 
   const activeAddress = wallet.addresses[selectedAddressIndex];
 
@@ -56,7 +69,7 @@ export function Transactions() {
 
   const NFTsRoute = useCallback(() => {
     return (
-      <CollectiblesTab
+      <NFTsTab
         NFTs={NFTs}
         hasMoreNFTs={hasMoreNFTs}
         fetchMoreNFTs={fetchMoreNFTs}

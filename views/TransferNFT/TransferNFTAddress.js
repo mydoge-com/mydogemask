@@ -1,17 +1,21 @@
-import { Input, Text } from 'native-base';
+import { Box, Input, Text, Toast } from 'native-base';
 import { useCallback, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
+import { ToastRender } from '../../components/ToastRender';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import { sendMessage } from '../../scripts/helpers/message';
 import { validateAddress } from '../../scripts/helpers/wallet';
+import { NFTView } from '../Transactions/components/NFT';
 
-export const TransferTokenAddress = ({
+export const TransferNFTAddress = ({
   walletAddress,
-  selectedToken,
   setFormPage,
   errors,
   setErrors,
   setFormData,
   formData,
+  selectedNFT,
 }) => {
   const [loading, setLoading] = useState(false);
   const onChangeText = useCallback(
@@ -43,15 +47,63 @@ export const TransferTokenAddress = ({
   const onSubmit = useCallback(() => {
     if (validate()) {
       setLoading(true);
-      setFormPage('amount');
+
+      sendMessage(
+        {
+          message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
+          data: {
+            ...selectedNFT,
+            address: walletAddress,
+            recipientAddress: formData.address.trim(),
+          },
+        },
+        ({ rawTx, fee, amount }) => {
+          if (rawTx && fee !== undefined && amount) {
+            setFormData({
+              ...formData,
+              rawTx,
+              fee,
+              dogeAmount: amount,
+            });
+            setFormPage('confirmation');
+            setLoading(false);
+          } else {
+            setLoading(false);
+            Toast.show({
+              title: 'Error',
+              description: 'Error creating transaction',
+              duration: 3000,
+              render: () => {
+                return (
+                  <ToastRender
+                    title='Error'
+                    description='Error creating transaction'
+                    status='error'
+                  />
+                );
+              },
+            });
+          }
+        }
+      );
     }
-  }, [setFormPage, validate]);
+  }, [
+    formData,
+    selectedNFT,
+    setFormData,
+    setFormPage,
+    validate,
+    walletAddress,
+  ]);
 
   return (
     <>
-      <Text fontSize='xl' pb='16px' textAlign='center'>
-        Send <Text fontWeight='bold'>{selectedToken.ticker}</Text> to
+      <Text fontSize='xl' pb='16px' textAlign='center' fontWeight='semibold'>
+        Transfer Doginal
       </Text>
+      <Box borderRadius='12px' overflow='hidden' mb='24px' mx='20px'>
+        <NFTView nft={selectedNFT} />
+      </Box>
       <Input
         variant='filled'
         placeholder='Recipient wallet address'
