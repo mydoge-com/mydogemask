@@ -14,19 +14,18 @@ import { BiTransferAlt } from 'react-icons/bi';
 import { BsInfoCircleFill } from 'react-icons/bs';
 
 import { BigButton } from '../../../components/Button';
-import { DISPATCH_TYPES } from '../../../Context';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { doginalsMarketplace } from '../../../scripts/api';
 import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
 import { logError } from '../../../utils/error';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
 
-export const TokenModal = ({ isOpen, onClose, token = {} }) => {
-  const { dispatch, navigate } = useAppContext();
+export const TokenModal = ({ isOpen, onClose, token }) => {
+  const { navigate } = useAppContext();
   const [tokenDetails, setTokenDetails] = useState();
 
   const { overallBalance, ticker, availableBalance, transferableBalance } =
-    token;
+    token ?? {};
 
   const fetchTokenDetails = useCallback(() => {
     doginalsMarketplace
@@ -43,35 +42,27 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
     }
   }, [fetchTokenDetails, isOpen]);
 
-  const onGetAvailable = useCallback(() => {
-    dispatch({
-      type: DISPATCH_TYPES.SELECT_TOKEN,
-      payload: {
-        token: {
-          ...token,
-          dogePrice: Number(
-            formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
-          ),
-        },
-      },
-    });
-    navigate('TransferAvailable');
-  }, [dispatch, navigate, token, tokenDetails?.floorPrice]);
+  const onInscribeToken = useCallback(() => {
+    navigate(
+      `/InscribeToken/?selectedToken=${JSON.stringify({
+        ...token,
+        dogePrice: Number(
+          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
+        ),
+      })}`
+    );
+  }, [navigate, token, tokenDetails?.floorPrice]);
 
   const onTransfer = useCallback(() => {
-    dispatch({
-      type: DISPATCH_TYPES.SELECT_TOKEN,
-      payload: {
-        token: {
-          ...token,
-          dogePrice: Number(
-            formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
-          ),
-        },
-      },
-    });
-    navigate('TransferToken');
-  }, [dispatch, navigate, token, tokenDetails?.floorPrice]);
+    navigate(
+      `/TransferToken/?selectedToken=${JSON.stringify({
+        ...token,
+        dogePrice: Number(
+          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
+        ),
+      })}`
+    );
+  }, [navigate, token, tokenDetails?.floorPrice]);
 
   if (!isOpen) return null;
 
@@ -168,11 +159,12 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
             Number(transferableBalance) < Number(availableBalance) ? (
               <HStack space='8px' mt='10px' alignItems='center'>
                 <BigButton
-                  onPress={onGetAvailable}
+                  onPress={onInscribeToken}
                   variant='secondary'
                   px='32px'
                 >
-                  Inscribe <BiTransferAlt style={{ marginLeft: '4px' }} />
+                  Inscribe for Transfer{' '}
+                  <BiTransferAlt style={{ marginLeft: '4px' }} />
                 </BigButton>
                 <Popover
                   trigger={(triggerProps) => {

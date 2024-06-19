@@ -8,14 +8,13 @@ import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
 
-export const NFTConfirmationScreen = ({
+export const TransferTokenConfirmation = ({
   setFormPage,
   errors,
   setErrors,
   formData,
   walletAddress,
   selectedAddressIndex,
-  selectedNFT,
 }) => {
   const { navigate } = useAppContext();
   const [loading, setLoading] = useState(false);
@@ -61,7 +60,7 @@ export const NFTConfirmationScreen = ({
                 render: () => {
                   return (
                     <ToastRender
-                      description='Trasaction Sent'
+                      description='Transaction Sent'
                       status='success'
                     />
                   );

@@ -10,6 +10,7 @@ export const NFT = ({
   nft,
   index,
   onPress,
+  selected,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const onClose = () => setIsOpen(false);
@@ -29,7 +30,12 @@ export const NFT = ({
         paddingLeft={index % 2 === 0 ? 0 : '6px'}
         paddingRight={index % 2 === 0 ? '6px' : 0}
       >
-        <VStack p='10px' borderRadius='12px' bg='gray.100'>
+        <VStack
+          p='10px'
+          borderRadius='12px'
+          bg='gray.100'
+          {...(selected ? { bg: 'amber.100' } : {})}
+        >
           <Box
             width='100%'
             borderRadius='6px'
@@ -60,28 +66,23 @@ export const NFT = ({
 };
 
 export const NFTView = ({ content, mimeType }) => {
-  switch (mimeType.type) {
-    case 'image':
-      return <img src={content} width='100%' height='auto' alt='NFT' />;
-    case 'text':
-      return (
-        <iframe
-          title='NFT'
-          src={content}
-          width='100%'
-          height='auto'
-          sandbox='allow-same-origin allow-scripts'
-          allow
-        />
-      );
-    default:
-      return (
-        <img
-          src='./assets/default-nft.webp'
-          width='100%'
-          height='auto'
-          alt='NFT'
-        />
-      );
+  if (mimeType.type === 'image') {
+    return <img src={content} width='100%' height='auto' alt='NFT' />;
   }
+  if (mimeType.type === 'text') {
+    return (
+      <iframe
+        title='NFT'
+        src={content}
+        width='100%'
+        height='auto'
+        sandbox='allow-same-origin allow-scripts'
+        allow
+        style={{ pointerEvents: 'none' }}
+      />
+    );
+  }
+  return (
+    <img src='./assets/default-nft.webp' width='100%' height='auto' alt='NFT' />
+  );
 };

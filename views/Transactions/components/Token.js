@@ -1,13 +1,17 @@
 import { Avatar, HStack, Pressable, Text, VStack } from 'native-base';
 import { Fragment } from 'react';
 
+import { useAppContext } from '../../../hooks/useAppContext';
 import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
 
 export const Token = ({
-  selectToken,
   token: { overallBalance, ticker, transferableBalance },
   token,
 }) => {
+  const { navigate } = useAppContext();
+  const selectToken = () => {
+    navigate(`/Transactions/tokens?selectedToken=${JSON.stringify(token)}`);
+  };
   return (
     <Fragment key={ticker}>
       <Pressable onPress={() => selectToken(token)} paddingTop='10px'>

@@ -8,8 +8,8 @@ import {
   VStack,
 } from 'native-base';
 import { useCallback } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
-import { DISPATCH_TYPES } from '../../../Context';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { Token } from './Token';
 import { TokenModal } from './TokenModal';
@@ -20,22 +20,17 @@ export const TokensTab = ({
   hasMoreTokens,
   fetchMoreTokens,
 }) => {
-  const { dispatch, selectedToken } = useAppContext();
-  const selectToken = useCallback(
-    (token) => {
-      dispatch({
-        type: DISPATCH_TYPES.SELECT_TOKEN,
-        payload: {
-          token,
-        },
-      });
-    },
-    [dispatch]
-  );
-  const renderItem = useCallback(
-    ({ item }) => <Token token={item} selectToken={selectToken} />,
-    [selectToken]
-  );
+  const { navigate } = useAppContext();
+
+  const [searchParams] = useSearchParams();
+
+  let selectedToken = searchParams.get('selectedToken');
+
+  if (selectedToken) {
+    selectedToken = JSON.parse(selectedToken);
+  }
+
+  const renderItem = useCallback(({ item }) => <Token token={item} />, []);
 
   return (
     <>
@@ -89,10 +84,7 @@ export const TokensTab = ({
         isOpen={!!selectedToken}
         token={selectedToken}
         onClose={() => {
-          dispatch({
-            type: DISPATCH_TYPES.SELECT_TOKEN,
-            payload: { token: undefined },
-          });
+          navigate('/Transactions/tokens');
         }}
       />
     </>

@@ -1,13 +1,14 @@
 import { Box } from 'native-base';
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
-import { AvailableAmountScreen } from './AvailableAmountScreen';
-import { InscribeTransferConfirmationScreen } from './InscribeTransferConfirmationScreen';
+import { InscribeTokenAmount } from './InscribeTokenAmount';
+import { InscribeTokenConfirmation } from './InscribeTokenConfirmation';
 
-export function TransferAvailable() {
-  const { wallet, selectedAddressIndex, selectedToken } = useAppContext();
+export function InscribeToken() {
+  const { wallet, selectedAddressIndex } = useAppContext();
   const walletAddress = wallet.addresses[selectedAddressIndex];
 
   const [formPage, setFormPage] = useState('amount');
@@ -16,29 +17,36 @@ export function TransferAvailable() {
 
   const RenderScreen =
     {
-      amount: AvailableAmountScreen,
-      confirmation: InscribeTransferConfirmationScreen,
+      amount: InscribeTokenAmount,
+      confirmation: InscribeTokenConfirmation,
     }[formPage] ?? null;
+
+  const [searchParams] = useSearchParams();
+
+  let selectedToken = searchParams.get('selectedToken');
+
+  if (selectedToken) {
+    selectedToken = JSON.parse(selectedToken);
+  }
 
   return (
     <Layout
       withHeader
       p={0}
       withCancelButton
-      cancelRoute='Transactions'
+      cancelRoute='/Transactions/tokens'
       addressColor='black'
     >
       <Box pt='72px' px='12px'>
         <RenderScreen
           walletAddress={walletAddress}
-          selectedToken={selectedToken}
           setFormPage={setFormPage}
           formData={formData}
           setFormData={setFormData}
           errors={errors}
           setErrors={setErrors}
           selectedAddressIndex={selectedAddressIndex}
-          walletNickname={wallet.nicknames?.[walletAddress]}
+          selectedToken={selectedToken}
         />
       </Box>
     </Layout>

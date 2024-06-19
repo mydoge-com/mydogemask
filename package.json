@@ -39,6 +39,7 @@
     "react-native-web": "^0.17.7",
     "react-native-web-linear-gradient": "^1.1.2",
     "react-no-ssr": "^1.1.0",
+    "react-router-dom": "^6.23.1",
     "satoshi-bitcoin": "1.0.5",
     "secure-ls": "^1.2.6",
     "timeago-react": "^3.0.5",

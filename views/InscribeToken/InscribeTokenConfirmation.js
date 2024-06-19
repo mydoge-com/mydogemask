@@ -3,12 +3,11 @@ import { useCallback, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
-import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export const InscribeTransferConfirmationScreen = ({
+export const InscribeTokenConfirmation = ({
   setFormPage,
   errors,
   formData,
@@ -16,7 +15,7 @@ export const InscribeTransferConfirmationScreen = ({
   selectedAddressIndex,
   selectedToken,
 }) => {
-  const { navigate, dispatch } = useAppContext();
+  const { navigate } = useAppContext();
   const [loading, setLoading] = useState(false);
 
   const onSubmit = useCallback(() => {
@@ -43,12 +42,8 @@ export const InscribeTransferConfirmationScreen = ({
           });
 
           console.log('Transaction Sent', txId);
-          dispatch({
-            type: DISPATCH_TYPES.SELECT_TOKEN,
-            payload: { token: undefined },
-          });
 
-          navigate('Transactions');
+          navigate('Transactions/tokens');
         } else {
           setLoading(false);
           Toast.show({
@@ -68,7 +63,7 @@ export const InscribeTransferConfirmationScreen = ({
         }
       }
     );
-  }, [dispatch, formData.tokenAmount, formData.txs, navigate, selectedToken]);
+  }, [formData.tokenAmount, formData.txs, navigate, selectedToken]);
 
   if (!selectedToken) return null;
 

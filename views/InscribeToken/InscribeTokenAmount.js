@@ -17,14 +17,14 @@ import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
-import { getLocalValue, setLocalValue } from '../../scripts/helpers/storage';
+import { getLocalValue } from '../../scripts/helpers/storage';
 import { sanitizeDogeInput } from '../../utils/formatters';
 
 const MAX_CHARACTERS = 10000;
 
 const TRANSACTION_CACHE_TIME = 1000 * 60 * 15;
 
-export const AvailableAmountScreen = ({
+export const InscribeTokenAmount = ({
   setFormPage,
   errors,
   setErrors,
@@ -32,12 +32,22 @@ export const AvailableAmountScreen = ({
   formData,
   walletAddress,
   selectedAddressIndex,
-  selectedToken,
   walletNickname,
+  selectedToken,
 }) => {
   const tokenInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [cachedTxs, setCachedTx] = useState();
+
+  console.log('selectedToken', selectedToken);
+
+  // const [searchParams] = useSearchParams();
+
+  // let selectedToken = searchParams.get('selectedToken');
+
+  // if (selectedToken) {
+  //   selectedToken = JSON.parse(selectedToken);
+  // }
 
   const onChangeTextToken = useCallback(
     (text) => {
@@ -72,16 +82,17 @@ export const AvailableAmountScreen = ({
   const transferableBalance =
     Number(selectedToken.availableBalance) - pendingInscriptionAmount;
 
-  // Fetch cached token transactions, filter out invalidated transactions na update cache
+  // Fetch cached token transactions, filter out invalidated transactions
   const fetchCachedTx = useCallback(async () => {
     let txs = await getLocalValue(selectedToken.ticker);
 
     if (txs?.length) {
       txs = txs.filter(
-        (tx) => tx.timestamp + TRANSACTION_CACHE_TIME > Date.now()
+        (tx) =>
+          tx.txType === 'inscribe' &&
+          tx.timestamp + TRANSACTION_CACHE_TIME > Date.now()
       );
       setCachedTx(txs);
-      setLocalValue({ [selectedToken.ticker]: txs });
     }
   }, [selectedToken.ticker]);
 
@@ -194,9 +205,6 @@ export const AvailableAmountScreen = ({
         w='80%'
         h='70px'
       >
-        {/* <Text fontSize='15px' color='gray.900' px='8px' pb='6px'>
-          Inscription amount:
-        </Text> */}
         <Input
           keyboardType='numeric'
           variant='filled'
@@ -280,23 +288,6 @@ export const AvailableAmountScreen = ({
       <Text fontSize='10px' color='red.500'>
         {errors.tokenAmount || ' '}
       </Text>
-      {/* <BigButton
-        variant='secondary'
-        px='6px'
-        py='4px'
-        rounded='10px'
-        mt='18px'
-        mb='4px'
-        onPress={swapInput}
-      >
-        <IoSwapVerticalOutline size='22px' style={{ paddingTop: 3 }} />
-      </BigButton>
-      <Text fontSize='20px' fontWeight='semibold' color='gray.500' pt='6px'>
-        {!isCurrencySwapped ? 'Ð' : `${selectedToken.ticker} `}
-        {isCurrencySwapped
-          ? formData.tokenAmount || 0
-          : formData.dogeAmount || 0}
-      </Text> */}
       <VStack alignItems='center' pt='12px' space='8px'>
         {transferableBalance ? (
           <HStack space='10px'>
