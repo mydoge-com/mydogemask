@@ -21,11 +21,13 @@ import {
 export default function App() {
   const { authenticated, wallet, onboardingComplete } = useAppContext();
 
-  const BaseComponent = !onboardingComplete
-    ? Intro
-    : authenticated && wallet
-    ? Transactions
-    : Password;
+  const BaseComponent = 
+    authenticated === undefined ? null 
+      : !onboardingComplete
+      ? Intro
+      : authenticated && wallet
+      ? Transactions
+      : Password;
 
   return (
       <Routes>
