@@ -39,16 +39,6 @@ export const InscribeTokenAmount = ({
   const [loading, setLoading] = useState(false);
   const [cachedTxs, setCachedTx] = useState();
 
-  console.log('selectedToken', selectedToken);
-
-  // const [searchParams] = useSearchParams();
-
-  // let selectedToken = searchParams.get('selectedToken');
-
-  // if (selectedToken) {
-  //   selectedToken = JSON.parse(selectedToken);
-  // }
-
   const onChangeTextToken = useCallback(
     (text) => {
       if (Number.isNaN(Number(text))) {
