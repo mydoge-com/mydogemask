@@ -1,6 +1,6 @@
 import { useAppContext } from '../hooks/useAppContext';
 import { Password, ResetWallet } from '../views/Auth';
-import { ClientConnect, ClientTransaction } from '../views/ClientRequests';
+import { ClientConnect, ClientTransaction, ClientDoginalTransaction, ClientAvailableDRC20Transaction } from '../views/ClientRequests';
 import {
   CreateWallet,
   ImportWallet,
@@ -27,6 +27,8 @@ const screens = {
   TransferToken,
   ClientConnect,
   ClientTransaction,
+  ClientDoginalTransaction,
+  ClientAvailableDRC20Transaction,
 };
 
 export default function App() {
