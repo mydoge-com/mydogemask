@@ -1,17 +1,23 @@
-import { Input, Text } from 'native-base';
-import { useCallback } from 'react';
+import { Box, Input, Text, Toast } from 'native-base';
+import { useCallback, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
+import { ToastRender } from '../../components/ToastRender';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import { sendMessage } from '../../scripts/helpers/message';
 import { validateAddress } from '../../scripts/helpers/wallet';
+import { NFTView } from '../Transactions/components/NFT';
 
-export const AddressScreen = ({
+export const TransferNFTAddress = ({
   walletAddress,
   setFormPage,
   errors,
   setErrors,
   setFormData,
   formData,
+  selectedNFT,
 }) => {
+  const [loading, setLoading] = useState(false);
   const onChangeText = useCallback(
     (text) => {
       setErrors({});
@@ -40,18 +46,67 @@ export const AddressScreen = ({
 
   const onSubmit = useCallback(() => {
     if (validate()) {
-      setFormPage('amount');
+      setLoading(true);
+
+      sendMessage(
+        {
+          message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
+          data: {
+            ...selectedNFT,
+            address: walletAddress,
+            recipientAddress: formData.address.trim(),
+          },
+        },
+        ({ rawTx, fee, amount }) => {
+          if (rawTx && fee !== undefined && amount) {
+            setFormData({
+              ...formData,
+              rawTx,
+              fee,
+              dogeAmount: amount,
+            });
+            setFormPage('confirmation');
+            setLoading(false);
+          } else {
+            setLoading(false);
+            Toast.show({
+              title: 'Error',
+              description: 'Error creating transaction',
+              duration: 3000,
+              render: () => {
+                return (
+                  <ToastRender
+                    title='Error'
+                    description='Error creating transaction'
+                    status='error'
+                  />
+                );
+              },
+            });
+          }
+        }
+      );
     }
-  }, [setFormPage, validate]);
+  }, [
+    formData,
+    selectedNFT,
+    setFormData,
+    setFormPage,
+    validate,
+    walletAddress,
+  ]);
 
   return (
     <>
       <Text fontSize='xl' pb='16px' textAlign='center' fontWeight='semibold'>
-        Send to
+        Transfer Doginal
       </Text>
+      <Box borderRadius='12px' overflow='hidden' mb='24px' mx='20px'>
+        <NFTView nft={selectedNFT} />
+      </Box>
       <Input
         variant='filled'
-        placeholder='Send to DOGE address'
+        placeholder='Recipient wallet address'
         py='14px'
         focusOutlineColor='brandYellow.500'
         _hover={{
@@ -83,6 +138,7 @@ export const AddressScreen = ({
         role='button'
         mt='32px'
         isDisabled={!formData.address || formData.address.length <= 26}
+        loading={loading}
       >
         Next
       </BigButton>

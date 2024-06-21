@@ -13,14 +13,14 @@ import { OnboardingLayout } from './OnboardingLayout';
 
 export const CreateWallet = () => {
   const [showPassword, setShowPassword] = useState(false);
-  const { navigate, dispatch } = useAppContext();
+  const { dispatch, navigate } = useAppContext();
 
   const toggleShowPassword = useCallback(() => {
     setShowPassword((current) => !current);
   }, []);
 
   const onBack = useCallback(() => {
-    navigate('Intro');
+    navigate(-1);
   }, [navigate]);
 
   const [formData, setFormData] = useState({});
@@ -87,7 +87,11 @@ export const CreateWallet = () => {
           if (authenticated && wallet) {
             dispatch({
               type: DISPATCH_TYPES.SIGN_IN,
-              payload: { authenticated, wallet, navigate: 'Success' },
+              payload: {
+                authenticated,
+                wallet,
+                navigate: '/Success',
+              },
             });
             dispatch({
               type: DISPATCH_TYPES.SET_ONBOARDING_COMPLETE,

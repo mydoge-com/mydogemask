@@ -49,7 +49,7 @@ export const ConfirmationScreen = ({
         // Process transaction
         sendMessage(
           {
-            message: 'sendTransaction',
+            message: MESSAGE_TYPES.SEND_TRANSACTION,
             data: { rawTx: formData.rawTx, selectedAddressIndex },
           },
           (txId) => {
@@ -60,14 +60,14 @@ export const ConfirmationScreen = ({
                 render: () => {
                   return (
                     <ToastRender
-                      description='Trasaction Sent'
+                      description='Transaction Sent'
                       status='success'
                     />
                   );
                 },
               });
 
-              navigate('Transactions');
+              navigate('/Transactions/?refresh=1');
             } else {
               setLoading(false);
               Toast.show({

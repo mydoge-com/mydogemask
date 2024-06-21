@@ -14,19 +14,18 @@ import { BiTransferAlt } from 'react-icons/bi';
 import { BsInfoCircleFill } from 'react-icons/bs';
 
 import { BigButton } from '../../../components/Button';
-import { DISPATCH_TYPES } from '../../../Context';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { doginalsMarketplace } from '../../../scripts/api';
 import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
 import { logError } from '../../../utils/error';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
 
-export const TokenModal = ({ isOpen, onClose, token = {} }) => {
-  const { dispatch, navigate } = useAppContext();
+export const TokenModal = ({ isOpen, onClose, token }) => {
+  const { navigate } = useAppContext();
   const [tokenDetails, setTokenDetails] = useState();
 
   const { overallBalance, ticker, availableBalance, transferableBalance } =
-    token;
+    token ?? {};
 
   const fetchTokenDetails = useCallback(() => {
     doginalsMarketplace
@@ -43,40 +42,39 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
     }
   }, [fetchTokenDetails, isOpen]);
 
-  const onGetAvailable = useCallback(() => {
-    dispatch({
-      type: DISPATCH_TYPES.SELECT_TOKEN,
-      payload: {
-        token: {
-          ...token,
-          dogePrice: Number(
-            formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
-          ),
-        },
-      },
-    });
-    navigate('TransferAvailable');
-  }, [dispatch, navigate, token, tokenDetails?.floorPrice]);
+  const onInscribeToken = useCallback(() => {
+    navigate(
+      `/InscribeToken/?selectedToken=${JSON.stringify({
+        ...token,
+        dogePrice: Number(
+          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
+        ),
+      })}`
+    );
+  }, [navigate, token, tokenDetails?.floorPrice]);
 
   const onTransfer = useCallback(() => {
-    dispatch({
-      type: DISPATCH_TYPES.SELECT_TOKEN,
-      payload: {
-        token: {
-          ...token,
-          dogePrice: Number(
-            formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
-          ),
-        },
-      },
-    });
-    navigate('TransferToken');
-  }, [dispatch, navigate, token, tokenDetails?.floorPrice]);
+    navigate(
+      `/TransferToken/?selectedToken=${JSON.stringify({
+        ...token,
+        dogePrice: Number(
+          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
+        ),
+      })}`
+    );
+  }, [navigate, token, tokenDetails?.floorPrice]);
 
   if (!isOpen) return null;
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size='full'>
+    <Modal
+      isOpen={isOpen}
+      onClose={() => {
+        onClose();
+        setTokenDetails(null);
+      }}
+      size='full'
+    >
       <Modal.Content w='90%'>
         <Modal.CloseButton />
         <Modal.Body alignItems='center' pt='54px' pb='36px'>
@@ -90,7 +88,7 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
                   uri: `${TICKER_ICON_URL}/${ticker}.png`,
                 }}
               >
-                {ticker.substring(0, 2).toUpperCase()}
+                {ticker?.substring(0, 2).toUpperCase()}
               </Avatar>
               <Text fontSize='24px' fontWeight='semibold'>
                 {Number(overallBalance).toLocaleString()} {ticker}
@@ -149,20 +147,24 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
                 </Text>
               </HStack>
             </VStack>
+            {Number(transferableBalance) ? (
+              <HStack space='8px' mt='10px' alignItems='center'>
+                <BigButton onPress={onTransfer} variant='primary' px='32px'>
+                  Transfer <BiTransferAlt style={{ marginLeft: '4px' }} />
+                </BigButton>
+              </HStack>
+            ) : null}
+
             {!Number(transferableBalance) ||
             Number(transferableBalance) < Number(availableBalance) ? (
-              <HStack
-                space='8px'
-                mt='30px'
-                alignItems='center'
-                // justifyContent='center'
-              >
+              <HStack space='8px' mt='10px' alignItems='center'>
                 <BigButton
-                  onPress={onGetAvailable}
+                  onPress={onInscribeToken}
                   variant='secondary'
-                  px='28px'
+                  px='32px'
                 >
-                  Inscribe <BiTransferAlt style={{ marginLeft: '4px' }} />
+                  Inscribe for Transfer{' '}
+                  <BiTransferAlt style={{ marginLeft: '4px' }} />
                 </BigButton>
                 <Popover
                   trigger={(triggerProps) => {
@@ -170,7 +172,7 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
                       <Pressable
                         {...triggerProps}
                         position='absolute'
-                        top='-6px'
+                        top='-8px'
                       >
                         <BsInfoCircleFill color='#bbbbbb' />
                       </Pressable>
@@ -191,13 +193,6 @@ export const TokenModal = ({ isOpen, onClose, token = {} }) => {
                     </Popover.Body>
                   </Popover.Content>
                 </Popover>
-              </HStack>
-            ) : null}
-            {Number(transferableBalance) ? (
-              <HStack space='8px' mt='10px' alignItems='center'>
-                <BigButton onPress={onTransfer} variant='primary' px='28px'>
-                  Transfer <BiTransferAlt style={{ marginLeft: '4px' }} />
-                </BigButton>
               </HStack>
             ) : null}
           </VStack>

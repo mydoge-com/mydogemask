@@ -4,22 +4,27 @@ import {
   Center,
   HStack,
   Input,
+  Popover,
+  Pressable,
   Text,
   Toast,
   VStack,
 } from 'native-base';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { BsInfoCircleFill } from 'react-icons/bs';
 
-// import { IoSwapVerticalOutline } from 'react-icons/io5';
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
+import { getLocalValue } from '../../scripts/helpers/storage';
 import { sanitizeDogeInput } from '../../utils/formatters';
 
 const MAX_CHARACTERS = 10000;
 
-export const AvailableAmountScreen = ({
+const TRANSACTION_CACHE_TIME = 1000 * 60 * 15;
+
+export const InscribeTokenAmount = ({
   setFormPage,
   errors,
   setErrors,
@@ -27,13 +32,12 @@ export const AvailableAmountScreen = ({
   formData,
   walletAddress,
   selectedAddressIndex,
-  selectedToken,
   walletNickname,
+  selectedToken,
 }) => {
-  // const [isCurrencySwapped, setIsCurrencySwapped] = useState(false);
   const tokenInputRef = useRef(null);
-  // const dogeInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
+  const [cachedTxs, setCachedTx] = useState();
 
   const onChangeTextToken = useCallback(
     (text) => {
@@ -61,43 +65,38 @@ export const AvailableAmountScreen = ({
     [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
   );
 
-  // const onChangeTextDoge = useCallback(
-  //   (text) => {
-  //     if (Number.isNaN(Number(text))) {
-  //       return;
-  //     }
+  const pendingInscriptionAmount = cachedTxs?.length
+    ? cachedTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
+    : 0;
 
-  //     setErrors({ ...errors, tokenAmount: '' });
-  //     const cleanText = sanitizeDogeInput(text) || '0';
+  const transferableBalance =
+    Number(selectedToken.availableBalance) - pendingInscriptionAmount;
 
-  //     if (cleanText.length > MAX_CHARACTERS) {
-  //       return;
-  //     }
+  // Fetch cached token transactions, filter out invalidated transactions
+  const fetchCachedTx = useCallback(async () => {
+    let txs = await getLocalValue(selectedToken.ticker);
 
-  //     const tokenAmount = (
-  //       parseFloat(cleanText) / selectedToken.dogePrice
-  //     ).toFixed(0);
+    if (txs?.length) {
+      txs = txs.filter(
+        (tx) =>
+          tx.txType === 'inscribe' &&
+          tx.timestamp + TRANSACTION_CACHE_TIME > Date.now()
+      );
+      setCachedTx(txs);
+    }
+  }, [selectedToken.ticker]);
 
-  //     setFormData({
-  //       ...formData,
-  //       tokenAmount,
-  //       dogeAmount: cleanText,
-  //     });
-  //   },
-  //   [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
-  // );
-
-  // const swapInput = useCallback(() => {
-  //   setIsCurrencySwapped((state) => !state);
-  // }, []);
+  useEffect(() => {
+    fetchCachedTx();
+  }, [fetchCachedTx]);
 
   const onSetMax = useCallback(() => {
-    onChangeTextToken(String(selectedToken.availableBalance));
-  }, [selectedToken.availableBalance, onChangeTextToken]);
+    onChangeTextToken(String(transferableBalance));
+  }, [onChangeTextToken, transferableBalance]);
 
   const validate = useCallback(() => {
-    return selectedToken.availableBalance >= Number(formData.tokenAmount);
-  }, [selectedToken.availableBalance, formData.tokenAmount]);
+    return transferableBalance >= Number(formData.tokenAmount);
+  }, [transferableBalance, formData.tokenAmount]);
 
   const onSubmit = useCallback(() => {
     if (validate()) {
@@ -196,12 +195,8 @@ export const AvailableAmountScreen = ({
         w='80%'
         h='70px'
       >
-        {/* <Text fontSize='15px' color='gray.900' px='8px' pb='6px'>
-          Inscription amount:
-        </Text> */}
         <Input
           keyboardType='numeric'
-          // isDisabled={selectedToken.dogePrice === 0}
           variant='filled'
           placeholder='0'
           focusOutlineColor='brandYellow.500'
@@ -235,8 +230,6 @@ export const AvailableAmountScreen = ({
           textAlign='center'
           ref={tokenInputRef}
           value={formData.tokenAmount}
-          // position='absolute'
-          // top={0}
         />
         {/* ) : (
           <Input
@@ -285,29 +278,41 @@ export const AvailableAmountScreen = ({
       <Text fontSize='10px' color='red.500'>
         {errors.tokenAmount || ' '}
       </Text>
-      {/* <BigButton
-        variant='secondary'
-        px='6px'
-        py='4px'
-        rounded='10px'
-        mt='18px'
-        mb='4px'
-        onPress={swapInput}
-      >
-        <IoSwapVerticalOutline size='22px' style={{ paddingTop: 3 }} />
-      </BigButton>
-      <Text fontSize='20px' fontWeight='semibold' color='gray.500' pt='6px'>
-        {!isCurrencySwapped ? 'Ð' : `${selectedToken.ticker} `}
-        {isCurrencySwapped
-          ? formData.tokenAmount || 0
-          : formData.dogeAmount || 0}
-      </Text> */}
       <VStack alignItems='center' pt='12px' space='8px'>
-        {selectedToken.availableBalance ? (
-          <Text fontSize='14px' color='gray.500'>
-            Balance: <Text fontWeight='bold'>{selectedToken.ticker}</Text>{' '}
-            {selectedToken.availableBalance}
-          </Text>
+        {transferableBalance ? (
+          <HStack space='10px'>
+            <Text fontSize='14px' color='gray.500'>
+              Balance: <Text fontWeight='bold'>{selectedToken.ticker}</Text>{' '}
+              {transferableBalance}
+            </Text>
+            {cachedTxs?.length ? (
+              <Popover
+                trigger={(triggerProps) => {
+                  return (
+                    <Pressable {...triggerProps}>
+                      <BsInfoCircleFill color='#FCD436' />
+                    </Pressable>
+                  );
+                }}
+              >
+                <Popover.Content>
+                  <Popover.Arrow />
+                  <Popover.Body>
+                    <Text fontSize='13px'>
+                      Pending token inscriptions affect your available token
+                      balance.{'\n\n'}
+                      Pending inscriptions:
+                      {'\n'}
+                      <Text fontWeight='bold'>
+                        {selectedToken.ticker}{' '}
+                        {Number(pendingInscriptionAmount).toLocaleString()}
+                      </Text>
+                    </Text>
+                  </Popover.Body>
+                </Popover.Content>
+              </Popover>
+            ) : null}
+          </HStack>
         ) : null}
         <Button
           background='gray.400'
@@ -321,13 +326,6 @@ export const AvailableAmountScreen = ({
         </Button>
       </VStack>
       <HStack alignItems='center' mt='60px' space='12px'>
-        <Button
-          variant='unstyled'
-          colorScheme='coolGray'
-          onPress={() => setFormPage('address')}
-        >
-          Back
-        </Button>
         <BigButton
           onPress={onSubmit}
           type='submit'

@@ -1,31 +1,51 @@
-import { Button, Center, HStack, Text, Toast } from 'native-base';
-import { useCallback, useState } from 'react';
+import { Avatar, Button, Center, HStack, Text, Toast } from 'native-base';
+import { useCallback, useEffect, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
 import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
+import { validateTransaction } from '../../scripts/helpers/wallet';
 
-export const InscribeTransferConfirmationScreen = ({
+export const TransferTokenConfirmation = ({
   setFormPage,
   errors,
+  setErrors,
   formData,
   walletAddress,
   selectedAddressIndex,
-  selectedToken,
 }) => {
   const { navigate } = useAppContext();
   const [loading, setLoading] = useState(false);
-
   const onSubmit = useCallback(() => {
+    let addressBalance;
+
     setLoading(true);
     sendMessage(
       {
         message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
         data: { address: walletAddress },
       },
-      () => {
+      (balance) => {
+        if (balance) {
+          addressBalance = balance;
+        } else {
+          setErrors({ confirmation: 'Error getting address balance' });
+        }
+
+        const error = validateTransaction({
+          senderAddress: walletAddress,
+          recipientAddress: formData.address.trim(),
+          dogeAmount: formData.dogeAmount,
+          addressBalance,
+        });
+        if (error) {
+          setErrors({ confirmation: error });
+          setLoading(false);
+
+          return;
+        }
         // Process transaction
         sendMessage(
           {
@@ -40,14 +60,14 @@ export const InscribeTransferConfirmationScreen = ({
                 render: () => {
                   return (
                     <ToastRender
-                      description='Trasaction Sent'
+                      description='Transaction Sent'
                       status='success'
                     />
                   );
                 },
               });
 
-              navigate('Transactions');
+              navigate('/Transactions/?refresh=1');
             } else {
               setLoading(false);
               Toast.show({
@@ -69,7 +89,21 @@ export const InscribeTransferConfirmationScreen = ({
         );
       }
     );
-  }, [formData.txs, navigate, walletAddress]);
+  }, [
+    formData.address,
+    formData.dogeAmount,
+    formData.rawTx,
+    navigate,
+    selectedAddressIndex,
+    setErrors,
+    walletAddress,
+  ]);
+
+  useEffect(() => {
+    if (walletAddress !== formData.address) {
+      setErrors({});
+    }
+  }, [walletAddress, formData.address, setErrors]);
 
   return (
     <Center>
@@ -81,35 +115,29 @@ export const InscribeTransferConfirmationScreen = ({
           Wallet {selectedAddressIndex + 1}
         </Text>
         {'  '}
-        {walletAddress.slice(0, 8)}
+        {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
       </Text>
-      <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
-        Inscribing
+      <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
+        Paying
       </Text>
-      {/* <Box alignItems='center' space='12px' pb='28px' px='106px' bg='red.100'>
+      <HStack alignItems='center' space='12px' pb='28px'>
+        <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
+          {formData.address.substring(0, 2)}
+        </Avatar>
         <Text
-          px='106px'
-          fontSize='sm'
+          fontSize='md'
           fontWeight='semibold'
           color='gray.500'
           textAlign='center'
-          adjustsFontSizeToFit
-          noOfLines={1}
         >
-          {formData.txs.toString()}
+          {formData.address.slice(0, 8)}...{formData.address.slice(-4)}
         </Text>
-      </Box> */}
+      </HStack>
       <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
-        {selectedToken.ticker} {formData.tokenAmount}
+        Ð{formData.dogeAmount}
       </Text>
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-        Network fee: <Text fontWeight='normal'>Ð{formData.fee}</Text>
-      </Text>
-      <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-        Transactions
-      </Text>
-      <Text fontSize='13px' fontWeight='semibold' pt='6px' numberOfLines={1}>
-        {formData.txs[0]}
+        Network fee Ð{formData.fee}
       </Text>
       <HStack alignItems='center' mt='60px' space='12px'>
         <Button
@@ -127,7 +155,7 @@ export const InscribeTransferConfirmationScreen = ({
           isDisabled={errors.confirmation}
           loading={loading}
         >
-          Send
+          Pay
         </BigButton>
       </HStack>
       {errors.confirmation ? (

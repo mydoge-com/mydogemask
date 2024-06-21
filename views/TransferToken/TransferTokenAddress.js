@@ -1,17 +1,19 @@
 import { Input, Text } from 'native-base';
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { validateAddress } from '../../scripts/helpers/wallet';
 
-export const AddressScreen = ({
+export const TransferTokenAddress = ({
   walletAddress,
+  selectedToken,
   setFormPage,
   errors,
   setErrors,
   setFormData,
   formData,
 }) => {
+  const [loading, setLoading] = useState(false);
   const onChangeText = useCallback(
     (text) => {
       setErrors({});
@@ -40,18 +42,19 @@ export const AddressScreen = ({
 
   const onSubmit = useCallback(() => {
     if (validate()) {
+      setLoading(true);
       setFormPage('amount');
     }
   }, [setFormPage, validate]);
 
   return (
     <>
-      <Text fontSize='xl' pb='16px' textAlign='center' fontWeight='semibold'>
-        Send to
+      <Text fontSize='xl' pb='16px' textAlign='center'>
+        Send <Text fontWeight='bold'>{selectedToken.ticker}</Text> to
       </Text>
       <Input
         variant='filled'
-        placeholder='Send to DOGE address'
+        placeholder='Recipient wallet address'
         py='14px'
         focusOutlineColor='brandYellow.500'
         _hover={{
@@ -83,6 +86,7 @@ export const AddressScreen = ({
         role='button'
         mt='32px'
         isDisabled={!formData.address || formData.address.length <= 26}
+        loading={loading}
       >
         Next
       </BigButton>

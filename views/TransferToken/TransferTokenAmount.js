@@ -20,7 +20,7 @@ import { sendMessage } from '../../scripts/helpers/message';
 import { getCachedTx } from '../../scripts/helpers/storage';
 import { NFT } from '../Transactions/components/NFT';
 
-export const SelectTransferScreen = ({
+export const TransferTokenAmount = ({
   setFormPage,
   setFormData,
   formData,
@@ -78,16 +78,19 @@ export const SelectTransferScreen = ({
   }, [selectedToken.ticker, walletAddress]);
 
   const renderItem = useCallback(
-    ({ item, index }) => (
-      <NFT
-        nft={item}
-        index={index}
-        onPress={() => {
-          setSelectedNFT(item);
-        }}
-      />
-    ),
-    []
+    ({ item, index }) => {
+      return (
+        <NFT
+          nft={item}
+          index={index}
+          onPress={() => {
+            setSelectedNFT(item);
+          }}
+          selected={selectedNFT?.txid === item.txid}
+        />
+      );
+    },
+    [selectedNFT?.txid]
   );
 
   const onSubmit = useCallback(() => {
@@ -134,22 +137,28 @@ export const SelectTransferScreen = ({
 
   return (
     <Center>
-      <Text fontSize='sm' color='gray.500' textAlign='center' mb='8px'>
+      <Text
+        fontSize='sm'
+        color='gray.500'
+        textAlign='center'
+        mb='12spx'
+        mt='-12px'
+      >
         <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
           Wallet {selectedAddressIndex + 1}
         </Text>
         {'  '}
         {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
       </Text>
-      <Text fontSize='xl' pb='4px' textAlign='center' fontWeight='semibold'>
-        Sending to
+      <Text fontSize='xl' pb='8px' textAlign='center'>
+        Transfer <Text fontWeight='bold'>{selectedToken.ticker}</Text> tokens to
       </Text>
       <HStack alignItems='center' space='12px' pb='28px'>
         <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
           {formData.address.substring(0, 2)}
         </Avatar>
         <Text
-          fontSize='md'
+          fontSize='sm'
           fontWeight='semibold'
           color='gray.500'
           textAlign='center'
@@ -169,20 +178,60 @@ export const SelectTransferScreen = ({
             </Text>
           </VStack>
         ) : (
-          <Box px='20px'>
-            <VStack space='10px'>
+          <Box justifyContent='center' pos='relative'>
+            <VStack space='10px' w='100%' pos='relative'>
               <FlatList
                 data={nfts}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.inscriptionNumber}
                 numColumns={2}
+                initialNumToRender={4}
               />
             </VStack>
+            <Center
+              space='18px'
+              position='sticky'
+              bottom={0}
+              bg='white'
+              w='100%'
+              flexDir='row'
+              pt='6px'
+            >
+              <Button
+                variant='unstyled'
+                colorScheme='coolGray'
+                onPress={() => setFormPage('address')}
+                alignSelf='center'
+              >
+                Back
+              </Button>
+              <BigButton
+                onPress={onSubmit}
+                type='submit'
+                role='button'
+                px='28px'
+                isDisabled={!selectedNFT}
+                loading={loading}
+              >
+                Next
+              </BigButton>
+            </Center>
           </Box>
         )}
       </Box>
 
-      <HStack alignItems='center' mt='60px' space='12px'>
+      {/* <HStack
+        alignItems='center'
+        mt='60px'
+        space='12px'
+        position='fixed'
+        // bottom='16px'
+        // bg='red.400'
+        // f={1}
+        // w='300px'
+        // jc='center'
+        // flexBasis={1}
+      >
         <Button
           variant='unstyled'
           colorScheme='coolGray'
@@ -200,7 +249,7 @@ export const SelectTransferScreen = ({
         >
           Next
         </BigButton>
-      </HStack>
+      </HStack> */}
     </Center>
   );
 };

@@ -1,14 +1,15 @@
 import { Box } from 'native-base';
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
-import { AddressScreen } from '../Send/AddressScreen';
-import { NFTConfirmationScreen } from '../Send/NFTConfirmationScreen';
-import { SelectTransferScreen } from '../Send/SelectTransferScreen';
+import { TransferTokenAddress } from './TransferTokenAddress';
+import { TransferTokenAmount } from './TransferTokenAmount';
+import { TransferTokenConfirmation } from './TransferTokenConfirmation';
 
 export function TransferToken() {
-  const { wallet, selectedAddressIndex, selectedToken } = useAppContext();
+  const { wallet, selectedAddressIndex } = useAppContext();
   const walletAddress = wallet.addresses[selectedAddressIndex];
 
   const [formPage, setFormPage] = useState('address');
@@ -17,17 +18,25 @@ export function TransferToken() {
 
   const RenderScreen =
     {
-      address: AddressScreen,
-      amount: SelectTransferScreen,
-      confirmation: NFTConfirmationScreen,
+      address: TransferTokenAddress,
+      amount: TransferTokenAmount,
+      confirmation: TransferTokenConfirmation,
     }[formPage] ?? null;
+
+  const [searchParams] = useSearchParams();
+
+  let selectedToken = searchParams.get('selectedToken');
+
+  if (selectedToken) {
+    selectedToken = JSON.parse(selectedToken);
+  }
 
   return (
     <Layout
       withHeader
       p={0}
       withCancelButton
-      cancelRoute='Transactions'
+      cancelRoute='/Transactions/tokens'
       addressColor='black'
     >
       <Box pt='72px' px='12px'>

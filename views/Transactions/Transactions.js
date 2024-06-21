@@ -1,13 +1,14 @@
 import { Box, Center, HStack, Text } from 'native-base';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SceneMap, TabBar, TabView } from 'react-native-tab-view';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import { WalletDetailModal } from '../../components/Header/WalletDetailModal';
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
 import { ActionButton } from './components/ActionButton';
 import { Balance } from './components/Balance';
-import { CollectiblesTab } from './components/CollectiblesTab';
+import { NFTsTab } from './components/NFTsTab';
 import { TokensTab } from './components/TokensTab';
 import { TransactionsTab } from './components/TransactionsTab';
 
@@ -20,8 +21,6 @@ export function Transactions() {
     wallet,
     navigate,
     selectedAddressIndex,
-    txTabIndex,
-    setTxTabIndex,
     transactions: {
       balance,
       usdValue,
@@ -37,8 +36,21 @@ export function Transactions() {
       tokensLoading,
       hasMoreTokens,
       fetchMoreTokens,
+      refreshTransactions,
     },
   } = useAppContext();
+
+  const [searchParams] = useSearchParams();
+
+  const shouldRefresh = searchParams.get('refresh');
+
+  console.log('shouldRefresh', shouldRefresh);
+
+  useEffect(() => {
+    if (shouldRefresh) {
+      refreshTransactions();
+    }
+  }, [shouldRefresh, refreshTransactions]);
 
   const activeAddress = wallet.addresses[selectedAddressIndex];
 
@@ -57,7 +69,7 @@ export function Transactions() {
 
   const NFTsRoute = useCallback(() => {
     return (
-      <CollectiblesTab
+      <NFTsTab
         NFTs={NFTs}
         hasMoreNFTs={hasMoreNFTs}
         fetchMoreNFTs={fetchMoreNFTs}
@@ -108,6 +120,12 @@ export function Transactions() {
     [NFTsRoute, TokensRoute, TransactionsRoute]
   );
 
+  const { tab } = useParams();
+
+  const [txTabIndex, setTxTabIndex] = useState(
+    routes.findIndex((r) => r.key === tab) ?? 0
+  );
+
   return (
     <Layout withHeader withConnectStatus p={0}>
       <Box pt='60px'>
@@ -154,7 +172,6 @@ export function Transactions() {
               {...props}
             />
           )}
-          // lazy={() => true}
         />
       </Box>
 

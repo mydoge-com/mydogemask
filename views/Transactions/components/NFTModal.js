@@ -9,17 +9,17 @@ import {
   VStack,
 } from 'native-base';
 import { useCallback } from 'react';
+import { BiTransferAlt } from 'react-icons/bi';
 import { FiExternalLink } from 'react-icons/fi';
 
 import { BigButton } from '../../../components/Button';
-import { DISPATCH_TYPES } from '../../../Context';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
+import { NFTView } from './NFT';
 
-export const NFTModal = ({
-  isOpen,
-  onClose,
-  nft: {
+export const NFTModal = ({ isOpen, onClose, nft }) => {
+  const { navigate } = useAppContext();
+  const {
     address,
     content,
     contentType,
@@ -28,15 +28,13 @@ export const NFTModal = ({
     timestamp,
     inscriptionId,
     genesisTransaction,
-  },
-  children,
-  nft,
-}) => {
-  const { dispatch, navigate } = useAppContext();
+  } = nft ?? {};
+
   const onSend = useCallback(() => {
-    dispatch({ type: DISPATCH_TYPES.SELECT_NFT, payload: { nft } });
-    navigate('SendNFT');
-  }, [dispatch, navigate, nft]);
+    navigate(`/TransferNFT/?selectedNFT=${JSON.stringify(nft)}`);
+  }, [navigate, nft]);
+
+  if (!isOpen) return null;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size='full'>
@@ -45,7 +43,7 @@ export const NFTModal = ({
         <Modal.Body alignItems='center' pt='54px' pb='36px'>
           <VStack w='100%'>
             <Box width='100%' borderRadius='12px' overflow='hidden'>
-              {children}
+              <NFTView nft={nft} />
               <Pressable
                 onPress={() => window.open(content)}
                 position='absolute'
@@ -143,8 +141,8 @@ export const NFTModal = ({
             </ScrollView>
 
             <Box pt='32px'>
-              <BigButton variant='secondary' px='28px' onPress={onSend}>
-                Send
+              <BigButton px='28px' onPress={onSend}>
+                Transfer <BiTransferAlt style={{ marginLeft: '4px' }} />
               </BigButton>
             </Box>
           </VStack>
