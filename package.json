@@ -6,9 +6,10 @@
     "build": "./build.sh",
     "build-scripts": "webpack --config ./webpack.config.js",
     "start": "yarn dev",
-    "lint": "next lint",
-    "postinstall": "cd scripts && yarn install && cd ..",
-    "watch": "nodemon --exec \"yarn run build\""
+    "lint": "yarn eslint .",
+    "lint-fix": "yarn eslint --fix .",
+    "watch": "nodemon --exec \"yarn run build\"",
+    "postinstall": "npx patch-package"
   },
   "dependencies": {
     "@mydogeofficial/dogecoin-js": "^0.1.0-beta.4",
@@ -17,10 +18,10 @@
     "bip32": "2.0.4",
     "bip39": "^3.0.4",
     "bitcoinjs-lib": "4.0.5",
-    "bitcore-lib-doge": "^10.0.32",
+    "bitcore-lib-doge": "https://github.com/mydoge-com/bitcore-lib-doge",
+    "bn.js": "=5.2.1",
     "crypto-js": "^4.1.1",
     "dayjs": "^1.11.7",
-    "dogecoin-bip84": "0.0.5",
     "dotenv": "^16.4.5",
     "expo-font": "^10.0.3",
     "ky": "^0.33.1",
@@ -38,6 +39,7 @@
     "react-native-web": "^0.17.7",
     "react-native-web-linear-gradient": "^1.1.2",
     "react-no-ssr": "^1.1.0",
+    "react-router-dom": "^6.23.1",
     "satoshi-bitcoin": "1.0.5",
     "secure-ls": "^1.2.6",
     "timeago-react": "^3.0.5",
@@ -45,13 +47,10 @@
     "wretch": "^2.3.2"
   },
   "devDependencies": {
-    "@babel/core": "7.18.10",
-
-    "node-polyfill-webpack-plugin": "^3.0.0",
-
-    "babel-loader": "8.3.0",
-    "@babel/eslint-parser": "^7.19.1",
+    "@babel/core": "^7.24.6",
+    "@babel/eslint-parser": "^7.24.6",
     "@babel/plugin-proposal-optional-chaining": "7.18.9",
+    "babel-loader": "8.3.0",
     "babel-plugin-transform-inline-environment-variables": "0.4.4",
     "babel-preset-expo": "^8.5.1",
     "eslint": "7",
@@ -62,7 +61,7 @@
     "eslint-plugin-jsx-a11y": "6.6.1",
     "eslint-plugin-prettier": "4.2.1",
     "eslint-plugin-react": "7.30.1",
-    "eslint-plugin-react-hooks": "4.6.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-native": "4.0.0",
     "eslint-plugin-simple-import-sort": "7.0.0",
     "husky": "8.0.1",
@@ -70,6 +69,7 @@
     "next-compose-plugins": "^2.2.1",
     "next-fonts": "^1.5.1",
     "next-transpile-modules": "^9.0.0",
+    "node-polyfill-webpack-plugin": "^3.0.0",
     "nodemon": "^2.0.20",
     "prettier": "2.7.1",
     "webpack": "^5.91.0",

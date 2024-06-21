@@ -1,5 +1,7 @@
 // Wrapper functions for chrome.storage.local and chrome.storage.session. Adds a wrapper for localStorage and sessionStorage in development mode.
 
+import { nownodes } from '../api';
+
 const dev = process.env.NODE_ENV === 'development';
 
 export const getSessionValue = (key) => {
@@ -87,3 +89,14 @@ export const clearLocalStorage = () => {
   }
   return chrome.storage.local.clear();
 };
+
+export async function getCachedTx(txid) {
+  let tx = await getLocalValue(txid);
+
+  if (!tx || !tx.vout || tx.confirmations === 0) {
+    tx = await nownodes.get(`/tx/${txid}`).json();
+    await setLocalValue({ [txid]: tx });
+  }
+
+  return tx;
+}

@@ -14,8 +14,8 @@ const createResponseHandler =
         onSuccess?.(data);
         resolve(data);
       } else {
-        onError?.(new Error('Unable to connect to MyDogeMask'));
-        reject(new Error('Unable to connect to MyDogeMask'));
+        onError?.(new Error('Unable to connect to MyDoge'));
+        reject(new Error('Unable to connect to MyDoge'));
       }
       window.removeEventListener('message', listener);
     }

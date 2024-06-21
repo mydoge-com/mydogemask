@@ -3,9 +3,9 @@ import wretch from 'wretch';
 import {
   DOGINALS_MARKETPLACE_API_URL,
   DOGINALS_WALLET_API_URL,
+  DOGINALS_WALLET_API_V2_URL,
   NODE_BASE_URL,
   NOWNODES_BASE_URL,
-  DOGINALS_WALLET_API_V2_URL,
 } from './helpers/constants';
 
 export const apiKey = process.env.NEXT_PUBLIC_NOWNODES_API_KEY;

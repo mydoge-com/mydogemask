@@ -1,4 +1,4 @@
-import { Button, Text } from 'native-base';
+import { Button, HStack, Spinner, Text } from 'native-base';
 
 const styleVariants = {
   primary: {
@@ -59,9 +59,12 @@ export const BigButton = ({
       {...buttonStyles}
       {...props}
     >
-      <Text fontWeight='semibold' fontSize='16px' {...textStyles}>
-        {children}
-      </Text>
+      <HStack space='8px'>
+        {loading ? <Spinner color='amber.600' /> : null}
+        <Text fontWeight='semibold' fontSize='16px' {...textStyles}>
+          {children}
+        </Text>
+      </HStack>
     </Button>
   );
 };

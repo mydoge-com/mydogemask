@@ -68,7 +68,7 @@ import { validateTransaction } from './helpers/wallet';
       (response) => {
         if (!response) {
           handleError({
-            errorMessage: 'Unable to connect to MyDogeMask',
+            errorMessage: 'Unable to connect to MyDoge',
             origin,
             messageType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
           });
@@ -120,7 +120,7 @@ import { validateTransaction } from './helpers/wallet';
           origin
         );
       } else {
-        throw new Error('MyDogeMask is not connected to this website');
+        throw new Error('MyDoge is not connected to this website');
       }
     } catch (e) {
       handleError({

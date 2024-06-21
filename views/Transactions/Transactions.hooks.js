@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import sb from 'satoshi-bitcoin';
 
-import { useAppContext } from '../../hooks/useAppContext';
 import { useInterval } from '../../hooks/useInterval';
 import { doginals, doginalsV2 } from '../../scripts/api';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
@@ -12,9 +11,8 @@ import { formatTransaction } from '../../utils/transactions';
 const QUERY_INTERVAL = 10000;
 const QUERY_PAGE_SIZE = 10;
 
-export const useTransactions = () => {
-  const { wallet, selectedAddressIndex } = useAppContext();
-  const walletAddress = wallet.addresses[selectedAddressIndex];
+export const useTransactions = ({ wallet = {}, selectedAddressIndex = 0 }) => {
+  const walletAddress = wallet.addresses?.[selectedAddressIndex];
 
   const [balance, setBalance] = useState(null);
   const [usdPrice, setUSDPrice] = useState(0);
@@ -44,7 +42,7 @@ export const useTransactions = () => {
           }&size=${QUERY_PAGE_SIZE}`
         )
         .json((res) => {
-          setNFTs([...currentNFTs, ...res?.result?.list]);
+          setNFTs([...currentNFTs, ...(res?.result?.list ?? [])]);
           setNFTsTotal(res?.result?.total);
           // Don't increment page on initial fetch, where cursor is undefined
           if (typeof cursor === 'number') {
@@ -67,7 +65,7 @@ export const useTransactions = () => {
           }&size=${QUERY_PAGE_SIZE}`
         )
         .json((res) => {
-          setTokens([...currentTokens, ...res?.result?.list]);
+          setTokens([...currentTokens, ...(res?.result?.list ?? [])]);
           setTokensTotal(res?.result?.total);
           // Don't increment page on initial fetch, where cursor is undefined
           if (typeof cursor === 'number') {
@@ -79,14 +77,6 @@ export const useTransactions = () => {
     },
     [walletAddress]
   );
-
-  useEffect(() => {
-    fetchNFTs();
-  }, [fetchNFTs]);
-
-  useEffect(() => {
-    fetchTokens();
-  }, [fetchTokens]);
 
   const usdValue = balance ? sb.toBitcoin(balance) * usdPrice : 0;
   const getAddressBalance = useCallback(() => {
@@ -215,7 +205,10 @@ export const useTransactions = () => {
 
   const fetchMoreTokens = useCallback(() => {
     if (hasMoreTokens) {
-      fetchTokens({ cursor: currentTokensPage.current + 1, currentTokens: tokens });
+      fetchTokens({
+        cursor: currentTokensPage.current + 1,
+        currentTokens: tokens,
+      });
     }
   }, [fetchTokens, hasMoreTokens, tokens]);
 
@@ -227,12 +220,27 @@ export const useTransactions = () => {
       currentPage.current = 0;
       setTransactions();
     }
+
+    if (!walletAddress) {
+      return;
+    }
     getTransactions();
     getAddressBalance();
-  }, [getAddressBalance, getTransactions, walletAddress]);
+    fetchTokens();
+    fetchNFTs();
+  }, [
+    fetchNFTs,
+    fetchTokens,
+    getAddressBalance,
+    getTransactions,
+    walletAddress,
+  ]);
 
   useInterval(
     () => {
+      if (!walletAddress) {
+        return;
+      }
       getAddressBalance();
       getDogecoinPrice();
       getRecentTransactions();
@@ -256,5 +264,6 @@ export const useTransactions = () => {
     tokensLoading,
     hasMoreTokens,
     fetchMoreTokens,
+    refreshTransactions: getRecentTransactions,
   };
 };

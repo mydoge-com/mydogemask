@@ -1,15 +1,14 @@
 import { Box } from 'native-base';
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
-import { AddressScreen } from './AddressScreen';
-import { AmountScreen } from './AmountScreen';
-import { ConfirmationScreen } from './ConfirmationScreen';
+import { TransferNFTAddress } from './TransferNFTAddress';
+import { TransferNFTConfirmation } from './TransferNFTConfirmation';
 
-export function Send() {
+export function TransferNFT() {
   const { wallet, selectedAddressIndex } = useAppContext();
-
   const walletAddress = wallet.addresses[selectedAddressIndex];
 
   const [formPage, setFormPage] = useState('address');
@@ -18,22 +17,30 @@ export function Send() {
 
   const RenderScreen =
     {
-      address: AddressScreen,
-      amount: AmountScreen,
-      confirmation: ConfirmationScreen,
+      address: TransferNFTAddress,
+      confirmation: TransferNFTConfirmation,
     }[formPage] ?? null;
+
+  const [searchParams] = useSearchParams();
+
+  let selectedNFT = searchParams.get('selectedNFT');
+
+  if (selectedNFT) {
+    selectedNFT = JSON.parse(selectedNFT);
+  }
 
   return (
     <Layout
       withHeader
       p={0}
       withCancelButton
-      cancelRoute='Transactions'
+      cancelRoute='/Transactions/doginals'
       addressColor='black'
     >
       <Box pt='72px' px='12px'>
         <RenderScreen
           walletAddress={walletAddress}
+          selectedNFT={selectedNFT}
           setFormPage={setFormPage}
           formData={formData}
           setFormData={setFormData}

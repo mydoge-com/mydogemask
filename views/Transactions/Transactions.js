@@ -1,17 +1,16 @@
 import { Box, Center, HStack, Text } from 'native-base';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SceneMap, TabBar, TabView } from 'react-native-tab-view';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import { WalletDetailModal } from '../../components/Header/WalletDetailModal';
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
 import { ActionButton } from './components/ActionButton';
 import { Balance } from './components/Balance';
-import { CollectiblesTab } from './components/CollectiblesTab';
+import { NFTsTab } from './components/NFTsTab';
 import { TokensTab } from './components/TokensTab';
 import { TransactionsTab } from './components/TransactionsTab';
-import { useTransactions } from './Transactions.hooks';
-
 
 const Buy = 'assets/buy.svg';
 const Receive = 'assets/receive.svg';
@@ -19,23 +18,39 @@ const Send = 'assets/send.svg';
 
 export function Transactions() {
   const {
-    balance,
-    usdValue,
-    NFTs,
-    hasMoreNFTs,
-    fetchMoreNFTs,
-    NFTsLoading,
-    transactions,
-    loading,
-    hasMore,
-    fetchMore,
-    tokens,
-    tokensLoading,
-    hasMoreTokens,
-    fetchMoreTokens,
-  } = useTransactions();
+    wallet,
+    navigate,
+    selectedAddressIndex,
+    transactions: {
+      balance,
+      usdValue,
+      NFTs,
+      hasMoreNFTs,
+      fetchMoreNFTs,
+      NFTsLoading,
+      transactions,
+      loading,
+      hasMore,
+      fetchMore,
+      tokens,
+      tokensLoading,
+      hasMoreTokens,
+      fetchMoreTokens,
+      refreshTransactions,
+    },
+  } = useAppContext();
 
-  const { wallet, navigate, selectedAddressIndex } = useAppContext();
+  const [searchParams] = useSearchParams();
+
+  const shouldRefresh = searchParams.get('refresh');
+
+  console.log('shouldRefresh', shouldRefresh);
+
+  useEffect(() => {
+    if (shouldRefresh) {
+      refreshTransactions();
+    }
+  }, [shouldRefresh, refreshTransactions]);
 
   const activeAddress = wallet.addresses[selectedAddressIndex];
 
@@ -46,7 +61,6 @@ export function Transactions() {
     window.open(`https://buy.getdoge.com/?addr=${activeAddress}`);
   }, [activeAddress]);
 
-  const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'transactions', title: 'Transactions' },
     { key: 'doginals', title: 'Doginals' },
@@ -55,7 +69,7 @@ export function Transactions() {
 
   const NFTsRoute = useCallback(() => {
     return (
-      <CollectiblesTab
+      <NFTsTab
         NFTs={NFTs}
         hasMoreNFTs={hasMoreNFTs}
         fetchMoreNFTs={fetchMoreNFTs}
@@ -106,6 +120,12 @@ export function Transactions() {
     [NFTsRoute, TokensRoute, TransactionsRoute]
   );
 
+  const { tab } = useParams();
+
+  const [txTabIndex, setTxTabIndex] = useState(
+    routes.findIndex((r) => r.key === tab) ?? 0
+  );
+
   return (
     <Layout withHeader withConnectStatus p={0}>
       <Box pt='60px'>
@@ -128,9 +148,9 @@ export function Transactions() {
           </HStack>
         </Center>
         <TabView
-          navigationState={{ index, routes }}
+          navigationState={{ index: txTabIndex, routes }}
           renderScene={renderScene}
-          onIndexChange={setIndex}
+          onIndexChange={setTxTabIndex}
           initialLayout={{ width: 375 }}
           renderTabBar={(props) => (
             <TabBar

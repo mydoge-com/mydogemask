@@ -8,7 +8,7 @@ import sb from 'satoshi-bitcoin';
 import { MIN_TX_AMOUNT } from '../../constants/Doge';
 
 // Dogecoin mainnet
-const network = {
+export const network = {
   messagePrefix: '\x19Dogecoin Signed Message:\n',
   bech32: 'dc',
   bip44: 3,

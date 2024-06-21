@@ -1,15 +1,15 @@
 import { Box } from 'native-base';
 import { useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
-import { AddressScreen } from './AddressScreen';
-import { AmountScreen } from './AmountScreen';
-import { ConfirmationScreen } from './ConfirmationScreen';
+import { TransferTokenAddress } from './TransferTokenAddress';
+import { TransferTokenAmount } from './TransferTokenAmount';
+import { TransferTokenConfirmation } from './TransferTokenConfirmation';
 
-export function Send() {
+export function TransferToken() {
   const { wallet, selectedAddressIndex } = useAppContext();
-
   const walletAddress = wallet.addresses[selectedAddressIndex];
 
   const [formPage, setFormPage] = useState('address');
@@ -18,22 +18,31 @@ export function Send() {
 
   const RenderScreen =
     {
-      address: AddressScreen,
-      amount: AmountScreen,
-      confirmation: ConfirmationScreen,
+      address: TransferTokenAddress,
+      amount: TransferTokenAmount,
+      confirmation: TransferTokenConfirmation,
     }[formPage] ?? null;
+
+  const [searchParams] = useSearchParams();
+
+  let selectedToken = searchParams.get('selectedToken');
+
+  if (selectedToken) {
+    selectedToken = JSON.parse(selectedToken);
+  }
 
   return (
     <Layout
       withHeader
       p={0}
       withCancelButton
-      cancelRoute='Transactions'
+      cancelRoute='/Transactions/tokens'
       addressColor='black'
     >
       <Box pt='72px' px='12px'>
         <RenderScreen
           walletAddress={walletAddress}
+          selectedToken={selectedToken}
           setFormPage={setFormPage}
           formData={formData}
           setFormData={setFormData}

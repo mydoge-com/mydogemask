@@ -1,9 +1,12 @@
 import dayjs from 'dayjs';
 import { Avatar, Box, Button, HStack, Modal, Text, VStack } from 'native-base';
+import { useEffect, useState } from 'react';
 import { FiArrowUpRight, FiCopy } from 'react-icons/fi';
 
 import { BigButton } from '../../../components/Button';
 import { useCopyText } from '../../../hooks/useCopyText';
+import { nownodes } from '../../../scripts/api';
+import { setLocalValue } from '../../../scripts/helpers/storage';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
 
 export const TransactionModal = ({
@@ -16,7 +19,19 @@ export const TransactionModal = ({
   id,
   confirmations,
 }) => {
+  const [conf, setConf] = useState(confirmations);
   const { copyTextToClipboard, textCopied } = useCopyText({ text: address });
+
+  useEffect(() => {
+    (async () => {
+      if (isOpen) {
+        const tx = await nownodes.get(`/tx/${id}`).json();
+        setConf(tx.confirmations);
+        await setLocalValue({ [id]: tx });
+      }
+    })();
+  }, [id, isOpen]);
+
   return (
     <Modal isOpen={isOpen} onClose={onClose} size='full'>
       <Modal.Content w='90%'>
@@ -70,7 +85,7 @@ export const TransactionModal = ({
             </Text>
             <HStack justifyContent='space-between' w='100%'>
               <Text color='gray.500'>Confirmations </Text>
-              <Text>{confirmations}</Text>
+              <Text>{conf}</Text>
             </HStack>
             <HStack justifyContent='space-between' w='100%' pt='6px'>
               <Text color='gray.500'>Timestamp </Text>

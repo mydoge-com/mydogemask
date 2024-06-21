@@ -9,7 +9,7 @@ export const AboutModal = ({ showModal, onClose }) => {
         <Modal.Body pt='20px' pb='36px'>
           <VStack>
             <Text fontWeight='bold' fontSize='md'>
-              MyDogeMask Version
+              MyDoge Version
             </Text>
             <Text color='gray.500'>
               {chrome?.runtime?.getManifest().version}

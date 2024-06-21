@@ -1,4 +1,4 @@
-import { Avatar, Button, Center, HStack, Text, Toast } from 'native-base';
+import { Avatar, Box, Button, Center, HStack, Text, Toast } from 'native-base';
 import { useCallback, useEffect, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
@@ -7,14 +7,16 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
+import { NFTView } from '../Transactions/components/NFT';
 
-export const ConfirmationScreen = ({
+export const TransferNFTConfirmation = ({
   setFormPage,
   errors,
   setErrors,
   formData,
   walletAddress,
   selectedAddressIndex,
+  selectedNFT,
 }) => {
   const { navigate } = useAppContext();
   const [loading, setLoading] = useState(false);
@@ -107,10 +109,19 @@ export const ConfirmationScreen = ({
 
   return (
     <Center>
-      <Text fontSize='2xl' pb='24px' textAlign='center' fontWeight='semibold'>
+      <Text fontSize='2xl' pb='16px' textAlign='center' fontWeight='semibold'>
         Confirm Transaction
       </Text>
-      <Text fontSize='sm' color='gray.500' textAlign='center' mb='12px'>
+      <Box
+        borderRadius='12px'
+        overflow='hidden'
+        mb='12px'
+        mx='60px'
+        maxHeight='100px'
+      >
+        <NFTView nft={selectedNFT} />
+      </Box>
+      <Text fontSize='sm' color='gray.500' textAlign='center' mb='16px'>
         <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
           Wallet {selectedAddressIndex + 1}
         </Text>
@@ -143,7 +154,7 @@ export const ConfirmationScreen = ({
         <Button
           variant='unstyled'
           colorScheme='coolGray'
-          onPress={() => setFormPage('amount')}
+          onPress={() => setFormPage('address')}
         >
           Back
         </Button>

@@ -91,12 +91,12 @@ export const Header = ({
           position='absolute'
           left='12px'
           pt='8px'
-          onPress={() => navigate(cancelRoute)}
+          onPress={() => navigate(cancelRoute ?? -1)}
         />
       ) : null}
       <Text
         fontWeight='medium'
-        fontSize='lg'
+        fontSize='md'
         pb='12px'
         px='12px'
         color={addressColor || 'white'}
@@ -393,7 +393,7 @@ const DetailPopup = ({
             </VStack>
           ) : (
             <Text>
-              MyDogeMask is not connected to this website. To connect, find and
+              MyDoge is not connected to this website. To connect, find and
               click the Connect button on the site.
             </Text>
           )}

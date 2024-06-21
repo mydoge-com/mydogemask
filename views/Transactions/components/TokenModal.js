@@ -1,19 +1,31 @@
-import { Avatar, Box, HStack, Modal, Spinner, Text, VStack } from 'native-base';
+import {
+  Avatar,
+  Box,
+  HStack,
+  Modal,
+  Popover,
+  Pressable,
+  Spinner,
+  Text,
+  VStack,
+} from 'native-base';
 import { useCallback, useEffect, useState } from 'react';
-import { BiTransfer } from 'react-icons/bi';
+import { BiTransferAlt } from 'react-icons/bi';
+import { BsInfoCircleFill } from 'react-icons/bs';
 
 import { BigButton } from '../../../components/Button';
+import { useAppContext } from '../../../hooks/useAppContext';
 import { doginalsMarketplace } from '../../../scripts/api';
 import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
 import { logError } from '../../../utils/error';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
 
-export const TokenModal = ({
-  isOpen,
-  onClose,
-  token: { availableBalance, overallBalance, ticker, transferableBalance },
-}) => {
+export const TokenModal = ({ isOpen, onClose, token }) => {
+  const { navigate } = useAppContext();
   const [tokenDetails, setTokenDetails] = useState();
+
+  const { overallBalance, ticker, availableBalance, transferableBalance } =
+    token ?? {};
 
   const fetchTokenDetails = useCallback(() => {
     doginalsMarketplace
@@ -30,8 +42,39 @@ export const TokenModal = ({
     }
   }, [fetchTokenDetails, isOpen]);
 
+  const onInscribeToken = useCallback(() => {
+    navigate(
+      `/InscribeToken/?selectedToken=${JSON.stringify({
+        ...token,
+        dogePrice: Number(
+          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
+        ),
+      })}`
+    );
+  }, [navigate, token, tokenDetails?.floorPrice]);
+
+  const onTransfer = useCallback(() => {
+    navigate(
+      `/TransferToken/?selectedToken=${JSON.stringify({
+        ...token,
+        dogePrice: Number(
+          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
+        ),
+      })}`
+    );
+  }, [navigate, token, tokenDetails?.floorPrice]);
+
+  if (!isOpen) return null;
+
   return (
-    <Modal isOpen={isOpen} onClose={onClose} size='full'>
+    <Modal
+      isOpen={isOpen}
+      onClose={() => {
+        onClose();
+        setTokenDetails(null);
+      }}
+      size='full'
+    >
       <Modal.Content w='90%'>
         <Modal.CloseButton />
         <Modal.Body alignItems='center' pt='54px' pb='36px'>
@@ -45,7 +88,7 @@ export const TokenModal = ({
                   uri: `${TICKER_ICON_URL}/${ticker}.png`,
                 }}
               >
-                {ticker.substring(0, 2).toUpperCase()}
+                {ticker?.substring(0, 2).toUpperCase()}
               </Avatar>
               <Text fontSize='24px' fontWeight='semibold'>
                 {Number(overallBalance).toLocaleString()} {ticker}
@@ -61,13 +104,12 @@ export const TokenModal = ({
                 <Pill
                   label='Price'
                   value={`Ɖ ${formatSatoshisAsDoge(
-                    tokenDetails.floorPrice,
-                    3
+                    Math.round(tokenDetails.floorPrice)
                   )}`}
                 />
                 <Pill
                   label='Volume'
-                  value={`Ɖ ${formatSatoshisAsDoge(tokenDetails.volume, 3)}`}
+                  value={`Ɖ ${formatSatoshisAsDoge(tokenDetails.volume)}`}
                 />
                 <Pill
                   label='Minted/Supply'
@@ -76,6 +118,8 @@ export const TokenModal = ({
                   ).toLocaleString()} / ${Number(
                     tokenDetails.maxSupply
                   ).toLocaleString()}`}
+                  flexDir='column'
+                  alignItems='center'
                 />
               </HStack>
             ) : (
@@ -103,14 +147,54 @@ export const TokenModal = ({
                 </Text>
               </HStack>
             </VStack>
-            <BigButton variant='secondary' px='28px' mt='30px'>
-              Transfer{' '}
-              <BiTransfer
-                style={{
-                  paddingTop: '1px',
-                }}
-              />
-            </BigButton>
+            {Number(transferableBalance) ? (
+              <HStack space='8px' mt='10px' alignItems='center'>
+                <BigButton onPress={onTransfer} variant='primary' px='32px'>
+                  Transfer <BiTransferAlt style={{ marginLeft: '4px' }} />
+                </BigButton>
+              </HStack>
+            ) : null}
+
+            {!Number(transferableBalance) ||
+            Number(transferableBalance) < Number(availableBalance) ? (
+              <HStack space='8px' mt='10px' alignItems='center'>
+                <BigButton
+                  onPress={onInscribeToken}
+                  variant='secondary'
+                  px='32px'
+                >
+                  Inscribe for Transfer{' '}
+                  <BiTransferAlt style={{ marginLeft: '4px' }} />
+                </BigButton>
+                <Popover
+                  trigger={(triggerProps) => {
+                    return (
+                      <Pressable
+                        {...triggerProps}
+                        position='absolute'
+                        top='-8px'
+                      >
+                        <BsInfoCircleFill color='#bbbbbb' />
+                      </Pressable>
+                    );
+                  }}
+                >
+                  <Popover.Content>
+                    <Popover.Arrow />
+                    <Popover.Body>
+                      <Text fontSize='13px'>
+                        Initiate the first step of transferring your{' '}
+                        <Text fontWeight='bold'>{ticker}</Text> tokens. This
+                        inscribes the token transfer intent on the Dogecoin
+                        blockchain, making the inscribed amount of{' '}
+                        <Text fontWeight='bold'>{ticker}</Text> available for
+                        transfer.
+                      </Text>
+                    </Popover.Body>
+                  </Popover.Content>
+                </Popover>
+              </HStack>
+            ) : null}
           </VStack>
         </Modal.Body>
       </Modal.Content>
@@ -118,7 +202,7 @@ export const TokenModal = ({
   );
 };
 
-function Pill({ label, value }) {
+function Pill({ label, value, ...props }) {
   if (!value) return null;
   return (
     <Box
@@ -128,6 +212,7 @@ function Pill({ label, value }) {
       paddingY='1px'
       flexDir='row'
       my='2px'
+      {...props}
     >
       <Text fontWeight='bold' fontSize='11px'>
         {label}:{' '}

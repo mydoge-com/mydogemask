@@ -29,7 +29,7 @@ export const OnboardingLayout = ({ children, ...props }) => {
             position='absolute'
             top='-30px'
             alignSelf='center'
-            alt='mydogemask'
+            alt='mydoge'
           />
           <Image
             source={{ uri: '/assets/intro.png' }}
