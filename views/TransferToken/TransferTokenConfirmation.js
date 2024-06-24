@@ -92,9 +92,8 @@ export const TransferTokenConfirmation = ({
   }, [
     formData.address,
     formData.dogeAmount,
-    formData.rawTx,
+    formData.txs,
     navigate,
-    selectedAddressIndex,
     setErrors,
     walletAddress,
   ]);
