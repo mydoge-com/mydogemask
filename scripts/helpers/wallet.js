@@ -2,6 +2,7 @@
 import * as bip32 from 'bip32';
 import * as bip39 from 'bip39';
 import * as bitcoin from 'bitcoinjs-lib';
+import * as bitcoinMessage from 'bitcoinjs-message';
 import * as Validator from 'multicoin-address-validator';
 import sb from 'satoshi-bitcoin';
 
@@ -76,6 +77,21 @@ export function signRawTx(rawTx, wif) {
   }
 
   return txb.build().toHex();
+}
+
+export function signRawPsbt(rawTx, index, wif) {
+  const keyPair = fromWIF(wif);
+  const tx = bitcoin.Transaction.fromHex(rawTx);
+  const txb = bitcoin.TransactionBuilder.fromTransaction(tx, network);
+
+  txb.sign(index, keyPair);
+
+  return txb.build().toHex();
+}
+
+export function signMessage(message, wif) {
+  const keyPair = fromWIF(wif);
+  return bitcoinMessage.sign(message, keyPair.privateKey, keyPair.compressed);
 }
 
 // export async function generateRawTx(sender, recipient, amount, utxos) {
