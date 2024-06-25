@@ -29,14 +29,14 @@ function MyApp({ Component, pageProps }) {
   return (
     <NoSSR>
       <MemoryRouter>
-      <AppContextProvider>
-        <NativeBaseProvider isSSR={false} theme={theme}>
-          <Head>
-            <title>MyDoge</title>
-          </Head>
-          <Component {...pageProps} />
-        </NativeBaseProvider>
-      </AppContextProvider>
+        <AppContextProvider>
+          <NativeBaseProvider isSSR={false} theme={theme}>
+            <Head>
+              <title>MyDoge</title>
+            </Head>
+            <Component {...pageProps} />
+          </NativeBaseProvider>
+        </AppContextProvider>
       </MemoryRouter>
     </NoSSR>
   );

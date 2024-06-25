@@ -19,6 +19,7 @@ export const DISPATCH_TYPES = {
   SET_ONBOARDING_COMPLETE: 'SET_ONBOARDING_COMPLETE',
   SET_AUTHENTICATED: 'SET_AUTHENTICATED',
   SET_WALLET: 'SET_WALLET',
+  SET_CONTEXT_LOADED: 'SET_CONTEXT_LOADED',
   SIGN_OUT: 'SIGN_OUT',
   SIGN_IN: 'SIGN_IN',
   SELECT_WALLET: 'SELECT_WALLET',
@@ -83,6 +84,8 @@ export const AppContextProvider = ({ children }) => {
         case DISPATCH_TYPES.CLEAR_CLIENT_REQUEST:
           setTimeout(() => window?.close(), 1000);
           return { ...state };
+        case DISPATCH_TYPES.SET_CONTEXT_LOADED:
+          return { ...state, ready: payload.ready };
         default:
           return state;
       }
@@ -95,6 +98,7 @@ export const AppContextProvider = ({ children }) => {
     wallet: undefined,
     selectedAddressIndex: 0,
     txTabIndex: 0,
+    ready: false,
   });
 
   const navigate = useNavigate();
@@ -164,6 +168,10 @@ export const AppContextProvider = ({ children }) => {
                   },
                 });
               }
+              dispatch({
+                type: DISPATCH_TYPES.SET_CONTEXT_LOADED,
+                payload: { ready: true },
+              });
             }
           );
         }
@@ -172,6 +180,12 @@ export const AppContextProvider = ({ children }) => {
   }, []);
 
   const transactions = useTransactions(state);
+
+  // const [ready, setReady] = useState(false);
+
+  // useEffect(() => {
+  //   setReady(true);
+  // }, []);
 
   const providerValue = useMemo(
     () => ({

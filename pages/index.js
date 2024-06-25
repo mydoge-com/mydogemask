@@ -21,12 +21,11 @@ import { TransferNFT } from '../views/TransferNFT';
 import { TransferToken } from '../views/TransferToken';
 
 export default function App() {
-  const { authenticated, wallet, onboardingComplete } = useAppContext();
+  const { authenticated, wallet, onboardingComplete, ready } = useAppContext();
 
-  const BaseComponent =
-    authenticated === undefined
-      ? null
-      : !onboardingComplete
+  if (!ready) return null;
+
+  const BaseComponent = !onboardingComplete
       ? Intro
       : authenticated && wallet
       ? Transactions
