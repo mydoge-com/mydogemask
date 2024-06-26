@@ -41,8 +41,6 @@ export const InscribeTokenConfirmation = ({
             },
           });
 
-          console.log('Transaction Sent', txId);
-
           navigate('/Transactions/?refresh=1');
         } else {
           setLoading(false);
@@ -105,7 +103,7 @@ export const InscribeTokenConfirmation = ({
           isDisabled={errors.confirmation}
           loading={loading}
         >
-          Send
+          Inscribe
         </BigButton>
       </HStack>
       {errors.confirmation ? (

@@ -3,11 +3,8 @@ import { Route, Routes } from 'react-router-dom';
 import { useAppContext } from '../hooks/useAppContext';
 import { Password, ResetWallet } from '../views/Auth';
 import {
-  ClientAvailableDRC20Transaction,
-  ClientConnect,
-  ClientDoginalTransaction,
-  ClientTransaction,
-} from '../views/ClientRequests';
+  ClientRequest
+} from '../views/ClientRequest';
 import { InscribeToken } from '../views/InscribeToken';
 import {
   CreateWallet,
@@ -45,16 +42,7 @@ export default function App() {
       <Route path='/TransferNFT' element={<TransferNFT />} />
       <Route path='/InscribeToken' element={<InscribeToken />} />
       <Route path='/TransferToken' element={<TransferToken />} />
-      <Route path='/ClientConnect' element={<ClientConnect />} />
-      <Route path='/ClientTransaction' element={<ClientTransaction />} />
-      <Route
-        path='/ClientDoginalTransaction'
-        element={<ClientDoginalTransaction />}
-      />
-      <Route
-        path='/ClientAvailableDRC20Transaction'
-        element={<ClientAvailableDRC20Transaction />}
-      />
+      <Route path='/ClientRequest' element={<ClientRequest />} />
     </Routes>
   );
 }

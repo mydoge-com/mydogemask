@@ -28,15 +28,6 @@ export const DISPATCH_TYPES = {
   COMPLETE_ONBOARDING: 'COMPLETE_ONBOARDING',
 };
 
-const CLIENT_REQUEST_ROUTES = {
-  [MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION]: 'ClientConnect',
-  [MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION]: 'ClientTransaction',
-  [MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION]:
-    'ClientDoginalTransaction',
-  [MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION]:
-    'ClientAvailableDRC20Transaction',
-};
-
 export const AppContextProvider = ({ children }) => {
   const reducer = useCallback(
     (state, { type, payload }) => {
@@ -59,9 +50,9 @@ export const AppContextProvider = ({ children }) => {
           };
         case DISPATCH_TYPES.SIGN_IN:
           navigate(
-            payload?.navigate ??
-              CLIENT_REQUEST_ROUTES[state.clientRequest?.requestType] ??
-              'Transactions'
+            payload?.navigate ?? state.clientRequest
+              ? 'ClientRequest'
+              : 'Transactions'
           );
           return {
             ...state,
@@ -70,9 +61,9 @@ export const AppContextProvider = ({ children }) => {
           };
         case DISPATCH_TYPES.COMPLETE_ONBOARDING:
           navigate(
-            payload?.navigate ??
-              CLIENT_REQUEST_ROUTES[state.clientRequest?.requestType] ??
-              'Transactions'
+            payload?.navigate ?? state.clientRequest
+              ? 'ClientRequest'
+              : 'Transactions'
           );
           return {
             ...state,
@@ -82,7 +73,7 @@ export const AppContextProvider = ({ children }) => {
         case DISPATCH_TYPES.SET_CLIENT_REQUEST:
           return { ...state, clientRequest: payload.clientRequest };
         case DISPATCH_TYPES.CLEAR_CLIENT_REQUEST:
-          setTimeout(() => window?.close(), 1000);
+          setTimeout(() => window?.close(), 3000);
           return { ...state };
         case DISPATCH_TYPES.SET_CONTEXT_LOADED:
           return { ...state, ready: payload.ready };
@@ -121,9 +112,15 @@ export const AppContextProvider = ({ children }) => {
 
         const requestType = url?.hash?.substring(1);
         const params = {};
-        url?.searchParams?.forEach((value, key) => {
-          params[key] = value;
+        url?.searchParams?.forEach((_, key) => {
+          const val = url.searchParams.getAll(key);
+          if (val.length > 1) {
+            params[key] = val;
+          } else {
+            [params[key]] = val;
+          }
         });
+
         params.originTabId = Number(params.originTabId);
         if (requestType && params?.originTabId && params?.origin) {
           const clientRequest = {
@@ -180,12 +177,6 @@ export const AppContextProvider = ({ children }) => {
   }, []);
 
   const transactions = useTransactions(state);
-
-  // const [ready, setReady] = useState(false);
-
-  // useEffect(() => {
-  //   setReady(true);
-  // }, []);
 
   const providerValue = useMemo(
     () => ({

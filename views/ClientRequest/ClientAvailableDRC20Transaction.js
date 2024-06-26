@@ -8,46 +8,26 @@ import {
   Toast,
   VStack,
 } from 'native-base';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
-import { Layout } from '../../components/Layout';
 import { OriginBadge } from '../../components/OriginBadge';
 import { ToastRender } from '../../components/ToastRender';
 import { DISPATCH_TYPES } from '../../Context';
-import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
-import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export function ClientAvailableDRC20Transaction() {
-  const {
-    clientRequest: {
-      params: {
-        originTabId,
-        origin,
-        walletAddress,
-        tokenAmount,
-        ticker,
-        txs,
-        fee,
-      },
-    },
-    dispatch,
-    clientRequest,
-  } = useAppContext();
-  console.log('clientRequest', clientRequest);
+export function ClientAvailableDRC20Transaction({
+  params,
+  walletAddress,
+  addressNickname,
+  dispatch,
+}) {
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
   }, [dispatch]);
 
-  const [addressIndex, setAddressIndex] = useState();
-
-  useEffect(() => {
-    getConnectedAddressIndex(origin).then((index) => {
-      setAddressIndex(index);
-    });
-  }, [origin]);
+  const { origin, originTabId, ticker, amount, fee } = params ?? {};
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -80,45 +60,28 @@ export function ClientAvailableDRC20Transaction() {
   }, [handleWindowClose, origin, originTabId]);
 
   return (
-    <Layout>
+    <>
       <Text fontSize='2xl' pb='24px' textAlign='center' fontWeight='semibold'>
         Confirm Transaction
       </Text>
+      <OriginBadge origin={origin} mb='8px' />
       <Text fontSize='sm' color='gray.500' textAlign='center' mb='12px'>
         <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          Wallet {addressIndex + 1}
+          {addressNickname}
         </Text>
         {'  '}
-        {walletAddress.slice(0, 8)}
+        {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
       </Text>
       <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
         Inscribing
       </Text>
-      {/* <Box alignItems='center' space='12px' pb='28px' px='106px' bg='red.100'>
-      <Text
-        px='106px'
-        fontSize='sm'
-        fontWeight='semibold'
-        color='gray.500'
-        textAlign='center'
-        adjustsFontSizeToFit
-        noOfLines={1}
-      >
-        {formData.txs.toString()}
-      </Text>
-    </Box> */}
       <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
-        {ticker} {tokenAmount}
+        {ticker} {Number(amount).toLocaleString()}
       </Text>
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
         Network fee: <Text fontWeight='normal'>Ð{fee}</Text>
       </Text>
-      <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-        Transactions
-      </Text>
-      <Text fontSize='13px' fontWeight='semibold' pt='6px' numberOfLines={1}>
-        {txs[0]}
-      </Text>
+
       <HStack alignItems='center' mt='60px' space='12px'>
         <Button
           variant='unstyled'
@@ -133,51 +96,44 @@ export function ClientAvailableDRC20Transaction() {
           role='button'
           px='28px'
         >
-          Send
+          Inscribe
         </BigButton>
       </HStack>
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
-        origin={origin}
-        originTabId={originTabId}
-        txs={txs}
-        addressIndex={addressIndex}
+        params={params}
         handleWindowClose={handleWindowClose}
-        recipientAddress={walletAddress}
-        dogeAmount={tokenAmount}
       />
-    </Layout>
+    </>
   );
 }
 
 const ConfirmationModal = ({
   showModal,
   onClose,
-  origin,
-  txs,
-  addressIndex,
-  originTabId,
+  params,
   handleWindowClose,
-  recipientAddress,
-  dogeAmount,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
+  const { origin, originTabId, ticker, amount: tokenAmount, txs } = params;
 
   const onSubmit = useCallback(async () => {
     setLoading(true);
     sendMessage(
       {
         message: MESSAGE_TYPES.SEND_TRANSFER_TRANSACTION,
-        data: { txs },
+        data: { ...params, txs, tokenAmount, ticker },
       },
       (txId) => {
+        setLoading(false);
         if (txId) {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-              data: { txId, originTabId, origin },
+              message:
+                MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+              data: { ...params, txs, tokenAmount, ticker },
             },
             () => {
               Toast.show({
@@ -191,41 +147,67 @@ const ConfirmationModal = ({
                   );
                 },
               });
-              handleWindowClose();
+              setTimeout(handleWindowClose, 2000);
             }
           );
         } else {
+          onClose?.();
+          Toast.show({
+            title: 'Error',
+            description: 'Transaction Failed',
+            duration: 3000,
+            render: () => {
+              return (
+                <ToastRender
+                  title='Error'
+                  description='Failed to send transaction.'
+                  status='error'
+                />
+              );
+            },
+          });
+          setTimeout(handleWindowClose, 2000);
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              message:
+                MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
               data: {
                 error: 'Failed to send transaction',
                 originTabId,
                 origin,
               },
-            },
-            () => {
-              Toast.show({
-                title: 'Error',
-                description: 'Transaction Failed',
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      title='Error'
-                      description='Failed to send transaction.'
-                      status='error'
-                    />
-                  );
-                },
-              });
-              handleWindowClose();
             }
+            // () => {
+            //   Toast.show({
+            //     title: 'Error',
+            //     description: 'Transaction Failed',
+            //     duration: 3000,
+            //     render: () => {
+            //       return (
+            //         <ToastRender
+            //           title='Error'
+            //           description='Failed to send transaction.'
+            //           status='error'
+            //         />
+            //       );
+            //     },
+            //   });
+            //   setTimeout(handleWindowClose, 2000);
+            // }
           );
         }
       }
     );
-  }, [handleWindowClose, origin, originTabId, txs]);
+  }, [
+    handleWindowClose,
+    onClose,
+    origin,
+    originTabId,
+    params,
+    ticker,
+    tokenAmount,
+    txs,
+  ]);
 
   return (
     <>
@@ -243,14 +225,13 @@ const ConfirmationModal = ({
           <AlertDialog.CloseButton />
           <AlertDialog.Header>Confirm Transaction</AlertDialog.Header>
           <AlertDialog.Body>
-            <OriginBadge origin={origin} mb='8px' />
+            <OriginBadge origin={origin} mb='18px' />
             <VStack alignItems='center'>
-              <Text>
-                Confirm transaction to send{' '}
-                <Text fontWeight='bold'>Ð{dogeAmount}</Text> to{' '}
-              </Text>
-              <Text fontSize='10px' fontWeight='bold'>
-                {recipientAddress}
+              <Text textAlign='center'>
+                Confirm transaction to inscribe{'\n'}
+                <Text fontWeight='bold' fontSize='md'>
+                  {ticker} {Number(tokenAmount).toLocaleString()}
+                </Text>
               </Text>
             </VStack>
           </AlertDialog.Body>
@@ -264,7 +245,7 @@ const ConfirmationModal = ({
               >
                 Cancel
               </Button>
-              <BigButton onPress={onSubmit} px='24px'>
+              <BigButton onPress={onSubmit} px='24px' loading={loading}>
                 Confirm
               </BigButton>
             </Button.Group>

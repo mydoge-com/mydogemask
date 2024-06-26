@@ -49,6 +49,33 @@ function sanitizeFloatAmount(amount) {
   return sb.toBitcoin(Math.trunc(sb.toSatoshi(amount)));
 }
 
+function createClientPopup({ sendResponse, sender, data = {}, messageType }) {
+  const params = new URLSearchParams();
+  params.append('originTabId', sender.tab.id);
+  params.append('origin', sender.origin);
+  Object.entries(data).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((val) => params.append(key, val));
+    } else {
+      params.append(key, value);
+    }
+  });
+  chrome.windows
+    .create({
+      url: `index.html?${params.toString()}#${messageType}`,
+      type: 'popup',
+      width: data.isOnboardingPending ? 800 : 357,
+      height: 640,
+    })
+    .then((tab) => {
+      if (tab) {
+        sendResponse?.({ originTabId: sender.tab.id });
+      } else {
+        sendResponse?.(false);
+      }
+    });
+}
+
 async function getDRC20Tickers(address, cursor, total, result) {
   let query;
   await doginals
@@ -74,16 +101,6 @@ async function getDRC20Tickers(address, cursor, total, result) {
       })
       .filter((i) => i)
   );
-
-  // console.log(
-  //   'found',
-  //   query.result.list.length,
-  //   'drc20 tickers',
-  //   'in page',
-  //   cursor,
-  //   'total',
-  //   total
-  // );
 
   if (total > result.length) {
     cursor += query.result.list.length;
@@ -574,6 +591,7 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
 }
 
 async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
+  console.log('inscribe transfer data', data);
   try {
     const results = [];
     let i = 0;
@@ -582,8 +600,6 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       if (i > 0) {
         await sleep(10 * 1000); // Nownodes needs some time between txs
       }
-
-      console.log({ signed });
 
       const jsonrpcReq = {
         API_key: apiKey,
@@ -614,16 +630,16 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       })
       .catch(() => {});
 
-    const tokenCache = (await getLocalValue(data.ticker)) ?? [];
+    // const tokenCache = (await getLocalValue(data.ticker)) ?? [];
 
-    tokenCache.push({
-      txs: results,
-      txType: 'inscribe',
-      tokenAmount: data.tokenAmount,
-      timestamp: Date.now(),
-    });
+    // tokenCache.push({
+    //   txs: results,
+    //   txType: 'inscribe',
+    //   tokenAmount: data.tokenAmount,
+    //   timestamp: Date.now(),
+    // });
 
-    setLocalValue({ [data.ticker]: tokenCache });
+    // setLocalValue({ [data.ticker]: tokenCache });
 
     sendResponse(results[1]);
   } catch (err) {
@@ -632,11 +648,7 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onRequestTransaction({
-  data: { recipientAddress, dogeAmount, rawTx, fee } = {},
-  sendResponse,
-  sender,
-} = {}) {
+async function onRequestTransaction({ data, sendResponse, sender } = {}) {
   const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
     sender.origin
   ];
@@ -644,38 +656,17 @@ async function onRequestTransaction({
     sendResponse?.(false);
     return;
   }
-  const params = new URLSearchParams();
-  Object.entries({
-    originTabId: sender.tab.id,
-    origin: sender.origin,
-    recipientAddress,
-    dogeAmount,
-    rawTx,
-    fee,
-  }).forEach(([key, value]) => {
-    params.append(key, value);
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
   });
-  chrome.windows
-    .create({
-      url: `index.html?${params.toString()}#${
-        MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION
-      }`,
-      type: 'popup',
-      width: 357,
-      height: 640,
-    })
-    .then((tab) => {
-      if (tab) {
-        sendResponse?.({ originTabId: sender.tab.id });
-      } else {
-        sendResponse?.(false);
-      }
-    });
   return true;
 }
 
 async function onRequestDoginalTransaction({
-  data: { recipientAddress, dogeAmount, rawTx, fee } = {},
+  data = {},
   sendResponse,
   sender,
 } = {}) {
@@ -686,38 +677,17 @@ async function onRequestDoginalTransaction({
     sendResponse?.(false);
     return;
   }
-  const params = new URLSearchParams();
-  Object.entries({
-    originTabId: sender.tab.id,
-    origin: sender.origin,
-    recipientAddress,
-    dogeAmount,
-    rawTx,
-    fee,
-  }).forEach(([key, value]) => {
-    params.append(key, value);
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
   });
-  chrome.windows
-    .create({
-      url: `index.html?${params.toString()}#${
-        MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION
-      }`,
-      type: 'popup',
-      width: 357,
-      height: 640,
-    })
-    .then((tab) => {
-      if (tab) {
-        sendResponse?.({ originTabId: sender.tab.id });
-      } else {
-        sendResponse?.(false);
-      }
-    });
   return true;
 }
 
 async function onRequestAvailableDRC20Transaction({
-  data: { walletAddress, txs, fee } = {},
+  data,
   sendResponse,
   sender,
 } = {}) {
@@ -728,36 +698,12 @@ async function onRequestAvailableDRC20Transaction({
     sendResponse?.(false);
     return;
   }
-  const params = new URLSearchParams();
-  Object.entries({
-    originTabId: sender.tab.id,
-    origin: sender.origin,
-    walletAddress,
-    txs,
-    fee,
-  }).forEach(([key, value]) => {
-    if (Array.isArray(value)) {
-      params.append(key, value.join(','));
-    } else {
-      params.append(key, value);
-    }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
   });
-  chrome.windows
-    .create({
-      url: `index.html?${params.toString()}#${
-        MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION
-      }`,
-      type: 'popup',
-      width: 357,
-      height: 640,
-    })
-    .then((tab) => {
-      if (tab) {
-        sendResponse?.({ originTabId: sender.tab.id });
-      } else {
-        sendResponse?.(false);
-      }
-    });
   return true;
 }
 
@@ -981,22 +927,12 @@ async function onConnectionRequest({ sendResponse, sender } = {}) {
   const params = new URLSearchParams();
   params.append('originTabId', sender.tab.id);
   params.append('origin', sender.origin);
-  chrome.windows
-    .create({
-      url: `index.html?${params.toString()}#${
-        MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION
-      }`,
-      type: 'popup',
-      width: onboardingComplete ? 357 : 800,
-      height: 640,
-    })
-    .then((tab) => {
-      if (tab) {
-        sendResponse?.({ originTabId: sender.tab.id });
-      } else {
-        sendResponse?.(false);
-      }
-    });
+  createClientPopup({
+    sendResponse,
+    sender,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION,
+    data: { isOnboardingPending: !onboardingComplete },
+  });
   return true;
 }
 
