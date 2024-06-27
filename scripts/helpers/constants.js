@@ -26,6 +26,7 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION: 'clientRequestDRC20Transaction',
   CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
     'clientRequestDRC20TransactionResponse',
+  CLIENT_REQUEST_PSBT: 'clientRequestPsbt',
   CLIENT_DISCONNECT: 'clientDisconnect',
   CLIENT_DISCONNECT_RESPONSE: 'clientDisconnectResponse',
   CLIENT_CONNECTION_STATUS: 'clientConnectionStatus',
@@ -52,6 +53,7 @@ export const MESSAGE_TYPES = {
   CREATE_TRANSACTION: 'createTransaction',
   CREATE_NFT_TRANSACTION: 'createNFTTransaction',
   CREATE_TRANSFER_TRANSACTION: 'inscribeTransferTransaction',
+  CREATE_PSBT: 'createPsbt',
   SEND_TRANSACTION: 'sendTransaction',
   SEND_TRANSFER_TRANSACTION: 'sendInscribeTransferTransaction',
   GET_CONNECTED_CLIENTS: 'getConnectedClients',
