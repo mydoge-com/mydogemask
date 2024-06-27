@@ -44,8 +44,6 @@ export function Transactions() {
 
   const shouldRefresh = searchParams.get('refresh');
 
-  console.log('shouldRefresh', shouldRefresh);
-
   useEffect(() => {
     if (shouldRefresh) {
       refreshTransactions();

@@ -91,7 +91,9 @@ export function signRawPsbt(rawTx, index, wif) {
 
 export function signMessage(message, wif) {
   const keyPair = fromWIF(wif);
-  return bitcoinMessage.sign(message, keyPair.privateKey, keyPair.compressed);
+  return bitcoinMessage
+    .sign(message, keyPair.privateKey, keyPair.compressed)
+    .toString('hex');
 }
 
 // export async function generateRawTx(sender, recipient, amount, utxos) {

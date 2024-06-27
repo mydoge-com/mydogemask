@@ -258,6 +258,28 @@ const doge = {
       });
     });
   },
+
+  signMessage(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.message) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE, data },
+        window.location.origin
+      );
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+      });
+    });
+  },
 };
 
 window.addEventListener('load', () => {

@@ -35,6 +35,7 @@ import {
   generateChild,
   generatePhrase,
   generateRoot,
+  signMessage,
   signRawPsbt,
   signRawTx,
 } from './helpers/wallet';
@@ -548,6 +549,30 @@ async function onCreatePSBT({ data = {}, sendResponse } = {}) {
         rawTx,
         // fee,
         // amount,
+      });
+    }
+  );
+}
+
+async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+      }
+
+      const signedMessage = signMessage(
+        data.message,
+        decryptedWallet.children[data.selectedAddressIndex]
+      );
+
+      sendResponse?.({
+        signedMessage,
       });
     }
   );
@@ -1251,6 +1276,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CREATE_PSBT:
       onCreatePSBT({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.CREATE_SIGNED_MESSAGE:
+      onCreateSignedMessage({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SEND_TRANSACTION:
       onSendTransaction({ data, sender, sendResponse });

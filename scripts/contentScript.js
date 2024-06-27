@@ -437,11 +437,14 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
 
   async function onRequestPSBT({ origin, data }) {
     try {
+      const selectedAddressIndex = await getConnectedAddressIndex(origin);
+
       chrome.runtime.sendMessage(
         {
           message: MESSAGE_TYPES.CREATE_PSBT,
           data: {
             ...data,
+            selectedAddressIndex,
             rawTx: data.rawTx,
             index: data.index,
           },
@@ -458,7 +461,7 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
               },
             });
           } else {
-            throw new Error('Unable to create transaction');
+            throw new Error('Unable to create psbt transaction');
           }
         }
       );
@@ -467,6 +470,44 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
         errorMessage: e.message,
         origin,
         messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      });
+    }
+  }
+
+  async function onRequestSignedMessage({ origin, data }) {
+    try {
+      const selectedAddressIndex = await getConnectedAddressIndex(origin);
+
+      chrome.runtime.sendMessage(
+        {
+          message: MESSAGE_TYPES.CREATE_SIGNED_MESSAGE,
+          data: {
+            ...data,
+            selectedAddressIndex,
+            message: data.message,
+          },
+        },
+        ({ signedMessage }) => {
+          if (signedMessage) {
+            window.postMessage(
+              {
+                type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+                data: {
+                  signedMessage,
+                },
+              },
+              origin
+            );
+          } else {
+            throw new Error('Unable to sign message');
+          }
+        }
+      );
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
       });
     }
   }
@@ -502,6 +543,9 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
           onRequestPSBT({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
+          onRequestSignedMessage({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_DISCONNECT:
           onDisconnectClient({ origin: source.origin });
