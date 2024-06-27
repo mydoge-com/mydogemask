@@ -1,7 +1,6 @@
 import {
   AlertDialog,
   Avatar,
-  // Badge,
   Box,
   Button,
   Center,
@@ -16,23 +15,16 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
-import { Layout } from '../../components/Layout';
 import { OriginBadge } from '../../components/OriginBadge';
 import { ToastRender } from '../../components/ToastRender';
 import { DISPATCH_TYPES } from '../../Context';
-import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export function ClientTransaction() {
-  const {
-    clientRequest: {
-      params: { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee },
-    },
-    wallet,
-    dispatch,
-  } = useAppContext();
+export function ClientDoginalTransaction({ params, wallet, dispatch }) {
+  const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
+    params;
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
@@ -79,7 +71,7 @@ export function ClientTransaction() {
   }, [handleWindowClose, origin, originTabId]);
 
   return (
-    <Layout pt='32px' alignItems='center'>
+    <>
       <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
         <FaLink />
       </Box>
@@ -146,7 +138,7 @@ export function ClientTransaction() {
         recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}
       />
-    </Layout>
+    </>
   );
 }
 

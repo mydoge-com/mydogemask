@@ -85,7 +85,7 @@ const doge = {
 
   getTransferableDRC20(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
-      if (!data?.ticker) {
+      if (!data?.ticker || !data?.amount) {
         onError?.(new Error('Invalid data'));
         reject(new Error('Invalid data'));
         return;
@@ -172,7 +172,8 @@ const doge = {
         reject,
         onSuccess,
         onError,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+        messageType:
+          MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
       });
     });
   },
