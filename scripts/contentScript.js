@@ -382,7 +382,7 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
       handleError({
         errorMessage: e.message,
         origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
       });
     }
   }

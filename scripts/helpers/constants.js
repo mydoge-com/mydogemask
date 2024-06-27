@@ -23,6 +23,8 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_TRANSACTION: 'clientRequestTransaction',
   CLIENT_REQUEST_TRANSACTION_RESPONSE: 'clientRequestTransactionResponse',
   CLIENT_REQUEST_DOGINAL_TRANSACTION: 'clientRequestDoginalTransaction',
+  CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
+    'clientRequestDoginalTransactionResponse',
   CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION: 'clientRequestDRC20Transaction',
   CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
     'clientRequestDRC20TransactionResponse',

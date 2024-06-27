@@ -1,9 +1,7 @@
 import {
   AlertDialog,
-  Avatar,
   Box,
   Button,
-  Center,
   HStack,
   Modal,
   Spinner,
@@ -16,13 +14,15 @@ import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
+import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
+import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export function ClientDoginalTransaction({ params, wallet, dispatch }) {
+export function ClientDoginalTransaction({ params, dispatch }) {
   const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
     params;
 
@@ -37,8 +37,6 @@ export function ClientDoginalTransaction({ params, wallet, dispatch }) {
       setAddressIndex(index);
     });
   }, [origin]);
-
-  const senderAddress = wallet.addresses[addressIndex];
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -72,61 +70,38 @@ export function ClientDoginalTransaction({ params, wallet, dispatch }) {
 
   return (
     <>
+      <OriginBadge origin={origin} mb='4px' />
       <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
         <FaLink />
       </Box>
-      <Text fontSize='2xl'>
+      <Text fontSize='2xl' pb='24px'>
         Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
-      <Center pt='36px'>
-        <Text fontSize='sm' color='gray.500' textAlign='center' mb='20px'>
-          <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-            Wallet {addressIndex + 1}
-          </Text>
-          {'  '}
-          {senderAddress?.slice(0, 8)}...{senderAddress?.slice(-4)}
-        </Text>
-        <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-          Paying
-        </Text>
-        <OriginBadge origin={origin} mb='6px' mt='12px' />
-        <HStack alignItems='center' space='12px' pb='28px'>
-          <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
-            {recipientAddress.substring(0, 2)}
-          </Avatar>
-          <Text
-            fontSize='md'
-            fontWeight='semibold'
-            color='gray.500'
-            textAlign='center'
-          >
-            {recipientAddress.slice(0, 8)}...{recipientAddress.slice(-4)}
-          </Text>
-        </HStack>
-        <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
-          Ð{dogeAmount}
-        </Text>
-        <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-          Network fee Ð{fee}
-        </Text>
-        <HStack alignItems='center' mt='60px' space='12px'>
-          <BigButton
-            onPress={onRejectTransaction}
-            variant='secondary'
-            px='20px'
-          >
-            Cancel
-          </BigButton>
-          <BigButton
-            onPress={() => setConfirmationModalOpen(true)}
-            type='submit'
-            role='button'
-            px='28px'
-          >
-            Pay
-          </BigButton>
-        </HStack>
-      </Center>
+      <WalletAddress />
+      <Text fontSize='lg' pb='14px' textAlign='center' fontWeight='semibold'>
+        Transferring
+      </Text>
+      <RecipientAddress address={recipientAddress} />
+
+      <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
+        Ð{dogeAmount}
+      </Text>
+      <Text fontSize='13px' fontWeight='semibold' pt='6px'>
+        Network fee Ð{fee}
+      </Text>
+      <HStack alignItems='center' mt='60px' space='12px'>
+        <BigButton onPress={onRejectTransaction} variant='secondary' px='20px'>
+          Cancel
+        </BigButton>
+        <BigButton
+          onPress={() => setConfirmationModalOpen(true)}
+          type='submit'
+          role='button'
+          px='28px'
+        >
+          Pay
+        </BigButton>
+      </HStack>
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}

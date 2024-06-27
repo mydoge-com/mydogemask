@@ -1,5 +1,6 @@
 import {
   AlertDialog,
+  Box,
   Button,
   HStack,
   Modal,
@@ -9,20 +10,17 @@ import {
   VStack,
 } from 'native-base';
 import { useCallback, useRef, useState } from 'react';
+import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
 import { ToastRender } from '../../components/ToastRender';
+import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export function ClientAvailableDRC20Transaction({
-  params,
-  walletAddress,
-  addressNickname,
-  dispatch,
-}) {
+export function ClientAvailableDRC20Transaction({ params, dispatch }) {
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
   }, [dispatch]);
@@ -61,17 +59,14 @@ export function ClientAvailableDRC20Transaction({
 
   return (
     <>
-      <Text fontSize='2xl' pb='24px' textAlign='center' fontWeight='semibold'>
-        Confirm Transaction
+      <OriginBadge origin={origin} mb='4px' />
+      <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
+        <FaLink />
+      </Box>
+      <Text fontSize='2xl' pb='24px'>
+        Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
-      <OriginBadge origin={origin} mb='8px' />
-      <Text fontSize='sm' color='gray.500' textAlign='center' mb='12px'>
-        <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          {addressNickname}
-        </Text>
-        {'  '}
-        {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
-      </Text>
+      <WalletAddress />
       <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
         Inscribing
       </Text>

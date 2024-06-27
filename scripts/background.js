@@ -642,7 +642,6 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
 }
 
 async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
-  console.log('inscribe transfer data', data);
   try {
     const results = [];
     let i = 0;
@@ -1057,6 +1056,7 @@ async function onApproveAvailableDRC20Transaction({
   }
   return true;
 }
+
 async function onApproveTransaction({
   sendResponse,
   data: { txId, error, originTabId, origin },
@@ -1073,6 +1073,30 @@ async function onApproveTransaction({
   } else {
     chrome.tabs?.sendMessage(originTabId, {
       type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
+async function onApproveDoginalTransaction({
+  sendResponse,
+  data: { txId, error, originTabId, origin },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      data: {
+        txId,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
       error,
       origin,
     });
@@ -1288,6 +1312,10 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
       onRequestDoginalTransaction({ data, sendResponse, sender });
+      break;
+
+    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
+      onApproveDoginalTransaction({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
       onRequestAvailableDRC20Transaction({ data, sendResponse, sender });

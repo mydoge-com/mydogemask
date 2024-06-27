@@ -15,13 +15,7 @@ const CLIENT_REQUEST_ROUTES = {
 };
 
 export function ClientRequest() {
-  const { wallet, selectedAddressIndex, clientRequest, dispatch } =
-    useAppContext();
-  const walletAddress = wallet.addresses[selectedAddressIndex];
-
-  const addressNickname =
-    wallet.nicknames?.[selectedAddressIndex] ??
-    `Address ${selectedAddressIndex + 1}`;
+  const { wallet, clientRequest, dispatch } = useAppContext();
 
   const RenderScreen = CLIENT_REQUEST_ROUTES[clientRequest.requestType];
 
@@ -30,9 +24,7 @@ export function ClientRequest() {
   return (
     <Layout p={0} alignItems='center' pt='32px'>
       <RenderScreen
-        walletAddress={walletAddress}
         params={clientRequest.params}
-        addressNickname={addressNickname}
         wallet={wallet}
         dispatch={dispatch}
       />

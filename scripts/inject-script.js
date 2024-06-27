@@ -85,7 +85,7 @@ const doge = {
 
   getTransferableDRC20(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
-      if (!data?.ticker || !data?.amount) {
+      if (!data?.ticker) {
         onError?.(new Error('Invalid data'));
         reject(new Error('Invalid data'));
         return;
@@ -174,6 +174,32 @@ const doge = {
         onError,
         messageType:
           MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+      });
+    });
+  },
+
+  requestDoginalTransaction(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.recipientAddress || !data?.output) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
+
+      window.postMessage(
+        {
+          type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
+          data,
+        },
+        window.location.origin
+      );
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
       });
     });
   },
