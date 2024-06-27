@@ -435,6 +435,42 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
     }
   }
 
+  async function onRequestPSBT({ origin, data }) {
+    try {
+      chrome.runtime.sendMessage(
+        {
+          message: MESSAGE_TYPES.CREATE_PSBT,
+          data: {
+            ...data,
+            rawTx: data.rawTx,
+            index: data.index,
+          },
+        },
+        ({ rawTx, fee, amount }) => {
+          if (rawTx && fee && amount) {
+            chrome.runtime.sendMessage({
+              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+              data: {
+                ...data,
+                rawTx,
+                fee,
+                dogeAmount: amount,
+              },
+            });
+          } else {
+            throw new Error('Unable to create transaction');
+          }
+        }
+      );
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      });
+    }
+  }
+
   // Listen to messages from injected script and pass to the respective handler functions tro forward to the background script
   window.addEventListener(
     'message',
@@ -463,6 +499,9 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
           onRequestAvailableDRC20Transaction({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
+          onRequestPSBT({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_DISCONNECT:
           onDisconnectClient({ origin: source.origin });
