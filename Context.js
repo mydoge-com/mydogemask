@@ -10,7 +10,6 @@ import { useNavigate } from 'react-router-dom';
 import { messageHandler } from './scripts/background';
 import { MESSAGE_TYPES } from './scripts/helpers/constants';
 import { addListener, sendMessage } from './scripts/helpers/message';
-import { useTransactions } from './views/Transactions/Transactions.hooks';
 
 export const AppContext = createContext(null);
 
@@ -73,7 +72,7 @@ export const AppContextProvider = ({ children }) => {
         case DISPATCH_TYPES.SET_CLIENT_REQUEST:
           return { ...state, clientRequest: payload.clientRequest };
         case DISPATCH_TYPES.CLEAR_CLIENT_REQUEST:
-          setTimeout(() => window?.close(), 3000);
+          setTimeout(() => window?.close(), 2000);
           return { ...state };
         case DISPATCH_TYPES.SET_CONTEXT_LOADED:
           return { ...state, ready: payload.ready };
@@ -176,16 +175,13 @@ export const AppContextProvider = ({ children }) => {
     );
   }, []);
 
-  const transactions = useTransactions(state);
-
   const providerValue = useMemo(
     () => ({
       ...state,
       dispatch,
       navigate,
-      transactions,
     }),
-    [navigate, state, transactions]
+    [navigate, state]
   );
   return (
     <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>

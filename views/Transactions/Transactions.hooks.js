@@ -1,23 +1,65 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import sb from 'satoshi-bitcoin';
+import useSWRInfinite from 'swr/infinite';
 
+import {
+  getTransactions,
+  getTransactionsKey,
+} from '../../dataFetchers/getTransactions';
+import { useAppContext } from '../../hooks/useAppContext';
 import { useInterval } from '../../hooks/useInterval';
 import { doginals, doginalsV2 } from '../../scripts/api';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
-import { formatTransaction } from '../../utils/transactions';
 
 const QUERY_INTERVAL = 10000;
 const QUERY_PAGE_SIZE = 10;
 
-export const useTransactions = ({ wallet = {}, selectedAddressIndex = 0 }) => {
+export const useTransactions = () => {
+  const { wallet, selectedAddressIndex, navigate } = useAppContext();
   const walletAddress = wallet.addresses?.[selectedAddressIndex];
+
+  const {
+    data: transactionsData,
+    size: transactionsPage,
+    setSize: setTransactionsPage,
+    isLoading: isLoadingTransactions,
+  } = useSWRInfinite(
+    !walletAddress
+      ? null
+      : (pageIndex, prevData) =>
+          getTransactionsKey(pageIndex, prevData, walletAddress),
+    getTransactions,
+    {
+      initialSize: 1,
+      revalidateAll: false,
+      revalidateFirstPage: true,
+      persistSize: false,
+      parallel: false,
+      refreshInterval: QUERY_INTERVAL,
+    }
+  );
+  const transactions = transactionsData?.flat() ?? undefined;
+
+  const fetchMoreTransactions = () => setTransactionsPage(transactionsPage + 1);
+
+  const isLoadingMoreTransactions =
+    isLoadingTransactions ||
+    (transactionsPage > 0 &&
+      transactionsData &&
+      typeof transactionsData[transactionsPage - 1] === 'undefined');
+
+  const hasMoreTransactions =
+    transactionsData &&
+    !(transactionsData[transactionsData.length - 1]?.length < QUERY_PAGE_SIZE);
+
+  const refreshTransactions = () => {
+    setTransactionsPage(1);
+  };
 
   const [balance, setBalance] = useState(null);
   const [usdPrice, setUSDPrice] = useState(0);
-  const [transactions, setTransactions] = useState();
-  const [loading, setLoading] = useState(true);
   const [NFTsLoading, setNFTsLoading] = useState(true);
   const [NFTs, setNFTs] = useState();
   const [NFTsTotal, setNFTsTotal] = useState();
@@ -26,9 +68,6 @@ export const useTransactions = ({ wallet = {}, selectedAddressIndex = 0 }) => {
   const [tokens, setTokens] = useState();
   const [tokensTotal, setTokensTotal] = useState();
 
-  const [hasMore, setHasMore] = useState(true);
-
-  const currentPage = useRef(0);
   const currentNFTPage = useRef(0);
   const currentTokensPage = useRef(0);
 
@@ -105,95 +144,6 @@ export const useTransactions = ({ wallet = {}, selectedAddressIndex = 0 }) => {
     });
   }, []);
 
-  const getRecentTransactions = useCallback(() => {
-    if (currentPage.current > 0 && !loading) {
-      sendMessage(
-        {
-          message: MESSAGE_TYPES.GET_TRANSACTIONS,
-          data: {
-            address: walletAddress,
-            page: 0,
-          },
-        },
-        ({ transactions: transactions_ }) => {
-          if (transactions_) {
-            let formattedTransactions = [];
-            transactions_.forEach((transaction) => {
-              formattedTransactions.push(
-                formatTransaction({ transaction, walletAddress })
-              );
-            });
-            // Find new transactions
-            formattedTransactions = formattedTransactions.filter((tx) => {
-              const idx = (transactions || []).findIndex((t) => t.id === tx.id);
-              if (idx === -1) {
-                return true;
-              } else if (
-                tx.confirmations > 0 &&
-                transactions[idx].confirmations === 0
-              ) {
-                // Replace the updated tx
-                setTransactions((state = []) => {
-                  const nextState = [...state];
-                  nextState[idx] = tx;
-                  return nextState;
-                });
-              }
-              return false;
-            });
-            // Append and sort
-            setTransactions((state = []) =>
-              [...state, ...formattedTransactions].sort(
-                (a, b) => b.blockTime - a.blockTime
-              )
-            );
-          } else {
-            logError(new Error('Failed to get recent transactions'));
-          }
-        }
-      );
-    }
-  }, [loading, transactions, walletAddress]);
-
-  const getTransactions = useCallback(() => {
-    setLoading(true);
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.GET_TRANSACTIONS,
-        data: {
-          address: walletAddress,
-          page: currentPage.current,
-        },
-      },
-      ({ page, totalPages, transactions: transactions_ }) => {
-        if (transactions_) {
-          const formattedTransactions = [];
-          transactions_.forEach((transaction) => {
-            formattedTransactions.push(
-              formatTransaction({ transaction, walletAddress })
-            );
-          });
-          setTransactions((state = []) =>
-            [...state, ...formattedTransactions].filter(
-              (tx, i, self) => self.findIndex((t) => t.id === tx.id) === i
-            )
-          );
-          currentPage.current = page + 1;
-          setHasMore(page < totalPages);
-          setLoading(false);
-        } else {
-          logError(new Error('Failed to get transaction history'));
-        }
-      }
-    );
-  }, [walletAddress]);
-
-  const fetchMore = useCallback(() => {
-    if (hasMore) {
-      getTransactions();
-    }
-  }, [getTransactions, hasMore]);
-
   const hasMoreNFTs = NFTs?.length < NFTsTotal;
   const hasMoreTokens = tokens?.length < tokensTotal;
 
@@ -212,29 +162,14 @@ export const useTransactions = ({ wallet = {}, selectedAddressIndex = 0 }) => {
     }
   }, [fetchTokens, hasMoreTokens, tokens]);
 
-  const currentAddress = useRef(walletAddress);
-
   useEffect(() => {
-    if (currentAddress.current !== walletAddress) {
-      currentAddress.current = walletAddress;
-      currentPage.current = 0;
-      setTransactions();
-    }
-
     if (!walletAddress) {
       return;
     }
-    getTransactions();
     getAddressBalance();
     fetchTokens();
     fetchNFTs();
-  }, [
-    fetchNFTs,
-    fetchTokens,
-    getAddressBalance,
-    getTransactions,
-    walletAddress,
-  ]);
+  }, [fetchNFTs, fetchTokens, getAddressBalance, walletAddress]);
 
   useInterval(
     () => {
@@ -243,7 +178,6 @@ export const useTransactions = ({ wallet = {}, selectedAddressIndex = 0 }) => {
       }
       getAddressBalance();
       getDogecoinPrice();
-      getRecentTransactions();
     },
     QUERY_INTERVAL,
     true
@@ -252,10 +186,12 @@ export const useTransactions = ({ wallet = {}, selectedAddressIndex = 0 }) => {
   return {
     balance,
     usdValue,
-    loading,
     transactions,
-    hasMore,
-    fetchMore,
+    isLoadingTransactions,
+    isLoadingMoreTransactions,
+    hasMoreTransactions,
+    fetchMoreTransactions,
+    refreshTransactions,
     NFTs,
     hasMoreNFTs,
     fetchMoreNFTs,
@@ -264,6 +200,8 @@ export const useTransactions = ({ wallet = {}, selectedAddressIndex = 0 }) => {
     tokensLoading,
     hasMoreTokens,
     fetchMoreTokens,
-    refreshTransactions: getRecentTransactions,
+    wallet,
+    selectedAddressIndex,
+    navigate,
   };
 };

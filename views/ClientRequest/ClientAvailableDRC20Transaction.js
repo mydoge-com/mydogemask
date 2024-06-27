@@ -127,13 +127,12 @@ const ConfirmationModal = ({
         data: { ...params, txs, tokenAmount, ticker },
       },
       (txId) => {
-        setLoading(false);
         if (txId) {
           sendMessage(
             {
               message:
                 MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
-              data: { ...params, txs, tokenAmount, ticker },
+              data: { ...params, txs, tokenAmount, ticker, txId },
             },
             () => {
               Toast.show({
@@ -147,11 +146,19 @@ const ConfirmationModal = ({
                   );
                 },
               });
-              setTimeout(handleWindowClose, 2000);
+              handleWindowClose();
             }
           );
         } else {
-          onClose?.();
+          sendMessage({
+            message:
+              MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+            data: {
+              error: 'Failed to inscribe token transfer',
+              originTabId,
+              origin,
+            },
+          });
           Toast.show({
             title: 'Error',
             description: 'Transaction Failed',
@@ -166,41 +173,12 @@ const ConfirmationModal = ({
               );
             },
           });
-          setTimeout(handleWindowClose, 2000);
-          sendMessage(
-            {
-              message:
-                MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
-              data: {
-                error: 'Failed to send transaction',
-                originTabId,
-                origin,
-              },
-            }
-            // () => {
-            //   Toast.show({
-            //     title: 'Error',
-            //     description: 'Transaction Failed',
-            //     duration: 3000,
-            //     render: () => {
-            //       return (
-            //         <ToastRender
-            //           title='Error'
-            //           description='Failed to send transaction.'
-            //           status='error'
-            //         />
-            //       );
-            //     },
-            //   });
-            //   setTimeout(handleWindowClose, 2000);
-            // }
-          );
+          handleWindowClose();
         }
       }
     );
   }, [
     handleWindowClose,
-    onClose,
     origin,
     originTabId,
     params,

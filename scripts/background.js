@@ -630,16 +630,16 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       })
       .catch(() => {});
 
-    // const tokenCache = (await getLocalValue(data.ticker)) ?? [];
+    const tokenCache = (await getLocalValue(data.ticker)) ?? [];
 
-    // tokenCache.push({
-    //   txs: results,
-    //   txType: 'inscribe',
-    //   tokenAmount: data.tokenAmount,
-    //   timestamp: Date.now(),
-    // });
+    tokenCache.push({
+      txs: results,
+      txType: 'inscribe',
+      tokenAmount: data.tokenAmount,
+      timestamp: Date.now(),
+    });
 
-    // setLocalValue({ [data.ticker]: tokenCache });
+    setLocalValue({ [data.ticker]: tokenCache });
 
     sendResponse(results[1]);
   } catch (err) {
@@ -981,6 +981,31 @@ async function onDisconnectClient({ sendResponse, data: { origin } } = {}) {
   return true;
 }
 
+async function onApproveAvailableDRC20Transaction({
+  sendResponse,
+  data: { txId, error, originTabId, origin, ticker, tokenAmount },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+      data: {
+        txId,
+        ticker,
+        amount: tokenAmount,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
 async function onApproveTransaction({
   sendResponse,
   data: { txId, error, originTabId, origin },
@@ -1209,6 +1234,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
       onRequestAvailableDRC20Transaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
+      onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });

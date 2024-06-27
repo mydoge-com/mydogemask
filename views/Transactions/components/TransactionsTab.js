@@ -19,6 +19,7 @@ export const TransactionsTab = ({
   loading,
   hasMore,
   fetchMore,
+  isLoadingMore,
 }) => {
   const renderItem = useCallback(
     ({ item }) => <Transaction transaction={item} />,
@@ -27,7 +28,7 @@ export const TransactionsTab = ({
 
   return (
     <Box flex={1}>
-      {transactions === undefined ? (
+      {transactions === undefined || (loading && !isLoadingMore) ? (
         <Center pt='40px'>
           <Spinner color='amber.400' />
         </Center>
@@ -65,7 +66,7 @@ export const TransactionsTab = ({
               >
                 <Text color='gray.500' alignItems='center'>
                   View more
-                  {loading ? (
+                  {isLoadingMore ? (
                     <Spinner
                       color='amber.400'
                       pl='8px'
