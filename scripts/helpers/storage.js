@@ -21,9 +21,12 @@ export const getLocalValue = (key) => {
     return Promise.resolve(value);
   }
 
-  return chrome.storage.local.get([key]).then((result) => {
-    return result[key];
-  });
+  return chrome.storage.local
+    .get([key])
+    .then((result) => {
+      return result[key];
+    })
+    .catch(() => null);
 };
 
 export const setSessionValue = (keyValues) => {

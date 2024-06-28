@@ -10,7 +10,6 @@ import { useNavigate } from 'react-router-dom';
 import { messageHandler } from './scripts/background';
 import { MESSAGE_TYPES } from './scripts/helpers/constants';
 import { addListener, sendMessage } from './scripts/helpers/message';
-import { useTransactions } from './views/Transactions/Transactions.hooks';
 
 export const AppContext = createContext(null);
 
@@ -19,21 +18,13 @@ export const DISPATCH_TYPES = {
   SET_ONBOARDING_COMPLETE: 'SET_ONBOARDING_COMPLETE',
   SET_AUTHENTICATED: 'SET_AUTHENTICATED',
   SET_WALLET: 'SET_WALLET',
+  SET_CONTEXT_LOADED: 'SET_CONTEXT_LOADED',
   SIGN_OUT: 'SIGN_OUT',
   SIGN_IN: 'SIGN_IN',
   SELECT_WALLET: 'SELECT_WALLET',
   SET_CLIENT_REQUEST: 'SET_CLIENT_REQUEST',
   CLEAR_CLIENT_REQUEST: 'CLEAR_CLIENT_REQUEST',
   COMPLETE_ONBOARDING: 'COMPLETE_ONBOARDING',
-};
-
-const CLIENT_REQUEST_ROUTES = {
-  [MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION]: 'ClientConnect',
-  [MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION]: 'ClientTransaction',
-  [MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION]:
-    'ClientDoginalTransaction',
-  [MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION]:
-    'ClientAvailableDRC20Transaction',
 };
 
 export const AppContextProvider = ({ children }) => {
@@ -58,9 +49,9 @@ export const AppContextProvider = ({ children }) => {
           };
         case DISPATCH_TYPES.SIGN_IN:
           navigate(
-            payload?.navigate ??
-              CLIENT_REQUEST_ROUTES[state.clientRequest?.requestType] ??
-              'Transactions'
+            payload?.navigate ?? state.clientRequest
+              ? 'ClientRequest'
+              : 'Transactions'
           );
           return {
             ...state,
@@ -69,9 +60,9 @@ export const AppContextProvider = ({ children }) => {
           };
         case DISPATCH_TYPES.COMPLETE_ONBOARDING:
           navigate(
-            payload?.navigate ??
-              CLIENT_REQUEST_ROUTES[state.clientRequest?.requestType] ??
-              'Transactions'
+            payload?.navigate ?? state.clientRequest
+              ? 'ClientRequest'
+              : 'Transactions'
           );
           return {
             ...state,
@@ -81,8 +72,10 @@ export const AppContextProvider = ({ children }) => {
         case DISPATCH_TYPES.SET_CLIENT_REQUEST:
           return { ...state, clientRequest: payload.clientRequest };
         case DISPATCH_TYPES.CLEAR_CLIENT_REQUEST:
-          setTimeout(() => window?.close(), 1000);
+          setTimeout(() => window?.close(), 2000);
           return { ...state };
+        case DISPATCH_TYPES.SET_CONTEXT_LOADED:
+          return { ...state, ready: payload.ready };
         default:
           return state;
       }
@@ -95,6 +88,7 @@ export const AppContextProvider = ({ children }) => {
     wallet: undefined,
     selectedAddressIndex: 0,
     txTabIndex: 0,
+    ready: false,
   });
 
   const navigate = useNavigate();
@@ -117,9 +111,15 @@ export const AppContextProvider = ({ children }) => {
 
         const requestType = url?.hash?.substring(1);
         const params = {};
-        url?.searchParams?.forEach((value, key) => {
-          params[key] = value;
+        url?.searchParams?.forEach((_, key) => {
+          const val = url.searchParams.getAll(key);
+          if (val.length > 1) {
+            params[key] = val;
+          } else {
+            [params[key]] = val;
+          }
         });
+
         params.originTabId = Number(params.originTabId);
         if (requestType && params?.originTabId && params?.origin) {
           const clientRequest = {
@@ -164,6 +164,10 @@ export const AppContextProvider = ({ children }) => {
                   },
                 });
               }
+              dispatch({
+                type: DISPATCH_TYPES.SET_CONTEXT_LOADED,
+                payload: { ready: true },
+              });
             }
           );
         }
@@ -171,16 +175,13 @@ export const AppContextProvider = ({ children }) => {
     );
   }, []);
 
-  const transactions = useTransactions(state);
-
   const providerValue = useMemo(
     () => ({
       ...state,
       dispatch,
       navigate,
-      transactions,
     }),
-    [navigate, state, transactions]
+    [navigate, state]
   );
   return (
     <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>

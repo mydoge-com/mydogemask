@@ -44,6 +44,7 @@
     "react-router-dom": "^6.23.1",
     "satoshi-bitcoin": "1.0.5",
     "secure-ls": "^1.2.6",
+    "swr": "^2.2.5",
     "timeago-react": "^3.0.5",
     "whatwg-mimetype": "^4.0.0",
     "wretch": "^2.3.2"

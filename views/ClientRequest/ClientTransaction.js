@@ -1,7 +1,5 @@
 import {
   AlertDialog,
-  Avatar,
-  // Badge,
   Box,
   Button,
   Center,
@@ -16,23 +14,18 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
-import { Layout } from '../../components/Layout';
 import { OriginBadge } from '../../components/OriginBadge';
+import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
+import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
-import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export function ClientDoginalTransaction() {
-  const {
-    clientRequest: {
-      params: { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee },
-    },
-    wallet,
-    dispatch,
-  } = useAppContext();
+export function ClientTransaction({ params, dispatch }) {
+  const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
+    params;
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
@@ -45,8 +38,6 @@ export function ClientDoginalTransaction() {
       setAddressIndex(index);
     });
   }, [origin]);
-
-  const senderAddress = wallet.addresses[addressIndex];
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -79,38 +70,21 @@ export function ClientDoginalTransaction() {
   }, [handleWindowClose, origin, originTabId]);
 
   return (
-    <Layout pt='32px' alignItems='center'>
+    <>
       <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
         <FaLink />
       </Box>
       <Text fontSize='2xl'>
         Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
-      <Center pt='36px'>
-        <Text fontSize='sm' color='gray.500' textAlign='center' mb='20px'>
-          <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-            Wallet {addressIndex + 1}
-          </Text>
-          {'  '}
-          {senderAddress?.slice(0, 8)}...{senderAddress?.slice(-4)}
-        </Text>
+      <Center pt='16px'>
+        <WalletAddress />
         <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
           Paying
         </Text>
-        <OriginBadge origin={origin} mb='6px' mt='12px' />
-        <HStack alignItems='center' space='12px' pb='28px'>
-          <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
-            {recipientAddress.substring(0, 2)}
-          </Avatar>
-          <Text
-            fontSize='md'
-            fontWeight='semibold'
-            color='gray.500'
-            textAlign='center'
-          >
-            {recipientAddress.slice(0, 8)}...{recipientAddress.slice(-4)}
-          </Text>
-        </HStack>
+        <OriginBadge origin={origin} mt='12px' mb='20px' />
+        <RecipientAddress address={recipientAddress} />
+
         <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
           Ð{dogeAmount}
         </Text>
@@ -146,7 +120,7 @@ export function ClientDoginalTransaction() {
         recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}
       />
-    </Layout>
+    </>
   );
 }
 

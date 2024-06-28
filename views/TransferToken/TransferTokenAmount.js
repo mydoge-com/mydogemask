@@ -1,10 +1,8 @@
 import {
-  Avatar,
   Box,
   Button,
   Center,
   FlatList,
-  HStack,
   Spinner,
   Text,
   Toast,
@@ -13,6 +11,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
+import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getDRC20Inscriptions } from '../../scripts/helpers/doginals';
@@ -27,9 +26,10 @@ export const TransferTokenAmount = ({
   walletAddress,
   selectedAddressIndex,
   selectedToken,
+  selectedNFT,
+  setSelectedNFT,
 }) => {
   const [loading, setLoading] = useState(false);
-  const [selectedNFT, setSelectedNFT] = useState(null);
   const [nfts, setNFTs] = useState(null);
 
   useEffect(() => {
@@ -90,7 +90,7 @@ export const TransferTokenAmount = ({
         />
       );
     },
-    [selectedNFT?.txid]
+    [selectedNFT?.txid, setSelectedNFT]
   );
 
   const onSubmit = useCallback(() => {
@@ -151,21 +151,9 @@ export const TransferTokenAmount = ({
         {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
       </Text>
       <Text fontSize='xl' pb='8px' textAlign='center'>
-        Transfer <Text fontWeight='bold'>{selectedToken.ticker}</Text> tokens to
+        Transfer <Text fontWeight='bold'>{selectedToken.ticker}</Text> tokens
       </Text>
-      <HStack alignItems='center' space='12px' pb='28px'>
-        <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
-          {formData.address.substring(0, 2)}
-        </Avatar>
-        <Text
-          fontSize='sm'
-          fontWeight='semibold'
-          color='gray.500'
-          textAlign='center'
-        >
-          {formData.address.slice(0, 8)}...{formData.address.slice(-4)}
-        </Text>
-      </HStack>
+      <RecipientAddress address={formData.address} />
       <Box flex={1}>
         {!nfts ? (
           <Center pt='40px'>

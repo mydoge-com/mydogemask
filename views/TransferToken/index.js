@@ -15,6 +15,7 @@ export function TransferToken() {
   const [formPage, setFormPage] = useState('address');
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
+  const [selectedNFT, setSelectedNFT] = useState(null);
 
   const RenderScreen =
     {
@@ -49,6 +50,8 @@ export function TransferToken() {
           errors={errors}
           setErrors={setErrors}
           selectedAddressIndex={selectedAddressIndex}
+          selectedNFT={selectedNFT}
+          setSelectedNFT={setSelectedNFT}
         />
       </Box>
     </Layout>
