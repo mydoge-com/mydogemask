@@ -9,6 +9,7 @@
     "lint": "yarn eslint .",
     "lint-fix": "yarn eslint --fix .",
     "watch": "nodemon --exec \"yarn run build\"",
+    "docs": "./docs.sh",
     "postinstall": "npx patch-package"
   },
   "dependencies": {
