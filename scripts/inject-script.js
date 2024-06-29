@@ -22,7 +22,10 @@ const createResponseHandler =
     window.addEventListener('message', listener);
   };
 
-class MyDoge {
+/**
+ * Class representing the MyDoge API to interact with the Dogecoin wallet.
+ */
+class MyDogeWallet {
   constructor() {
     this.isMyDogeMask = true;
     console.info('MyDoge API initialized');
@@ -33,6 +36,7 @@ class MyDoge {
    * @param {Function} [onSuccess] - Callback function to execute upon successful connection.
    * @param {Function} [onError] - Callback function to execute upon connection error.
    * @returns {Promise} Promise object represents the outcome of the connection attempt.
+   * @method
    */
   connect(onSuccess, onError) {
     return new Promise((resolve, reject) => {
@@ -80,6 +84,7 @@ class MyDoge {
    * @param {Function} [onSuccess] - Callback function to execute upon successful retrieval.
    * @param {Function} [onError] - Callback function to execute upon error in fetching the balance.
    * @returns {Promise} Promise object represents the DRC20 balance retrieval outcome.
+   * @method
    */
   getDRC20Balance(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
@@ -110,6 +115,7 @@ class MyDoge {
    * @param {Function} [onSuccess] - Callback function to execute upon successful retrieval.
    * @param {Function} [onError] - Callback function to execute upon error in fetching the transferable balance.
    * @returns {Promise} Promise object represents the retrieval outcome.
+   * @method
    */
   getTransferableDRC20(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
@@ -140,6 +146,7 @@ class MyDoge {
    * @param {Function} [onSuccess] - Callback function to execute upon successful transaction request.
    * @param {Function} [onError] - Callback function to execute upon error in processing the transaction request.
    * @returns {Promise} Promise object represents the transaction request outcome.
+   * @method
    */
   requestTransaction(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
@@ -169,6 +176,7 @@ class MyDoge {
    * @param {Function} [onSuccess] - Callback function to execute upon successful transaction request.
    * @param {Function} [onError] - Callback function to execute upon error in processing the transaction request.
    * @returns {Promise} Promise object represents the transaction request outcome.
+   * @method
    */
   requestInscriptionTransaction(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
@@ -199,6 +207,7 @@ class MyDoge {
    * @param {Function} [onSuccess] - Callback function to execute upon successful transaction request.
    * @param {Function} [onError] - Callback function to execute upon error in processing the transaction request.
    * @returns {Promise} Promise object represents the transaction request outcome.
+   * @method
    */
   requestAvailableDRC20Transaction(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
@@ -232,6 +241,7 @@ class MyDoge {
    * @param {Function} [onSuccess] - Callback function to execute upon successful signing.
    * @param {Function} [onError] - Callback function to execute upon error in signing the PSBT.
    * @returns {Promise} Promise object represents the signing request outcome.
+   * @method
    */
   requestPSBT(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
@@ -265,6 +275,7 @@ class MyDoge {
    * @param {Function} [onSuccess] - Callback function to execute upon successful message signing.
    * @param {Function} [onError] - Callback function to execute upon error in signing the message.
    * @returns {Promise} Promise object represents the message signing request outcome.
+   * @method
    */
   signMessage(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
@@ -293,6 +304,7 @@ class MyDoge {
    * @param {Function} [onSuccess] - Callback function to execute upon successful disconnection.
    * @param {Function} [onError] - Callback function to execute upon error in disconnecting.
    * @returns {Promise} Promise object represents the disconnection outcome.
+   * @method
    */
   disconnect(onSuccess, onError) {
     return new Promise((resolve, reject) => {
@@ -316,6 +328,7 @@ class MyDoge {
    * @param {Function} [onSuccess] - Callback function to execute upon successfully retrieving the status.
    * @param {Function} [onError] - Callback function to execute upon error in retrieving the connection status.
    * @returns {Promise} Promise object represents the connection status retrieval outcome.
+   * @method
    */
   getConnectionStatus(onSuccess, onError) {
     return new Promise((resolve, reject) => {
@@ -340,6 +353,7 @@ class MyDoge {
    * @param {Function} [onSuccess] - Callback function to execute upon successful status retrieval.
    * @param {Function} [onError] - Callback function to execute upon error in retrieving the transaction status.
    * @returns {Promise} Promise object represents the transaction status retrieval outcome.
+   * @method
    */
   getTransactionStatus(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
@@ -365,7 +379,7 @@ class MyDoge {
 }
 
 // API we expose to allow websites to detect & interact with extension
-const doge = new MyDoge();
+const doge = new MyDogeWallet();
 
 window.addEventListener('load', () => {
   window.doge = doge;
