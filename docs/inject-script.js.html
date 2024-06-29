@@ -50,362 +50,355 @@ const createResponseHandler =
     window.addEventListener('message', listener);
   };
 
-/**
- * Initiates a connection request with the wallet.
- * @param {Function} [onSuccess] - Callback function to execute upon successful connection.
- * @param {Function} [onError] - Callback function to execute upon connection error.
- * @returns {Promise} Promise object represents the outcome of the connection attempt.
- */
-function connect(onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    window.postMessage(
-      { type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION },
-      window.location.origin
-    );
+class MyDoge {
+  constructor() {
+    this.isMyDogeMask = true;
+    console.info('MyDoge API initialized');
+  }
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+  /**
+   * Initiates a connection request with the wallet.
+   * @param {Function} [onSuccess] - Callback function to execute upon successful connection.
+   * @param {Function} [onError] - Callback function to execute upon connection error.
+   * @returns {Promise} Promise object represents the outcome of the connection attempt.
+   */
+  connect(onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION },
+        window.location.origin
+      );
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+      });
     });
-  });
-}
+  }
 
-/**
- * Retrieves the balance from the connected wallet.
- * @param {Function} [onSuccess] - Callback function to execute upon successful retrieval of balance.
- * @param {Function} [onError] - Callback function to execute upon error in retrieving balance.
- * @returns {Promise} Promise object represents the balance retrieval outcome.
- */
-function getBalance(onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    window.postMessage(
-      { type: MESSAGE_TYPES.CLIENT_GET_BALANCE },
-      window.location.origin
-    );
+  /**
+   * Retrieves the balance from the connected wallet.
+   * @param {Function} [onSuccess] - Callback function to execute upon successful retrieval of balance.
+   * @param {Function} [onError] - Callback function to execute upon error in retrieving balance.
+   * @returns {Promise} Promise object represents the balance retrieval outcome.
+   */
+  getBalance(onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_GET_BALANCE },
+        window.location.origin
+      );
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
+      });
     });
-  });
-}
+  }
 
-/**
- * Retrieves the DRC20 token balance based on provided data.
- * @param {Object} data - Data required to fetch the DRC20 balance, must contain 'ticker'.
- * @param {Function} [onSuccess] - Callback function to execute upon successful retrieval.
- * @param {Function} [onError] - Callback function to execute upon error in fetching the balance.
- * @returns {Promise} Promise object represents the DRC20 balance retrieval outcome.
- */
-function getDRC20Balance(data, onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    if (!data?.ticker) {
-      onError?.(new Error('Invalid data'));
-      reject(new Error('Invalid data'));
-      return;
-    }
+  /**
+   * Retrieves the DRC20 token balance based on provided data.
+   * @param {Object} data - Data required to fetch the DRC20 balance, must contain 'ticker'.
+   * @param {Function} [onSuccess] - Callback function to execute upon successful retrieval.
+   * @param {Function} [onError] - Callback function to execute upon error in fetching the balance.
+   * @returns {Promise} Promise object represents the DRC20 balance retrieval outcome.
+   */
+  getDRC20Balance(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.ticker) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
 
-    window.postMessage(
-      { type: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE, data },
-      window.location.origin
-    );
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE, data },
+        window.location.origin
+      );
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE_RESPONSE,
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE_RESPONSE,
+      });
     });
-  });
-}
+  }
 
-/**
- * Retrieves transferable DRC20 inscriptions based on provided data.
- * @param {Object} data - Data required for the query, must contain 'ticker'.
- * @param {Function} [onSuccess] - Callback function to execute upon successful retrieval.
- * @param {Function} [onError] - Callback function to execute upon error in fetching the transferable balance.
- * @returns {Promise} Promise object represents the retrieval outcome.
- */
-function getTransferableDRC20(data, onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    if (!data?.ticker) {
-      onError?.(new Error('Invalid data'));
-      reject(new Error('Invalid data'));
-      return;
-    }
+  /**
+   * Retrieves transferable DRC20 inscriptions based on provided data.
+   * @param {Object} data - Data required for the query, must contain 'ticker'.
+   * @param {Function} [onSuccess] - Callback function to execute upon successful retrieval.
+   * @param {Function} [onError] - Callback function to execute upon error in fetching the transferable balance.
+   * @returns {Promise} Promise object represents the retrieval outcome.
+   */
+  getTransferableDRC20(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.ticker) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
 
-    window.postMessage(
-      { type: MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20, data },
-      window.location.origin
-    );
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20, data },
+        window.location.origin
+      );
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE,
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE,
+      });
     });
-  });
-}
+  }
 
-/**
- * Requests a Dogecoin transaction based on the specified data.
- * @param {Object} data - Data needed for the transaction, must contain 'recipientAddress' and 'dogeAmount'.
- * @param {Function} [onSuccess] - Callback function to execute upon successful transaction request.
- * @param {Function} [onError] - Callback function to execute upon error in processing the transaction request.
- * @returns {Promise} Promise object represents the transaction request outcome.
- */
-function requestTransaction(data, onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    if (!data?.recipientAddress || !data?.dogeAmount) {
-      onError?.(new Error('Invalid data'));
-      reject(new Error('Invalid data'));
-      return;
-    }
-    window.postMessage(
-      { type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION, data },
-      window.location.origin
-    );
+  /**
+   * Requests a Dogecoin transaction based on the specified data.
+   * @param {Object} data - Data needed for the transaction, must contain 'recipientAddress' and 'dogeAmount'.
+   * @param {Function} [onSuccess] - Callback function to execute upon successful transaction request.
+   * @param {Function} [onError] - Callback function to execute upon error in processing the transaction request.
+   * @returns {Promise} Promise object represents the transaction request outcome.
+   */
+  requestTransaction(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.recipientAddress || !data?.dogeAmount) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION, data },
+        window.location.origin
+      );
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      });
     });
-  });
-}
+  }
 
-/**
- * Requests an inscription transaction for Doginal/DRC-20 based on the specified data.
- * @param {Object} data - Data required for the transaction, must contain 'recipientAddress' and 'output'.
- * @param {Function} [onSuccess] - Callback function to execute upon successful transaction request.
- * @param {Function} [onError] - Callback function to execute upon error in processing the transaction request.
- * @returns {Promise} Promise object represents the transaction request outcome.
- */
-function requestInscriptionTransaction(data, onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    if (!data?.recipientAddress || !data?.output) {
-      onError?.(new Error('Invalid data'));
-      reject(new Error('Invalid data'));
-      return;
-    }
+  /**
+   * Requests an inscription transaction for Doginal/DRC-20 based on the specified data.
+   * @param {Object} data - Data required for the transaction, must contain 'recipientAddress' and 'output'.
+   * @param {Function} [onSuccess] - Callback function to execute upon successful transaction request.
+   * @param {Function} [onError] - Callback function to execute upon error in processing the transaction request.
+   * @returns {Promise} Promise object represents the transaction request outcome.
+   */
+  requestInscriptionTransaction(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.recipientAddress || !data?.output) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
 
-    window.postMessage(
-      { type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION, data },
-      window.location.origin
-    );
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION, data },
+        window.location.origin
+      );
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      });
     });
-  });
-}
+  }
 
-/**
- * Requests a transaction for available DRC20 tokens based on specified data.
- * @param {Object} data - Data required for the transaction, must contain 'ticker' and 'amount'.
- * @param {Function} [onSuccess] - Callback function to execute upon successful transaction request.
- * @param {Function} [onError] - Callback function to execute upon error in processing the transaction request.
- * @returns {Promise} Promise object represents the transaction request outcome.
- */
-function requestAvailableDRC20Transaction(data, onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    if (!data?.ticker || !data?.amount) {
-      onError?.(new Error('Invalid data'));
-      reject(new Error('Invalid data'));
-      return;
-    }
+  /**
+   * Requests a transaction for available DRC20 tokens based on specified data.
+   * @param {Object} data - Data required for the transaction, must contain 'ticker' and 'amount'.
+   * @param {Function} [onSuccess] - Callback function to execute upon successful transaction request.
+   * @param {Function} [onError] - Callback function to execute upon error in processing the transaction request.
+   * @returns {Promise} Promise object represents the transaction request outcome.
+   */
+  requestAvailableDRC20Transaction(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.ticker || !data?.amount) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
 
-    window.postMessage(
-      {
-        type: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
-        data,
-      },
-      window.location.origin
-    );
+      window.postMessage(
+        {
+          type: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
+          data,
+        },
+        window.location.origin
+      );
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      });
     });
-  });
-}
+  }
 
-/**
- * Requests the signing of a partially signed Bitcoin transaction (PSBT) based on provided data.
- * @param {Object} data - Data required for signing the PSBT, must contain 'rawTx' and an 'index'.
- * @param {Function} [onSuccess] - Callback function to execute upon successful signing.
- * @param {Function} [onError] - Callback function to execute upon error in signing the PSBT.
- * @returns {Promise} Promise object represents the signing request outcome.
- */
-function requestPSBT(data, onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    if (!data?.rawTx || data?.index === undefined) {
-      onError?.(new Error('Invalid data'));
-      reject(new Error('Invalid data'));
-      return;
-    }
+  /**
+   * Requests the signing of a partially signed Bitcoin transaction (PSBT) based on provided data.
+   * @param {Object} data - Data required for signing the PSBT, must contain 'rawTx' and an 'index'.
+   * @param {Function} [onSuccess] - Callback function to execute upon successful signing.
+   * @param {Function} [onError] - Callback function to execute upon error in signing the PSBT.
+   * @returns {Promise} Promise object represents the signing request outcome.
+   */
+  requestPSBT(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.rawTx || data?.index === undefined) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
 
-    window.postMessage(
-      {
-        type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
-        data,
-      },
-      window.location.origin
-    );
+      window.postMessage(
+        {
+          type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
+          data,
+        },
+        window.location.origin
+      );
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      });
     });
-  });
-}
+  }
 
-/**
- * Requests the signing of an arbitrary message based on provided data.
- * @param {Object} data - Data required for the message signing, must contain 'message'.
- * @param {Function} [onSuccess] - Callback function to execute upon successful message signing.
- * @param {Function} [onError] - Callback function to execute upon error in signing the message.
- * @returns {Promise} Promise object represents the message signing request outcome.
- */
-function signMessage(data, onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    if (!data?.message) {
-      onError?.(new Error('Invalid data'));
-      reject(new Error('Invalid data'));
-      return;
-    }
-    window.postMessage(
-      { type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE, data },
-      window.location.origin
-    );
+  /**
+   * Requests the signing of an arbitrary message based on provided data.
+   * @param {Object} data - Data required for the message signing, must contain 'message'.
+   * @param {Function} [onSuccess] - Callback function to execute upon successful message signing.
+   * @param {Function} [onError] - Callback function to execute upon error in signing the message.
+   * @returns {Promise} Promise object represents the message signing request outcome.
+   */
+  signMessage(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.message) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE, data },
+        window.location.origin
+      );
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+      });
     });
-  });
-}
+  }
 
-/**
- * Disconnects the current session with the wallet.
- * @param {Function} [onSuccess] - Callback function to execute upon successful disconnection.
- * @param {Function} [onError] - Callback function to execute upon error in disconnecting.
- * @returns {Promise} Promise object represents the disconnection outcome.
- */
-function disconnect(onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    window.postMessage(
-      { type: MESSAGE_TYPES.CLIENT_DISCONNECT },
-      window.location.origin
-    );
+  /**
+   * Disconnects the current session with the wallet.
+   * @param {Function} [onSuccess] - Callback function to execute upon successful disconnection.
+   * @param {Function} [onError] - Callback function to execute upon error in disconnecting.
+   * @returns {Promise} Promise object represents the disconnection outcome.
+   */
+  disconnect(onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_DISCONNECT },
+        window.location.origin
+      );
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_DISCONNECT_RESPONSE,
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_DISCONNECT_RESPONSE,
+      });
     });
-  });
-}
+  }
 
-/**
- * Retrieves the connection status with the wallet.
- * @param {Function} [onSuccess] - Callback function to execute upon successfully retrieving the status.
- * @param {Function} [onError] - Callback function to execute upon error in retrieving the connection status.
- * @returns {Promise} Promise object represents the connection status retrieval outcome.
- */
-function getConnectionStatus(onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    window.postMessage(
-      { type: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS },
-      window.location.origin
-    );
+  /**
+   * Retrieves the connection status with the wallet.
+   * @param {Function} [onSuccess] - Callback function to execute upon successfully retrieving the status.
+   * @param {Function} [onError] - Callback function to execute upon error in retrieving the connection status.
+   * @returns {Promise} Promise object represents the connection status retrieval outcome.
+   */
+  getConnectionStatus(onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS },
+        window.location.origin
+      );
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS_RESPONSE,
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_CONNECTION_STATUS_RESPONSE,
+      });
     });
-  });
-}
+  }
 
-/**
- * Retrieves the status of a specific transaction based on provided data.
- * @param {Object} data - Data required for the query, must contain 'txId'.
- * @param {Function} [onSuccess] - Callback function to execute upon successful status retrieval.
- * @param {Function} [onError] - Callback function to execute upon error in retrieving the transaction status.
- * @returns {Promise} Promise object represents the transaction status retrieval outcome.
- */
-function getTransactionStatus(data, onSuccess, onError) {
-  return new Promise((resolve, reject) => {
-    if (!data?.txId) {
-      onError?.(new Error('Invalid data'));
-      reject(new Error('Invalid data'));
-      return;
-    }
-    window.postMessage(
-      { type: MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS, data },
-      window.location.origin
-    );
+  /**
+   * Retrieves the status of a specific transaction based on provided data.
+   * @param {Object} data - Data required for the query, must contain 'txId'.
+   * @param {Function} [onSuccess] - Callback function to execute upon successful status retrieval.
+   * @param {Function} [onError] - Callback function to execute upon error in retrieving the transaction status.
+   * @returns {Promise} Promise object represents the transaction status retrieval outcome.
+   */
+  getTransactionStatus(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.txId) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS, data },
+        window.location.origin
+      );
 
-    createResponseHandler()({
-      resolve,
-      reject,
-      onSuccess,
-      onError,
-      messageType: MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS_RESPONSE,
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_TRANSACTION_STATUS_RESPONSE,
+      });
     });
-  });
+  }
 }
 
 // API we expose to allow websites to detect &amp; interact with extension
-const doge = {
-  isMyDogeMask: true,
-
-  connect,
-  getBalance,
-  getDRC20Balance,
-  getTransferableDRC20,
-  requestTransaction,
-  requestInscriptionTransaction,
-  requestAvailableDRC20Transaction,
-  requestPSBT,
-  signMessage,
-  disconnect,
-  getConnectionStatus,
-  getTransactionStatus,
-};
+const doge = new MyDoge();
 
 window.addEventListener('load', () => {
   window.doge = doge;
   window.dispatchEvent(new Event('doge#initialized'));
+  console.info('MyDoge API dispatched to window object');
 });
 </code></pre>
         </article>
@@ -417,13 +410,13 @@ window.addEventListener('load', () => {
 </div>
 
 <nav>
-    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#connect">connect</a></li><li><a href="global.html#disconnect">disconnect</a></li><li><a href="global.html#getBalance">getBalance</a></li><li><a href="global.html#getConnectionStatus">getConnectionStatus</a></li><li><a href="global.html#getDRC20Balance">getDRC20Balance</a></li><li><a href="global.html#getTransactionStatus">getTransactionStatus</a></li><li><a href="global.html#getTransferableDRC20">getTransferableDRC20</a></li><li><a href="global.html#requestAvailableDRC20Transaction">requestAvailableDRC20Transaction</a></li><li><a href="global.html#requestInscriptionTransaction">requestInscriptionTransaction</a></li><li><a href="global.html#requestPSBT">requestPSBT</a></li><li><a href="global.html#requestTransaction">requestTransaction</a></li><li><a href="global.html#signMessage">signMessage</a></li></ul>
+    <h2><a href="index.html">Home</a></h2>
 </nav>
 
 <br class="clear">
 
 <footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Fri Jun 28 2024 12:49:32 GMT-0700 (Pacific Daylight Time)
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Sat Jun 29 2024 12:46:49 GMT-0700 (Pacific Daylight Time)
 </footer>
 
 <script> prettyPrint(); </script>
