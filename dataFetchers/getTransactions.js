@@ -8,7 +8,7 @@ export const getTransactionsKey = (
   walletAddress
 ) => {
   if (previousPageData && !previousPageData.length) return null;
-  return [pageIndex, walletAddress, `/transactions/${walletAddress}`];
+  return [pageIndex + 1, walletAddress, `/transactions/${walletAddress}`];
 };
 
 export const getTransactions = ([pageIndex, walletAddress]) =>

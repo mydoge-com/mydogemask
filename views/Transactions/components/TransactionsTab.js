@@ -28,7 +28,7 @@ export const TransactionsTab = ({
 
   return (
     <Box flex={1}>
-      {transactions === undefined || (loading && !isLoadingMore) ? (
+      {!transactions || (loading && !isLoadingMore) ? (
         <Center pt='40px'>
           <Spinner color='amber.400' />
         </Center>
