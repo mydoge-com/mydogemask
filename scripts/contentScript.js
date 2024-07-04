@@ -7,10 +7,14 @@ import {
   getConnectedClient,
 } from './helpers/data';
 import {
-  getDoginals,
+  // getAllDRC20,
+  getAllInscriptions,
+  // getAllInscriptions,
+  // getDoginals,
   getDRC20Balances,
   getDRC20Inscriptions,
 } from './helpers/doginals';
+import { getCachedTx } from './helpers/storage';
 import { validateAddress, validateTransaction } from './helpers/wallet';
 
 (() => {
@@ -343,9 +347,21 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
       }
 
       const client = await getConnectedClient(origin);
-      const doginals = [];
-      await getDoginals(client?.address, 0, doginals);
-      const doginal = doginals.find(
+      let inscriptions = await getAllInscriptions(client?.address);
+
+      // Get output values
+      inscriptions = await Promise.all(
+        inscriptions.map(async (nft) => {
+          const tx = await getCachedTx(nft.txid);
+
+          return {
+            ...nft,
+            outputValue: tx.vout[nft.vout].value,
+          };
+        })
+      );
+
+      const doginal = inscriptions.find(
         (ins) => ins.txid === txid && ins.vout === vout
       );
 
@@ -368,6 +384,7 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
               message: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
               data: {
                 ...data,
+                ...doginal,
                 rawTx,
                 fee,
                 dogeAmount: amount,

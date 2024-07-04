@@ -9,7 +9,7 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
-import { NFTView } from '../Transactions/components/NFT';
+import { NFTView } from '../Transactions/components/NFTView';
 
 export const TransferTokenConfirmation = ({
   setFormPage,
@@ -110,7 +110,7 @@ export const TransferTokenConfirmation = ({
   return (
     <Center>
       <Text fontSize='2xl' pb='24px' textAlign='center' fontWeight='semibold'>
-        Confirm Transaction
+        Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
       <WalletAddress />
       <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>

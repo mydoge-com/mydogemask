@@ -1,25 +1,21 @@
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { apiKey, doginals, node, nownodes } from './api';
+import { apiKey, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
   CONNECTED_CLIENTS,
+  DRC20_INSCRIPTION_CACHE,
   FEE_RATE_KB,
   MAX_UTXOS,
   MESSAGE_TYPES,
   MIN_TX_AMOUNT,
-  NFT_PAGE_SIZE,
   ONBOARDING_COMPLETE,
   PASSWORD,
   WALLET,
 } from './helpers/constants';
-import {
-  getDoginals,
-  getDRC20Inscriptions,
-  inscribe,
-} from './helpers/doginals';
+import { getAllInscriptions, inscribe } from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
@@ -51,6 +47,15 @@ function sanitizeFloatAmount(amount) {
   return sb.toBitcoin(Math.trunc(sb.toSatoshi(amount)));
 }
 
+/**
+ * Creates a client popup window.
+ *
+ * @param {Object} options - The options for creating the client popup.
+ * @param {Function} options.sendResponse - The function to send a response to the sender.
+ * @param {Object} options.sender - The sender object containing information about the sender.
+ * @param {Object} [options.data={}] - Additional data to be passed to the popup window.
+ * @param {string} options.messageType - The type of message to be sent to the popup window.
+ */
 function createClientPopup({ sendResponse, sender, data = {}, messageType }) {
   const params = new URLSearchParams();
   params.append('originTabId', sender.tab.id);
@@ -76,65 +81,6 @@ function createClientPopup({ sendResponse, sender, data = {}, messageType }) {
         sendResponse?.(false);
       }
     });
-}
-
-async function getDRC20Tickers(address, cursor, total, result) {
-  let query;
-  await doginals
-    .get(
-      `/brc20/tokens?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
-    )
-    .json((res) => {
-      query = res;
-    });
-
-  if (cursor === 0) {
-    total = query.result.total;
-  }
-
-  result.push(
-    ...query.result.list
-      .map((i) => {
-        if (i.transferableBalance !== '0') {
-          return i.ticker;
-        } else {
-          total--;
-        }
-      })
-      .filter((i) => i)
-  );
-
-  if (total > result.length) {
-    cursor += query.result.list.length;
-    return getDRC20Tickers(address, cursor, total, result);
-  }
-}
-
-async function getAllDRC20(address, result) {
-  const tickers = [];
-  await getDRC20Tickers(address, 0, 0, tickers);
-
-  console.log('found tickers', tickers.length);
-
-  for await (const ticker of tickers) {
-    const tickerResult = [];
-    await getDRC20Inscriptions(address, ticker, 0, tickerResult);
-    result.push(...tickerResult);
-  }
-}
-
-async function getAllInscriptions(address) {
-  const nfts = [];
-  await getDoginals(address, 0, nfts);
-
-  console.log('found doginals', nfts.length);
-
-  const drc20 = [];
-  await getAllDRC20(address, drc20);
-
-  console.log('found drc20', drc20.length);
-
-  return [...nfts, ...drc20];
 }
 
 // Build a raw transaction and determine fee
@@ -680,16 +626,18 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       })
       .catch(() => {});
 
-    const tokenCache = (await getLocalValue(data.ticker)) ?? [];
+    const inscriptionCache =
+      (await getLocalValue(DRC20_INSCRIPTION_CACHE)) ?? [];
 
-    tokenCache.push({
+    inscriptionCache.push({
       txs: results,
       txType: 'inscribe',
       tokenAmount: data.tokenAmount,
       timestamp: Date.now(),
+      ticker: data.ticker,
     });
 
-    setLocalValue({ [data.ticker]: tokenCache });
+    setLocalValue({ [DRC20_INSCRIPTION_CACHE]: inscriptionCache });
 
     sendResponse(results[1]);
   } catch (err) {

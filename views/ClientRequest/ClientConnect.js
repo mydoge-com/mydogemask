@@ -133,11 +133,7 @@ export function ClientConnect({ params, wallet, dispatch }) {
                     <VStack>
                       <HStack alignItems='center'>
                         <Text fontSize='sm' fontWeight='medium'>
-                          Address {i + 1}
-                        </Text>
-                        <Text fontSize='sm' color='gray.500'>
-                          {' '}
-                          ({address.slice(0, 8)}...{address.slice(-4)})
+                          {wallet.nicknames?.[address] ?? `Address ${i + 1}`}
                         </Text>
                       </HStack>
                       <Text color='gray.400' fontSize='xs'>

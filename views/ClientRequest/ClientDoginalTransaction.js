@@ -21,6 +21,7 @@ import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
+import { NFTView } from '../Transactions/components/NFTView';
 
 export function ClientDoginalTransaction({ params, dispatch }) {
   const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
@@ -78,18 +79,27 @@ export function ClientDoginalTransaction({ params, dispatch }) {
         Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
       <WalletAddress />
-      <Text fontSize='lg' pb='14px' textAlign='center' fontWeight='semibold'>
-        Transferring
+      <Text fontSize='lg' textAlign='center' fontWeight='semibold'>
+        Transfer
       </Text>
+      <Box
+        borderRadius='12px'
+        overflow='hidden'
+        mb='12px'
+        mx='20px'
+        maxHeight='100px'
+      >
+        <NFTView nft={params} />
+      </Box>
       <RecipientAddress address={recipientAddress} />
 
-      <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
+      <Text fontSize='3xl' fontWeight='semibold' mt='-6px'>
         Ð{dogeAmount}
       </Text>
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
         Network fee Ð{fee}
       </Text>
-      <HStack alignItems='center' mt='60px' space='12px'>
+      <HStack alignItems='center' mt='30px' space='12px'>
         <BigButton onPress={onRejectTransaction} variant='secondary' px='20px'>
           Cancel
         </BigButton>
@@ -135,14 +145,15 @@ const ConfirmationModal = ({
     setLoading(true);
     sendMessage(
       {
-        message: 'sendTransaction',
+        message: MESSAGE_TYPES.SEND_TRANSACTION,
         data: { rawTx, selectedAddressIndex: addressIndex },
       },
       (txId) => {
         if (txId) {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              message:
+                MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
               data: { txId, originTabId, origin },
             },
             () => {

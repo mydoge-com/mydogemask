@@ -6,7 +6,7 @@ import { ToastRender } from '../../components/ToastRender';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateAddress } from '../../scripts/helpers/wallet';
-import { NFTView } from '../Transactions/components/NFT';
+import { NFTView } from '../Transactions/components/NFTView';
 
 export const TransferNFTAddress = ({
   walletAddress,

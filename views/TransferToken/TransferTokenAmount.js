@@ -13,6 +13,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { BigButton } from '../../components/Button';
 import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
+import { WalletAddress } from '../../components/WalletAddress';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getDRC20Inscriptions } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
@@ -24,7 +25,6 @@ export const TransferTokenAmount = ({
   setFormData,
   formData,
   walletAddress,
-  selectedAddressIndex,
   selectedToken,
   selectedNFT,
   setSelectedNFT,
@@ -137,19 +137,7 @@ export const TransferTokenAmount = ({
 
   return (
     <Center>
-      <Text
-        fontSize='sm'
-        color='gray.500'
-        textAlign='center'
-        mb='12spx'
-        mt='-12px'
-      >
-        <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          Wallet {selectedAddressIndex + 1}
-        </Text>
-        {'  '}
-        {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
-      </Text>
+      <WalletAddress />
       <Text fontSize='xl' pb='8px' textAlign='center'>
         Transfer <Text fontWeight='bold'>{selectedToken.ticker}</Text> tokens
       </Text>

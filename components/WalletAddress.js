@@ -1,22 +1,29 @@
-import { Text, Tooltip } from 'native-base';
+import { Box, Text, Tooltip } from 'native-base';
 
 import { useAppContext } from '../hooks/useAppContext';
 
-export const WalletAddress = () => {
+export const WalletAddress = ({ address }) => {
   const { wallet, selectedAddressIndex } = useAppContext();
-  const walletAddress = wallet.addresses[selectedAddressIndex];
+
+  const walletAddress = address ?? wallet.addresses[selectedAddressIndex];
+
+  const addressIndex = wallet.addresses.indexOf(walletAddress);
   const addressNickname =
-    wallet.nicknames?.[selectedAddressIndex] ??
-    `Address ${selectedAddressIndex + 1}`;
+    wallet.nicknames?.[walletAddress] ?? `Address ${addressIndex + 1}`;
+
   return (
-    <Tooltip label={walletAddress} _text={{ fontSize: '10px' }}>
-      <Text fontSize='sm' color='gray.500' textAlign='center' mb='12px'>
-        <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          {addressNickname}
-        </Text>
-        {'  '}
-        {walletAddress?.slice(0, 8)}...{walletAddress?.slice(-4)}
-      </Text>
-    </Tooltip>
+    <Box mb='12px'>
+      <Tooltip label={walletAddress} _text={{ fontSize: '10px' }}>
+        <Box>
+          <Text fontSize='sm' color='gray.500' textAlign='center'>
+            <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
+              {addressNickname}
+            </Text>
+            {'  '}
+            {walletAddress?.slice(0, 8)}...{walletAddress?.slice(-4)}
+          </Text>
+        </Box>
+      </Tooltip>
+    </Box>
   );
 };

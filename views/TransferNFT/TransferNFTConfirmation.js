@@ -7,7 +7,7 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
-import { NFTView } from '../Transactions/components/NFT';
+import { NFTView } from '../Transactions/components/NFTView';
 
 export const TransferNFTConfirmation = ({
   setFormPage,
