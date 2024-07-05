@@ -1,4 +1,5 @@
 import wretch from 'wretch';
+import { retry } from 'wretch/middlewares';
 
 import {
   DOGINALS_MARKETPLACE_API_URL,
@@ -10,6 +11,17 @@ import {
 
 export const apiKey = process.env.NEXT_PUBLIC_NOWNODES_API_KEY;
 
+const retryOptions = retry({
+  delayTimer: 500,
+  delayRamp: (delay, nbOfAttempts) => delay * nbOfAttempts,
+  maxAttempts: 2,
+  until: (response) => response && response.ok,
+  onRetry: null,
+  retryOnNetworkError: false,
+  resolveWithLatestResponse: false,
+  skip: (_, opts) => opts.method !== 'GET',
+});
+
 export const nownodes = wretch(NOWNODES_BASE_URL, {
   headers: {
     'api-key': apiKey,
@@ -17,9 +29,15 @@ export const nownodes = wretch(NOWNODES_BASE_URL, {
   redirect: 'follow',
 });
 
-export const doginals = wretch(DOGINALS_WALLET_API_URL);
-export const doginalsV2 = wretch(DOGINALS_WALLET_API_V2_URL);
+export const doginals = wretch(DOGINALS_WALLET_API_URL).middlewares([
+  retryOptions,
+]);
+export const doginalsV2 = wretch(DOGINALS_WALLET_API_V2_URL).middlewares([
+  retryOptions,
+]);
 
-export const doginalsMarketplace = wretch(DOGINALS_MARKETPLACE_API_URL);
+export const doginalsMarketplace = wretch(
+  DOGINALS_MARKETPLACE_API_URL
+).middlewares([retryOptions]);
 
 export const node = wretch(NODE_BASE_URL);
