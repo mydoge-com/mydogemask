@@ -307,7 +307,10 @@ export async function getDoginals(address, cursor, result) {
   // console.log(`fetched ${result.length}/${query.result.total} inscriptions`);
 
   // Fixes an issue where Doginals API returns `total` less than items in `list` array.
-  if (query.result.total > result.length) {
+  if (
+    query.result.total > query.result.list.length &&
+    query.result.list.length === NFT_PAGE_SIZE
+  ) {
     cursor += query.result.list.length;
     return getDoginals(address, cursor, result);
   }
@@ -340,7 +343,10 @@ export async function getDRC20Inscriptions(address, ticker, cursor, result) {
     })
   );
 
-  if (query.result.total !== result.length) {
+  if (
+    query.result.total > query.result.list.length &&
+    query.result.list.length === NFT_PAGE_SIZE
+  ) {
     cursor += query.result.list.length;
     return getDRC20Inscriptions(address, ticker, cursor, result);
   }
@@ -368,7 +374,10 @@ export async function getDRC20Balances(address, cursor, result) {
   //   total
   // );
 
-  if (query.result.total > result.length) {
+  if (
+    query.result.total > query.result.list.length &&
+    query.result.list.length === NFT_PAGE_SIZE
+  ) {
     cursor += query.result.list.length;
     return getDRC20Balances(address, cursor, result);
   }
@@ -400,7 +409,10 @@ export async function getDRC20Tickers(address, cursor, total, result) {
       .filter((i) => i)
   );
 
-  if (total > result.length) {
+  if (
+    total > query.result.list.length &&
+    query.result.list.length === NFT_PAGE_SIZE
+  ) {
     cursor += query.result.list.length;
     return getDRC20Tickers(address, cursor, total, result);
   }

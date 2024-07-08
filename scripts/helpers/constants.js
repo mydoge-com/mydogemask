@@ -10,8 +10,15 @@ export const MAX_UTXOS = 1000;
 export const MIN_TX_AMOUNT = 0.001;
 export const NFT_PAGE_SIZE = 100;
 export const QUERY_CACHE = '@mydoge_QUERY_CACHE';
-export const DRC20_INSCRIPTION_CACHE = '@mydoge_DRC20_INSCRIPTION_CACHE';
-export const DRC20_TRANSFER_CACHE = '@mydoge_DRC20_INSCRIPTION_CACHE';
+export const INSCRIPTION_TXS_CACHE = '@mydoge_INSCRIPTION_TXS_CACHE';
+
+export const TRANSACTION_TYPES = {
+  DRC20_AVAILABLE_TX: 'drc20_available_tx',
+  DOGINAL_TX: 'doginal_tx',
+};
+export const DOGINAL_TX = 'doginal_tx';
+
+export const TRANSACTION_PENDING_TIME = 1000 * 60 * 15;
 
 const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_CONNECTION: 'clientRequestConnection',

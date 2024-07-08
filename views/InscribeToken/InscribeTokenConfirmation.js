@@ -22,7 +22,7 @@ export const InscribeTokenConfirmation = ({
     setLoading(true);
     sendMessage(
       {
-        message: MESSAGE_TYPES.SEND_INSCRIBE_TRANSFER_TRANSACTION,
+        message: MESSAGE_TYPES.SEND_TRANSFER_TRANSACTION,
         data: {
           txs: formData.txs,
           tokenAmount: formData.tokenAmount,
