@@ -6,7 +6,10 @@ import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { useAppContext } from '../../hooks/useAppContext';
-import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import {
+  MESSAGE_TYPES,
+  TRANSACTION_TYPES,
+} from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
 import { NFTView } from '../Transactions/components/NFTView';
@@ -18,6 +21,7 @@ export const TransferTokenConfirmation = ({
   formData,
   walletAddress,
   selectedNFT,
+  selectedAddressIndex,
 }) => {
   const { navigate } = useAppContext();
   const [loading, setLoading] = useState(false);
@@ -52,8 +56,12 @@ export const TransferTokenConfirmation = ({
         // Process transaction
         sendMessage(
           {
-            message: MESSAGE_TYPES.SEND_TRANSFER_TRANSACTION,
-            data: { txs: formData.txs },
+            message: MESSAGE_TYPES.SEND_TRANSACTION,
+            data: {
+              rawTx: formData.rawTx,
+              selectedAddressIndex,
+              txType: TRANSACTION_TYPES.DOGINAL_TX,
+            },
           },
           (txId) => {
             if (txId) {
@@ -95,8 +103,9 @@ export const TransferTokenConfirmation = ({
   }, [
     formData.address,
     formData.dogeAmount,
-    formData.txs,
+    formData.rawTx,
     navigate,
+    selectedAddressIndex,
     setErrors,
     walletAddress,
   ]);

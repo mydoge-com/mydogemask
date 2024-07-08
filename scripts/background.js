@@ -566,7 +566,7 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
       };
       node
         .post(jsonrpcReq)
-        .json((jsonrpcRes) => {
+        .json(async (jsonrpcRes) => {
           // Open offscreen notification page to handle transaction status notifications
           chrome.offscreen
             ?.createDocument({
@@ -577,6 +577,20 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
               justification: 'Handle transaction status notifications',
             })
             .catch(() => {});
+
+          // Cache transaction if it's a DRC20 transaction
+
+          if (data.txType) {
+            const txsCache = (await getLocalValue(INSCRIPTION_TXS_CACHE)) ?? [];
+
+            txsCache.push({
+              txs: [jsonrpcRes.result],
+              txType: data.txType,
+              timestamp: Date.now(),
+            });
+
+            setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
+          }
 
           sendResponse(jsonrpcRes.result);
         })

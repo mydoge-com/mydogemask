@@ -132,7 +132,7 @@ export const AddressScreen = ({
                 colorScheme='coolGray'
                 onPress={() => navigate(-1)}
               >
-                Back
+                Go back
               </Button>
               <BigButton
                 variant='danger'
