@@ -1,4 +1,5 @@
 import wretch from 'wretch';
+// eslint-disable-next-line import/no-unresolved
 import { retry } from 'wretch/middlewares';
 
 import {
@@ -14,7 +15,7 @@ export const apiKey = process.env.NEXT_PUBLIC_NOWNODES_API_KEY;
 const retryOptions = retry({
   delayTimer: 500,
   delayRamp: (delay, nbOfAttempts) => delay * nbOfAttempts,
-  maxAttempts: 2,
+  maxAttempts: 3,
   until: (response) => response && response.ok,
   onRetry: null,
   retryOnNetworkError: false,

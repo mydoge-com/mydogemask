@@ -15,14 +15,17 @@ import { BsInfoCircleFill } from 'react-icons/bs';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
-import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import {
+  INSCRIPTION_TXS_CACHE,
+  MESSAGE_TYPES,
+  TRANSACTION_PENDING_TIME,
+  TRANSACTION_TYPES,
+} from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { getLocalValue } from '../../scripts/helpers/storage';
 import { sanitizeDogeInput } from '../../utils/formatters';
 
 const MAX_CHARACTERS = 10000;
-
-const TRANSACTION_CACHE_TIME = 1000 * 60 * 15;
 
 export const InscribeTokenAmount = ({
   setFormPage,
@@ -73,22 +76,22 @@ export const InscribeTokenAmount = ({
     Number(selectedToken.availableBalance) - pendingInscriptionAmount;
 
   // Fetch cached token transactions, filter out invalidated transactions
-  const fetchCachedTx = useCallback(async () => {
-    let txs = await getLocalValue(selectedToken.ticker);
+  const fetchCachedTxs = useCallback(async () => {
+    const transactionsCache = await getLocalValue(INSCRIPTION_TXS_CACHE);
 
-    if (txs?.length) {
-      txs = txs.filter(
+    if (transactionsCache?.length) {
+      const pendingInscriptions = transactionsCache.filter(
         (tx) =>
-          tx.txType === 'inscribe' &&
-          tx.timestamp + TRANSACTION_CACHE_TIME > Date.now()
+          tx.txType === TRANSACTION_TYPES.DRC20_AVAILABLE_TX &&
+          tx.timestamp + TRANSACTION_PENDING_TIME > Date.now()
       );
-      setCachedTx(txs);
+      setCachedTx(pendingInscriptions);
     }
-  }, [selectedToken.ticker]);
+  }, []);
 
   useEffect(() => {
-    fetchCachedTx();
-  }, [fetchCachedTx]);
+    fetchCachedTxs();
+  }, [fetchCachedTxs]);
 
   const onSetMax = useCallback(() => {
     onChangeTextToken(String(transferableBalance));

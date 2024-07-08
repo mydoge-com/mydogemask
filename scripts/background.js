@@ -6,13 +6,14 @@ import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
   CONNECTED_CLIENTS,
-  DRC20_INSCRIPTION_CACHE,
   FEE_RATE_KB,
+  INSCRIPTION_TXS_CACHE,
   MAX_UTXOS,
   MESSAGE_TYPES,
   MIN_TX_AMOUNT,
   ONBOARDING_COMPLETE,
   PASSWORD,
+  TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
 import { getAllInscriptions, inscribe } from './helpers/doginals';
@@ -626,18 +627,17 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       })
       .catch(() => {});
 
-    const inscriptionCache =
-      (await getLocalValue(DRC20_INSCRIPTION_CACHE)) ?? [];
+    const txsCache = (await getLocalValue(INSCRIPTION_TXS_CACHE)) ?? [];
 
-    inscriptionCache.push({
+    txsCache.push({
       txs: results,
-      txType: 'inscribe',
+      txType: TRANSACTION_TYPES.DRC20_AVAILABLE_TX,
       tokenAmount: data.tokenAmount,
       timestamp: Date.now(),
       ticker: data.ticker,
     });
 
-    setLocalValue({ [DRC20_INSCRIPTION_CACHE]: inscriptionCache });
+    setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
 
     sendResponse(results[1]);
   } catch (err) {
