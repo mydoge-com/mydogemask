@@ -25,6 +25,7 @@ async function run() {
   const keyPair1 = bitcoin.ECPair.fromWIF(process.env.WIF_1, network);
   const keyPair2 = bitcoin.ECPair.fromWIF(process.env.WIF_2, network);
   const psbt = new bitcoin.Psbt({ network });
+  psbt.setMaximumFeeRate(100000000);
 
   console.log('initialized keypairs and psbt');
 
@@ -35,12 +36,12 @@ async function run() {
   const value1 = sb.toBitcoin(tx1.data.vout[index1].value);
   const value2 = sb.toBitcoin(tx2.data.vout[index2].value);
   const amount = Number(process.env.AMOUNT);
+  const fee = Number(process.env.FEE);
 
   console.log('tx 1', tx1.data.txid, index1, value1);
   console.log('tx 2', tx2.data.txid, index2, value2);
-  console.log('amount', amount);
 
-  const change = Math.trunc(sb.toSatoshi(value1 + value2 - amount));
+  const change = Math.trunc(sb.toSatoshi(value1 + value2 - amount - fee));
   const changeAddress = bitcoin.payments.p2pkh({
     pubkey: keyPair1.publicKey,
     network,
@@ -49,8 +50,6 @@ async function run() {
     pubkey: keyPair2.publicKey,
     network,
   }).address;
-
-  console.log('calculated change', sb.toBitcoin(change));
 
   // Add Inputs
   psbt.addInput({
@@ -79,19 +78,24 @@ async function run() {
   psbt.signInput(0, keyPair1);
   const txHex = psbt.toHex();
 
-  // Print the raw transaction hex
+  // Print the raw transaction details
   console.log(changeAddress, 'sending', value1);
   console.log(signerAddress, 'sending', value2);
   console.log(
-    'with recipeint',
+    'recipeint',
     process.env.RECIPIENT_ADDRESS,
     'amount',
-    amount
+    amount,
+    'fee',
+    fee
   );
-  console.log('and change to', changeAddress, 'amount', sb.toBitcoin(change));
-  console.log('\nraw tx awaiting signature\n\n', txHex);
+  console.log('change', changeAddress, 'amount', sb.toBitcoin(change));
+  console.log(`\nraw tx awaiting signature on index 1\n\n${txHex}`);
 
+  // Finalize the transaction so we can compare the results
   const finalPsbt = bitcoin.Psbt.fromHex(txHex, { network });
+
+  finalPsbt.setMaximumFeeRate(100000000);
   finalPsbt.signInput(1, keyPair2);
 
   finalPsbt.validateSignaturesOfInput(1, keyPair2.publicKey);
@@ -103,7 +107,7 @@ async function run() {
 
   // Export the fully signed transaction ready for broadcast
   const finalTx = finalPsbt.extractTransaction().toHex();
-  console.log('\nfinal transaction\n\n', finalTx);
+  console.log(`\nfinal transaction\n\n${finalTx}`);
 }
 
 run()
