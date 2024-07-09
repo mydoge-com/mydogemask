@@ -10,6 +10,7 @@ import {
 import { useCallback } from 'react';
 
 import { BigButton } from '../../../components/Button';
+import { useCachedInscriptionTxs } from '../../../hooks/useCachedInscriptionTxs';
 import { Transaction } from './Transaction';
 
 export const TransactionsTab = ({
@@ -21,9 +22,18 @@ export const TransactionsTab = ({
   fetchMore,
   isLoadingMore,
 }) => {
+  const cachedInscriptions = useCachedInscriptionTxs({ filterPending: false });
+
   const renderItem = useCallback(
-    ({ item }) => <Transaction transaction={item} />,
-    []
+    ({ item }) => (
+      <Transaction
+        transaction={item}
+        cachedInscription={cachedInscriptions.find((inscription) =>
+          inscription.txs?.includes(item.id)
+        )}
+      />
+    ),
+    [cachedInscriptions]
   );
 
   return (

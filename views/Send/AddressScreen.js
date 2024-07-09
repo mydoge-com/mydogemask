@@ -3,11 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
 import { useAppContext } from '../../hooks/useAppContext';
-import {
-  INSCRIPTION_TXS_CACHE,
-  TRANSACTION_PENDING_TIME,
-} from '../../scripts/helpers/constants';
-import { getLocalValue } from '../../scripts/helpers/storage';
+import { useCachedInscriptionTxs } from '../../hooks/useCachedInscriptionTxs';
 import { validateAddress } from '../../scripts/helpers/wallet';
 
 export const AddressScreen = ({
@@ -54,22 +50,13 @@ export const AddressScreen = ({
 
   const [pendingTxsDialogOpen, setPendingTxsDialogOpen] = useState(false);
 
-  const fetchCachedTxs = useCallback(async () => {
-    const transactionsCache = await getLocalValue(INSCRIPTION_TXS_CACHE);
-
-    if (transactionsCache?.length) {
-      const pendingInscriptions = transactionsCache.filter(
-        (tx) => tx.timestamp + TRANSACTION_PENDING_TIME > Date.now()
-      );
-      if (pendingInscriptions.length > 0) {
-        setPendingTxsDialogOpen(true);
-      }
-    }
-  }, []);
+  const pendingTxs = useCachedInscriptionTxs({ filterPending: true });
 
   useEffect(() => {
-    fetchCachedTxs();
-  }, [fetchCachedTxs]);
+    if (pendingTxs.length > 0) {
+      setPendingTxsDialogOpen(true);
+    }
+  }, [pendingTxs]);
 
   return (
     <>
