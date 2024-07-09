@@ -23,7 +23,7 @@ import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export function ClientTransaction({ params, dispatch }) {
+export function ClientPSBT({ params, dispatch }) {
   const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
     params;
 
@@ -142,14 +142,14 @@ const ConfirmationModal = ({
     setLoading(true);
     sendMessage(
       {
-        message: MESSAGE_TYPES.SEND_TRANSACTION,
+        message: MESSAGE_TYPES.SEND_PSBT,
         data: { rawTx, selectedAddressIndex: addressIndex },
       },
       (txId) => {
         if (txId) {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
               data: { txId, originTabId, origin },
             },
             () => {
@@ -170,7 +170,7 @@ const ConfirmationModal = ({
         } else {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
               data: {
                 error: 'Failed to send transaction',
                 originTabId,

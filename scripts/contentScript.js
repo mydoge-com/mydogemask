@@ -454,11 +454,12 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
 
   async function onRequestPSBT({ origin, data }) {
     try {
+      // const client = await getConnectedClient(origin);
       const selectedAddressIndex = await getConnectedAddressIndex(origin);
 
       chrome.runtime.sendMessage(
         {
-          message: MESSAGE_TYPES.CREATE_PSBT,
+          message: MESSAGE_TYPES.SIGN_PSBT,
           data: {
             ...data,
             selectedAddressIndex,
@@ -469,7 +470,7 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
         ({ rawTx, fee, amount }) => {
           if (rawTx && fee && amount) {
             chrome.runtime.sendMessage({
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+              message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
               data: {
                 ...data,
                 rawTx,
@@ -486,7 +487,7 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
       handleError({
         errorMessage: e.message,
         origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
       });
     }
   }
@@ -497,7 +498,7 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
 
       chrome.runtime.sendMessage(
         {
-          message: MESSAGE_TYPES.CREATE_SIGNED_MESSAGE,
+          message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
           data: {
             ...data,
             selectedAddressIndex,

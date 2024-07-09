@@ -245,7 +245,11 @@ class MyDogeWallet {
    */
   requestPSBT(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
-      if (!data?.rawTx || data?.index === undefined) {
+      if (
+        !data?.rawTx ||
+        data?.index === undefined ||
+        Number.isNaN(data?.index)
+      ) {
         onError?.(new Error('Invalid data'));
         reject(new Error('Invalid data'));
         return;
@@ -264,7 +268,7 @@ class MyDogeWallet {
         reject,
         onSuccess,
         onError,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
       });
     });
   }

@@ -4,6 +4,7 @@ import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { ClientAvailableDRC20Transaction } from './ClientAvailableDRC20Transaction';
 import { ClientConnect } from './ClientConnect';
 import { ClientDoginalTransaction } from './ClientDoginalTransaction';
+import { ClientPSBT } from './ClientPSBT';
 import { ClientTransaction } from './ClientTransaction';
 
 const CLIENT_REQUEST_ROUTES = {
@@ -12,6 +13,7 @@ const CLIENT_REQUEST_ROUTES = {
   [MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION]: ClientDoginalTransaction,
   [MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION]:
     ClientAvailableDRC20Transaction,
+  [MESSAGE_TYPES.CLIENT_REQUEST_PSBT]: ClientPSBT,
 };
 
 export function ClientRequest() {
