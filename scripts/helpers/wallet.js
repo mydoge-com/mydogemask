@@ -81,12 +81,26 @@ export function signRawTx(rawTx, wif) {
 
 export function signRawPsbt(rawTx, index, wif) {
   const keyPair = fromWIF(wif);
-  const tx = bitcoin.Transaction.fromHex(rawTx);
-  const txb = bitcoin.TransactionBuilder.fromTransaction(tx, network);
+  const finalPsbt = bitcoin.Psbt.fromHex(rawTx, { network });
+  finalPsbt.setMaximumFeeRate(100000000);
 
-  txb.sign(index, keyPair);
+  // Sign / finalize inputs
+  finalPsbt.signInput(index, keyPair);
+  finalPsbt.finalizeInput(1);
+  finalPsbt.finalizeInput(0);
 
-  return txb.build().toHex();
+  // Get total outputs and fee
+  const amount = finalPsbt.txOutputs.reduce(
+    (acc, output) => acc + output.value,
+    0
+  );
+  const fee = finalPsbt.getFee();
+
+  return {
+    rawTx: finalPsbt.extractTransaction().toHex(),
+    fee: sb.toBitcoin(fee),
+    amount: sb.toBitcoin(amount),
+  };
 }
 
 export function signMessage(message, wif) {
