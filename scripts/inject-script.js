@@ -281,7 +281,7 @@ class MyDogeWallet {
    * @returns {Promise} Promise object represents the message signing request outcome.
    * @method
    */
-  signMessage(data, onSuccess, onError) {
+  requestSignedMessage(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
       if (!data?.message) {
         onError?.(new Error('Invalid data'));
