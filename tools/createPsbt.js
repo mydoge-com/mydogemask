@@ -21,27 +21,13 @@ const network = {
   wif: 0x80,
 };
 
+/*
+ * Create a PSBT with the first UTXOs from WIF_1 and WIF_2
+ * Sends AMOUNT to the RECIPIENT_ADDRESS and change to WIF_1
+ */
 async function run() {
   const keyPair1 = bitcoin.ECPair.fromWIF(process.env.WIF_1, network);
   const keyPair2 = bitcoin.ECPair.fromWIF(process.env.WIF_2, network);
-  const psbt = new bitcoin.Psbt({ network });
-  psbt.setMaximumFeeRate(100000000);
-
-  console.log('initialized keypairs and psbt');
-
-  const index1 = Number(process.env.INDEX_1);
-  const index2 = Number(process.env.INDEX_2);
-  const tx1 = await nownodes.get(`tx/${process.env.TXID_1}`);
-  const tx2 = await nownodes.get(`tx/${process.env.TXID_2}`);
-  const value1 = sb.toBitcoin(tx1.data.vout[index1].value);
-  const value2 = sb.toBitcoin(tx2.data.vout[index2].value);
-  const amount = Number(process.env.AMOUNT);
-  const fee = Number(process.env.FEE);
-
-  console.log('tx 1', tx1.data.txid, index1, value1);
-  console.log('tx 2', tx2.data.txid, index2, value2);
-
-  const change = Math.trunc(sb.toSatoshi(value1 + value2 - amount - fee));
   const changeAddress = bitcoin.payments.p2pkh({
     pubkey: keyPair1.publicKey,
     network,
@@ -50,15 +36,64 @@ async function run() {
     pubkey: keyPair2.publicKey,
     network,
   }).address;
+  const amount = Number(process.env.AMOUNT);
+  const fee = Number(process.env.FEE);
+  const psbt = new bitcoin.Psbt({ network });
+
+  psbt.setMaximumFeeRate(100000000);
+
+  console.log('initialized keypairs, amount, fee');
+
+  const utxos1 = (await nownodes.get(`utxo/${changeAddress}`)).data.sort(
+    (a, b) => {
+      const aValue = Number(a.value);
+      const bValue = Number(b.value);
+      return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
+    }
+  );
+  const utxos2 = (await nownodes.get(`utxo/${signerAddress}`)).data.sort(
+    (a, b) => {
+      const aValue = Number(a.value);
+      const bValue = Number(b.value);
+      return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
+    }
+  );
+
+  if (utxos1.length === 0) {
+    throw new Error('no utxos for address 1');
+  }
+
+  if (utxos2.length === 0) {
+    throw new Error('no utxos for address 2');
+  }
+
+  if (
+    sb.toBitcoin(Number(utxos1[0].value) + Number(utxos2[0].value)) <
+    amount + fee
+  ) {
+    throw new Error('no utxos for address 2');
+  }
+
+  const index1 = utxos1[0].vout;
+  const index2 = utxos2[0].vout;
+  const tx1 = await nownodes.get(`tx/${utxos1[0].txid}`);
+  const tx2 = await nownodes.get(`tx/${utxos2[0].txid}`);
+  const value1 = sb.toBitcoin(tx1.data.vout[index1].value);
+  const value2 = sb.toBitcoin(tx2.data.vout[index2].value);
+
+  console.log('tx 1', tx1.data.txid, index1, value1);
+  console.log('tx 2', tx2.data.txid, index2, value2);
+
+  const change = Math.trunc(sb.toSatoshi(value1 + value2 - amount - fee));
 
   // Add Inputs
   psbt.addInput({
-    hash: process.env.TXID_1,
+    hash: tx1.data.txid,
     index: index1,
     nonWitnessUtxo: Buffer.from(tx1.data.hex, 'hex'),
   });
   psbt.addInput({
-    hash: process.env.TXID_2,
+    hash: tx2.data.txid,
     index: index2,
     nonWitnessUtxo: Buffer.from(tx2.data.hex, 'hex'),
   });
