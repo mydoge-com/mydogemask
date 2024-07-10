@@ -1243,7 +1243,6 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE:
       onApproveConnection({ sender, sendResponse, data });
       break;
-
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });
       break;
