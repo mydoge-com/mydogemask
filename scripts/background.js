@@ -1019,11 +1019,11 @@ async function onApproveAvailableDRC20Transaction({
 
 async function onApproveTransaction({
   sendResponse,
-  data: { txId, error, originTabId, origin },
+  data: { txId, error, originTabId, origin, type },
 } = {}) {
   if (txId) {
     chrome.tabs?.sendMessage(originTabId, {
-      type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      type,
       data: {
         txId,
       },
@@ -1032,31 +1032,7 @@ async function onApproveTransaction({
     sendResponse(true);
   } else {
     chrome.tabs?.sendMessage(originTabId, {
-      type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-      error,
-      origin,
-    });
-    sendResponse(false);
-  }
-  return true;
-}
-
-async function onApproveDoginalTransaction({
-  sendResponse,
-  data: { txId, error, originTabId, origin },
-} = {}) {
-  if (txId) {
-    chrome.tabs?.sendMessage(originTabId, {
-      type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
-      data: {
-        txId,
-      },
-      origin,
-    });
-    sendResponse(true);
-  } else {
-    chrome.tabs?.sendMessage(originTabId, {
-      type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      type,
       error,
       origin,
     });
@@ -1267,15 +1243,7 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE:
       onApproveConnection({ sender, sendResponse, data });
       break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE:
-      onApproveTransaction({ data, sendResponse, sender });
-      break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
-      onApproveDoginalTransaction({ data, sendResponse, sender });
-      break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
-      onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
-      break;
+
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });
       break;
@@ -1296,6 +1264,14 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
     case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
       onRequestPopup({ data, sendResponse, sender, messageType: message });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE:
+    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
+    case MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE:
+      onApproveTransaction({ data, sendResponse, sender, type: message });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
+      onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
       break;
     default:
   }
