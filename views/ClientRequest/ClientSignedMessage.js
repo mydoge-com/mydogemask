@@ -43,6 +43,7 @@ export function ClientSignedMessage({ params, dispatch }) {
   }, []);
 
   const onRejectTransaction = useCallback(() => {
+    console.log('onRejectTransaction');
     sendMessage(
       {
         message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
@@ -129,6 +130,7 @@ const ConfirmationModal = ({
 
   const onSubmit = useCallback(async () => {
     setLoading(true);
+    console.log('submit signed message');
     sendMessage(
       {
         message: MESSAGE_TYPES.SIGN_MESSAGE,

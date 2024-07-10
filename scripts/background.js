@@ -536,6 +536,12 @@ async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
         decryptedWallet.children[data.selectedAddressIndex]
       );
 
+      console.log(
+        'onCreateSignedMessage signed message',
+        signedMessage,
+        sendResponse !== undefined
+      );
+
       sendResponse?.({
         signedMessage,
       });

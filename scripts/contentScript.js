@@ -505,20 +505,21 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
             message: data.message,
           },
         },
-        ({ signedMessage }) => {
-          if (signedMessage) {
-            window.postMessage(
-              {
-                type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
-                data: {
-                  signedMessage,
-                },
-              },
-              origin
-            );
-          } else {
-            throw new Error('Unable to sign message');
-          }
+        (response) => {
+          console.log('onRequestSignedMessage response', response);
+          // if (signedMessage) {
+          //   window.postMessage(
+          //     {
+          //       type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+          //       data: {
+          //         signedMessage,
+          //       },
+          //     },
+          //     origin
+          //   );
+          // } else {
+          //   throw new Error('Unable to sign message');
+          // }
         }
       );
     } catch (e) {
