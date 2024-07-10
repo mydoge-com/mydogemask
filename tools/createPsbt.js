@@ -63,28 +63,38 @@ async function run() {
     throw new Error('no utxos for address 1');
   }
 
-  if (utxos2.length === 0) {
-    throw new Error('no utxos for address 2');
+  if (utxos2.length < 2) {
+    throw new Error('need at least 2 utxos for address 2');
   }
 
   if (
-    sb.toBitcoin(Number(utxos1[0].value) + Number(utxos2[0].value)) <
+    sb.toBitcoin(
+      Number(utxos1[0].value) +
+        Number(utxos2[0].value) +
+        Number(utxos2[1].value)
+    ) <
     amount + fee
   ) {
-    throw new Error('no utxos for address 2');
+    throw new Error('not enough funds to cover amount and fee');
   }
 
   const index1 = utxos1[0].vout;
   const index2 = utxos2[0].vout;
+  const index3 = utxos2[1].vout;
   const tx1 = await nownodes.get(`tx/${utxos1[0].txid}`);
   const tx2 = await nownodes.get(`tx/${utxos2[0].txid}`);
+  const tx3 = await nownodes.get(`tx/${utxos2[1].txid}`);
   const value1 = sb.toBitcoin(tx1.data.vout[index1].value);
   const value2 = sb.toBitcoin(tx2.data.vout[index2].value);
+  const value3 = sb.toBitcoin(tx3.data.vout[index3].value);
 
   console.log('tx 1', tx1.data.txid, index1, value1);
   console.log('tx 2', tx2.data.txid, index2, value2);
+  console.log('tx 2', tx3.data.txid, index3, value3);
 
-  const change = Math.trunc(sb.toSatoshi(value1 + value2 - amount - fee));
+  const change = Math.trunc(
+    sb.toSatoshi(value1 + value2 + value3 - amount - fee)
+  );
 
   // Add Inputs
   psbt.addInput({
@@ -96,6 +106,11 @@ async function run() {
     hash: tx2.data.txid,
     index: index2,
     nonWitnessUtxo: Buffer.from(tx2.data.hex, 'hex'),
+  });
+  psbt.addInput({
+    hash: tx3.data.txid,
+    index: index3,
+    nonWitnessUtxo: Buffer.from(tx3.data.hex, 'hex'),
   });
 
   // Add outputs
@@ -116,6 +131,7 @@ async function run() {
   // Print the raw transaction details
   console.log(changeAddress, 'sending', value1);
   console.log(signerAddress, 'sending', value2);
+  console.log(signerAddress, 'sending', value3);
   console.log(
     'recipeint',
     process.env.RECIPIENT_ADDRESS,
@@ -131,14 +147,17 @@ async function run() {
   const finalPsbt = bitcoin.Psbt.fromHex(txHex, { network });
 
   finalPsbt.setMaximumFeeRate(100000000);
-  finalPsbt.signInput(1, keyPair2);
 
+  finalPsbt.validateSignaturesOfInput(0, keyPair1.publicKey);
+  finalPsbt.finalizeInput(0);
+
+  finalPsbt.signInput(1, keyPair2);
   finalPsbt.validateSignaturesOfInput(1, keyPair2.publicKey);
   finalPsbt.finalizeInput(1);
 
-  // Finalize the first input (assuming it wasn't done before)
-  finalPsbt.validateSignaturesOfInput(0, keyPair1.publicKey);
-  finalPsbt.finalizeInput(0);
+  finalPsbt.signInput(2, keyPair2);
+  finalPsbt.validateSignaturesOfInput(2, keyPair2.publicKey);
+  finalPsbt.finalizeInput(2);
 
   // Export the fully signed transaction ready for broadcast
   const finalTx = finalPsbt.extractTransaction().toHex();
