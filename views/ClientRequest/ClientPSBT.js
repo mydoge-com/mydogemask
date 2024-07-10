@@ -47,7 +47,7 @@ export function ClientPSBT({ params, dispatch }) {
   const onRejectTransaction = useCallback(() => {
     sendMessage(
       {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+        message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
         data: { error: 'User refused transaction', originTabId, origin },
       },
       () => {
