@@ -493,62 +493,6 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onSignPSBT({ data = {}, sendResponse } = {}) {
-  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-    ([wallet, password]) => {
-      const decryptedWallet = decrypt({
-        data: wallet,
-        password,
-      });
-      if (!decryptedWallet) {
-        sendResponse?.(false);
-      }
-
-      const { rawTx, fee, amount } = signRawPsbt(
-        data.rawTx,
-        data.index,
-        decryptedWallet.children[data.selectedAddressIndex]
-      );
-
-      sendResponse?.({
-        rawTx,
-        fee,
-        amount,
-      });
-    }
-  );
-}
-
-async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
-  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-    ([wallet, password]) => {
-      const decryptedWallet = decrypt({
-        data: wallet,
-        password,
-      });
-
-      if (!decryptedWallet) {
-        sendResponse?.(false);
-      }
-
-      const signedMessage = signMessage(
-        data.message,
-        decryptedWallet.children[data.selectedAddressIndex]
-      );
-
-      console.log(
-        'onCreateSignedMessage signed message',
-        signedMessage,
-        sendResponse !== undefined
-      );
-
-      sendResponse?.({
-        signedMessage,
-      });
-    }
-  );
-}
-
 function onSendTransaction({ data = {}, sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
     ([wallet, password]) => {
@@ -667,6 +611,32 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
   }
 }
 
+async function onSignPSBT({ data = {}, sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+      }
+
+      const { rawTx, fee, amount } = signRawPsbt(
+        data.rawTx,
+        data.index,
+        decryptedWallet.children[data.selectedAddressIndex]
+      );
+
+      sendResponse?.({
+        rawTx,
+        fee,
+        amount,
+      });
+    }
+  );
+}
+
 async function onSendPSBT({ data = {}, sendResponse } = {}) {
   try {
     const jsonrpcReq = {
@@ -701,11 +671,49 @@ async function onSendPSBT({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onRequestPopup({
-  data,
+async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+      }
+
+      const signedMessage = signMessage(
+        data.message,
+        decryptedWallet.children[data.selectedAddressIndex]
+      );
+
+      sendResponse?.(signedMessage);
+    }
+  );
+}
+
+async function onRequestTransaction({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+  });
+  return true;
+}
+
+async function onRequestDoginalTransaction({
+  data = {},
   sendResponse,
   sender,
-  messageType,
 } = {}) {
   const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
     sender.origin
@@ -718,7 +726,62 @@ async function onRequestPopup({
     sendResponse,
     sender,
     data,
-    messageType,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
+  });
+  return true;
+}
+
+async function onRequestAvailableDRC20Transaction({
+  data,
+  sendResponse,
+  sender,
+} = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
+  });
+  return true;
+}
+
+async function onRequestPSBT({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
+  });
+  return true;
+}
+
+async function onRequestSignedMessage({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
   });
   return true;
 }
@@ -1025,11 +1088,11 @@ async function onApproveAvailableDRC20Transaction({
 
 async function onApproveTransaction({
   sendResponse,
-  data: { txId, error, originTabId, origin, type },
+  data: { txId, error, originTabId, origin },
 } = {}) {
   if (txId) {
     chrome.tabs?.sendMessage(originTabId, {
-      type,
+      type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
       data: {
         txId,
       },
@@ -1038,7 +1101,55 @@ async function onApproveTransaction({
     sendResponse(true);
   } else {
     chrome.tabs?.sendMessage(originTabId, {
-      type,
+      type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
+async function onApproveDoginalTransaction({
+  sendResponse,
+  data: { txId, error, originTabId, origin },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      data: {
+        txId,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
+async function onApprovePSBT({
+  sendResponse,
+  data: { txId, error, originTabId, origin },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+      data: {
+        txId,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
       error,
       origin,
     });
@@ -1049,11 +1160,11 @@ async function onApproveTransaction({
 
 async function onApproveSignedMessage({
   sendResponse,
-  data: { signedMessage, error, originTabId, origin, type },
+  data: { signedMessage, error, originTabId, origin },
 } = {}) {
   if (signedMessage) {
     chrome.tabs?.sendMessage(originTabId, {
-      type,
+      type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
       data: {
         signedMessage,
       },
@@ -1062,7 +1173,7 @@ async function onApproveSignedMessage({
     sendResponse(true);
   } else {
     chrome.tabs?.sendMessage(originTabId, {
-      type,
+      type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
       error,
       origin,
     });
@@ -1225,6 +1336,12 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION:
       onInscribeTransferTransaction({ data, sendResponse });
       break;
+    case MESSAGE_TYPES.SIGN_PSBT:
+      onSignPSBT({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.SEND_PSBT:
+      onSendPSBT({ data, sendResponse });
+      break;
     case MESSAGE_TYPES.SIGN_MESSAGE:
       onCreateSignedMessage({ data, sendResponse });
       break;
@@ -1233,12 +1350,6 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.SEND_TRANSFER_TRANSACTION:
       onSendInscribeTransfer({ data, sender, sendResponse });
-      break;
-    case MESSAGE_TYPES.SIGN_PSBT:
-      onSignPSBT({ data, sendResponse });
-      break;
-    case MESSAGE_TYPES.SEND_PSBT:
-      onSendPSBT({ data, sendResponse });
       break;
     case MESSAGE_TYPES.IS_ONBOARDING_COMPLETE:
       getOnboardingStatus({ data, sendResponse, sender });
@@ -1273,6 +1384,36 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE:
       onApproveConnection({ sender, sendResponse, data });
       break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
+      onRequestTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE:
+      onApproveTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
+      onRequestDoginalTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
+      onApproveDoginalTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
+      onRequestAvailableDRC20Transaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
+      onRequestPSBT({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE:
+      onApprovePSBT({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
+      onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
+      onRequestSignedMessage({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
+      onApproveSignedMessage({ data, sendResponse, sender });
+      break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });
       break;
@@ -1287,24 +1428,6 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.NOTIFY_TRANSACTION_SUCCESS:
       onNotifyTransactionSuccess({ sender, sendResponse, data });
-      break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
-    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
-    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
-    case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
-    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
-      onRequestPopup({ data, sendResponse, sender, messageType: message });
-      break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE:
-    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
-    case MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE:
-      onApproveTransaction({ data, sendResponse, sender, type: message });
-      break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
-      onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
-      break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
-      onApproveSignedMessage({ data, sendResponse, sender });
       break;
     default:
   }
