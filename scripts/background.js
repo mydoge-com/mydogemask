@@ -1041,6 +1041,30 @@ async function onApproveTransaction({
   return true;
 }
 
+async function onApproveSignedMessage({
+  sendResponse,
+  data: { signedMessage, error, originTabId, origin, type },
+} = {}) {
+  if (signedMessage) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type,
+      data: {
+        signedMessage,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
 async function onGetConnectedClients({ sendResponse } = {}) {
   const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || {};
   sendResponse(connectedClients);
@@ -1195,7 +1219,7 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION:
       onInscribeTransferTransaction({ data, sendResponse });
       break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
+    case MESSAGE_TYPES.SIGN_MESSAGE:
       onCreateSignedMessage({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SEND_TRANSACTION:
@@ -1262,6 +1286,7 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
     case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
+    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
       onRequestPopup({ data, sendResponse, sender, messageType: message });
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE:
@@ -1271,6 +1296,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
       onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
+      onApproveSignedMessage({ data, sendResponse, sender });
       break;
     default:
   }

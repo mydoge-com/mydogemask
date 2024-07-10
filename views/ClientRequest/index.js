@@ -5,6 +5,7 @@ import { ClientAvailableDRC20Transaction } from './ClientAvailableDRC20Transacti
 import { ClientConnect } from './ClientConnect';
 import { ClientDoginalTransaction } from './ClientDoginalTransaction';
 import { ClientPSBT } from './ClientPSBT';
+import { ClientSignedMessage } from './ClientSignedMessage';
 import { ClientTransaction } from './ClientTransaction';
 
 const CLIENT_REQUEST_ROUTES = {
@@ -14,6 +15,7 @@ const CLIENT_REQUEST_ROUTES = {
   [MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION]:
     ClientAvailableDRC20Transaction,
   [MESSAGE_TYPES.CLIENT_REQUEST_PSBT]: ClientPSBT,
+  [MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE]: ClientSignedMessage,
 };
 
 export function ClientRequest() {

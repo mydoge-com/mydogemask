@@ -71,6 +71,7 @@ export const MESSAGE_TYPES = {
   SEND_TRANSFER_TRANSACTION: 'sendInscribeTransferTransaction',
   SIGN_PSBT: 'signPsbt',
   SEND_PSBT: 'sendPsbt',
+  SIGN_MESSAGE: 'signMessage',
   GET_CONNECTED_CLIENTS: 'getConnectedClients',
   UPDATE_ADDRESS_NICKNAME: 'updateAddressNickname',
   NOTIFY_TRANSACTION_SUCCESS: 'notifyTransactionSuccess',
