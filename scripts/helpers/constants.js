@@ -37,8 +37,8 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION: 'clientRequestDRC20Transaction',
   CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
     'clientRequestDRC20TransactionResponse',
-  CLIENT_REQUEST_PSBT: 'clientRequestSignPsbt',
-  CLIENT_REQUEST_PSBT_RESPONSE: 'clientRequestSendPsbtResponse',
+  CLIENT_REQUEST_PSBT: 'clientRequestPsbt',
+  CLIENT_REQUEST_PSBT_RESPONSE: 'clientRequestPsbtResponse',
   CLIENT_REQUEST_SIGNED_MESSAGE: 'clientRequestSignedMessage',
   CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE: 'clientRequestSignedMessageResponse',
   CLIENT_DISCONNECT: 'clientDisconnect',
