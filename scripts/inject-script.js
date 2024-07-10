@@ -237,7 +237,7 @@ class MyDogeWallet {
 
   /**
    * Requests the signing of a partially signed Bitcoin transaction (PSBT) based on provided data.
-   * @param {Object} data - Data required for signing the PSBT, must contain 'rawTx' and an 'index'.
+   * @param {Object} data - Data required for signing the PSBT, must contain 'rawTx' and an array of indexes to sign 'indexes'.
    * @param {Function} [onSuccess] - Callback function to execute upon successful signing.
    * @param {Function} [onError] - Callback function to execute upon error in signing the PSBT.
    * @returns {Promise} Promise object represents the signing request outcome.
@@ -245,11 +245,8 @@ class MyDogeWallet {
    */
   requestPSBT(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
-      if (
-        !data?.rawTx ||
-        data?.index === undefined ||
-        Number.isNaN(data?.index)
-      ) {
+      console.log('requestPSBT data', data);
+      if (!data?.rawTx || !data?.indexes?.length) {
         onError?.(new Error('Invalid data'));
         reject(new Error('Invalid data'));
         return;

@@ -464,7 +464,7 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
             ...data,
             selectedAddressIndex,
             rawTx: data.rawTx,
-            index: data.index,
+            indexes: data.indexes,
           },
         },
         ({ rawTx, fee, amount }) => {
