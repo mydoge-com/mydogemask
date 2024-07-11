@@ -45,7 +45,7 @@ export function fromWIF(wif) {
   return new bitcoin.ECPair.fromWIF(wif, network); // eslint-disable-line
 }
 
-export function decodeRawTx(rawTx) {
+export function decodeRawPsbt(rawTx) {
   return bitcoin.Psbt.fromHex(rawTx);
 }
 

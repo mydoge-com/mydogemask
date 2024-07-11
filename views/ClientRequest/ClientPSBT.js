@@ -24,7 +24,7 @@ import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
-import { decodeRawTx } from '../../scripts/helpers/wallet';
+import { decodeRawPsbt } from '../../scripts/helpers/wallet';
 import { logError } from '../../utils/error';
 
 export function ClientPSBT({ params, dispatch, connectedClient }) {
@@ -34,7 +34,7 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
   }, [dispatch]);
 
-  const psbt = decodeRawTx(rawTx);
+  const psbt = decodeRawPsbt(rawTx);
 
   let inputs = psbt?.txInputs;
   inputs = inputs.map((input, index) => {

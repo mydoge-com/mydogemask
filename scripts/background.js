@@ -981,7 +981,6 @@ function onUpdateAddressNickname({ sendResponse, data } = {}) {
         password,
       });
 
-      console.log('decryptedWallet', decryptedWallet);
       if (!decryptedWallet) {
         sendResponse?.(false);
         return;
