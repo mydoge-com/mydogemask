@@ -1,6 +1,10 @@
+import { useEffect, useState } from 'react';
+
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import { getConnectedClient } from '../../scripts/helpers/data';
+import { logError } from '../../utils/error';
 import { ClientAvailableDRC20Transaction } from './ClientAvailableDRC20Transaction';
 import { ClientConnect } from './ClientConnect';
 import { ClientDoginalTransaction } from './ClientDoginalTransaction';
@@ -20,6 +24,17 @@ const CLIENT_REQUEST_ROUTES = {
 
 export function ClientRequest() {
   const { wallet, clientRequest, dispatch } = useAppContext();
+  const [connectedClient, setConnectedClient] = useState({});
+  const { origin } = clientRequest.params;
+
+  useEffect(() => {
+    (async () => {
+      const client = await getConnectedClient(origin).catch((e) => logError(e));
+      if (client) {
+        setConnectedClient(client);
+      }
+    })();
+  }, [origin]);
 
   const RenderScreen = CLIENT_REQUEST_ROUTES[clientRequest.requestType];
 
@@ -31,6 +46,7 @@ export function ClientRequest() {
         params={clientRequest.params}
         wallet={wallet}
         dispatch={dispatch}
+        connectedClient={connectedClient}
       />
     </Layout>
   );

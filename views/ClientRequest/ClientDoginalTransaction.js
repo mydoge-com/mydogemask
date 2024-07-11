@@ -23,7 +23,11 @@ import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
 import { NFTView } from '../Transactions/components/NFTView';
 
-export function ClientDoginalTransaction({ params, dispatch }) {
+export function ClientDoginalTransaction({
+  params,
+  dispatch,
+  connectedClient,
+}) {
   const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
     params;
 
@@ -78,7 +82,7 @@ export function ClientDoginalTransaction({ params, dispatch }) {
       <Text fontSize='2xl' pb='24px'>
         Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
-      <WalletAddress />
+      <WalletAddress address={connectedClient.address} />
       <Text fontSize='lg' textAlign='center' fontWeight='semibold'>
         Transfer
       </Text>

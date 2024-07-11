@@ -45,6 +45,10 @@ export function fromWIF(wif) {
   return new bitcoin.ECPair.fromWIF(wif, network); // eslint-disable-line
 }
 
+export function decodeRawTx(rawTx) {
+  return bitcoin.Psbt.fromHex(rawTx);
+}
+
 export function validateAddress(data) {
   return Validator.validate(data, 'doge', 'prod');
 }

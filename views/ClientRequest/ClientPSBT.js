@@ -5,6 +5,8 @@ import {
   Center,
   HStack,
   Modal,
+  Popover,
+  Pressable,
   Spinner,
   Text,
   Toast,
@@ -12,31 +14,54 @@ import {
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
+import { MdOutlineKeyboardArrowRight } from 'react-icons/md';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
-import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
+import { decodeRawTx } from '../../scripts/helpers/wallet';
+import { logError } from '../../utils/error';
 
-export function ClientPSBT({ params, dispatch }) {
-  const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
-    params;
+export function ClientPSBT({ params, dispatch, connectedClient }) {
+  const { originTabId, origin, dogeAmount, rawTx, fee } = params;
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
   }, [dispatch]);
 
+  const psbt = decodeRawTx(rawTx);
+
+  let inputs = psbt?.txInputs;
+  inputs = inputs.map((input, index) => {
+    return {
+      inputIndex: index,
+      txid: input.hash.toString('hex'),
+      vout: input.index,
+    };
+  });
+
+  let outputs = psbt?.txOutputs;
+  outputs = outputs.map((output, index) => {
+    return {
+      outputIndex: index,
+      address: output.address,
+      value: output.value,
+    };
+  });
+
   const [addressIndex, setAddressIndex] = useState();
 
   useEffect(() => {
-    getConnectedAddressIndex(origin).then((index) => {
-      setAddressIndex(index);
-    });
+    getConnectedAddressIndex(origin)
+      .then((index) => {
+        setAddressIndex(index);
+      })
+      .catch((e) => logError(e));
   }, [origin]);
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
@@ -77,13 +102,162 @@ export function ClientPSBT({ params, dispatch }) {
       <Text fontSize='2xl'>
         Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
-      <Center pt='16px'>
-        <WalletAddress />
+      <Center pt='16px' w='300px'>
+        <WalletAddress address={connectedClient.address} />
         <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-          Paying
+          Sign PSTB
         </Text>
-        <OriginBadge origin={origin} mt='12px' mb='20px' />
-        <RecipientAddress address={recipientAddress} />
+        <OriginBadge origin={origin} mt='12px' mb='10px' />
+        <VStack pt='12px' pb='20px' justifyContent='center'>
+          {inputs?.length ? (
+            <HStack>
+              <Text fontSize='14px' fontWeight='semibold' color='gray.500'>
+                Inputs ({inputs.length})
+              </Text>
+              <Popover
+                trigger={(triggerProps) => {
+                  return (
+                    <Pressable {...triggerProps} position='absolute'>
+                      <MdOutlineKeyboardArrowRight size={24} />
+                    </Pressable>
+                  );
+                }}
+              >
+                <Popover.Content>
+                  <Popover.Arrow />
+                  <Popover.Body>
+                    <VStack space='16px'>
+                      {inputs.map(({ inputIndex, txid, vout }) => (
+                        <VStack
+                          alignItems='flex-start'
+                          justifyContent='flex-start'
+                          w='300px'
+                          key={inputIndex}
+                        >
+                          <Text
+                            fontSize='14px'
+                            fontWeight='bold'
+                            paddingBottom='10px'
+                          >
+                            Input Index {inputIndex}
+                          </Text>
+                          <VStack>
+                            <Text
+                              fontSize='10px'
+                              fontWeight='medium'
+                              color='gray.600'
+                            >
+                              Transaction ID
+                            </Text>
+                            <Text
+                              fontSize='12px'
+                              fontWeight='medium'
+                              color='gray.600'
+                              width='300px'
+                            >
+                              {txid}
+                            </Text>
+                          </VStack>
+                          <VStack>
+                            <Text
+                              fontSize='10px'
+                              fontWeight='medium'
+                              color='gray.500'
+                            >
+                              Vout
+                            </Text>
+                            <Text
+                              fontSize='12px'
+                              fontWeight='medium'
+                              color='gray.700'
+                            >
+                              {vout}
+                            </Text>
+                          </VStack>
+                        </VStack>
+                      ))}
+                    </VStack>
+                  </Popover.Body>
+                </Popover.Content>
+              </Popover>
+            </HStack>
+          ) : null}
+          {outputs?.length ? (
+            <HStack>
+              <Text fontSize='14px' fontWeight='semibold' color='gray.500'>
+                Outputs ({outputs.length})
+              </Text>
+              <Popover
+                trigger={(triggerProps) => {
+                  return (
+                    <Pressable {...triggerProps} position='absolute'>
+                      <MdOutlineKeyboardArrowRight size={24} />
+                    </Pressable>
+                  );
+                }}
+              >
+                <Popover.Content>
+                  <Popover.Arrow />
+                  <Popover.Body>
+                    <VStack space='16px'>
+                      {outputs.map(({ outputIndex, address, value }) => (
+                        <VStack
+                          alignItems='flex-start'
+                          justifyContent='flex-start'
+                          w='300px'
+                          key={outputIndex}
+                        >
+                          <Text
+                            fontSize='14px'
+                            fontWeight='bold'
+                            paddingBottom='6px'
+                          >
+                            Output Index {outputIndex}
+                          </Text>
+                          <VStack>
+                            <Text
+                              fontSize='10px'
+                              fontWeight='medium'
+                              color='gray.600'
+                            >
+                              Address:{' '}
+                            </Text>
+                            <Text
+                              fontSize='12px'
+                              fontWeight='medium'
+                              color='gray.600'
+                              width='300px'
+                            >
+                              {address}
+                            </Text>
+                          </VStack>
+                          <VStack>
+                            <Text
+                              fontSize='10px'
+                              fontWeight='medium'
+                              color='gray.600'
+                            >
+                              Value
+                            </Text>
+                            <Text
+                              fontSize='12px'
+                              fontWeight='medium'
+                              color='gray.600'
+                            >
+                              {value}
+                            </Text>
+                          </VStack>
+                        </VStack>
+                      ))}
+                    </VStack>
+                  </Popover.Body>
+                </Popover.Content>
+              </Popover>
+            </HStack>
+          ) : null}
+        </VStack>
+
+        {/* <RecipientAddress address={recipientAddress} /> */}
 
         <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
           Ð{dogeAmount}
@@ -117,7 +291,7 @@ export function ClientPSBT({ params, dispatch }) {
         rawTx={rawTx}
         addressIndex={addressIndex}
         handleWindowClose={handleWindowClose}
-        recipientAddress={recipientAddress}
+        // recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}
       />
     </>
@@ -132,7 +306,7 @@ const ConfirmationModal = ({
   addressIndex,
   originTabId,
   handleWindowClose,
-  recipientAddress,
+  // recipientAddress,
   dogeAmount,
 }) => {
   const cancelRef = useRef();
@@ -146,6 +320,7 @@ const ConfirmationModal = ({
         data: { rawTx, selectedAddressIndex: addressIndex },
       },
       (txId) => {
+        setLoading(false);
         if (txId) {
           sendMessage(
             {
@@ -220,11 +395,11 @@ const ConfirmationModal = ({
             <VStack alignItems='center'>
               <Text>
                 Confirm transaction to send{' '}
-                <Text fontWeight='bold'>Ð{dogeAmount}</Text> to{' '}
+                <Text fontWeight='bold'>Ð{dogeAmount}</Text>
               </Text>
-              <Text fontSize='10px' fontWeight='bold'>
+              {/* <Text fontSize='10px' fontWeight='bold'>
                 {recipientAddress}
-              </Text>
+              </Text> */}
             </VStack>
           </AlertDialog.Body>
           <AlertDialog.Footer>
@@ -234,10 +409,11 @@ const ConfirmationModal = ({
                 colorScheme='coolGray'
                 onPress={onClose}
                 ref={cancelRef}
+                disabled={loading}
               >
                 Cancel
               </Button>
-              <BigButton onPress={onSubmit} px='24px'>
+              <BigButton onPress={onSubmit} px='24px' disabled>
                 Confirm
               </BigButton>
             </Button.Group>

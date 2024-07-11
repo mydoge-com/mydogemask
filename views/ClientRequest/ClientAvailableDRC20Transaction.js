@@ -20,7 +20,11 @@ import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export function ClientAvailableDRC20Transaction({ params, dispatch }) {
+export function ClientAvailableDRC20Transaction({
+  params,
+  dispatch,
+  connectedClient,
+}) {
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
   }, [dispatch]);
@@ -66,7 +70,7 @@ export function ClientAvailableDRC20Transaction({ params, dispatch }) {
       <Text fontSize='2xl' pb='24px'>
         Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
-      <WalletAddress />
+      <WalletAddress address={connectedClient.address} />
       <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
         Inscribing
       </Text>

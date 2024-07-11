@@ -454,7 +454,6 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
 
   async function onRequestPSBT({ origin, data }) {
     try {
-      // const client = await getConnectedClient(origin);
       const selectedAddressIndex = await getConnectedAddressIndex(origin);
 
       chrome.runtime.sendMessage(

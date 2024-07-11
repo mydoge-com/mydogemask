@@ -23,7 +23,7 @@ import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export function ClientTransaction({ params, dispatch }) {
+export function ClientTransaction({ params, dispatch, connectedClient }) {
   const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
     params;
 
@@ -78,7 +78,7 @@ export function ClientTransaction({ params, dispatch }) {
         Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
       <Center pt='16px'>
-        <WalletAddress />
+        <WalletAddress address={connectedClient.address} />
         <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
           Paying
         </Text>

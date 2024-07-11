@@ -612,29 +612,37 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
 }
 
 async function onSignPSBT({ data = {}, sendResponse } = {}) {
-  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-    ([wallet, password]) => {
-      const decryptedWallet = decrypt({
-        data: wallet,
-        password,
-      });
-      if (!decryptedWallet) {
-        sendResponse?.(false);
-      }
+  try {
+    const [wallet, password] = await Promise.all([
+      getLocalValue(WALLET),
+      getSessionValue(PASSWORD),
+    ]);
 
-      const { rawTx, fee, amount } = signRawPsbt(
-        data.rawTx,
-        data.indexes,
-        decryptedWallet.children[data.selectedAddressIndex]
-      );
-
-      sendResponse?.({
-        rawTx,
-        fee,
-        amount,
-      });
+    const decryptedWallet = decrypt({
+      data: wallet,
+      password,
+    });
+    if (!decryptedWallet) {
+      sendResponse?.(false);
     }
-  );
+
+    const { rawTx, fee, amount } = signRawPsbt(
+      data.rawTx,
+      data.index,
+      decryptedWallet.children[data.selectedAddressIndex]
+    );
+
+    sendResponse?.({
+      rawTx,
+      fee,
+      amount,
+    });
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+
+  return true;
 }
 
 async function onSendPSBT({ data = {}, sendResponse } = {}) {
@@ -972,6 +980,8 @@ function onUpdateAddressNickname({ sendResponse, data } = {}) {
         data: wallet,
         password,
       });
+
+      console.log('decryptedWallet', decryptedWallet);
       if (!decryptedWallet) {
         sendResponse?.(false);
         return;
