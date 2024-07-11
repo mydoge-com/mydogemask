@@ -46,7 +46,7 @@ export function fromWIF(wif) {
 }
 
 export function decodeRawPsbt(rawTx) {
-  return bitcoin.Psbt.fromHex(rawTx);
+  return bitcoin.Psbt.fromHex(rawTx, { network });
 }
 
 export function validateAddress(data) {
