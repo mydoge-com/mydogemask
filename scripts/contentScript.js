@@ -452,7 +452,7 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
     }
   }
 
-  async function onRequestPSBT({ origin, data }) {
+  async function onRequestPsbt({ origin, data }) {
     try {
       const selectedAddressIndex = await getConnectedAddressIndex(origin);
 
@@ -560,7 +560,7 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
           onRequestAvailableDRC20Transaction({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
-          onRequestPSBT({ origin: source.origin, data });
+          onRequestPsbt({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
           onRequestSignedMessage({ origin: source.origin, data });

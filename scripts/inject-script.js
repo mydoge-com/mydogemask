@@ -243,7 +243,7 @@ class MyDogeWallet {
    * @returns {Promise} Promise object represents the signing request outcome.
    * @method
    */
-  requestPSBT(data, onSuccess, onError) {
+  requestPsbt(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
       if (!data?.rawTx || !data?.indexes?.length) {
         onError?.(new Error('Invalid data'));

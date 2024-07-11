@@ -611,7 +611,7 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onSignPSBT({ data = {}, sendResponse } = {}) {
+async function onSignPsbt({ data = {}, sendResponse } = {}) {
   try {
     const [wallet, password] = await Promise.all([
       getLocalValue(WALLET),
@@ -645,7 +645,7 @@ async function onSignPSBT({ data = {}, sendResponse } = {}) {
   return true;
 }
 
-async function onSendPSBT({ data = {}, sendResponse } = {}) {
+async function onSendPsbt({ data = {}, sendResponse } = {}) {
   try {
     const jsonrpcReq = {
       API_key: apiKey,
@@ -760,7 +760,7 @@ async function onRequestAvailableDRC20Transaction({
   return true;
 }
 
-async function onRequestPSBT({ data, sendResponse, sender } = {}) {
+async function onRequestPsbt({ data, sendResponse, sender } = {}) {
   const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
     sender.origin
   ];
@@ -1143,7 +1143,7 @@ async function onApproveDoginalTransaction({
   return true;
 }
 
-async function onApprovePSBT({
+async function onApprovePsbt({
   sendResponse,
   data: { txId, error, originTabId, origin },
 } = {}) {
@@ -1346,10 +1346,10 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       onInscribeTransferTransaction({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SIGN_PSBT:
-      onSignPSBT({ data, sendResponse });
+      onSignPsbt({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SEND_PSBT:
-      onSendPSBT({ data, sendResponse });
+      onSendPsbt({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SIGN_MESSAGE:
       onCreateSignedMessage({ data, sendResponse });
@@ -1409,10 +1409,10 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       onRequestAvailableDRC20Transaction({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
-      onRequestPSBT({ data, sendResponse, sender });
+      onRequestPsbt({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE:
-      onApprovePSBT({ data, sendResponse, sender });
+      onApprovePsbt({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
       onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
