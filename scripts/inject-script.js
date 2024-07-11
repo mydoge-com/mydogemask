@@ -245,7 +245,6 @@ class MyDogeWallet {
    */
   requestPSBT(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
-      console.log('requestPSBT data', data);
       if (!data?.rawTx || !data?.indexes?.length) {
         onError?.(new Error('Invalid data'));
         reject(new Error('Invalid data'));
