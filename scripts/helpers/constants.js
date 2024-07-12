@@ -72,6 +72,7 @@ export const MESSAGE_TYPES = {
   SIGN_PSBT: 'signPsbt',
   SEND_PSBT: 'sendPsbt',
   SIGN_MESSAGE: 'signMessage',
+  GET_PSBT_FEE: 'getPsbtFee',
   GET_CONNECTED_CLIENTS: 'getConnectedClients',
   UPDATE_ADDRESS_NICKNAME: 'updateAddressNickname',
   NOTIFY_TRANSACTION_SUCCESS: 'notifyTransactionSuccess',

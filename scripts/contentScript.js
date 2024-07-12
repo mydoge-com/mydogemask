@@ -456,32 +456,13 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
     try {
       const selectedAddressIndex = await getConnectedAddressIndex(origin);
 
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.SIGN_PSBT,
-          data: {
-            ...data,
-            selectedAddressIndex,
-            rawTx: data.rawTx,
-            indexes: data.indexes,
-          },
+      chrome.runtime.sendMessage({
+        message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
+        data: {
+          ...data,
+          selectedAddressIndex,
         },
-        ({ rawTx, fee, amount }) => {
-          if (rawTx && fee && amount) {
-            chrome.runtime.sendMessage({
-              message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
-              data: {
-                ...data,
-                rawTx,
-                fee,
-                dogeAmount: amount,
-              },
-            });
-          } else {
-            throw new Error('Unable to create psbt transaction');
-          }
-        }
-      );
+      });
     } catch (e) {
       handleError({
         errorMessage: e.message,

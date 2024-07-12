@@ -112,6 +112,27 @@ export function signRawPsbt(rawTx, indexes, wif) {
   };
 }
 
+export function getAmountFromRawPsbt(rawTx) {
+  const psbt = bitcoin.Psbt.fromHex(rawTx, { network });
+
+  let totalOutput = 0;
+  let largestOutput = 0;
+
+  // Calculate total output and find largest output
+  psbt.txOutputs.forEach((output) => {
+    totalOutput += output.value;
+    if (output.value > largestOutput) {
+      largestOutput = output.value;
+    }
+  });
+
+  return {
+    largestOutput: sb.toBitcoin(largestOutput),
+    totalOutput: sb.toBitcoin(totalOutput),
+    amount: sb.toBitcoin(totalOutput - largestOutput),
+  };
+}
+
 export function signMessage(message, wif) {
   const keyPair = fromWIF(wif);
   return bitcoinMessage
