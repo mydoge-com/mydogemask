@@ -629,7 +629,8 @@ async function onSignPsbt({ data = {}, sendResponse } = {}) {
     const { rawTx, fee, amount } = signRawPsbt(
       data.rawTx,
       data.indexes,
-      decryptedWallet.children[data.selectedAddressIndex]
+      decryptedWallet.children[data.selectedAddressIndex],
+      !data.feeOnly
     );
 
     sendResponse?.({

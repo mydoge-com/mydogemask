@@ -49,6 +49,10 @@ export function decodeRawPsbt(rawTx) {
   return bitcoin.Psbt.fromHex(rawTx, { network });
 }
 
+export function decodeRawTx(rawTx) {
+  return bitcoin.Transaction.fromHex(rawTx);
+}
+
 export function validateAddress(data) {
   return Validator.validate(data, 'doge', 'prod');
 }
@@ -83,7 +87,7 @@ export function signRawTx(rawTx, wif) {
   return txb.build().toHex();
 }
 
-export function signRawPsbt(rawTx, indexes, wif) {
+export function signRawPsbt(rawTx, indexes, wif, withTx = true) {
   const keyPair = fromWIF(wif);
   const finalPsbt = bitcoin.Psbt.fromHex(rawTx, { network });
   finalPsbt.setMaximumFeeRate(100000000);
@@ -106,30 +110,9 @@ export function signRawPsbt(rawTx, indexes, wif) {
   const fee = finalPsbt.getFee();
 
   return {
-    rawTx: finalPsbt.extractTransaction().toHex(),
+    ...(withTx && { rawTx: finalPsbt.extractTransaction().toHex() }),
     fee: sb.toBitcoin(fee),
     amount: sb.toBitcoin(amount),
-  };
-}
-
-export function getAmountFromRawPsbt(rawTx) {
-  const psbt = bitcoin.Psbt.fromHex(rawTx, { network });
-
-  let totalOutput = 0;
-  let largestOutput = 0;
-
-  // Calculate total output and find largest output
-  psbt.txOutputs.forEach((output) => {
-    totalOutput += output.value;
-    if (output.value > largestOutput) {
-      largestOutput = output.value;
-    }
-  });
-
-  return {
-    largestOutput: sb.toBitcoin(largestOutput),
-    totalOutput: sb.toBitcoin(totalOutput),
-    amount: sb.toBitcoin(totalOutput - largestOutput),
   };
 }
 

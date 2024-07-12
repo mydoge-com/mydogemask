@@ -14,61 +14,98 @@ import {
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
+import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
-import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
-import {
-  decodeRawPsbt,
-  getAmountFromRawPsbt,
-} from '../../scripts/helpers/wallet';
+import { getCachedTx } from '../../scripts/helpers/storage';
+import { decodeRawPsbt } from '../../scripts/helpers/wallet';
 
 export function ClientPSBT({ params, dispatch, connectedClient }) {
-  const { originTabId, origin, rawTx, selectedAddressIndex, indexes } = params;
-
-  console.log('rawTx', rawTx, 'indexes', indexes);
+  const {
+    originTabId,
+    origin,
+    rawTx,
+    selectedAddressIndex,
+    indexes: indexesParam,
+  } = params;
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
   }, [dispatch]);
 
   const [psbt, setPsbt] = useState(null);
+  const [inputs, setInputs] = useState([]);
+  const [dogeAmount, setDogeAmount] = useState(0);
+  const [dogeFee, setDogeFee] = useState(0.0);
+  const [indexes] = useState([indexesParam].flat());
 
   useEffect(() => {
     try {
       setPsbt(decodeRawPsbt(rawTx));
+      sendMessage(
+        {
+          message: MESSAGE_TYPES.SIGN_PSBT,
+          data: { rawTx, indexes, selectedAddressIndex, feeOnly: true },
+        },
+        ({ fee }) => {
+          if (fee) {
+            setDogeFee(fee);
+          }
+        }
+      );
     } catch (error) {
+      console.error(error);
       handleFailedTransaction({
         title: 'Error',
         description: 'Invalid PSBT',
       });
     }
-  }, [handleFailedTransaction, rawTx]);
+  }, [handleFailedTransaction, rawTx, indexes, selectedAddressIndex]);
 
-  const inputs = psbt?.txInputs?.map((input, index) => {
-    return {
-      inputIndex: index,
-      txid: input.hash.toString('hex'),
-      vout: input.index,
-    };
-  });
+  useEffect(() => {
+    (async () => {
+      if (psbt) {
+        let amount = 0;
+
+        const mappedInputs = await Promise.all(
+          psbt?.txInputs?.map(async (input, index) => {
+            const hash = Buffer.from(input.hash.reverse());
+            const txid = hash.toString('hex');
+            const tx = await getCachedTx(txid);
+            const value = sb.toBitcoin(tx.vout[input.index].value);
+
+            if (indexes.includes(String(index))) {
+              amount += value;
+            }
+
+            return {
+              txid,
+              value,
+              inputIndex: index,
+              vout: input.index,
+            };
+          })
+        );
+
+        setDogeAmount(amount);
+        setInputs(mappedInputs);
+      }
+    })();
+  }, [psbt, indexes]);
 
   const outputs = psbt?.txOutputs?.map((output, index) => {
     return {
       outputIndex: index,
       address: output.address,
-      value: output.value,
+      value: sb.toBitcoin(output.value),
     };
   });
-
-  const { amount: dogeAmount } = getAmountFromRawPsbt(rawTx);
-
-  const recipientAddress = outputs?.[0]?.address;
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
 
@@ -140,7 +177,7 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
     sendMessage(
       {
         message: MESSAGE_TYPES.SIGN_PSBT,
-        data: { rawTx, indexes: [indexes].flat(), selectedAddressIndex },
+        data: { rawTx, indexes, selectedAddressIndex },
       },
       ({ rawTx: signedRawTx, fee, amount }) => {
         if (signedRawTx && fee && amount) {
@@ -216,8 +253,7 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
           Send PSBT
         </Text>
         <OriginBadge origin={origin} mt='12px' mb='10px' />
-        <RecipientAddress address={outputs[0].address} />
-        <HStack pb='20px' justifyContent='center' space='16px' mt='-10px'>
+        <HStack py='20px' justifyContent='center' space='16px' mt='-10px'>
           {inputs?.length ? (
             <Popover
               trigger={(triggerProps) => {
@@ -241,7 +277,7 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
                 <Popover.Arrow />
                 <Popover.Body>
                   <VStack space='16px'>
-                    {inputs.map(({ inputIndex, txid, vout }) => (
+                    {inputs.map(({ inputIndex, txid, vout, value }) => (
                       <VStack
                         alignItems='flex-start'
                         justifyContent='flex-start'
@@ -286,6 +322,22 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
                             color='gray.700'
                           >
                             {vout}
+                          </Text>
+                        </VStack>
+                        <VStack>
+                          <Text
+                            fontSize='10px'
+                            fontWeight='medium'
+                            color='gray.600'
+                          >
+                            Value
+                          </Text>
+                          <Text
+                            fontSize='12px'
+                            fontWeight='medium'
+                            color='gray.600'
+                          >
+                            {value}
                           </Text>
                         </VStack>
                       </VStack>
@@ -377,9 +429,9 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
         <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
           Ð{dogeAmount}
         </Text>
-        {/* <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-          Network fee Ð{fee}
-        </Text> */}
+        <Text fontSize='13px' fontWeight='semibold' pt='6px'>
+          Network fee Ð{dogeFee}
+        </Text>
         <HStack alignItems='center' mt='60px' space='12px'>
           <BigButton
             onPress={onRejectTransaction}
@@ -394,7 +446,7 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
             role='button'
             px='28px'
           >
-            Pay
+            Send
           </BigButton>
         </HStack>
       </Center>
@@ -404,7 +456,6 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
         origin={origin}
         onSubmit={onSubmit}
         loading={loading}
-        recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}
       />
     </>
@@ -418,7 +469,6 @@ const ConfirmationModal = ({
   onSubmit,
   loading,
   dogeAmount,
-  recipientAddress,
 }) => {
   const cancelRef = useRef();
 
@@ -439,7 +489,6 @@ const ConfirmationModal = ({
           <AlertDialog.Header>Confirm Transaction</AlertDialog.Header>
           <AlertDialog.Body alignItems='center'>
             <OriginBadge origin={origin} mb='8px' />
-            <RecipientAddress address={recipientAddress} />
             <VStack alignItems='center'>
               <Text>
                 Confirm transaction to send{' '}
