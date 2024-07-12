@@ -94,7 +94,7 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
               return (
                 <ToastRender
                   title={title}
-                  description={`MyDoge failed to authorize the transaction to ${origin}`}
+                  description={description}
                   status='error'
                 />
               );
@@ -140,14 +140,14 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
     sendMessage(
       {
         message: MESSAGE_TYPES.SIGN_PSBT,
-        data: { rawTx, indexes },
+        data: { rawTx, indexes: [indexes].flat(), selectedAddressIndex },
       },
       ({ rawTx: signedRawTx, fee, amount }) => {
         if (signedRawTx && fee && amount) {
           sendMessage(
             {
               message: MESSAGE_TYPES.SEND_PSBT,
-              data: { signedRawTx, selectedAddressIndex },
+              data: { rawTx: signedRawTx, selectedAddressIndex },
             },
             (txId) => {
               setLoading(false);
