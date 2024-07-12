@@ -60,7 +60,6 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
         }
       );
     } catch (error) {
-      console.error(error);
       handleFailedTransaction({
         title: 'Error',
         description: 'Invalid PSBT',
