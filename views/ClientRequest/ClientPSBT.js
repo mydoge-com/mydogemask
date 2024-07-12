@@ -213,7 +213,7 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
       <Center pt='16px' w='300px'>
         <WalletAddress address={connectedClient.address} />
         <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-          Sign PSTB
+          Send PSBT
         </Text>
         <OriginBadge origin={origin} mt='12px' mb='10px' />
         <RecipientAddress address={outputs[0].address} />
