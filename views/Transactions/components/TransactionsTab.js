@@ -10,6 +10,7 @@ import {
 import { useCallback } from 'react';
 
 import { BigButton } from '../../../components/Button';
+import { useCachedInscriptionTxs } from '../../../hooks/useCachedInscriptionTxs';
 import { Transaction } from './Transaction';
 
 export const TransactionsTab = ({
@@ -19,15 +20,25 @@ export const TransactionsTab = ({
   loading,
   hasMore,
   fetchMore,
+  isLoadingMore,
 }) => {
+  const cachedInscriptions = useCachedInscriptionTxs({ filterPending: false });
+
   const renderItem = useCallback(
-    ({ item }) => <Transaction transaction={item} />,
-    []
+    ({ item }) => (
+      <Transaction
+        transaction={item}
+        cachedInscription={cachedInscriptions.find((inscription) =>
+          inscription.txs?.includes(item.id)
+        )}
+      />
+    ),
+    [cachedInscriptions]
   );
 
   return (
     <Box flex={1}>
-      {transactions === undefined ? (
+      {!transactions || (loading && !isLoadingMore) ? (
         <Center pt='40px'>
           <Spinner color='amber.400' />
         </Center>
@@ -65,7 +76,7 @@ export const TransactionsTab = ({
               >
                 <Text color='gray.500' alignItems='center'>
                   View more
-                  {loading ? (
+                  {isLoadingMore ? (
                     <Spinner
                       color='amber.400'
                       pl='8px'

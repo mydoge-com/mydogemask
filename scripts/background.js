@@ -1,21 +1,22 @@
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { apiKey, doginals, doginalsV2, node, nownodes } from './api';
+import { apiKey, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
   CONNECTED_CLIENTS,
   FEE_RATE_KB,
+  INSCRIPTION_TXS_CACHE,
   MAX_UTXOS,
   MESSAGE_TYPES,
   MIN_TX_AMOUNT,
-  NFT_PAGE_SIZE,
   ONBOARDING_COMPLETE,
   PASSWORD,
+  TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
-import { getDRC20Inscriptions, inscribe } from './helpers/doginals';
+import { getAllInscriptions, inscribe } from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
@@ -31,6 +32,8 @@ import {
   generateChild,
   generatePhrase,
   generateRoot,
+  signMessage,
+  signRawPsbt,
   signRawTx,
 } from './helpers/wallet';
 
@@ -45,99 +48,40 @@ function sanitizeFloatAmount(amount) {
   return sb.toBitcoin(Math.trunc(sb.toSatoshi(amount)));
 }
 
-async function getDoginals(address, cursor, result) {
-  let query;
-  await doginalsV2
-    .get(
-      `/address/inscriptions?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
-    )
-    .json((res) => {
-      query = res;
+/**
+ * Creates a client popup window.
+ *
+ * @param {Object} options - The options for creating the client popup.
+ * @param {Function} options.sendResponse - The function to send a response to the sender.
+ * @param {Object} options.sender - The sender object containing information about the sender.
+ * @param {Object} [options.data={}] - Additional data to be passed to the popup window.
+ * @param {string} options.messageType - The type of message to be sent to the popup window.
+ */
+function createClientPopup({ sendResponse, sender, data = {}, messageType }) {
+  const params = new URLSearchParams();
+  params.append('originTabId', sender.tab.id);
+  params.append('origin', sender.origin);
+  Object.entries(data).forEach(([key, value]) => {
+    if (Array.isArray(value)) {
+      value.forEach((val) => params.append(key, val));
+    } else {
+      params.append(key, value);
+    }
+  });
+  chrome.windows
+    .create({
+      url: `index.html?${params.toString()}#${messageType}`,
+      type: 'popup',
+      width: data.isOnboardingPending ? 800 : 357,
+      height: 640,
+    })
+    .then((tab) => {
+      if (tab) {
+        sendResponse?.({ originTabId: sender.tab.id });
+      } else {
+        sendResponse?.(false);
+      }
     });
-
-  result.push(
-    ...query.result.list.map((i) => ({
-      txid: i.output.split(':')[0],
-      vout: parseInt(i.output.split(':')[1], 10),
-    }))
-  );
-
-  // console.log(`fetched ${result.length}/${query.result.total} inscriptions`);
-
-  // Fixes an issue where Doginals API returns `total` less than items in `list` array.
-  if (query.result.total > result.length) {
-    cursor += query.result.list.length;
-    return getDoginals(address, cursor, result);
-  }
-}
-
-async function getDRC20Tickers(address, cursor, total, result) {
-  let query;
-  await doginals
-    .get(
-      `/brc20/tokens?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
-    )
-    .json((res) => {
-      query = res;
-    });
-
-  if (cursor === 0) {
-    total = query.result.total;
-  }
-
-  result.push(
-    ...query.result.list
-      .map((i) => {
-        if (i.transferableBalance !== '0') {
-          return i.ticker;
-        } else {
-          total--;
-        }
-      })
-      .filter((i) => i)
-  );
-
-  // console.log(
-  //   'found',
-  //   query.result.list.length,
-  //   'drc20 tickers',
-  //   'in page',
-  //   cursor,
-  //   'total',
-  //   total
-  // );
-
-  if (total > result.length) {
-    cursor += query.result.list.length;
-    return getDRC20Tickers(address, cursor, total, result);
-  }
-}
-
-async function getAllDRC20(address, result) {
-  const tickers = [];
-  await getDRC20Tickers(address, 0, 0, tickers);
-
-  console.log('found tickers', tickers.length);
-
-  for await (const ticker of tickers) {
-    const tickerResult = [];
-    await getDRC20Inscriptions(address, ticker, 0, tickerResult);
-    result.push(...tickerResult);
-  }
-}
-
-async function getAllInscriptions(address) {
-  const nfts = [];
-  await getDoginals(address, 0, nfts);
-
-  console.log('found doginals', nfts.length);
-
-  const drc20 = [];
-  await getAllDRC20(address, drc20);
-
-  console.log('found drc20', drc20.length);
-
-  return [...nfts, ...drc20];
 }
 
 // Build a raw transaction and determine fee
@@ -200,6 +144,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
           (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
         )
       ) {
+        // console.log('skipping inscription', utxo.txid, utxo.vout);
         skipped++;
         continue;
       }
@@ -572,7 +517,7 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
       };
       node
         .post(jsonrpcReq)
-        .json((jsonrpcRes) => {
+        .json(async (jsonrpcRes) => {
           // Open offscreen notification page to handle transaction status notifications
           chrome.offscreen
             ?.createDocument({
@@ -583,6 +528,20 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
               justification: 'Handle transaction status notifications',
             })
             .catch(() => {});
+
+          // Cache transaction if it's a DRC20 transaction
+
+          if (data.txType) {
+            const txsCache = (await getLocalValue(INSCRIPTION_TXS_CACHE)) ?? [];
+
+            txsCache.push({
+              txs: [jsonrpcRes.result],
+              txType: data.txType,
+              timestamp: Date.now(),
+            });
+
+            setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
+          }
 
           sendResponse(jsonrpcRes.result);
         })
@@ -603,8 +562,6 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       if (i > 0) {
         await sleep(10 * 1000); // Nownodes needs some time between txs
       }
-
-      console.log({ signed });
 
       const jsonrpcReq = {
         API_key: apiKey,
@@ -635,16 +592,17 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       })
       .catch(() => {});
 
-    const tokenCache = (await getLocalValue(data.ticker)) ?? [];
+    const txsCache = (await getLocalValue(INSCRIPTION_TXS_CACHE)) ?? [];
 
-    tokenCache.push({
+    txsCache.push({
       txs: results,
-      txType: 'inscribe',
+      txType: TRANSACTION_TYPES.DRC20_AVAILABLE_TX,
       tokenAmount: data.tokenAmount,
       timestamp: Date.now(),
+      ticker: data.ticker,
     });
 
-    setLocalValue({ [data.ticker]: tokenCache });
+    setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
 
     sendResponse(results[1]);
   } catch (err) {
@@ -653,8 +611,116 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onRequestTransaction({
-  data: { recipientAddress, dogeAmount, rawTx, fee } = {},
+async function onSignPsbt({ data = {}, sendResponse } = {}) {
+  try {
+    const [wallet, password] = await Promise.all([
+      getLocalValue(WALLET),
+      getSessionValue(PASSWORD),
+    ]);
+
+    const decryptedWallet = decrypt({
+      data: wallet,
+      password,
+    });
+    if (!decryptedWallet) {
+      sendResponse?.(false);
+    }
+
+    const { rawTx, fee, amount } = signRawPsbt(
+      data.rawTx,
+      data.indexes,
+      decryptedWallet.children[data.selectedAddressIndex],
+      !data.feeOnly
+    );
+
+    sendResponse?.({
+      rawTx,
+      fee,
+      amount,
+    });
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+
+  return true;
+}
+
+async function onSendPsbt({ data = {}, sendResponse } = {}) {
+  try {
+    const jsonrpcReq = {
+      API_key: apiKey,
+      jsonrpc: '2.0',
+      id: `send_${Date.now()}`,
+      method: 'sendrawtransaction',
+      params: [data.rawTx],
+    };
+
+    console.log(`sending signed psbt`, jsonrpcReq.params[0]);
+
+    const jsonrpcRes = await node.post(jsonrpcReq).json();
+
+    console.log(`tx id ${jsonrpcRes.result}`);
+
+    // Open offscreen notification page to handle transaction status notifications
+    chrome.offscreen
+      ?.createDocument({
+        url: chrome.runtime.getURL(
+          `notification.html/?txId=${jsonrpcRes.result}`
+        ),
+        reasons: ['BLOBS'],
+        justification: 'Handle transaction status notifications',
+      })
+      .catch(() => {});
+
+    sendResponse(jsonrpcRes.result);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+}
+
+async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+      }
+
+      const signedMessage = signMessage(
+        data.message,
+        decryptedWallet.children[data.selectedAddressIndex]
+      );
+
+      sendResponse?.(signedMessage);
+    }
+  );
+}
+
+async function onRequestTransaction({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+  });
+  return true;
+}
+
+async function onRequestDoginalTransaction({
+  data = {},
   sendResponse,
   sender,
 } = {}) {
@@ -665,33 +731,67 @@ async function onRequestTransaction({
     sendResponse?.(false);
     return;
   }
-  const params = new URLSearchParams();
-  Object.entries({
-    originTabId: sender.tab.id,
-    origin: sender.origin,
-    recipientAddress,
-    dogeAmount,
-    rawTx,
-    fee,
-  }).forEach(([key, value]) => {
-    params.append(key, value);
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
   });
-  chrome.windows
-    .create({
-      url: `index.html?${params.toString()}#${
-        MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION
-      }`,
-      type: 'popup',
-      width: 357,
-      height: 640,
-    })
-    .then((tab) => {
-      if (tab) {
-        sendResponse?.({ originTabId: sender.tab.id });
-      } else {
-        sendResponse?.(false);
-      }
-    });
+  return true;
+}
+
+async function onRequestAvailableDRC20Transaction({
+  data,
+  sendResponse,
+  sender,
+} = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
+  });
+  return true;
+}
+
+async function onRequestPsbt({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
+  });
+  return true;
+}
+
+async function onRequestSignedMessage({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
+  });
   return true;
 }
 
@@ -881,6 +981,7 @@ function onUpdateAddressNickname({ sendResponse, data } = {}) {
         data: wallet,
         password,
       });
+
       if (!decryptedWallet) {
         sendResponse?.(false);
         return;
@@ -915,22 +1016,12 @@ async function onConnectionRequest({ sendResponse, sender } = {}) {
   const params = new URLSearchParams();
   params.append('originTabId', sender.tab.id);
   params.append('origin', sender.origin);
-  chrome.windows
-    .create({
-      url: `index.html?${params.toString()}#${
-        MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION
-      }`,
-      type: 'popup',
-      width: onboardingComplete ? 357 : 800,
-      height: 640,
-    })
-    .then((tab) => {
-      if (tab) {
-        sendResponse?.({ originTabId: sender.tab.id });
-      } else {
-        sendResponse?.(false);
-      }
-    });
+  createClientPopup({
+    sendResponse,
+    sender,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION,
+    data: { isOnboardingPending: !onboardingComplete },
+  });
   return true;
 }
 
@@ -979,6 +1070,32 @@ async function onDisconnectClient({ sendResponse, data: { origin } } = {}) {
   return true;
 }
 
+async function onApproveAvailableDRC20Transaction({
+  sendResponse,
+  data: { txId, error, originTabId, origin, ticker, tokenAmount },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+      data: {
+        txId,
+        ticker,
+        amount: tokenAmount,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
 async function onApproveTransaction({
   sendResponse,
   data: { txId, error, originTabId, origin },
@@ -995,6 +1112,78 @@ async function onApproveTransaction({
   } else {
     chrome.tabs?.sendMessage(originTabId, {
       type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
+async function onApproveDoginalTransaction({
+  sendResponse,
+  data: { txId, error, originTabId, origin },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      data: {
+        txId,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
+async function onApprovePsbt({
+  sendResponse,
+  data: { txId, error, originTabId, origin },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+      data: {
+        txId,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
+async function onApproveSignedMessage({
+  sendResponse,
+  data: { signedMessage, error, originTabId, origin },
+} = {}) {
+  if (signedMessage) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+      data: {
+        signedMessage,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
       error,
       origin,
     });
@@ -1154,13 +1343,22 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CREATE_NFT_TRANSACTION:
       onCreateNFTTransaction({ data, sendResponse });
       break;
-    case MESSAGE_TYPES.INSCRIBE_TRANSFER_TRANSACTION:
+    case MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION:
       onInscribeTransferTransaction({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.SIGN_PSBT:
+      onSignPsbt({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.SEND_PSBT:
+      onSendPsbt({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.SIGN_MESSAGE:
+      onCreateSignedMessage({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SEND_TRANSACTION:
       onSendTransaction({ data, sender, sendResponse });
       break;
-    case MESSAGE_TYPES.SEND_INSCRIBE_TRANSFER_TRANSACTION:
+    case MESSAGE_TYPES.SEND_TRANSFER_TRANSACTION:
       onSendInscribeTransfer({ data, sender, sendResponse });
       break;
     case MESSAGE_TYPES.IS_ONBOARDING_COMPLETE:
@@ -1201,6 +1399,30 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE:
       onApproveTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
+      onRequestDoginalTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
+      onApproveDoginalTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
+      onRequestAvailableDRC20Transaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
+      onRequestPsbt({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE:
+      onApprovePsbt({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
+      onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
+      onRequestSignedMessage({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
+      onApproveSignedMessage({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });

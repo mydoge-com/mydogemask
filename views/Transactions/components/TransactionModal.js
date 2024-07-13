@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react';
 import { FiArrowUpRight, FiCopy } from 'react-icons/fi';
 
 import { BigButton } from '../../../components/Button';
+import { InscriptionIndicator } from '../../../components/InscriptionIndicator';
 import { useCopyText } from '../../../hooks/useCopyText';
 import { nownodes } from '../../../scripts/api';
+import { TRANSACTION_TYPES } from '../../../scripts/helpers/constants';
 import { setLocalValue } from '../../../scripts/helpers/storage';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
 
@@ -18,6 +20,7 @@ export const TransactionModal = ({
   blockTime,
   id,
   confirmations,
+  cachedInscription,
 }) => {
   const [conf, setConf] = useState(confirmations);
   const { copyTextToClipboard, textCopied } = useCopyText({ text: address });
@@ -83,6 +86,34 @@ export const TransactionModal = ({
             >
               Ɖ{formatSatoshisAsDoge(amount, 3)}
             </Text>
+            <HStack justifyContent='center' w='100%' mb='8px'>
+              <InscriptionIndicator
+                cachedInscription={cachedInscription}
+                mb='8px'
+                py='4px'
+                px='10px'
+                _text={{ fontSize: '12px' }}
+                showFullLabel
+              />
+            </HStack>
+
+            {cachedInscription &&
+            cachedInscription.txType ===
+              TRANSACTION_TYPES.DRC20_AVAILABLE_TX ? (
+              <>
+                <HStack justifyContent='space-between' w='100%'>
+                  <Text color='gray.500'>Ticker </Text>
+                  <Text>{cachedInscription.ticker}</Text>
+                </HStack>
+                <HStack justifyContent='space-between' w='100%'>
+                  <Text color='gray.500'>Token Amount </Text>
+                  <Text>
+                    {Number(cachedInscription.tokenAmount).toLocaleString()}
+                  </Text>
+                </HStack>
+              </>
+            ) : null}
+
             <HStack justifyContent='space-between' w='100%'>
               <Text color='gray.500'>Confirmations </Text>
               <Text>{conf}</Text>

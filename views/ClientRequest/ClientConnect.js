@@ -16,25 +16,17 @@ import { FiCheck } from 'react-icons/fi';
 import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
-import { Layout } from '../../components/Layout';
 import { OriginBadge } from '../../components/OriginBadge';
 import { ToastRender } from '../../components/ToastRender';
 import { DISPATCH_TYPES } from '../../Context';
-import { useAppContext } from '../../hooks/useAppContext';
 import { useInterval } from '../../hooks/useInterval';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 
 const REFRESH_INTERVAL = 10000;
 
-export function ClientConnect() {
-  const {
-    clientRequest: {
-      params: { originTabId, origin },
-    },
-    wallet,
-    dispatch,
-  } = useAppContext();
+export function ClientConnect({ params, wallet, dispatch }) {
+  const { origin, originTabId } = params ?? {};
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
@@ -93,7 +85,7 @@ export function ClientConnect() {
     setConfirmationModalOpen(false);
   }, []);
   return (
-    <Layout pt='32px' alignItems='center'>
+    <>
       <OriginBadge origin={origin} />
 
       <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
@@ -141,11 +133,7 @@ export function ClientConnect() {
                     <VStack>
                       <HStack alignItems='center'>
                         <Text fontSize='sm' fontWeight='medium'>
-                          Address {i + 1}
-                        </Text>
-                        <Text fontSize='sm' color='gray.500'>
-                          {' '}
-                          ({address.slice(0, 8)}...{address.slice(-4)})
+                          {wallet.nicknames?.[address] ?? `Address ${i + 1}`}
                         </Text>
                       </HStack>
                       <Text color='gray.400' fontSize='xs'>
@@ -188,7 +176,7 @@ export function ClientConnect() {
         balance={addressBalances[selectedAddressIndex]}
         handleWindowClose={handleWindowClose}
       />
-    </Layout>
+    </>
   );
 }
 

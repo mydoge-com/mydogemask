@@ -1,10 +1,7 @@
 import {
   AlertDialog,
-  Avatar,
-  // Badge,
   Box,
   Button,
-  Center,
   HStack,
   Modal,
   Spinner,
@@ -16,23 +13,23 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
-import { Layout } from '../../components/Layout';
 import { OriginBadge } from '../../components/OriginBadge';
+import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
+import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
-import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
+import { NFTView } from '../Transactions/components/NFTView';
 
-export function ClientTransaction() {
-  const {
-    clientRequest: {
-      params: { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee },
-    },
-    wallet,
-    dispatch,
-  } = useAppContext();
+export function ClientDoginalTransaction({
+  params,
+  dispatch,
+  connectedClient,
+}) {
+  const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
+    params;
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
@@ -45,8 +42,6 @@ export function ClientTransaction() {
       setAddressIndex(index);
     });
   }, [origin]);
-
-  const senderAddress = wallet.addresses[addressIndex];
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -79,62 +74,48 @@ export function ClientTransaction() {
   }, [handleWindowClose, origin, originTabId]);
 
   return (
-    <Layout pt='32px' alignItems='center'>
+    <>
+      <OriginBadge origin={origin} mb='4px' />
       <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
         <FaLink />
       </Box>
-      <Text fontSize='2xl'>
+      <Text fontSize='2xl' pb='24px'>
         Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
-      <Center pt='36px'>
-        <Text fontSize='sm' color='gray.500' textAlign='center' mb='20px'>
-          <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-            Wallet {addressIndex + 1}
-          </Text>
-          {'  '}
-          {senderAddress?.slice(0, 8)}...{senderAddress?.slice(-4)}
-        </Text>
-        <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-          Paying
-        </Text>
-        <OriginBadge origin={origin} mb='6px' mt='12px' />
-        <HStack alignItems='center' space='12px' pb='28px'>
-          <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
-            {recipientAddress.substring(0, 2)}
-          </Avatar>
-          <Text
-            fontSize='md'
-            fontWeight='semibold'
-            color='gray.500'
-            textAlign='center'
-          >
-            {recipientAddress.slice(0, 8)}...{recipientAddress.slice(-4)}
-          </Text>
-        </HStack>
-        <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
-          Ð{dogeAmount}
-        </Text>
-        <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-          Network fee Ð{fee}
-        </Text>
-        <HStack alignItems='center' mt='60px' space='12px'>
-          <BigButton
-            onPress={onRejectTransaction}
-            variant='secondary'
-            px='20px'
-          >
-            Cancel
-          </BigButton>
-          <BigButton
-            onPress={() => setConfirmationModalOpen(true)}
-            type='submit'
-            role='button'
-            px='28px'
-          >
-            Pay
-          </BigButton>
-        </HStack>
-      </Center>
+      <WalletAddress address={connectedClient.address} />
+      <Text fontSize='lg' textAlign='center' fontWeight='semibold'>
+        Transfer
+      </Text>
+      <Box
+        borderRadius='12px'
+        overflow='hidden'
+        mb='12px'
+        mx='20px'
+        maxHeight='100px'
+      >
+        <NFTView nft={params} />
+      </Box>
+      <RecipientAddress address={recipientAddress} />
+
+      <Text fontSize='3xl' fontWeight='semibold' mt='-6px'>
+        Ð{dogeAmount}
+      </Text>
+      <Text fontSize='13px' fontWeight='semibold' pt='6px'>
+        Network fee Ð{fee}
+      </Text>
+      <HStack alignItems='center' mt='30px' space='12px'>
+        <BigButton onPress={onRejectTransaction} variant='secondary' px='20px'>
+          Cancel
+        </BigButton>
+        <BigButton
+          onPress={() => setConfirmationModalOpen(true)}
+          type='submit'
+          role='button'
+          px='28px'
+        >
+          Pay
+        </BigButton>
+      </HStack>
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
@@ -146,7 +127,7 @@ export function ClientTransaction() {
         recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}
       />
-    </Layout>
+    </>
   );
 }
 
@@ -168,14 +149,15 @@ const ConfirmationModal = ({
     setLoading(true);
     sendMessage(
       {
-        message: 'sendTransaction',
+        message: MESSAGE_TYPES.SEND_TRANSACTION,
         data: { rawTx, selectedAddressIndex: addressIndex },
       },
       (txId) => {
         if (txId) {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              message:
+                MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
               data: { txId, originTabId, origin },
             },
             () => {

@@ -2,13 +2,16 @@ import { Avatar, HStack, Pressable, Text, VStack } from 'native-base';
 import { Fragment, useState } from 'react';
 import TimeAgo from 'timeago-react';
 
+import { InscriptionIndicator } from '../../../components/InscriptionIndicator';
 import { formatSatoshisAsDoge, is69, is420 } from '../../../utils/formatters';
 import { TransactionModal } from './TransactionModal';
 
 export const Transaction = ({
   transaction: { address, id, blockTime, type, amount, confirmations },
+  cachedInscription,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+
   return (
     <Fragment key={id}>
       <Pressable onPress={() => setIsOpen(true)} paddingTop='10px'>
@@ -27,18 +30,21 @@ export const Transaction = ({
               {address.slice(0, 8)}...{address.slice(-4)}
             </Text>
 
-            <Text
-              fontSize='12px'
-              fontWeight='semibold'
-              _light={{ color: 'gray.400' }}
-              _dark={{ color: 'gray.500' }}
-            >
-              {confirmations === 0 ? (
-                'PENDING'
-              ) : (
-                <TimeAgo datetime={blockTime * 1000} />
-              )}
-            </Text>
+            <HStack space='6px'>
+              <Text
+                fontSize='12px'
+                fontWeight='semibold'
+                _light={{ color: 'gray.400' }}
+                _dark={{ color: 'gray.500' }}
+              >
+                {confirmations === 0 ? (
+                  'PENDING'
+                ) : (
+                  <TimeAgo datetime={blockTime * 1000} />
+                )}
+              </Text>
+              <InscriptionIndicator cachedInscription={cachedInscription} />
+            </HStack>
           </VStack>
           <VStack flexDirection='row' alignItems='flex-start' ml='8px'>
             <HStack
@@ -89,6 +95,7 @@ export const Transaction = ({
         blockTime={blockTime}
         id={id}
         confirmations={confirmations}
+        cachedInscription={cachedInscription}
       />
     </Fragment>
   );

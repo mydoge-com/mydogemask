@@ -1,9 +1,9 @@
 import dayjs from 'dayjs';
-import { Box, Center, Pressable, Spinner, Text, VStack } from 'native-base';
-import { Fragment, useState } from 'react';
-import MIMEType from 'whatwg-mimetype';
+import { Box, Pressable, Text, VStack } from 'native-base';
+import { Fragment } from 'react';
 
 import { useAppContext } from '../../../hooks/useAppContext';
+import { NFTView } from './NFTView';
 
 export const NFT = ({ nft, index, onPress, selected }) => {
   const { inscriptionNumber, timestamp, amount, ticker } = nft ?? {};
@@ -58,39 +58,5 @@ export const NFT = ({ nft, index, onPress, selected }) => {
         </VStack>
       </Pressable>
     </Fragment>
-  );
-};
-
-export const NFTView = ({ nft = {} }) => {
-  const { content, contentType } = nft;
-  const mimeType = new MIMEType(contentType);
-
-  const [nftLoaded, setNFTLoaded] = useState(false);
-  if (mimeType.type === 'image') {
-    return <img src={content} width='100%' height='auto' alt='NFT' />;
-  }
-  if (mimeType.type === 'text') {
-    return (
-      <>
-        {!nftLoaded && (
-          <Center position='absolute' width='100%' height='100%'>
-            <Spinner color='amber.400' />
-          </Center>
-        )}
-        <iframe
-          title='NFT'
-          src={content}
-          width='100%'
-          height='auto'
-          sandbox='allow-same-origin allow-scripts'
-          allow
-          style={{ pointerEvents: 'none', border: 'none' }}
-          onLoad={() => setNFTLoaded(true)}
-        />
-      </>
-    );
-  }
-  return (
-    <img src='./assets/default-nft.webp' width='100%' height='auto' alt='NFT' />
   );
 };

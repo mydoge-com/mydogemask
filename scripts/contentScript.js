@@ -1,6 +1,21 @@
+import BN from 'bn.js';
+
 import { MESSAGE_TYPES } from './helpers/constants';
-import { getAddressBalance, getConnectedClient } from './helpers/data';
-import { validateTransaction } from './helpers/wallet';
+import {
+  getAddressBalance,
+  getConnectedAddressIndex,
+  getConnectedClient,
+} from './helpers/data';
+import {
+  // getAllDRC20,
+  getAllInscriptions,
+  // getAllInscriptions,
+  // getDoginals,
+  getDRC20Balances,
+  getDRC20Inscriptions,
+} from './helpers/doginals';
+import { getCachedTx } from './helpers/storage';
+import { validateAddress, validateTransaction } from './helpers/wallet';
 
 (() => {
   // const loadSendTipFloating = async () => {
@@ -97,6 +112,76 @@ import { validateTransaction } from './helpers/wallet';
           type: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
           data: {
             balance,
+            address: client.address,
+          },
+        },
+        origin
+      );
+    }
+  }
+
+  async function onGetDRC20Balance({ origin, data }) {
+    let client;
+    let availableBalance = '0';
+    let transferableBalance = '0';
+
+    try {
+      client = await getConnectedClient(origin);
+      const balances = [];
+      await getDRC20Balances(client?.address, 0, balances);
+      const balance = balances.find((ins) => ins.ticker === data.ticker);
+
+      if (balance) {
+        availableBalance = balance.availableBalance;
+        transferableBalance = balance.transferableBalance;
+      }
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE_RESPONSE,
+      });
+      return;
+    }
+    if (client) {
+      window.postMessage(
+        {
+          type: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE_RESPONSE,
+          data: {
+            availableBalance,
+            transferableBalance,
+            ticker: data.ticker,
+            address: client.address,
+          },
+        },
+        origin
+      );
+    }
+  }
+
+  async function onGetTransferableDRC20({ origin, data }) {
+    let client;
+    const inscriptions = [];
+
+    try {
+      client = await getConnectedClient(origin);
+      await getDRC20Inscriptions(client?.address, data.ticker, 0, inscriptions);
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE,
+      });
+      return;
+    }
+
+    if (client) {
+      window.postMessage(
+        {
+          type: MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE,
+          data: {
+            inscriptions,
+            ticker: data.ticker,
             address: client.address,
           },
         },
@@ -248,6 +333,184 @@ import { validateTransaction } from './helpers/wallet';
     }
   }
 
+  async function onRequestDoginalTransaction({ origin, data }) {
+    try {
+      if (!validateAddress(data.recipientAddress)) {
+        throw new Error('Invalid address');
+      }
+
+      const txid = data.output.split(':')[0];
+      const vout = parseInt(data.output.split(':')[1], 10);
+
+      if (txid?.length !== 64 || Number.isNaN(vout)) {
+        throw new Error('Invalid output');
+      }
+
+      const client = await getConnectedClient(origin);
+      let inscriptions = await getAllInscriptions(client?.address);
+
+      // Get output values
+      inscriptions = await Promise.all(
+        inscriptions.map(async (nft) => {
+          const tx = await getCachedTx(nft.txid);
+
+          return {
+            ...nft,
+            outputValue: tx.vout[nft.vout].value,
+          };
+        })
+      );
+
+      const doginal = inscriptions.find(
+        (ins) => ins.txid === txid && ins.vout === vout
+      );
+
+      if (!doginal) {
+        throw new Error('Doginal not found');
+      }
+
+      chrome.runtime.sendMessage(
+        {
+          message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
+          data: {
+            ...data,
+            address: client?.address,
+            outputValue: doginal.outputValue,
+          },
+        },
+        ({ rawTx, fee, amount }) => {
+          if (rawTx && fee && amount) {
+            chrome.runtime.sendMessage({
+              message: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
+              data: {
+                ...data,
+                ...doginal,
+                rawTx,
+                fee,
+                dogeAmount: amount,
+              },
+            });
+          } else {
+            throw new Error('Unable to create doginal transaction');
+          }
+        }
+      );
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      });
+    }
+  }
+
+  async function onRequestAvailableDRC20Transaction({ origin, data }) {
+    try {
+      const client = await getConnectedClient(origin);
+      const selectedAddressIndex = await getConnectedAddressIndex(origin);
+      const balances = [];
+      await getDRC20Balances(client?.address, 0, balances);
+      const balance = balances.find((ins) => ins.ticker === data.ticker);
+      const ab = new BN(balance.availableBalance);
+      const amt = new BN(data.amount);
+
+      if (!balance || ab.lt(amt)) {
+        throw new Error('Insufficient balance');
+      }
+
+      chrome.runtime.sendMessage(
+        {
+          message: MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION,
+          data: {
+            ...data,
+            selectedAddressIndex,
+            walletAddress: client?.address,
+            tokenAmount: data.amount,
+          },
+        },
+        ({ txs, fee }) => {
+          if (txs?.length && fee) {
+            chrome.runtime.sendMessage({
+              message: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
+              data: {
+                ...data,
+                txs,
+                fee,
+              },
+            });
+          } else {
+            throw new Error('Unable to create available drc-20 transaction');
+          }
+        }
+      );
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      });
+    }
+  }
+
+  async function onRequestPsbt({ origin, data }) {
+    try {
+      const selectedAddressIndex = await getConnectedAddressIndex(origin);
+
+      chrome.runtime.sendMessage({
+        message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
+        data: {
+          ...data,
+          selectedAddressIndex,
+        },
+      });
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+      });
+    }
+  }
+
+  async function onRequestSignedMessage({ origin, data }) {
+    try {
+      const selectedAddressIndex = await getConnectedAddressIndex(origin);
+
+      chrome.runtime.sendMessage(
+        {
+          message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
+          data: {
+            ...data,
+            selectedAddressIndex,
+            message: data.message,
+          },
+        },
+        (response) => {
+          console.log('onRequestSignedMessage response', response);
+          // if (signedMessage) {
+          //   window.postMessage(
+          //     {
+          //       type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+          //       data: {
+          //         signedMessage,
+          //       },
+          //     },
+          //     origin
+          //   );
+          // } else {
+          //   throw new Error('Unable to sign message');
+          // }
+        }
+      );
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+      });
+    }
+  }
+
   // Listen to messages from injected script and pass to the respective handler functions tro forward to the background script
   window.addEventListener(
     'message',
@@ -262,8 +525,26 @@ import { validateTransaction } from './helpers/wallet';
         case MESSAGE_TYPES.CLIENT_GET_BALANCE:
           onGetBalance({ origin: source.origin });
           break;
+        case MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE:
+          onGetDRC20Balance({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20:
+          onGetTransferableDRC20({ origin: source.origin, data });
+          break;
         case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
           onRequestTransaction({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
+          onRequestDoginalTransaction({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
+          onRequestAvailableDRC20Transaction({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
+          onRequestPsbt({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
+          onRequestSignedMessage({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_DISCONNECT:
           onDisconnectClient({ origin: source.origin });

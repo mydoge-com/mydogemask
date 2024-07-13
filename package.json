@@ -9,15 +9,18 @@
     "lint": "yarn eslint .",
     "lint-fix": "yarn eslint --fix .",
     "watch": "nodemon --exec \"yarn run build\"",
+    "docs": "./docs.sh",
     "postinstall": "npx patch-package"
   },
   "dependencies": {
     "@mydogeofficial/dogecoin-js": "^0.1.0-beta.4",
     "@native-base/icons": "^0.0.11",
     "@native-base/next-adapter": "^1.1.9",
+    "axios": "^1.7.2",
     "bip32": "2.0.4",
     "bip39": "^3.0.4",
-    "bitcoinjs-lib": "4.0.5",
+    "bitcoinjs-lib": "5.2.0",
+    "bitcoinjs-message": "^2.2.0",
     "bitcore-lib-doge": "https://github.com/mydoge-com/bitcore-lib-doge",
     "bn.js": "=5.2.1",
     "crypto-js": "^4.1.1",
@@ -42,6 +45,7 @@
     "react-router-dom": "^6.23.1",
     "satoshi-bitcoin": "1.0.5",
     "secure-ls": "^1.2.6",
+    "swr": "^2.2.5",
     "timeago-react": "^3.0.5",
     "whatwg-mimetype": "^4.0.0",
     "wretch": "^2.3.2"

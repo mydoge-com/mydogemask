@@ -1,12 +1,18 @@
-import { Avatar, Button, Center, HStack, Text, Toast } from 'native-base';
+import { Box, Button, Center, HStack, Text, Toast } from 'native-base';
 import { useCallback, useEffect, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
+import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
+import { WalletAddress } from '../../components/WalletAddress';
 import { useAppContext } from '../../hooks/useAppContext';
-import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import {
+  MESSAGE_TYPES,
+  TRANSACTION_TYPES,
+} from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
+import { NFTView } from '../Transactions/components/NFTView';
 
 export const TransferTokenConfirmation = ({
   setFormPage,
@@ -14,6 +20,7 @@ export const TransferTokenConfirmation = ({
   setErrors,
   formData,
   walletAddress,
+  selectedNFT,
   selectedAddressIndex,
 }) => {
   const { navigate } = useAppContext();
@@ -50,7 +57,11 @@ export const TransferTokenConfirmation = ({
         sendMessage(
           {
             message: MESSAGE_TYPES.SEND_TRANSACTION,
-            data: { rawTx: formData.rawTx, selectedAddressIndex },
+            data: {
+              rawTx: formData.rawTx,
+              selectedAddressIndex,
+              txType: TRANSACTION_TYPES.DOGINAL_TX,
+            },
           },
           (txId) => {
             if (txId) {
@@ -108,31 +119,23 @@ export const TransferTokenConfirmation = ({
   return (
     <Center>
       <Text fontSize='2xl' pb='24px' textAlign='center' fontWeight='semibold'>
-        Confirm Transaction
+        Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
-      <Text fontSize='sm' color='gray.500' textAlign='center' mb='12px'>
-        <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          Wallet {selectedAddressIndex + 1}
-        </Text>
-        {'  '}
-        {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
-      </Text>
+      <WalletAddress />
       <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-        Paying
+        Transfer
       </Text>
-      <HStack alignItems='center' space='12px' pb='28px'>
-        <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
-          {formData.address.substring(0, 2)}
-        </Avatar>
-        <Text
-          fontSize='md'
-          fontWeight='semibold'
-          color='gray.500'
-          textAlign='center'
-        >
-          {formData.address.slice(0, 8)}...{formData.address.slice(-4)}
-        </Text>
-      </HStack>
+      <Box
+        borderRadius='12px'
+        overflow='hidden'
+        mb='24px'
+        mx='20px'
+        maxHeight='100px'
+      >
+        <NFTView nft={selectedNFT} />
+      </Box>
+      <RecipientAddress address={formData.address} />
+
       <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
         Ð{formData.dogeAmount}
       </Text>

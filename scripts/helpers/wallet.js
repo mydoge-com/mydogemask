@@ -2,6 +2,7 @@
 import * as bip32 from 'bip32';
 import * as bip39 from 'bip39';
 import * as bitcoin from 'bitcoinjs-lib';
+import * as bitcoinMessage from 'bitcoinjs-message';
 import * as Validator from 'multicoin-address-validator';
 import sb from 'satoshi-bitcoin';
 
@@ -44,6 +45,14 @@ export function fromWIF(wif) {
   return new bitcoin.ECPair.fromWIF(wif, network); // eslint-disable-line
 }
 
+export function decodeRawPsbt(rawTx) {
+  return bitcoin.Psbt.fromHex(rawTx, { network });
+}
+
+export function decodeRawTx(rawTx) {
+  return bitcoin.Transaction.fromHex(rawTx);
+}
+
 export function validateAddress(data) {
   return Validator.validate(data, 'doge', 'prod');
 }
@@ -76,6 +85,42 @@ export function signRawTx(rawTx, wif) {
   }
 
   return txb.build().toHex();
+}
+
+export function signRawPsbt(rawTx, indexes, wif, withTx = true) {
+  const keyPair = fromWIF(wif);
+  const finalPsbt = bitcoin.Psbt.fromHex(rawTx, { network });
+  finalPsbt.setMaximumFeeRate(100000000);
+
+  // Sign / finalize inputs
+  for (let i = 0; i < indexes.length; i++) {
+    const index = Number(indexes[i]);
+    finalPsbt.signInput(index, keyPair);
+  }
+
+  for (let i = 0; i < finalPsbt.txInputs.length; i++) {
+    finalPsbt.finalizeInput(i);
+  }
+
+  // Get total outputs and fee
+  const amount = finalPsbt.txOutputs.reduce(
+    (acc, output) => acc + output.value,
+    0
+  );
+  const fee = finalPsbt.getFee();
+
+  return {
+    ...(withTx && { rawTx: finalPsbt.extractTransaction().toHex() }),
+    fee: sb.toBitcoin(fee),
+    amount: sb.toBitcoin(amount),
+  };
+}
+
+export function signMessage(message, wif) {
+  const keyPair = fromWIF(wif);
+  return bitcoinMessage
+    .sign(message, keyPair.privateKey, keyPair.compressed)
+    .toString('hex');
 }
 
 // export async function generateRawTx(sender, recipient, amount, utxos) {

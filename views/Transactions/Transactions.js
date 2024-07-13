@@ -5,12 +5,12 @@ import { useParams, useSearchParams } from 'react-router-dom';
 
 import { WalletDetailModal } from '../../components/Header/WalletDetailModal';
 import { Layout } from '../../components/Layout';
-import { useAppContext } from '../../hooks/useAppContext';
 import { ActionButton } from './components/ActionButton';
 import { Balance } from './components/Balance';
 import { NFTsTab } from './components/NFTsTab';
 import { TokensTab } from './components/TokensTab';
 import { TransactionsTab } from './components/TransactionsTab';
+import { useTransactions } from './Transactions.hooks';
 
 const Buy = 'assets/buy.svg';
 const Receive = 'assets/receive.svg';
@@ -18,33 +18,30 @@ const Send = 'assets/send.svg';
 
 export function Transactions() {
   const {
+    balance,
+    usdValue,
+    transactions,
+    isLoadingTransactions,
+    isLoadingMoreTransactions,
+    hasMoreTransactions,
+    fetchMoreTransactions,
+    refreshTransactions,
+    NFTs,
+    hasMoreNFTs,
+    fetchMoreNFTs,
+    NFTsLoading,
+    tokens,
+    tokensLoading,
+    hasMoreTokens,
+    fetchMoreTokens,
     wallet,
-    navigate,
     selectedAddressIndex,
-    transactions: {
-      balance,
-      usdValue,
-      NFTs,
-      hasMoreNFTs,
-      fetchMoreNFTs,
-      NFTsLoading,
-      transactions,
-      loading,
-      hasMore,
-      fetchMore,
-      tokens,
-      tokensLoading,
-      hasMoreTokens,
-      fetchMoreTokens,
-      refreshTransactions,
-    },
-  } = useAppContext();
+    navigate,
+  } = useTransactions();
 
   const [searchParams] = useSearchParams();
 
   const shouldRefresh = searchParams.get('refresh');
-
-  console.log('shouldRefresh', shouldRefresh);
 
   useEffect(() => {
     if (shouldRefresh) {
@@ -90,12 +87,21 @@ export function Transactions() {
         toggleReceiveModal={toggleReceiveModal}
         onBuy={onBuy}
         transactions={transactions}
-        loading={loading}
-        hasMore={hasMore}
-        fetchMore={fetchMore}
+        loading={isLoadingTransactions}
+        hasMore={hasMoreTransactions}
+        fetchMore={fetchMoreTransactions}
+        isLoadingMore={isLoadingMoreTransactions}
       />
     ),
-    [toggleReceiveModal, onBuy, transactions, loading, hasMore, fetchMore]
+    [
+      toggleReceiveModal,
+      onBuy,
+      transactions,
+      isLoadingTransactions,
+      hasMoreTransactions,
+      fetchMoreTransactions,
+      isLoadingMoreTransactions,
+    ]
   );
 
   const TokensRoute = useCallback(

@@ -22,7 +22,7 @@ export const InscribeTokenConfirmation = ({
     setLoading(true);
     sendMessage(
       {
-        message: MESSAGE_TYPES.SEND_INSCRIBE_TRANSFER_TRANSACTION,
+        message: MESSAGE_TYPES.SEND_TRANSFER_TRANSACTION,
         data: {
           txs: formData.txs,
           tokenAmount: formData.tokenAmount,
@@ -40,8 +40,6 @@ export const InscribeTokenConfirmation = ({
               );
             },
           });
-
-          console.log('Transaction Sent', txId);
 
           navigate('/Transactions/?refresh=1');
         } else {
@@ -105,7 +103,7 @@ export const InscribeTokenConfirmation = ({
           isDisabled={errors.confirmation}
           loading={loading}
         >
-          Send
+          Inscribe
         </BigButton>
       </HStack>
       {errors.confirmation ? (

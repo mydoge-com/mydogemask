@@ -15,7 +15,7 @@ import { FiExternalLink } from 'react-icons/fi';
 import { BigButton } from '../../../components/Button';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
-import { NFTView } from './NFT';
+import { NFTView } from './NFTView';
 
 export const NFTModal = ({ isOpen, onClose, nft }) => {
   const { navigate } = useAppContext();

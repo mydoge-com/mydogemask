@@ -44,7 +44,8 @@
     "no-param-reassign": "off",
     "no-multi-assign": "off",
     "no-continue": "off",
-    "array-callback-return": "off"
+    "array-callback-return": "off",
+    "class-methods-use-this": "off"
   },
   "globals": {
     "chrome": true
