@@ -149,14 +149,17 @@ export const useTransactions = () => {
 
   const fetchMoreNFTs = useCallback(() => {
     if (hasMoreNFTs) {
-      fetchNFTs({ cursor: currentNFTPage.current + 1, currentNFTs: NFTs });
+      fetchNFTs({
+        cursor: currentNFTPage.current + QUERY_PAGE_SIZE,
+        currentNFTs: NFTs,
+      });
     }
   }, [fetchNFTs, hasMoreNFTs, NFTs]);
 
   const fetchMoreTokens = useCallback(() => {
     if (hasMoreTokens) {
       fetchTokens({
-        cursor: currentTokensPage.current + 1,
+        cursor: currentTokensPage.current + QUERY_PAGE_SIZE,
         currentTokens: tokens,
       });
     }

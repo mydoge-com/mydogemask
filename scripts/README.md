@@ -1,54 +1,11 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8">
-    <title>JSDoc: Home</title>
+## MyDoge Chrome Extension API Integration
 
-    <script src="scripts/prettify/prettify.js"> </script>
-    <script src="scripts/prettify/lang-css.js"> </script>
-    <!--[if lt IE 9]>
-      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
-    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
-    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
-</head>
+- See our [demo project](https://github.com/mydoge-com/mydogemask-next-example) for a complete example of MyDoge Wallet API functionality.
 
-<body>
+## Sample Code
 
-<div id="main">
-
-    <h1 class="page-title">Home</h1>
-
-    
-
-
-
-    
-
-
-    <h3> </h3>
-
-
-
-
-
-
-
-
-
-
-    
-
-
-
-
-    <section>
-        <article><h2>MyDoge Chrome Extension API Integration</h2>
-<ul>
-<li>See our <a href="https://github.com/mydoge-com/mydogemask-next-example">demo project</a> for a complete example of MyDoge Wallet API functionality.</li>
-</ul>
-<h2>Sample Code</h2>
-<pre class="prettyprint source lang-typescript"><code>let myDogeMask = null;
+```typescript
+let myDogeMask = null;
 
 // Listen to the window event which ensures the extension script is injected
 window.addEventListener(
@@ -70,15 +27,15 @@ if (myDogeMask?.isMyDogeMask) {
     const connectRes = await myDogeMask.connect(/*onSuccess, onError*/);
     console.log('connect result', connectRes);
     /*{
-        &quot;approved&quot;: true,
-        &quot;address&quot;: &quot;DBKwBLEDY96jBtx1xCmjfBzp9FrNCWxnmM&quot;,
-        &quot;balance&quot;: &quot;4206912345678&quot;
+        "approved": true,
+        "address": "DBKwBLEDY96jBtx1xCmjfBzp9FrNCWxnmM",
+        "balance": "4206912345678"
       }*/
 
     // Request connected address balance
     const balanceRes = await myDogeMask.getBalance(/*onSuccess, onError*/);
     console.log('balance result', balanceRes);
-    // { &quot;address&quot;: &quot;DBKwBLEDY96jBtx1xCmjfBzp9FrNCWxnmM&quot;, &quot;balance&quot;: &quot;4206912345678&quot; }
+    // { "address": "DBKwBLEDY96jBtx1xCmjfBzp9FrNCWxnmM", "balance": "4206912345678" }
 
     // Send a transaction
     // Generates a popup to be confirmed by the user
@@ -92,7 +49,7 @@ if (myDogeMask?.isMyDogeMask) {
       // onError
     );
     console.log('request transaction result', txReqRes);
-    // { &quot;txId&quot;: &quot;b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0&quot; }
+    // { "txId": "b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0" }
 
     // Send an inscription doginal/drc-20
     // Generates a popup to be confirmed by the user
@@ -107,38 +64,38 @@ if (myDogeMask?.isMyDogeMask) {
       // onError
     );
     console.log('request inscription transaction result', txReqRes);
-    // { &quot;txId&quot;: &quot;b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0&quot; }
+    // { "txId": "b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0" }
 
     // Request connected address DRC-20 balance
     const drc20BalanceRes = await myDogeMask.getDRC20Balance({ ticker: 'abcd', /*onSuccess, onError*/);
     console.log('drc-20 balance result', drc20BalanceRes);
-    // { &quot;address&quot;: &quot;DBKwBLEDY96jBtx1xCmjfBzp9FrNCWxnmM&quot;, &quot;availableBalance&quot;: &quot;4206912345678&quot;, &quot;transferableBalance&quot;: &quot;12345678&quot;, &quot;ticker&quot;: &quot;abcd&quot; }
+    // { "address": "DBKwBLEDY96jBtx1xCmjfBzp9FrNCWxnmM", "availableBalance": "4206912345678", "transferableBalance": "12345678", "ticker": "abcd" }
 
     // Request connected address transferable DRC-20 outputs
     const transferableRes = await myDogeMask.getTransferableDRC20({ ticker: 'abcd', /*onSuccess, onError*/);
     console.log('drc-20 transferable result', transferableRes);
-    // { inscriptions: [{ &quot;amount&quot;: &quot;1000&quot;, &quot;output&quot;: &quot;68f08b2ad7dfd26192685e04a7038223fa0259e0878e1b636776104c1535bb9f:0&quot; }], ticker: 'abcd', address: 'DLRAyAnjpP6tHtzT6D7MfpWuG1nEYvw9dA'}
+    // { inscriptions: [{ "amount": "1000", "output": "68f08b2ad7dfd26192685e04a7038223fa0259e0878e1b636776104c1535bb9f:0" }], ticker: 'abcd', address: 'DLRAyAnjpP6tHtzT6D7MfpWuG1nEYvw9dA'}
 
     // Request a transaction to inscribe a transfer of avaialble drc-20 balance
     // Generates a popup to be confirmed by the user
     // Promise will reject or onError will be called if canceled
     const availableRes = await myDogeMask.requestAvailableDRC20Transaction({ ticker: 'abcd', amount: 1000, /*onSuccess, onError*/);
     console.log('drc-20 request avaialable result', availableRes);
-    // { &quot;txId&quot;: &quot;b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0&quot; }
+    // { "txId": "b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0" }
 
     // Request the signing of a psbt
     // Generates a popup to be confirmed by the user
     // Promise will reject or onError will be called if canceled
     const psbtRes = await myDogeMask.requestPSBT({ rawTx: 'the raw tx hex', index: 1, /*onSuccess, onError*/);
     console.log('psbt result', psbtRes);
-    // { &quot;txId&quot;: &quot;b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0&quot; }
+    // { "txId": "b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0" }
 
     // Request the signing of an arbitrary message
     // Generates a popup to be confirmed by the user
     // Promise will reject or onError will be called if canceled
     const signMessageRes = await myDogeMask.signMessage({ message: 'the message to sign', /*onSuccess, onError*/);
     console.log('signed message result', signMessageRes);
-    // { &quot;signedMessage&quot;: &quot;b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0&quot; }
+    // { "signedMessage": "b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0" }
 
     // Poll to get the transaction status
     setInterval(async () => {
@@ -147,11 +104,11 @@ if (myDogeMask?.isMyDogeMask) {
       });
       console.log('transaction status result', txStatusRes);
       /*{
-          &quot;txId&quot;: &quot;b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0&quot;,
-          &quot;confirmations&quot;: 0,
-          &quot;dogeAmount&quot;: &quot;420000000&quot;,
-          &quot;blockTime&quot;: 1675217503,
-          &quot;status&quot;: &quot;pending&quot;
+          "txId": "b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0",
+          "confirmations": 0,
+          "dogeAmount": "420000000",
+          "blockTime": 1675217503,
+          "status": "pending"
         }*/
     }, 10000);
 
@@ -162,7 +119,7 @@ if (myDogeMask?.isMyDogeMask) {
         .getConnectionStatus(/*onSuccess, onError*/)
         .catch(console.error);
       console.log('connection status result', connectionStatusRes);
-      // { &quot;connected&quot;: true, &quot;address&quot;: &quot;DBKwBLEDY96jBtx1xCmjfBzp9FrNCWxnmM&quot; }
+      // { "connected": true, "address": "DBKwBLEDY96jBtx1xCmjfBzp9FrNCWxnmM" }
 
       if (!connectionStatusRes?.connected) {
         console.log('disconnected');
@@ -172,32 +129,9 @@ if (myDogeMask?.isMyDogeMask) {
     // Disconnect the connected address manually
     const disconnectRes = await myDogeMask.disconnect(/*onSuccess, onError*/);
     console.log('disconnect result', disconnectRes);
-    // { &quot;disconnected&quot;: true }
+    // { "disconnected": true }
   } catch (e) {
     console.error(e);
   }
 }
-</code></pre></article>
-    </section>
-
-
-
-
-
-
-</div>
-
-<nav>
-    <h2><a href="index.html">Home</a></h2><h3>Classes</h3><ul><li><a href="MyDogeWallet.html">MyDogeWallet</a></li></ul>
-</nav>
-
-<br class="clear">
-
-<footer>
-    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Fri Jul 12 2024 19:35:47 GMT-0700 (Pacific Daylight Time)
-</footer>
-
-<script> prettyPrint(); </script>
-<script src="scripts/linenumber.js"> </script>
-</body>
-</html>
+```

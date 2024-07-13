@@ -1,4 +1,4 @@
-# MyDogeMask
+# MyDoge Chrome Extension
 
 ## 🚀 Quick start
 
@@ -19,6 +19,8 @@
 
 - Run `yarn watch` to build and reload the extension with every file change.
 
-## Integration
+## API Integration
 
-- See our [integration example](https://github.com/mydoge-com/mydogemask-next-example) for instructions on how to use MyDogeMask to accept Dogecoin payments on your own website.
+- View the [documentation](https://mydoge-com.github.io/mydogemask/)
+
+- See our [demo project](https://github.com/mydoge-com/mydogemask-next-example) for a complete example of MyDoge Wallet API functionality.
