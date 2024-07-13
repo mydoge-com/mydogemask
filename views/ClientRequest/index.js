@@ -25,10 +25,11 @@ const CLIENT_REQUEST_ROUTES = {
 export function ClientRequest() {
   const { wallet, clientRequest, dispatch } = useAppContext();
   const [connectedClient, setConnectedClient] = useState({});
-  const { origin } = clientRequest.params;
+  const origin = clientRequest?.params?.origin;
 
   useEffect(() => {
     (async () => {
+      if (!origin) return;
       const client = await getConnectedClient(origin).catch((e) => logError(e));
       if (client) {
         setConnectedClient(client);
