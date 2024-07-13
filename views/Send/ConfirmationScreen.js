@@ -112,7 +112,7 @@ export const ConfirmationScreen = ({
       </Text>
       <Text fontSize='sm' color='gray.500' textAlign='center' mb='12px'>
         <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          Wallet {selectedAddressIndex + 1}
+          Address {selectedAddressIndex + 1}
         </Text>
         {'  '}
         {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
