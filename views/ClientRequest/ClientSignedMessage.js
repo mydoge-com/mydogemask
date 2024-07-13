@@ -2,6 +2,7 @@ import {
   AlertDialog,
   Box,
   Button,
+  Center,
   HStack,
   Modal,
   Spinner,
@@ -14,22 +15,15 @@ import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
-import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
-import { NFTView } from '../Transactions/components/NFTView';
 
-export function ClientDoginalTransaction({
-  params,
-  dispatch,
-  connectedClient,
-}) {
-  const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
-    params;
+export function ClientSignedMessage({ params, dispatch, connectedClient }) {
+  const { originTabId, origin, message } = params;
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
@@ -49,10 +43,11 @@ export function ClientDoginalTransaction({
   }, []);
 
   const onRejectTransaction = useCallback(() => {
+    console.log('onRejectTransaction');
     sendMessage(
       {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-        data: { error: 'User refused transaction', originTabId, origin },
+        message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+        data: { error: 'User refused signed message', originTabId, origin },
       },
       () => {
         Toast.show({
@@ -60,8 +55,8 @@ export function ClientDoginalTransaction({
           render: () => {
             return (
               <ToastRender
-                title='Transaction Rejected'
-                description={`MyDoge failed to authorize the transaction to ${origin}`}
+                title='Message Rejected'
+                description={`MyDoge failed to authorize the signed message request to ${origin}`}
                 status='error'
               />
             );
@@ -75,57 +70,47 @@ export function ClientDoginalTransaction({
 
   return (
     <>
-      <OriginBadge origin={origin} mb='4px' />
       <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
         <FaLink />
       </Box>
-      <Text fontSize='2xl' pb='24px'>
-        Confirm <Text fontWeight='bold'>Transaction</Text>
+      <Text fontSize='2xl'>
+        Confirm <Text fontWeight='bold'>Signed Message</Text>
       </Text>
-      <WalletAddress address={connectedClient.address} />
-      <Text fontSize='lg' textAlign='center' fontWeight='semibold'>
-        Transfer
-      </Text>
-      <Box
-        borderRadius='12px'
-        overflow='hidden'
-        mb='12px'
-        mx='20px'
-        maxHeight='100px'
-      >
-        <NFTView nft={params} />
-      </Box>
-      <RecipientAddress address={recipientAddress} />
-
-      <Text fontSize='3xl' fontWeight='semibold' mt='-6px'>
-        Ð{dogeAmount}
-      </Text>
-      <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-        Network fee Ð{fee}
-      </Text>
-      <HStack alignItems='center' mt='30px' space='12px'>
-        <BigButton onPress={onRejectTransaction} variant='secondary' px='20px'>
-          Cancel
-        </BigButton>
-        <BigButton
-          onPress={() => setConfirmationModalOpen(true)}
-          type='submit'
-          role='button'
-          px='28px'
-        >
-          Pay
-        </BigButton>
-      </HStack>
+      <Center pt='16px'>
+        <WalletAddress address={connectedClient.address} />
+        <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
+          Signing
+        </Text>
+        <OriginBadge origin={origin} mt='12px' mb='20px' />
+        <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
+          {message}
+        </Text>
+        <HStack alignItems='center' mt='60px' space='12px'>
+          <BigButton
+            onPress={onRejectTransaction}
+            variant='secondary'
+            px='20px'
+          >
+            Cancel
+          </BigButton>
+          <BigButton
+            onPress={() => setConfirmationModalOpen(true)}
+            type='submit'
+            role='button'
+            px='28px'
+          >
+            Sign
+          </BigButton>
+        </HStack>
+      </Center>
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
         origin={origin}
         originTabId={originTabId}
-        rawTx={rawTx}
+        message={message}
         addressIndex={addressIndex}
         handleWindowClose={handleWindowClose}
-        recipientAddress={recipientAddress}
-        dogeAmount={dogeAmount}
       />
     </>
   );
@@ -135,30 +120,29 @@ const ConfirmationModal = ({
   showModal,
   onClose,
   origin,
-  rawTx,
+  message,
   addressIndex,
   originTabId,
   handleWindowClose,
-  recipientAddress,
-  dogeAmount,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
 
   const onSubmit = useCallback(async () => {
     setLoading(true);
+    console.log('submit signed message');
     sendMessage(
       {
-        message: MESSAGE_TYPES.SEND_TRANSACTION,
-        data: { rawTx, selectedAddressIndex: addressIndex },
+        message: MESSAGE_TYPES.SIGN_MESSAGE,
+        data: { message, selectedAddressIndex: addressIndex },
       },
-      (txId) => {
-        if (txId) {
+      (signedMessage) => {
+        console.log('signedMessage', signedMessage);
+        if (signedMessage) {
           sendMessage(
             {
-              message:
-                MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
-              data: { txId, originTabId, origin },
+              message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+              data: { signedMessage, originTabId, origin },
             },
             () => {
               Toast.show({
@@ -166,7 +150,7 @@ const ConfirmationModal = ({
                 render: () => {
                   return (
                     <ToastRender
-                      description='Transaction Sent'
+                      description='Message Signed Successfully'
                       status='success'
                     />
                   );
@@ -178,9 +162,9 @@ const ConfirmationModal = ({
         } else {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
               data: {
-                error: 'Failed to send transaction',
+                error: 'Failed to sign message',
                 originTabId,
                 origin,
               },
@@ -188,13 +172,13 @@ const ConfirmationModal = ({
             () => {
               Toast.show({
                 title: 'Error',
-                description: 'Transaction Failed',
+                description: 'Message Signing Failed',
                 duration: 3000,
                 render: () => {
                   return (
                     <ToastRender
                       title='Error'
-                      description='Failed to send transaction.'
+                      description='Failed to sign message.'
                       status='error'
                     />
                   );
@@ -206,7 +190,7 @@ const ConfirmationModal = ({
         }
       }
     );
-  }, [addressIndex, handleWindowClose, origin, originTabId, rawTx]);
+  }, [addressIndex, handleWindowClose, origin, originTabId, message]);
 
   return (
     <>
@@ -227,11 +211,8 @@ const ConfirmationModal = ({
             <OriginBadge origin={origin} mb='8px' />
             <VStack alignItems='center'>
               <Text>
-                Confirm transaction to send{' '}
-                <Text fontWeight='bold'>Ð{dogeAmount}</Text> to{' '}
-              </Text>
-              <Text fontSize='10px' fontWeight='bold'>
-                {recipientAddress}
+                Confirm message to sign <Text fontWeight='bold'>{message}</Text>{' '}
+                to{' '}
               </Text>
             </VStack>
           </AlertDialog.Body>

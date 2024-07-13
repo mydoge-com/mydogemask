@@ -45,6 +45,14 @@ export function fromWIF(wif) {
   return new bitcoin.ECPair.fromWIF(wif, network); // eslint-disable-line
 }
 
+export function decodeRawPsbt(rawTx) {
+  return bitcoin.Psbt.fromHex(rawTx, { network });
+}
+
+export function decodeRawTx(rawTx) {
+  return bitcoin.Transaction.fromHex(rawTx);
+}
+
 export function validateAddress(data) {
   return Validator.validate(data, 'doge', 'prod');
 }
@@ -79,14 +87,33 @@ export function signRawTx(rawTx, wif) {
   return txb.build().toHex();
 }
 
-export function signRawPsbt(rawTx, index, wif) {
+export function signRawPsbt(rawTx, indexes, wif, withTx = true) {
   const keyPair = fromWIF(wif);
-  const tx = bitcoin.Transaction.fromHex(rawTx);
-  const txb = bitcoin.TransactionBuilder.fromTransaction(tx, network);
+  const finalPsbt = bitcoin.Psbt.fromHex(rawTx, { network });
+  finalPsbt.setMaximumFeeRate(100000000);
 
-  txb.sign(index, keyPair);
+  // Sign / finalize inputs
+  for (let i = 0; i < indexes.length; i++) {
+    const index = Number(indexes[i]);
+    finalPsbt.signInput(index, keyPair);
+  }
 
-  return txb.build().toHex();
+  for (let i = 0; i < finalPsbt.txInputs.length; i++) {
+    finalPsbt.finalizeInput(i);
+  }
+
+  // Get total outputs and fee
+  const amount = finalPsbt.txOutputs.reduce(
+    (acc, output) => acc + output.value,
+    0
+  );
+  const fee = finalPsbt.getFee();
+
+  return {
+    ...(withTx && { rawTx: finalPsbt.extractTransaction().toHex() }),
+    fee: sb.toBitcoin(fee),
+    amount: sb.toBitcoin(amount),
+  };
 }
 
 export function signMessage(message, wif) {

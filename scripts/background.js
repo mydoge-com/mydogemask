@@ -493,55 +493,6 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onCreatePSBT({ data = {}, sendResponse } = {}) {
-  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-    ([wallet, password]) => {
-      const decryptedWallet = decrypt({
-        data: wallet,
-        password,
-      });
-      if (!decryptedWallet) {
-        sendResponse?.(false);
-      }
-      const rawTx = signRawPsbt(
-        data.rawTx,
-        data.index,
-        decryptedWallet.children[data.selectedAddressIndex]
-      );
-
-      sendResponse?.({
-        rawTx,
-        // fee,
-        // amount,
-      });
-    }
-  );
-}
-
-async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
-  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-    ([wallet, password]) => {
-      const decryptedWallet = decrypt({
-        data: wallet,
-        password,
-      });
-
-      if (!decryptedWallet) {
-        sendResponse?.(false);
-      }
-
-      const signedMessage = signMessage(
-        data.message,
-        decryptedWallet.children[data.selectedAddressIndex]
-      );
-
-      sendResponse?.({
-        signedMessage,
-      });
-    }
-  );
-}
-
 function onSendTransaction({ data = {}, sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
     ([wallet, password]) => {
@@ -660,6 +611,97 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
   }
 }
 
+async function onSignPsbt({ data = {}, sendResponse } = {}) {
+  try {
+    const [wallet, password] = await Promise.all([
+      getLocalValue(WALLET),
+      getSessionValue(PASSWORD),
+    ]);
+
+    const decryptedWallet = decrypt({
+      data: wallet,
+      password,
+    });
+    if (!decryptedWallet) {
+      sendResponse?.(false);
+    }
+
+    const { rawTx, fee, amount } = signRawPsbt(
+      data.rawTx,
+      data.indexes,
+      decryptedWallet.children[data.selectedAddressIndex],
+      !data.feeOnly
+    );
+
+    sendResponse?.({
+      rawTx,
+      fee,
+      amount,
+    });
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+
+  return true;
+}
+
+async function onSendPsbt({ data = {}, sendResponse } = {}) {
+  try {
+    const jsonrpcReq = {
+      API_key: apiKey,
+      jsonrpc: '2.0',
+      id: `send_${Date.now()}`,
+      method: 'sendrawtransaction',
+      params: [data.rawTx],
+    };
+
+    console.log(`sending signed psbt`, jsonrpcReq.params[0]);
+
+    const jsonrpcRes = await node.post(jsonrpcReq).json();
+
+    console.log(`tx id ${jsonrpcRes.result}`);
+
+    // Open offscreen notification page to handle transaction status notifications
+    chrome.offscreen
+      ?.createDocument({
+        url: chrome.runtime.getURL(
+          `notification.html/?txId=${jsonrpcRes.result}`
+        ),
+        reasons: ['BLOBS'],
+        justification: 'Handle transaction status notifications',
+      })
+      .catch(() => {});
+
+    sendResponse(jsonrpcRes.result);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+}
+
+async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+      }
+
+      const signedMessage = signMessage(
+        data.message,
+        decryptedWallet.children[data.selectedAddressIndex]
+      );
+
+      sendResponse?.(signedMessage);
+    }
+  );
+}
+
 async function onRequestTransaction({ data, sendResponse, sender } = {}) {
   const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
     sender.origin
@@ -715,6 +757,40 @@ async function onRequestAvailableDRC20Transaction({
     sender,
     data,
     messageType: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
+  });
+  return true;
+}
+
+async function onRequestPsbt({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
+  });
+  return true;
+}
+
+async function onRequestSignedMessage({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
   });
   return true;
 }
@@ -905,6 +981,7 @@ function onUpdateAddressNickname({ sendResponse, data } = {}) {
         data: wallet,
         password,
       });
+
       if (!decryptedWallet) {
         sendResponse?.(false);
         return;
@@ -1067,6 +1144,54 @@ async function onApproveDoginalTransaction({
   return true;
 }
 
+async function onApprovePsbt({
+  sendResponse,
+  data: { txId, error, originTabId, origin },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+      data: {
+        txId,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
+async function onApproveSignedMessage({
+  sendResponse,
+  data: { signedMessage, error, originTabId, origin },
+} = {}) {
+  if (signedMessage) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+      data: {
+        signedMessage,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
 async function onGetConnectedClients({ sendResponse } = {}) {
   const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || {};
   sendResponse(connectedClients);
@@ -1221,10 +1346,13 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION:
       onInscribeTransferTransaction({ data, sendResponse });
       break;
-    case MESSAGE_TYPES.CREATE_PSBT:
-      onCreatePSBT({ data, sendResponse });
+    case MESSAGE_TYPES.SIGN_PSBT:
+      onSignPsbt({ data, sendResponse });
       break;
-    case MESSAGE_TYPES.CREATE_SIGNED_MESSAGE:
+    case MESSAGE_TYPES.SEND_PSBT:
+      onSendPsbt({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.SIGN_MESSAGE:
       onCreateSignedMessage({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SEND_TRANSACTION:
@@ -1275,15 +1403,26 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
       onRequestDoginalTransaction({ data, sendResponse, sender });
       break;
-
     case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
       onApproveDoginalTransaction({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
       onRequestAvailableDRC20Transaction({ data, sendResponse, sender });
       break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
+      onRequestPsbt({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE:
+      onApprovePsbt({ data, sendResponse, sender });
+      break;
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
       onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
+      onRequestSignedMessage({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
+      onApproveSignedMessage({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });
