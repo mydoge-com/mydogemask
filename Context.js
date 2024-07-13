@@ -49,7 +49,9 @@ export const AppContextProvider = ({ children }) => {
           };
         case DISPATCH_TYPES.SIGN_IN:
           navigate(
-            payload?.navigate ?? state.clientRequest
+            payload?.navigate
+              ? payload?.navigate
+              : state.clientRequest
               ? 'ClientRequest'
               : 'Transactions'
           );
@@ -60,7 +62,9 @@ export const AppContextProvider = ({ children }) => {
           };
         case DISPATCH_TYPES.COMPLETE_ONBOARDING:
           navigate(
-            payload?.navigate ?? state.clientRequest
+            payload?.navigate
+              ? payload?.navigate
+              : state.clientRequest
               ? 'ClientRequest'
               : 'Transactions'
           );

@@ -37,7 +37,9 @@ export function ClientRequest() {
     })();
   }, [origin]);
 
-  const RenderScreen = CLIENT_REQUEST_ROUTES[clientRequest?.requestType];
+  const RenderScreen = clientRequest
+    ? CLIENT_REQUEST_ROUTES[clientRequest?.requestType]
+    : null;
 
   if (!RenderScreen) return null;
 
