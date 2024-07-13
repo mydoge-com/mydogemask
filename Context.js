@@ -170,6 +170,11 @@ export const AppContextProvider = ({ children }) => {
               });
             }
           );
+        } else {
+          dispatch({
+            type: DISPATCH_TYPES.SET_CONTEXT_LOADED,
+            payload: { ready: true },
+          });
         }
       }
     );
