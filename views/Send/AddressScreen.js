@@ -108,7 +108,7 @@ export const AddressScreen = ({
           <AlertDialog.CloseButton />
           <AlertDialog.Header>Pending Inscriptions</AlertDialog.Header>
           <AlertDialog.Body>
-            You have pending DRC-20 inscriptions that may not yet be indexed.
+            You have pending inscriptions that may not yet be indexed.
             Proceeding with this transaction may result in the loss of these
             inscriptions.
           </AlertDialog.Body>
