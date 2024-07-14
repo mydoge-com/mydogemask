@@ -1,12 +1,12 @@
 import { Avatar, HStack, Pressable, Text, VStack } from 'native-base';
-import { Fragment, useState } from 'react';
+import { Fragment, memo, useState } from 'react';
 import TimeAgo from 'timeago-react';
 
 import { InscriptionIndicator } from '../../../components/InscriptionIndicator';
 import { formatSatoshisAsDoge, is69, is420 } from '../../../utils/formatters';
 import { TransactionModal } from './TransactionModal';
 
-export const Transaction = ({
+const TransactionComponent = ({
   transaction: { address, id, blockTime, type, amount, confirmations },
   cachedInscription,
 }) => {
@@ -100,3 +100,7 @@ export const Transaction = ({
     </Fragment>
   );
 };
+
+export const Transaction = memo(TransactionComponent, (prev, next) => {
+  return prev.transaction.id === next.transaction.id;
+});

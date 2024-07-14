@@ -37,6 +37,7 @@ export function Transactions() {
     wallet,
     selectedAddressIndex,
     navigate,
+    cachedInscriptions,
   } = useTransactions();
 
   const [searchParams] = useSearchParams();
@@ -91,6 +92,7 @@ export function Transactions() {
         hasMore={hasMoreTransactions}
         fetchMore={fetchMoreTransactions}
         isLoadingMore={isLoadingMoreTransactions}
+        cachedInscriptions={cachedInscriptions}
       />
     ),
     [
@@ -101,6 +103,7 @@ export function Transactions() {
       hasMoreTransactions,
       fetchMoreTransactions,
       isLoadingMoreTransactions,
+      cachedInscriptions,
     ]
   );
 

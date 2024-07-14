@@ -7,6 +7,7 @@ import {
   getTransactionsKey,
 } from '../../dataFetchers/getTransactions';
 import { useAppContext } from '../../hooks/useAppContext';
+import { useCachedInscriptionTxs } from '../../hooks/useCachedInscriptionTxs';
 import { useInterval } from '../../hooks/useInterval';
 import { doginals, doginalsV2 } from '../../scripts/api';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
@@ -41,6 +42,8 @@ export const useTransactions = () => {
     }
   );
   const transactions = transactionsData?.flat() ?? undefined;
+
+  const cachedInscriptions = useCachedInscriptionTxs({ filterPending: false });
 
   const fetchMoreTransactions = () => setTransactionsPage(transactionsPage + 1);
 
@@ -206,5 +209,6 @@ export const useTransactions = () => {
     wallet,
     selectedAddressIndex,
     navigate,
+    cachedInscriptions,
   };
 };
