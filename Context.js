@@ -8,8 +8,12 @@ import {
 import { useNavigate } from 'react-router-dom';
 
 import { messageHandler } from './scripts/background';
-import { MESSAGE_TYPES } from './scripts/helpers/constants';
+import {
+  MESSAGE_TYPES,
+  SELECTED_ADDRESS_INDEX,
+} from './scripts/helpers/constants';
 import { addListener, sendMessage } from './scripts/helpers/message';
+import { getLocalValue, setLocalValue } from './scripts/helpers/storage';
 
 export const AppContext = createContext(null);
 
@@ -72,6 +76,7 @@ export const AppContextProvider = ({ children }) => {
             ...state,
           };
         case DISPATCH_TYPES.SELECT_WALLET:
+          setLocalValue({ [SELECTED_ADDRESS_INDEX]: payload.index });
           return { ...state, selectedAddressIndex: payload.index };
         case DISPATCH_TYPES.SET_CLIENT_REQUEST:
           return { ...state, clientRequest: payload.clientRequest };
@@ -182,6 +187,14 @@ export const AppContextProvider = ({ children }) => {
         }
       }
     );
+    getLocalValue(SELECTED_ADDRESS_INDEX).then((index) => {
+      if (typeof index === 'number') {
+        dispatch({
+          type: DISPATCH_TYPES.SELECT_WALLET,
+          payload: { index },
+        });
+      }
+    });
   }, []);
 
   const providerValue = useMemo(
