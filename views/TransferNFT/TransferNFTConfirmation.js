@@ -59,6 +59,7 @@ export const TransferNFTConfirmation = ({
               rawTx: formData.rawTx,
               selectedAddressIndex,
               txType: TRANSACTION_TYPES.DOGINAL_TX,
+              output: selectedNFT.output,
             },
           },
           (txId) => {

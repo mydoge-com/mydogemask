@@ -1,8 +1,11 @@
 import dayjs from 'dayjs';
-import { Box, Pressable, Text, VStack } from 'native-base';
+import { Box, Pressable, Text, Toast, VStack } from 'native-base';
 import { Fragment } from 'react';
 
+import { ToastRender } from '../../../components/ToastRender';
 import { useAppContext } from '../../../hooks/useAppContext';
+import { useCachedInscriptionTxs } from '../../../hooks/useCachedInscriptionTxs';
+import { TRANSACTION_TYPES } from '../../../scripts/helpers/constants';
 import { NFTView } from './NFTView';
 
 export const NFT = ({ nft, index, onPress, selected }) => {
@@ -14,10 +17,37 @@ export const NFT = ({ nft, index, onPress, selected }) => {
     navigate(`/Transactions/doginals?selectedNFT=${JSON.stringify(nft)}`);
   };
 
+  const pendingDoginalTxs = useCachedInscriptionTxs({
+    filterPending: true,
+  }).filter(
+    (tx) =>
+      tx.txType === TRANSACTION_TYPES.DOGINAL_TX ||
+      tx.txType === TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX
+  );
+
+  const isNFTPending = pendingDoginalTxs?.find(
+    (tx) => tx.output === nft?.output
+  );
+
   return (
     <Fragment key={inscriptionNumber}>
       <Pressable
         onPress={() => {
+          if (isNFTPending) {
+            Toast.show({
+              duration: 3000,
+              render: () => {
+                return (
+                  <ToastRender
+                    title='Unable to select NFT'
+                    description="There's a pending transfer of this NFT. Check your transaction history for more details."
+                    status='info'
+                  />
+                );
+              },
+            });
+            return;
+          }
           if (onPress) {
             onPress();
           } else {

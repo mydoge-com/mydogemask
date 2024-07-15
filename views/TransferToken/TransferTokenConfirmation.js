@@ -64,6 +64,7 @@ export const TransferTokenConfirmation = ({
               txType: TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX,
               ticker: selectedToken.ticker,
               tokenAmount: selectedNFT.amount,
+              output: selectedNFT.output,
             },
           },
           (txId) => {
@@ -109,7 +110,7 @@ export const TransferTokenConfirmation = ({
     formData.rawTx,
     navigate,
     selectedAddressIndex,
-    selectedNFT.amount,
+    selectedNFT,
     selectedToken.ticker,
     setErrors,
     walletAddress,

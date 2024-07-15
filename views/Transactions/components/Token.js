@@ -2,7 +2,6 @@ import { Avatar, HStack, Pressable, Text, VStack } from 'native-base';
 import { Fragment } from 'react';
 
 import { useAppContext } from '../../../hooks/useAppContext';
-import { useCachedInscriptionTxs } from '../../../hooks/useCachedInscriptionTxs';
 import {
   TICKER_ICON_URL,
   TRANSACTION_TYPES,
@@ -16,12 +15,9 @@ export const Token = ({
     availableBalance: available,
   },
   token,
+  pendingTxs,
 }) => {
   const { navigate } = useAppContext();
-
-  const pendingTxs = useCachedInscriptionTxs({
-    filterPending: true,
-  })?.filter((tx) => tx.ticker === token?.ticker);
 
   // Pending transfer inscriptions
   const pendingTransferTxs = pendingTxs?.filter(
