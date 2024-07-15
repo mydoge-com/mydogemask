@@ -9,31 +9,46 @@ import {
 } from '../../../scripts/helpers/constants';
 
 export const Token = ({
-  token: { overallBalance, ticker, transferableBalance: transferable },
+  token: {
+    overallBalance,
+    ticker,
+    transferableBalance: transferable,
+    availableBalance: available,
+  },
   token,
 }) => {
   const { navigate } = useAppContext();
 
-  const pendingInscriptionTxs = useCachedInscriptionTxs({
+  const pendingTxs = useCachedInscriptionTxs({
     filterPending: true,
-  })?.filter(
-    (tx) =>
-      tx.ticker === token?.ticker &&
-      tx.txType === TRANSACTION_TYPES.DRC20_AVAILABLE_TX
+  })?.filter((tx) => tx.ticker === token?.ticker);
+
+  // Pending transfer inscriptions
+  const pendingTransferTxs = pendingTxs?.filter(
+    (tx) => tx.txType === TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX
   );
-
-  const pendingInscriptionAmount = pendingInscriptionTxs?.length
-    ? pendingInscriptionTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
+  const pendingTransferAmount = pendingTransferTxs?.length
+    ? pendingTransferTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
     : 0;
+  const transferableBalance = Number(transferable) - pendingTransferAmount;
 
-  const transferableBalance = Number(transferable) - pendingInscriptionAmount;
+  // Pending available inscriptions
+  const pendingAvailableTxs = pendingTxs?.filter(
+    (tx) => tx.txType === TRANSACTION_TYPES.DRC20_AVAILABLE_TX
+  );
+  const pendingAvailableAmount = pendingAvailableTxs?.length
+    ? pendingAvailableTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
+    : 0;
+  const availableBalance = Number(available) - pendingAvailableAmount;
 
   const selectToken = () => {
     navigate(
       `/Transactions/tokens?selectedToken=${JSON.stringify({
         ...token,
         transferableBalance,
-        pendingInscriptionAmount,
+        pendingTransferAmount,
+        pendingAvailableAmount,
+        availableBalance,
       })}`
     );
   };

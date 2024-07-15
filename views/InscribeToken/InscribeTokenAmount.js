@@ -15,11 +15,7 @@ import { BsInfoCircleFill } from 'react-icons/bs';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
-import { useCachedInscriptionTxs } from '../../hooks/useCachedInscriptionTxs';
-import {
-  MESSAGE_TYPES,
-  TRANSACTION_TYPES,
-} from '../../scripts/helpers/constants';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { sanitizeDogeInput } from '../../utils/formatters';
 
@@ -39,20 +35,7 @@ export const InscribeTokenAmount = ({
   const tokenInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
-  const pendingInscriptionTxs = useCachedInscriptionTxs({
-    filterPending: true,
-  })?.filter(
-    (tx) =>
-      tx.ticker === selectedToken.ticker &&
-      tx.txType === TRANSACTION_TYPES.DRC20_AVAILABLE_TX
-  );
-
-  const pendingInscriptionAmount = pendingInscriptionTxs?.length
-    ? pendingInscriptionTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
-    : 0;
-
-  const transferableBalance =
-    Number(selectedToken.availableBalance) - pendingInscriptionAmount;
+  const { availableBalance, pendingAvailableAmount } = selectedToken;
 
   const onChangeTextToken = useCallback(
     (text) => {
@@ -81,12 +64,12 @@ export const InscribeTokenAmount = ({
   );
 
   const onSetMax = useCallback(() => {
-    onChangeTextToken(String(transferableBalance));
-  }, [onChangeTextToken, transferableBalance]);
+    onChangeTextToken(String(selectedToken.availableBalance));
+  }, [onChangeTextToken, selectedToken.availableBalance]);
 
   const validate = useCallback(() => {
-    return transferableBalance >= Number(formData.tokenAmount);
-  }, [transferableBalance, formData.tokenAmount]);
+    return selectedToken.availableBalance >= Number(formData.tokenAmount);
+  }, [selectedToken.availableBalance, formData.tokenAmount]);
 
   const onSubmit = useCallback(() => {
     if (validate()) {
@@ -227,13 +210,13 @@ export const InscribeTokenAmount = ({
         {errors.tokenAmount || ' '}
       </Text>
       <VStack alignItems='center' pt='12px' space='8px'>
-        {transferableBalance ? (
+        {availableBalance ? (
           <HStack space='10px'>
             <Text fontSize='14px' color='gray.500'>
               Balance: <Text fontWeight='bold'>{selectedToken.ticker}</Text>{' '}
-              {transferableBalance}
+              {availableBalance}
             </Text>
-            {pendingInscriptionTxs?.length ? (
+            {pendingAvailableAmount ? (
               <Popover
                 trigger={(triggerProps) => {
                   return (
@@ -253,7 +236,7 @@ export const InscribeTokenAmount = ({
                       {'\n'}
                       <Text fontWeight='bold'>
                         {selectedToken.ticker}{' '}
-                        {Number(pendingInscriptionAmount).toLocaleString()}
+                        {Number(pendingAvailableAmount).toLocaleString()}
                       </Text>
                     </Text>
                   </Popover.Body>

@@ -29,7 +29,8 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
     availableBalance,
     ticker,
     transferableBalance,
-    pendingInscriptionAmount,
+    pendingTransferAmount,
+    pendingAvailableAmount,
   } = token ?? {};
 
   const fetchTokenDetails = useCallback(() => {
@@ -139,19 +140,11 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
                 <Text color='gray.700' fontSize='16px' fontWeight='semibold'>
                   Available balance:{' '}
                 </Text>
-                <Text color='gray.700' ontSize='16px'>
-                  {Number(availableBalance).toLocaleString()}
-                </Text>
-              </HStack>
-              <HStack justifyContent='space-between' w='100%'>
-                <Text color='gray.700' fontSize='16px' fontWeight='semibold'>
-                  Transferable balance:{' '}
-                </Text>
                 <HStack space='4px' alignItems='center'>
-                  <Text color='gray.700' fontSize='16px'>
-                    {Number(transferableBalance).toLocaleString()}
+                  <Text color='gray.700' ontSize='16px'>
+                    {Number(availableBalance).toLocaleString()}
                   </Text>
-                  {pendingInscriptionAmount ? (
+                  {pendingAvailableAmount ? (
                     <Popover
                       trigger={(triggerProps) => {
                         return (
@@ -171,9 +164,44 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
                             {'\n'}
                             <Text fontWeight='bold'>
                               {token.ticker}{' '}
-                              {Number(
-                                pendingInscriptionAmount
-                              ).toLocaleString()}
+                              {Number(pendingAvailableAmount).toLocaleString()}
+                            </Text>
+                          </Text>
+                        </Popover.Body>
+                      </Popover.Content>
+                    </Popover>
+                  ) : null}
+                </HStack>
+              </HStack>
+              <HStack justifyContent='space-between' w='100%'>
+                <Text color='gray.700' fontSize='16px' fontWeight='semibold'>
+                  Transferable balance:{' '}
+                </Text>
+                <HStack space='4px' alignItems='center'>
+                  <Text color='gray.700' fontSize='16px'>
+                    {Number(transferableBalance).toLocaleString()}
+                  </Text>
+                  {pendingTransferAmount ? (
+                    <Popover
+                      trigger={(triggerProps) => {
+                        return (
+                          <Pressable {...triggerProps}>
+                            <BsInfoCircleFill color='#FCD436' />
+                          </Pressable>
+                        );
+                      }}
+                    >
+                      <Popover.Content>
+                        <Popover.Arrow />
+                        <Popover.Body>
+                          <Text fontSize='13px'>
+                            Pending token transfers affect your transferable
+                            token balance.{'\n\n'}
+                            Pending transfers:
+                            {'\n'}
+                            <Text fontWeight='bold'>
+                              {token.ticker}{' '}
+                              {Number(pendingTransferAmount).toLocaleString()}
                             </Text>
                           </Text>
                         </Popover.Body>
