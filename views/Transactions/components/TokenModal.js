@@ -15,12 +15,8 @@ import { BsInfoCircleFill } from 'react-icons/bs';
 
 import { BigButton } from '../../../components/Button';
 import { useAppContext } from '../../../hooks/useAppContext';
-import { useCachedInscriptionTxs } from '../../../hooks/useCachedInscriptionTxs';
 import { doginalsMarketplace } from '../../../scripts/api';
-import {
-  TICKER_ICON_URL,
-  TRANSACTION_TYPES,
-} from '../../../scripts/helpers/constants';
+import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
 import { logError } from '../../../utils/error';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
 
@@ -32,7 +28,8 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
     overallBalance,
     availableBalance,
     ticker,
-    transferableBalance: transferable,
+    transferableBalance,
+    pendingInscriptionAmount,
   } = token ?? {};
 
   const fetchTokenDetails = useCallback(() => {
@@ -71,20 +68,6 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
       })}`
     );
   }, [navigate, token, tokenDetails?.floorPrice]);
-
-  const pendingInscriptionTxs = useCachedInscriptionTxs({
-    filterPending: true,
-  })?.filter(
-    (tx) =>
-      tx.ticker === token?.ticker &&
-      tx.txType === TRANSACTION_TYPES.DRC20_AVAILABLE_TX
-  );
-
-  const pendingInscriptionAmount = pendingInscriptionTxs?.length
-    ? pendingInscriptionTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
-    : 0;
-
-  const transferableBalance = Number(transferable) - pendingInscriptionAmount;
 
   if (!isOpen) return null;
 
@@ -168,7 +151,7 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
                   <Text color='gray.700' fontSize='16px'>
                     {Number(transferableBalance).toLocaleString()}
                   </Text>
-                  {pendingInscriptionTxs?.length ? (
+                  {pendingInscriptionAmount ? (
                     <Popover
                       trigger={(triggerProps) => {
                         return (

@@ -2,15 +2,40 @@ import { Avatar, HStack, Pressable, Text, VStack } from 'native-base';
 import { Fragment } from 'react';
 
 import { useAppContext } from '../../../hooks/useAppContext';
-import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
+import { useCachedInscriptionTxs } from '../../../hooks/useCachedInscriptionTxs';
+import {
+  TICKER_ICON_URL,
+  TRANSACTION_TYPES,
+} from '../../../scripts/helpers/constants';
 
 export const Token = ({
-  token: { overallBalance, ticker, transferableBalance },
+  token: { overallBalance, ticker, transferableBalance: transferable },
   token,
 }) => {
   const { navigate } = useAppContext();
+
+  const pendingInscriptionTxs = useCachedInscriptionTxs({
+    filterPending: true,
+  })?.filter(
+    (tx) =>
+      tx.ticker === token?.ticker &&
+      tx.txType === TRANSACTION_TYPES.DRC20_AVAILABLE_TX
+  );
+
+  const pendingInscriptionAmount = pendingInscriptionTxs?.length
+    ? pendingInscriptionTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
+    : 0;
+
+  const transferableBalance = Number(transferable) - pendingInscriptionAmount;
+
   const selectToken = () => {
-    navigate(`/Transactions/tokens?selectedToken=${JSON.stringify(token)}`);
+    navigate(
+      `/Transactions/tokens?selectedToken=${JSON.stringify({
+        ...token,
+        transferableBalance,
+        pendingInscriptionAmount,
+      })}`
+    );
   };
   return (
     <Fragment key={ticker}>
