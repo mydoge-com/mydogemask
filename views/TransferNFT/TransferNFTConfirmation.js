@@ -105,6 +105,7 @@ export const TransferNFTConfirmation = ({
     formData.rawTx,
     navigate,
     selectedAddressIndex,
+    selectedNFT.output,
     setErrors,
     walletAddress,
   ]);
@@ -125,7 +126,7 @@ export const TransferNFTConfirmation = ({
         overflow='hidden'
         mb='12px'
         mx='60px'
-        maxHeight='100px'
+        maxHeight='180px'
       >
         <NFTView nft={selectedNFT} />
       </Box>
@@ -158,7 +159,7 @@ export const TransferNFTConfirmation = ({
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
         Network fee Ð{formData.fee}
       </Text>
-      <HStack alignItems='center' mt='60px' space='12px'>
+      <HStack alignItems='center' mt='30px' space='12px'>
         <Button
           variant='unstyled'
           colorScheme='coolGray'
