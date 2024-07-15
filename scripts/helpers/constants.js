@@ -15,6 +15,7 @@ export const INSCRIPTION_TXS_CACHE = '@mydoge_INSCRIPTION_TXS_CACHE';
 
 export const TRANSACTION_TYPES = {
   DRC20_AVAILABLE_TX: 'drc20_available_tx',
+  DRC20_SEND_INSCRIPTION_TX: 'drc20_send_inscription_tx',
   DOGINAL_TX: 'doginal_tx',
 };
 export const DOGINAL_TX = 'doginal_tx';

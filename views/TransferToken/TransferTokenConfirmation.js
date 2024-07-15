@@ -22,6 +22,7 @@ export const TransferTokenConfirmation = ({
   walletAddress,
   selectedNFT,
   selectedAddressIndex,
+  selectedToken,
 }) => {
   const { navigate } = useAppContext();
   const [loading, setLoading] = useState(false);
@@ -60,7 +61,9 @@ export const TransferTokenConfirmation = ({
             data: {
               rawTx: formData.rawTx,
               selectedAddressIndex,
-              txType: TRANSACTION_TYPES.DOGINAL_TX,
+              txType: TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX,
+              ticker: selectedToken.ticker,
+              tokenAmount: selectedNFT.amount,
             },
           },
           (txId) => {
@@ -106,6 +109,8 @@ export const TransferTokenConfirmation = ({
     formData.rawTx,
     navigate,
     selectedAddressIndex,
+    selectedNFT.amount,
+    selectedToken.ticker,
     setErrors,
     walletAddress,
   ]);

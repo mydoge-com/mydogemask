@@ -15,8 +15,12 @@ import { BsInfoCircleFill } from 'react-icons/bs';
 
 import { BigButton } from '../../../components/Button';
 import { useAppContext } from '../../../hooks/useAppContext';
+import { useCachedInscriptionTxs } from '../../../hooks/useCachedInscriptionTxs';
 import { doginalsMarketplace } from '../../../scripts/api';
-import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
+import {
+  TICKER_ICON_URL,
+  TRANSACTION_TYPES,
+} from '../../../scripts/helpers/constants';
 import { logError } from '../../../utils/error';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
 
@@ -24,8 +28,12 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
   const { navigate } = useAppContext();
   const [tokenDetails, setTokenDetails] = useState();
 
-  const { overallBalance, ticker, availableBalance, transferableBalance } =
-    token ?? {};
+  const {
+    overallBalance,
+    availableBalance,
+    ticker,
+    transferableBalance: transferable,
+  } = token ?? {};
 
   const fetchTokenDetails = useCallback(() => {
     doginalsMarketplace
@@ -63,6 +71,20 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
       })}`
     );
   }, [navigate, token, tokenDetails?.floorPrice]);
+
+  const pendingInscriptionTxs = useCachedInscriptionTxs({
+    filterPending: true,
+  })?.filter(
+    (tx) =>
+      tx.ticker === token?.ticker &&
+      tx.txType === TRANSACTION_TYPES.DRC20_AVAILABLE_TX
+  );
+
+  const pendingInscriptionAmount = pendingInscriptionTxs?.length
+    ? pendingInscriptionTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
+    : 0;
+
+  const transferableBalance = Number(transferable) - pendingInscriptionAmount;
 
   if (!isOpen) return null;
 
@@ -142,9 +164,40 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
                 <Text color='gray.700' fontSize='16px' fontWeight='semibold'>
                   Transferable balance:{' '}
                 </Text>
-                <Text color='gray.700' fontSize='16px'>
-                  {Number(transferableBalance).toLocaleString()}
-                </Text>
+                <HStack space='4px' alignItems='center'>
+                  <Text color='gray.700' fontSize='16px'>
+                    {Number(transferableBalance).toLocaleString()}
+                  </Text>
+                  {pendingInscriptionTxs?.length ? (
+                    <Popover
+                      trigger={(triggerProps) => {
+                        return (
+                          <Pressable {...triggerProps}>
+                            <BsInfoCircleFill color='#FCD436' />
+                          </Pressable>
+                        );
+                      }}
+                    >
+                      <Popover.Content>
+                        <Popover.Arrow />
+                        <Popover.Body>
+                          <Text fontSize='13px'>
+                            Pending token inscriptions affect your available
+                            token balance.{'\n\n'}
+                            Pending inscriptions:
+                            {'\n'}
+                            <Text fontWeight='bold'>
+                              {token.ticker}{' '}
+                              {Number(
+                                pendingInscriptionAmount
+                              ).toLocaleString()}
+                            </Text>
+                          </Text>
+                        </Popover.Body>
+                      </Popover.Content>
+                    </Popover>
+                  ) : null}
+                </HStack>
               </HStack>
             </VStack>
             {Number(transferableBalance) ? (
@@ -156,7 +209,7 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
             ) : null}
 
             {!Number(transferableBalance) ||
-            Number(transferableBalance) < Number(availableBalance) ? (
+            Number(transferableBalance) < Number(overallBalance) ? (
               <HStack space='8px' mt='10px' alignItems='center'>
                 <BigButton
                   onPress={onInscribeToken}
