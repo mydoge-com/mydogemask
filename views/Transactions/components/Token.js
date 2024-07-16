@@ -2,15 +2,51 @@ import { Avatar, HStack, Pressable, Text, VStack } from 'native-base';
 import { Fragment } from 'react';
 
 import { useAppContext } from '../../../hooks/useAppContext';
-import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
+import {
+  TICKER_ICON_URL,
+  TRANSACTION_TYPES,
+} from '../../../scripts/helpers/constants';
 
 export const Token = ({
-  token: { overallBalance, ticker, transferableBalance },
+  token: {
+    overallBalance,
+    ticker,
+    transferableBalance: transferable,
+    availableBalance: available,
+  },
   token,
+  pendingTxs,
 }) => {
   const { navigate } = useAppContext();
+
+  // Pending transfer inscriptions
+  const pendingTransferTxs = pendingTxs?.filter(
+    (tx) => tx.txType === TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX
+  );
+  const pendingTransferAmount = pendingTransferTxs?.length
+    ? pendingTransferTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
+    : 0;
+  const transferableBalance = Number(transferable) - pendingTransferAmount;
+
+  // Pending available inscriptions
+  const pendingAvailableTxs = pendingTxs?.filter(
+    (tx) => tx.txType === TRANSACTION_TYPES.DRC20_AVAILABLE_TX
+  );
+  const pendingAvailableAmount = pendingAvailableTxs?.length
+    ? pendingAvailableTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
+    : 0;
+  const availableBalance = Number(available) - pendingAvailableAmount;
+
   const selectToken = () => {
-    navigate(`/Transactions/tokens?selectedToken=${JSON.stringify(token)}`);
+    navigate(
+      `/Transactions/tokens?selectedToken=${JSON.stringify({
+        ...token,
+        transferableBalance,
+        pendingTransferAmount,
+        pendingAvailableAmount,
+        availableBalance,
+      })}`
+    );
   };
   return (
     <Fragment key={ticker}>

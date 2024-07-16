@@ -8,6 +8,11 @@ const TRANSACTION_LABELS = {
     fullLabel: 'DRC-20 Inscription',
     color: 'gray.200',
   },
+  [TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX]: {
+    shortLabel: 'DRC-20',
+    fullLabel: 'DRC-20 Inscription Transfer',
+    color: 'gray.200',
+  },
   [TRANSACTION_TYPES.DOGINAL_TX]: {
     shortLabel: 'DOGINAL',
     fullLabel: 'DOGINAL Transfer',

@@ -14,14 +14,11 @@ import { formatSatoshisAsDoge } from '../../../utils/formatters';
 export const TransactionModal = ({
   isOpen,
   onClose,
-  address,
-  type,
-  amount,
-  blockTime,
-  id,
-  confirmations,
+  transaction,
   cachedInscription,
 }) => {
+  const { address, type, amount, blockTime, id, confirmations } =
+    transaction ?? {};
   const [conf, setConf] = useState(confirmations);
   const { copyTextToClipboard, textCopied } = useCopyText({ text: address });
 
@@ -34,6 +31,8 @@ export const TransactionModal = ({
       }
     })();
   }, [id, isOpen]);
+
+  if (!isOpen) return null;
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} size='full'>
@@ -98,16 +97,18 @@ export const TransactionModal = ({
             </HStack>
 
             {cachedInscription &&
-            cachedInscription.txType ===
-              TRANSACTION_TYPES.DRC20_AVAILABLE_TX ? (
+            (cachedInscription.txType ===
+              TRANSACTION_TYPES.DRC20_AVAILABLE_TX ||
+              cachedInscription.txType ===
+                TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX) ? (
               <>
                 <HStack justifyContent='space-between' w='100%'>
                   <Text color='gray.500'>Ticker </Text>
-                  <Text>{cachedInscription.ticker}</Text>
+                  <Text fontWeight='semibold'>{cachedInscription.ticker}</Text>
                 </HStack>
                 <HStack justifyContent='space-between' w='100%'>
                   <Text color='gray.500'>Token Amount </Text>
-                  <Text>
+                  <Text fontWeight='semibold'>
                     {Number(cachedInscription.tokenAmount).toLocaleString()}
                   </Text>
                 </HStack>
@@ -116,11 +117,11 @@ export const TransactionModal = ({
 
             <HStack justifyContent='space-between' w='100%'>
               <Text color='gray.500'>Confirmations </Text>
-              <Text>{conf}</Text>
+              <Text fontWeight='semibold'>{conf}</Text>
             </HStack>
             <HStack justifyContent='space-between' w='100%' pt='6px'>
               <Text color='gray.500'>Timestamp </Text>
-              <Text>
+              <Text fontWeight='semibold'>
                 {dayjs(blockTime * 1000).format('YYYY-MM-DD HH:mm:ss')}
               </Text>
             </HStack>

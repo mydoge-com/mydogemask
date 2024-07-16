@@ -1,6 +1,7 @@
 export const PASSWORD = '@mydoge_PASSWORD';
 export const WALLET = '@mydoge_WALLET';
 export const ONBOARDING_COMPLETE = '@mydoge_ONBOARDING_COMPLETE';
+export const SELECTED_ADDRESS_INDEX = '@mydoge_SELECTED_ADDRESS_INDEX';
 export const CONNECTED_CLIENTS = '@mydoge_CONNECTED_CLIENTS';
 export const AUTHENTICATED = '@mydoge_AUTHENTICATED';
 export const NOWNODES_BASE_URL = 'https://dogebook.nownodes.io/api/v2';
@@ -14,6 +15,7 @@ export const INSCRIPTION_TXS_CACHE = '@mydoge_INSCRIPTION_TXS_CACHE';
 
 export const TRANSACTION_TYPES = {
   DRC20_AVAILABLE_TX: 'drc20_available_tx',
+  DRC20_SEND_INSCRIPTION_TX: 'drc20_send_inscription_tx',
   DOGINAL_TX: 'doginal_tx',
 };
 export const DOGINAL_TX = 'doginal_tx';

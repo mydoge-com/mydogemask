@@ -24,8 +24,14 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
   const { navigate } = useAppContext();
   const [tokenDetails, setTokenDetails] = useState();
 
-  const { overallBalance, ticker, availableBalance, transferableBalance } =
-    token ?? {};
+  const {
+    overallBalance,
+    availableBalance,
+    ticker,
+    transferableBalance,
+    pendingTransferAmount,
+    pendingAvailableAmount,
+  } = token ?? {};
 
   const fetchTokenDetails = useCallback(() => {
     doginalsMarketplace
@@ -134,17 +140,75 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
                 <Text color='gray.700' fontSize='16px' fontWeight='semibold'>
                   Available balance:{' '}
                 </Text>
-                <Text color='gray.700' ontSize='16px'>
-                  {Number(availableBalance).toLocaleString()}
-                </Text>
+                <HStack space='4px' alignItems='center'>
+                  <Text color='gray.700' ontSize='16px'>
+                    {Number(availableBalance).toLocaleString()}
+                  </Text>
+                  {pendingAvailableAmount ? (
+                    <Popover
+                      trigger={(triggerProps) => {
+                        return (
+                          <Pressable {...triggerProps}>
+                            <BsInfoCircleFill color='#FCD436' />
+                          </Pressable>
+                        );
+                      }}
+                    >
+                      <Popover.Content>
+                        <Popover.Arrow />
+                        <Popover.Body>
+                          <Text fontSize='13px'>
+                            Pending token inscriptions affect your available
+                            token balance.{'\n\n'}
+                            Pending inscriptions:
+                            {'\n'}
+                            <Text fontWeight='bold'>
+                              {token.ticker}{' '}
+                              {Number(pendingAvailableAmount).toLocaleString()}
+                            </Text>
+                          </Text>
+                        </Popover.Body>
+                      </Popover.Content>
+                    </Popover>
+                  ) : null}
+                </HStack>
               </HStack>
               <HStack justifyContent='space-between' w='100%'>
                 <Text color='gray.700' fontSize='16px' fontWeight='semibold'>
                   Transferable balance:{' '}
                 </Text>
-                <Text color='gray.700' fontSize='16px'>
-                  {Number(transferableBalance).toLocaleString()}
-                </Text>
+                <HStack space='4px' alignItems='center'>
+                  <Text color='gray.700' fontSize='16px'>
+                    {Number(transferableBalance).toLocaleString()}
+                  </Text>
+                  {pendingTransferAmount ? (
+                    <Popover
+                      trigger={(triggerProps) => {
+                        return (
+                          <Pressable {...triggerProps}>
+                            <BsInfoCircleFill color='#FCD436' />
+                          </Pressable>
+                        );
+                      }}
+                    >
+                      <Popover.Content>
+                        <Popover.Arrow />
+                        <Popover.Body>
+                          <Text fontSize='13px'>
+                            Pending token transfers affect your transferable
+                            token balance.{'\n\n'}
+                            Pending transfers:
+                            {'\n'}
+                            <Text fontWeight='bold'>
+                              {token.ticker}{' '}
+                              {Number(pendingTransferAmount).toLocaleString()}
+                            </Text>
+                          </Text>
+                        </Popover.Body>
+                      </Popover.Content>
+                    </Popover>
+                  ) : null}
+                </HStack>
               </HStack>
             </VStack>
             {Number(transferableBalance) ? (
@@ -156,7 +220,7 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
             ) : null}
 
             {!Number(transferableBalance) ||
-            Number(transferableBalance) < Number(availableBalance) ? (
+            Number(transferableBalance) < Number(overallBalance) ? (
               <HStack space='8px' mt='10px' alignItems='center'>
                 <BigButton
                   onPress={onInscribeToken}

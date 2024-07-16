@@ -22,6 +22,7 @@ export const TransferTokenConfirmation = ({
   walletAddress,
   selectedNFT,
   selectedAddressIndex,
+  selectedToken,
 }) => {
   const { navigate } = useAppContext();
   const [loading, setLoading] = useState(false);
@@ -60,7 +61,10 @@ export const TransferTokenConfirmation = ({
             data: {
               rawTx: formData.rawTx,
               selectedAddressIndex,
-              txType: TRANSACTION_TYPES.DOGINAL_TX,
+              txType: TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX,
+              ticker: selectedToken.ticker,
+              tokenAmount: selectedNFT.amount,
+              output: selectedNFT.output,
             },
           },
           (txId) => {
@@ -106,6 +110,8 @@ export const TransferTokenConfirmation = ({
     formData.rawTx,
     navigate,
     selectedAddressIndex,
+    selectedNFT,
+    selectedToken.ticker,
     setErrors,
     walletAddress,
   ]);
@@ -130,7 +136,8 @@ export const TransferTokenConfirmation = ({
         overflow='hidden'
         mb='24px'
         mx='20px'
-        maxHeight='100px'
+        maxHeight='120px'
+        maxWidth='150px'
       >
         <NFTView nft={selectedNFT} />
       </Box>
@@ -142,7 +149,7 @@ export const TransferTokenConfirmation = ({
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
         Network fee Ð{formData.fee}
       </Text>
-      <HStack alignItems='center' mt='60px' space='12px'>
+      <HStack alignItems='center' mt='30px' space='12px'>
         <Button
           variant='unstyled'
           colorScheme='coolGray'

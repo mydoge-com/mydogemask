@@ -538,6 +538,9 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
               txs: [jsonrpcRes.result],
               txType: data.txType,
               timestamp: Date.now(),
+              ticker: data.ticker,
+              tokenAmount: data.tokenAmount,
+              output: data.output,
             });
 
             setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });

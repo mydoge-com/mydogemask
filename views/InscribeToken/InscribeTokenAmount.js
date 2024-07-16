@@ -10,19 +10,13 @@ import {
   Toast,
   VStack,
 } from 'native-base';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { BsInfoCircleFill } from 'react-icons/bs';
 
 import { BigButton } from '../../components/Button';
 import { ToastRender } from '../../components/ToastRender';
-import {
-  INSCRIPTION_TXS_CACHE,
-  MESSAGE_TYPES,
-  TRANSACTION_PENDING_TIME,
-  TRANSACTION_TYPES,
-} from '../../scripts/helpers/constants';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
-import { getLocalValue } from '../../scripts/helpers/storage';
 import { sanitizeDogeInput } from '../../utils/formatters';
 
 const MAX_CHARACTERS = 10000;
@@ -40,7 +34,8 @@ export const InscribeTokenAmount = ({
 }) => {
   const tokenInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
-  const [cachedTxs, setCachedTx] = useState();
+
+  const { availableBalance, pendingAvailableAmount } = selectedToken;
 
   const onChangeTextToken = useCallback(
     (text) => {
@@ -68,38 +63,13 @@ export const InscribeTokenAmount = ({
     [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
   );
 
-  const pendingInscriptionAmount = cachedTxs?.length
-    ? cachedTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
-    : 0;
-
-  const transferableBalance =
-    Number(selectedToken.availableBalance) - pendingInscriptionAmount;
-
-  // Fetch cached token transactions, filter out invalidated transactions
-  const fetchCachedTxs = useCallback(async () => {
-    const transactionsCache = await getLocalValue(INSCRIPTION_TXS_CACHE);
-
-    if (transactionsCache?.length) {
-      const pendingInscriptions = transactionsCache.filter(
-        (tx) =>
-          tx.txType === TRANSACTION_TYPES.DRC20_AVAILABLE_TX &&
-          tx.timestamp + TRANSACTION_PENDING_TIME > Date.now()
-      );
-      setCachedTx(pendingInscriptions);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchCachedTxs();
-  }, [fetchCachedTxs]);
-
   const onSetMax = useCallback(() => {
-    onChangeTextToken(String(transferableBalance));
-  }, [onChangeTextToken, transferableBalance]);
+    onChangeTextToken(String(selectedToken.availableBalance));
+  }, [onChangeTextToken, selectedToken.availableBalance]);
 
   const validate = useCallback(() => {
-    return transferableBalance >= Number(formData.tokenAmount);
-  }, [transferableBalance, formData.tokenAmount]);
+    return selectedToken.availableBalance >= Number(formData.tokenAmount);
+  }, [selectedToken.availableBalance, formData.tokenAmount]);
 
   const onSubmit = useCallback(() => {
     if (validate()) {
@@ -234,61 +204,19 @@ export const InscribeTokenAmount = ({
           ref={tokenInputRef}
           value={formData.tokenAmount}
         />
-        {/* ) : (
-          <Input
-            keyboardType='numeric'
-            variant='filled'
-            placeholder='0'
-            focusOutlineColor='brandYellow.500'
-            _hover={{
-              borderColor: 'brandYellow.500',
-            }}
-            _invalid={{
-              borderColor: 'red.500',
-              focusOutlineColor: 'red.500',
-              _hover: {
-                borderColor: 'red.500',
-              },
-            }}
-            isInvalid={errors.tokenAmount}
-            onChangeText={onChangeTextDoge}
-            onSubmitEditing={onSubmit}
-            autoFocus
-            type='number'
-            fontSize='24px'
-            fontWeight='semibold'
-            _input={{
-              py: '10px',
-              pl: '4px',
-              type: 'number',
-            }}
-            InputLeftElement={
-              <Text fontSize='24px' fontWeight='semibold' px='4px'>
-                Ð
-              </Text>
-            }
-            textAlign='center'
-            ref={dogeInputRef}
-            value={formData.dogeAmount}
-            position='absolute'
-            top={0}
-            allowFontScaling
-            adjustsFontSizeToFit
-          />
-        )} */}
       </Box>
 
       <Text fontSize='10px' color='red.500'>
         {errors.tokenAmount || ' '}
       </Text>
       <VStack alignItems='center' pt='12px' space='8px'>
-        {transferableBalance ? (
+        {availableBalance ? (
           <HStack space='10px'>
             <Text fontSize='14px' color='gray.500'>
               Balance: <Text fontWeight='bold'>{selectedToken.ticker}</Text>{' '}
-              {transferableBalance}
+              {availableBalance}
             </Text>
-            {cachedTxs?.length ? (
+            {pendingAvailableAmount ? (
               <Popover
                 trigger={(triggerProps) => {
                   return (
@@ -308,7 +236,7 @@ export const InscribeTokenAmount = ({
                       {'\n'}
                       <Text fontWeight='bold'>
                         {selectedToken.ticker}{' '}
-                        {Number(pendingInscriptionAmount).toLocaleString()}
+                        {Number(pendingAvailableAmount).toLocaleString()}
                       </Text>
                     </Text>
                   </Popover.Body>

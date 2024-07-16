@@ -11,6 +11,7 @@ import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { useAppContext } from '../../../hooks/useAppContext';
+import { useCachedInscriptionTxs } from '../../../hooks/useCachedInscriptionTxs';
 import { Token } from './Token';
 import { TokenModal } from './TokenModal';
 
@@ -30,7 +31,19 @@ export const TokensTab = ({
     selectedToken = JSON.parse(selectedToken);
   }
 
-  const renderItem = useCallback(({ item }) => <Token token={item} />, []);
+  const pendingTxs = useCachedInscriptionTxs({
+    filterPending: true,
+  });
+
+  const renderItem = useCallback(
+    ({ item }) => (
+      <Token
+        token={item}
+        pendingTxs={pendingTxs.filter((tx) => tx.ticker === item.ticker)}
+      />
+    ),
+    [pendingTxs]
+  );
 
   return (
     <>

@@ -1,20 +1,25 @@
 import { Avatar, HStack, Pressable, Text, VStack } from 'native-base';
-import { Fragment, useState } from 'react';
+import { Fragment } from 'react';
 import TimeAgo from 'timeago-react';
 
 import { InscriptionIndicator } from '../../../components/InscriptionIndicator';
+import { useAppContext } from '../../../hooks/useAppContext';
 import { formatSatoshisAsDoge, is69, is420 } from '../../../utils/formatters';
-import { TransactionModal } from './TransactionModal';
 
 export const Transaction = ({
   transaction: { address, id, blockTime, type, amount, confirmations },
+  transaction,
   cachedInscription,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const { navigate } = useAppContext();
+
+  const selectTx = () => {
+    navigate(`/Transactions/tokens?selectedTx=${JSON.stringify(transaction)}`);
+  };
 
   return (
     <Fragment key={id}>
-      <Pressable onPress={() => setIsOpen(true)} paddingTop='10px'>
+      <Pressable onPress={selectTx} paddingTop='10px'>
         <HStack p='2px'>
           <VStack mr='12px'>
             <Avatar
@@ -86,17 +91,6 @@ export const Transaction = ({
           </VStack>
         </HStack>
       </Pressable>
-      <TransactionModal
-        isOpen={isOpen}
-        onClose={() => setIsOpen(false)}
-        address={address}
-        type={type}
-        amount={amount}
-        blockTime={blockTime}
-        id={id}
-        confirmations={confirmations}
-        cachedInscription={cachedInscription}
-      />
     </Fragment>
   );
 };
