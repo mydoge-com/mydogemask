@@ -4,6 +4,7 @@ import {
   Button,
   Center,
   HStack,
+  Image,
   Modal,
   Spinner,
   Text,
@@ -18,26 +19,74 @@ import { OriginBadge } from '../../components/OriginBadge';
 import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
-import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
-import { getConnectedAddressIndex } from '../../scripts/helpers/data';
+import { getAddressBalance } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
+import { validateTransaction } from '../../scripts/helpers/wallet';
 
-export function ClientTransaction({ params, dispatch, connectedClient }) {
-  const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
-    params;
+const MydogeIcon = 'assets/mydoge-icon.svg';
 
-  const handleWindowClose = useCallback(() => {
-    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  }, [dispatch]);
+export function ClientTransaction({
+  params,
+  connectedClient,
+  selectedAddressIndex,
+  handleError,
+  handleWindowClose,
+}) {
+  const { originTabId, origin, recipientAddress, dogeAmount } = params;
 
-  const [addressIndex, setAddressIndex] = useState();
+  const [pageLoading, setPageLoading] = useState(false);
+
+  /**
+   * @type {ReturnType<typeof useState<{ rawTx: string; fee: number; amount: number } | undefined}>>}
+   */
+  const [tx, setTx] = useState();
 
   useEffect(() => {
-    getConnectedAddressIndex(origin).then((index) => {
-      setAddressIndex(index);
-    });
-  }, [origin]);
+    (async () => {
+      setPageLoading(true);
+      const balance = await getAddressBalance(connectedClient.address);
+
+      const txData = {
+        senderAddress: connectedClient.address,
+        recipientAddress,
+        dogeAmount,
+      };
+
+      const error = validateTransaction({
+        ...txData,
+        addressBalance: balance,
+      });
+      if (error) {
+        handleError({
+          messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+          error,
+        });
+      }
+
+      sendMessage(
+        { message: MESSAGE_TYPES.CREATE_TRANSACTION, data: txData },
+        ({ rawTx, fee, amount }) => {
+          setPageLoading(false);
+          if (rawTx && fee && amount) {
+            setTx({ rawTx, fee, amount });
+          } else {
+            handleError({
+              messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              error: 'Unable to create transaction',
+            });
+          }
+        }
+      );
+    })();
+  }, [
+    connectedClient.address,
+    dogeAmount,
+    handleError,
+    origin,
+    originTabId,
+    recipientAddress,
+  ]);
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -69,6 +118,35 @@ export function ClientTransaction({ params, dispatch, connectedClient }) {
     );
   }, [handleWindowClose, origin, originTabId]);
 
+  if (!tx)
+    return (
+      <>
+        <Image
+          src={MydogeIcon}
+          width={66}
+          height={66}
+          alignSelf='center'
+          zIndex={2}
+          alt='Mydoge icon'
+        />
+        <Box p='8px' bg='brandYellow.500' rounded='full' my='24px'>
+          <FaLink />
+        </Box>
+        <OriginBadge origin={origin} />
+        <VStack
+          alignItems='center'
+          justifyContent='center'
+          space='6px'
+          pt='80px'
+        >
+          {pageLoading ? <Spinner size='lg' color='amber.500' /> : null}
+          <Text fontSize='md' pt='6px' color='gray.400'>
+            Creating transaction...
+          </Text>
+        </VStack>
+      </>
+    );
+
   return (
     <>
       <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
@@ -89,7 +167,7 @@ export function ClientTransaction({ params, dispatch, connectedClient }) {
           Ð{dogeAmount}
         </Text>
         <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-          Network fee Ð{fee}
+          Network fee Ð{tx.fee}
         </Text>
         <HStack alignItems='center' mt='60px' space='12px'>
           <BigButton
@@ -114,8 +192,8 @@ export function ClientTransaction({ params, dispatch, connectedClient }) {
         onClose={onCloseModal}
         origin={origin}
         originTabId={originTabId}
-        rawTx={rawTx}
-        addressIndex={addressIndex}
+        rawTx={tx.rawTx}
+        addressIndex={selectedAddressIndex}
         handleWindowClose={handleWindowClose}
         recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}

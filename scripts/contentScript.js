@@ -15,7 +15,7 @@ import {
   getDRC20Inscriptions,
 } from './helpers/doginals';
 import { getCachedTx } from './helpers/storage';
-import { validateAddress, validateTransaction } from './helpers/wallet';
+import { validateAddress } from './helpers/wallet';
 
 (() => {
   // const loadSendTipFloating = async () => {
@@ -287,43 +287,12 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
 
   async function onRequestTransaction({ origin, data }) {
     try {
-      const client = await getConnectedClient(origin);
-      const balance = await getAddressBalance(client?.address);
+      await getConnectedClient(origin);
 
-      const txData = {
-        senderAddress: client.address,
-        recipientAddress: data.recipientAddress,
-        dogeAmount: data.dogeAmount,
-      };
-
-      const error = validateTransaction({
-        ...txData,
-        addressBalance: balance,
+      chrome.runtime.sendMessage({
+        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+        data,
       });
-      if (error) {
-        throw new Error(error);
-      }
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.CREATE_TRANSACTION,
-          data: txData,
-        },
-        ({ rawTx, fee, amount }) => {
-          if (rawTx && fee && amount) {
-            chrome.runtime.sendMessage({
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
-              data: {
-                ...data,
-                rawTx,
-                fee,
-                dogeAmount: amount,
-              },
-            });
-          } else {
-            throw new Error('Unable to create transaction');
-          }
-        }
-      );
     } catch (e) {
       handleError({
         errorMessage: e.message,

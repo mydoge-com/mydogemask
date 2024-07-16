@@ -2,6 +2,11 @@
 
 const listeners = [];
 
+/**
+ * Sends a message to the background script. In development mode, it triggers local listeners instead.
+ * @param {{ message: string; data: Object }} params - An object containing the message type (as a key of MESSAGE_TYPES) and associated data.
+ * @param {Function} sendResponse - A callback function to send a response back to the message sender.
+ */
 export const sendMessage = ({ message, data }, sendResponse) => {
   if (process.env.NODE_ENV === 'development') {
     listeners.forEach((listener) => {

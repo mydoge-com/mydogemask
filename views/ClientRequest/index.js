@@ -1,9 +1,16 @@
-import { useEffect, useState } from 'react';
+import { Toast } from 'native-base';
+import { useCallback, useEffect, useState } from 'react';
 
 import { Layout } from '../../components/Layout';
+import { ToastRender } from '../../components/ToastRender';
+import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
-import { getConnectedClient } from '../../scripts/helpers/data';
+import {
+  getConnectedAddressIndex,
+  getConnectedClient,
+} from '../../scripts/helpers/data';
+import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
 import { ClientAvailableDRC20Transaction } from './ClientAvailableDRC20Transaction';
 import { ClientConnect } from './ClientConnect';
@@ -25,6 +32,7 @@ const CLIENT_REQUEST_ROUTES = {
 export function ClientRequest() {
   const { wallet, clientRequest, dispatch } = useAppContext();
   const [connectedClient, setConnectedClient] = useState({});
+  const [selectedAddressIndex, setSelectedAddressIndex] = useState();
   const origin = clientRequest?.params?.origin;
 
   useEffect(() => {
@@ -35,11 +43,47 @@ export function ClientRequest() {
         setConnectedClient(client);
       }
     })();
+    getConnectedAddressIndex(origin).then((index) => {
+      setSelectedAddressIndex(index);
+    });
   }, [origin]);
 
   const RenderScreen = clientRequest
     ? CLIENT_REQUEST_ROUTES[clientRequest?.requestType]
     : null;
+
+  const handleWindowClose = useCallback(() => {
+    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
+  }, [dispatch]);
+
+  const handleError = useCallback(
+    ({ error = 'Transaction Failed', title = 'Error', messageType }) => {
+      sendMessage(
+        {
+          message: messageType,
+          error,
+          originTabId: clientRequest?.params?.originTabId,
+          origin: clientRequest?.params?.origin,
+        },
+        () => {
+          Toast.show({
+            duration: 3000,
+            render: () => {
+              return (
+                <ToastRender title={title} description={error} status='error' />
+              );
+            },
+          });
+          handleWindowClose();
+        }
+      );
+    },
+    [
+      clientRequest?.params?.origin,
+      clientRequest?.params?.originTabId,
+      handleWindowClose,
+    ]
+  );
 
   if (!RenderScreen) return null;
 
@@ -50,6 +94,9 @@ export function ClientRequest() {
         wallet={wallet}
         dispatch={dispatch}
         connectedClient={connectedClient}
+        selectedAddressIndex={selectedAddressIndex}
+        handleError={handleError}
+        handleWindowClose={handleWindowClose}
       />
     </Layout>
   );

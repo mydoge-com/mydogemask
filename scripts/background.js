@@ -59,14 +59,10 @@ function sanitizeFloatAmount(amount) {
  */
 function createClientPopup({ sendResponse, sender, data = {}, messageType }) {
   const params = new URLSearchParams();
-  params.append('originTabId', sender.tab.id);
-  params.append('origin', sender.origin);
+  params.append('originTabId', JSON.stringify(sender.tab.id));
+  params.append('origin', JSON.stringify(sender.origin));
   Object.entries(data).forEach(([key, value]) => {
-    if (Array.isArray(value)) {
-      value.forEach((val) => params.append(key, val));
-    } else {
-      params.append(key, value);
-    }
+    params.append(key, JSON.stringify(value));
   });
   chrome.windows
     .create({
