@@ -83,7 +83,7 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
     >
       <Modal.Content w='90%'>
         <Modal.CloseButton />
-        <Modal.Body alignItems='center' pt='54px' pb='36px'>
+        <Modal.Body alignItems='center' pt='25px' pb='36px'>
           <VStack w='100%' alignItems='center'>
             <VStack alignItems='center' space='12px'>
               <Avatar
