@@ -1,5 +1,3 @@
-import BN from 'bn.js';
-
 import { MESSAGE_TYPES } from './helpers/constants';
 import {
   getAddressBalance,
@@ -261,71 +259,12 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
   async function onRequestDoginalTransaction({ origin, data }) {
     try {
-      // if (!validateAddress(data.recipientAddress)) {
-      //   throw new Error('Invalid address');
-      // }
-
-      // const txid = data.output.split(':')[0];
-      // const vout = parseInt(data.output.split(':')[1], 10);
-
-      // if (txid?.length !== 64 || Number.isNaN(vout)) {
-      //   throw new Error('Invalid output');
-      // }
-
       await getConnectedClient(origin);
-      // let inscriptions = await getAllInscriptions(client?.address);
-
-      // // Get output values
-      // inscriptions = await Promise.all(
-      //   inscriptions.map(async (nft) => {
-      //     const tx = await getCachedTx(nft.txid);
-
-      //     return {
-      //       ...nft,
-      //       outputValue: tx.vout[nft.vout].value,
-      //     };
-      //   })
-      // );
-
-      // const doginal = inscriptions.find(
-      //   (ins) => ins.txid === txid && ins.vout === vout
-      // );
-
-      // if (!doginal) {
-      //   throw new Error('Doginal not found');
-      // }
 
       chrome.runtime.sendMessage({
         message: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
         data,
       });
-
-      // chrome.runtime.sendMessage(
-      //   {
-      //     message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
-      //     data: {
-      //       ...data,
-      //       address: client?.address,
-      //       outputValue: doginal.outputValue,
-      //     },
-      //   },
-      //   ({ rawTx, fee, amount }) => {
-      //     if (rawTx && fee && amount) {
-      //       chrome.runtime.sendMessage({
-      //         message: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
-      //         data: {
-      //           ...data,
-      //           ...doginal,
-      //           rawTx,
-      //           fee,
-      //           dogeAmount: amount,
-      //         },
-      //       });
-      //     } else {
-      //       throw new Error('Unable to create doginal transaction');
-      //     }
-      //   }
-      // );
     } catch (e) {
       handleError({
         errorMessage: e.message,
@@ -337,43 +276,12 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
   async function onRequestAvailableDRC20Transaction({ origin, data }) {
     try {
-      const client = await getConnectedClient(origin);
-      const selectedAddressIndex = await getConnectedAddressIndex(origin);
-      const balances = [];
-      await getDRC20Balances(client?.address, 0, balances);
-      const balance = balances.find((ins) => ins.ticker === data.ticker);
-      const ab = new BN(balance.availableBalance);
-      const amt = new BN(data.amount);
+      await getConnectedClient(origin);
 
-      if (!balance || ab.lt(amt)) {
-        throw new Error('Insufficient balance');
-      }
-
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION,
-          data: {
-            ...data,
-            selectedAddressIndex,
-            walletAddress: client?.address,
-            tokenAmount: data.amount,
-          },
-        },
-        ({ txs, fee }) => {
-          if (txs?.length && fee) {
-            chrome.runtime.sendMessage({
-              message: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
-              data: {
-                ...data,
-                txs,
-                fee,
-              },
-            });
-          } else {
-            throw new Error('Unable to create available drc-20 transaction');
-          }
-        }
-      );
+      chrome.runtime.sendMessage({
+        message: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
+        data,
+      });
     } catch (e) {
       handleError({
         errorMessage: e.message,
@@ -385,14 +293,9 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
   async function onRequestPsbt({ origin, data }) {
     try {
-      const selectedAddressIndex = await getConnectedAddressIndex(origin);
-
       chrome.runtime.sendMessage({
         message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
-        data: {
-          ...data,
-          selectedAddressIndex,
-        },
+        data,
       });
     } catch (e) {
       handleError({
@@ -407,32 +310,14 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
     try {
       const selectedAddressIndex = await getConnectedAddressIndex(origin);
 
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
-          data: {
-            ...data,
-            selectedAddressIndex,
-            message: data.message,
-          },
+      chrome.runtime.sendMessage({
+        message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
+        data: {
+          ...data,
+          selectedAddressIndex,
+          message: data.message,
         },
-        (response) => {
-          console.log('onRequestSignedMessage response', response);
-          // if (signedMessage) {
-          //   window.postMessage(
-          //     {
-          //       type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
-          //       data: {
-          //         signedMessage,
-          //       },
-          //     },
-          //     origin
-          //   );
-          // } else {
-          //   throw new Error('Unable to sign message');
-          // }
-        }
-      );
+      });
     } catch (e) {
       handleError({
         errorMessage: e.message,

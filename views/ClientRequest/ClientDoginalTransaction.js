@@ -3,8 +3,6 @@ import {
   Box,
   Button,
   HStack,
-  Modal,
-  Spinner,
   Text,
   Toast,
   VStack,
@@ -239,6 +237,8 @@ const ConfirmationModal = ({
         data: { rawTx, selectedAddressIndex: addressIndex },
       },
       (txId) => {
+        setLoading(false);
+        onClose();
         if (txId) {
           sendMessage(
             {
@@ -292,15 +292,15 @@ const ConfirmationModal = ({
         }
       }
     );
-  }, [addressIndex, handleWindowClose, origin, originTabId, rawTx]);
+  }, [addressIndex, handleWindowClose, onClose, origin, originTabId, rawTx]);
 
   return (
     <>
-      <Modal isOpen={loading} full>
+      {/* <Modal isOpen={loading} full>
         <Modal.Body h='600px' justifyContent='center'>
           <Spinner size='lg' />
         </Modal.Body>
-      </Modal>
+      </Modal> */}
       <AlertDialog
         leastDestructiveRef={cancelRef}
         isOpen={showModal}
@@ -328,10 +328,11 @@ const ConfirmationModal = ({
                 colorScheme='coolGray'
                 onPress={onClose}
                 ref={cancelRef}
+                isDisabled={loading}
               >
                 Cancel
               </Button>
-              <BigButton onPress={onSubmit} px='24px'>
+              <BigButton onPress={onSubmit} px='24px' loading={loading}>
                 Confirm
               </BigButton>
             </Button.Group>

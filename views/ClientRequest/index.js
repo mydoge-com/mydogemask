@@ -61,9 +61,11 @@ export function ClientRequest() {
       sendMessage(
         {
           message: messageType,
-          error,
-          originTabId: clientRequest?.params?.originTabId,
-          origin: clientRequest?.params?.origin,
+          data: {
+            error,
+            originTabId: clientRequest?.params?.originTabId,
+            origin: clientRequest?.params?.origin,
+          },
         },
         () => {
           Toast.show({
