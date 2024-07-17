@@ -10,7 +10,7 @@ import {
   Toast,
   VStack,
 } from 'native-base';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
@@ -19,23 +19,19 @@ import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
-import { getConnectedAddressIndex } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export function ClientSignedMessage({ params, dispatch, connectedClient }) {
+export function ClientSignedMessage({
+  params,
+  dispatch,
+  connectedClient,
+  connectedAddressIndex: addressIndex,
+}) {
   const { originTabId, origin, message } = params;
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
   }, [dispatch]);
-
-  const [addressIndex, setAddressIndex] = useState();
-
-  useEffect(() => {
-    getConnectedAddressIndex(origin).then((index) => {
-      setAddressIndex(index);
-    });
-  }, [origin]);
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {

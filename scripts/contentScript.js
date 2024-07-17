@@ -1,9 +1,5 @@
 import { MESSAGE_TYPES } from './helpers/constants';
-import {
-  getAddressBalance,
-  getConnectedAddressIndex,
-  getConnectedClient,
-} from './helpers/data';
+import { getAddressBalance, getConnectedClient } from './helpers/data';
 import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
 (() => {
@@ -308,15 +304,9 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
   async function onRequestSignedMessage({ origin, data }) {
     try {
-      const selectedAddressIndex = await getConnectedAddressIndex(origin);
-
       chrome.runtime.sendMessage({
         message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
-        data: {
-          ...data,
-          selectedAddressIndex,
-          message: data.message,
-        },
+        data,
       });
     } catch (e) {
       handleError({

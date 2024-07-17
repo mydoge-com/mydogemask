@@ -254,7 +254,7 @@ const ConfirmationModal = ({
         }
       }
     );
-  }, [addressIndex, handleWindowClose, origin, originTabId, rawTx]);
+  }, [addressIndex, handleWindowClose, onClose, origin, originTabId, rawTx]);
 
   return (
     <>
