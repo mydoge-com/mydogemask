@@ -13,35 +13,112 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
+import { ClientPopupLoading } from '../../components/ClientPopupLoading';
 import { OriginBadge } from '../../components/OriginBadge';
 import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
-import { getConnectedAddressIndex } from '../../scripts/helpers/data';
+import { getAllInscriptions } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
+import { getCachedTx } from '../../scripts/helpers/storage';
+import { validateAddress } from '../../scripts/helpers/wallet';
 import { NFTView } from '../Transactions/components/NFTView';
 
 export function ClientDoginalTransaction({
   params,
   dispatch,
   connectedClient,
+  connectedAddressIndex,
+  handleError,
 }) {
-  const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
-    params;
+  const { originTabId, origin, recipientAddress, output } = params;
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
   }, [dispatch]);
 
-  const [addressIndex, setAddressIndex] = useState();
+  /**
+   * @type {ReturnType<typeof useState<{ rawTx: string; fee: number; amount: number } | undefined}>>}
+   */
+  const [transaction, setTransaction] = useState();
+
+  const [pageLoading, setPageLoading] = useState(false);
 
   useEffect(() => {
-    getConnectedAddressIndex(origin).then((index) => {
-      setAddressIndex(index);
-    });
-  }, [origin]);
+    (async () => {
+      if (!validateAddress(recipientAddress)) {
+        handleError({
+          error: 'Invalid address',
+          messageType:
+            MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+        });
+        return;
+      }
+
+      const txid = output.split(':')[0];
+      const vout = parseInt(output.split(':')[1], 10);
+
+      if (txid?.length !== 64 || Number.isNaN(vout)) {
+        handleError({
+          error: 'Invalid output',
+          messageType:
+            MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+        });
+        return;
+      }
+      setPageLoading(true);
+      let inscriptions = await getAllInscriptions(connectedClient?.address);
+
+      // Get output values
+      inscriptions = await Promise.all(
+        inscriptions.map(async (nft) => {
+          const tx = await getCachedTx(nft.txid);
+
+          return {
+            ...nft,
+            outputValue: tx.vout[nft.vout].value,
+          };
+        })
+      );
+
+      const doginal = inscriptions.find(
+        (ins) => ins.txid === txid && ins.vout === vout
+      );
+
+      if (!doginal) {
+        handleError({
+          error: 'Doginal not found',
+          messageType:
+            MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+        });
+        setPageLoading(false);
+        return;
+      }
+
+      sendMessage(
+        {
+          message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
+          data: {
+            ...doginal,
+            recipientAddress,
+            output,
+            address: connectedClient?.address,
+            outputValue: doginal.outputValue,
+          },
+        },
+        ({ rawTx, fee, amount }) => {
+          setPageLoading(false);
+          if (rawTx && fee && amount) {
+            setTransaction({ rawTx, fee, amount });
+          } else {
+            throw new Error('Unable to create doginal transaction');
+          }
+        }
+      );
+    })();
+  }, [connectedClient?.address, handleError, output, recipientAddress]);
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -73,6 +150,15 @@ export function ClientDoginalTransaction({
     );
   }, [handleWindowClose, origin, originTabId]);
 
+  if (!transaction)
+    return (
+      <ClientPopupLoading
+        pageLoading={pageLoading}
+        origin={origin}
+        loadingText='Creating transaction...'
+      />
+    );
+
   return (
     <>
       <OriginBadge origin={origin} mb='4px' />
@@ -98,10 +184,10 @@ export function ClientDoginalTransaction({
       <RecipientAddress address={recipientAddress} />
 
       <Text fontSize='3xl' fontWeight='semibold' mt='-6px'>
-        Ð{dogeAmount}
+        Ð{transaction.amount}
       </Text>
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-        Network fee Ð{fee}
+        Network fee Ð{transaction.fee}
       </Text>
       <HStack alignItems='center' mt='30px' space='12px'>
         <BigButton onPress={onRejectTransaction} variant='secondary' px='20px'>
@@ -121,11 +207,11 @@ export function ClientDoginalTransaction({
         onClose={onCloseModal}
         origin={origin}
         originTabId={originTabId}
-        rawTx={rawTx}
-        addressIndex={addressIndex}
+        rawTx={transaction.rawTx}
+        addressIndex={connectedAddressIndex}
         handleWindowClose={handleWindowClose}
         recipientAddress={recipientAddress}
-        dogeAmount={dogeAmount}
+        dogeAmount={transaction.amount}
       />
     </>
   );

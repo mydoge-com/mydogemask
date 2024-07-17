@@ -4,7 +4,6 @@ import {
   Button,
   Center,
   HStack,
-  Image,
   Modal,
   Spinner,
   Text,
@@ -15,6 +14,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
+import { ClientPopupLoading } from '../../components/ClientPopupLoading';
 import { OriginBadge } from '../../components/OriginBadge';
 import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
@@ -24,12 +24,10 @@ import { getAddressBalance } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
 
-const MydogeIcon = 'assets/mydoge-icon.svg';
-
 export function ClientTransaction({
   params,
   connectedClient,
-  selectedAddressIndex,
+  connectedAddressIndex,
   handleError,
   handleWindowClose,
 }) {
@@ -40,7 +38,7 @@ export function ClientTransaction({
   /**
    * @type {ReturnType<typeof useState<{ rawTx: string; fee: number; amount: number } | undefined}>>}
    */
-  const [tx, setTx] = useState();
+  const [transaction, setTransaction] = useState();
 
   useEffect(() => {
     (async () => {
@@ -69,7 +67,7 @@ export function ClientTransaction({
         ({ rawTx, fee, amount }) => {
           setPageLoading(false);
           if (rawTx && fee && amount) {
-            setTx({ rawTx, fee, amount });
+            setTransaction({ rawTx, fee, amount });
           } else {
             handleError({
               messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
@@ -118,33 +116,13 @@ export function ClientTransaction({
     );
   }, [handleWindowClose, origin, originTabId]);
 
-  if (!tx)
+  if (!transaction)
     return (
-      <>
-        <Image
-          src={MydogeIcon}
-          width={66}
-          height={66}
-          alignSelf='center'
-          zIndex={2}
-          alt='Mydoge icon'
-        />
-        <Box p='8px' bg='brandYellow.500' rounded='full' my='24px'>
-          <FaLink />
-        </Box>
-        <OriginBadge origin={origin} />
-        <VStack
-          alignItems='center'
-          justifyContent='center'
-          space='6px'
-          pt='80px'
-        >
-          {pageLoading ? <Spinner size='lg' color='amber.500' /> : null}
-          <Text fontSize='md' pt='6px' color='gray.400'>
-            Creating transaction...
-          </Text>
-        </VStack>
-      </>
+      <ClientPopupLoading
+        pageLoading={pageLoading}
+        origin={origin}
+        loadingText='Creating transaction...'
+      />
     );
 
   return (
@@ -167,7 +145,7 @@ export function ClientTransaction({
           Ð{dogeAmount}
         </Text>
         <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-          Network fee Ð{tx.fee}
+          Network fee Ð{transaction.fee}
         </Text>
         <HStack alignItems='center' mt='60px' space='12px'>
           <BigButton
@@ -192,8 +170,8 @@ export function ClientTransaction({
         onClose={onCloseModal}
         origin={origin}
         originTabId={originTabId}
-        rawTx={tx.rawTx}
-        addressIndex={selectedAddressIndex}
+        rawTx={transaction.rawTx}
+        addressIndex={connectedAddressIndex}
         handleWindowClose={handleWindowClose}
         recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}

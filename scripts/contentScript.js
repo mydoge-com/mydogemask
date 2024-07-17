@@ -6,52 +6,9 @@ import {
   getConnectedAddressIndex,
   getConnectedClient,
 } from './helpers/data';
-import {
-  // getAllDRC20,
-  getAllInscriptions,
-  // getAllInscriptions,
-  // getDoginals,
-  getDRC20Balances,
-  getDRC20Inscriptions,
-} from './helpers/doginals';
-import { getCachedTx } from './helpers/storage';
-import { validateAddress } from './helpers/wallet';
+import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
 (() => {
-  // const loadSendTipFloating = async () => {
-  //   const sendTipFloatingBtnExists = document.getElementsByClassName(
-  //     'sendTipFloating-btn'
-  //   )[0];
-
-  //   if (!sendTipFloatingBtnExists) {
-  //     const sendTipBtn = document.createElement('img');
-
-  //     sendTipBtn.src = chrome.runtime.getURL('assets/sendtip.png');
-  //     sendTipBtn.className = 'sendTipFloating-btn';
-  //     sendTipBtn.title = 'Tip This Site';
-  //     sendTipBtn.style =
-  //       'bottom: 10px; right: 10px; position:fixed; z-index: 9999;';
-  //     document.body.appendChild(sendTipBtn);
-  //     sendTipBtn.addEventListener('click', sendTipEventHandler);
-  //   }
-  // };
-
-  // const sendTipEventHandler = async () => {
-  //   onRequestTransaction({});
-  // };
-
-  // TODO: Inject tip button into body if website has dogecoin meta tag
-  // Tip button should be floating (absolutely positioned, bottom right maybe?)
-  // const metas = document.getElementsByTagName('meta');
-  // for (let i = 0; i < metas.length; i++) {
-  //   const name = metas[i].getAttribute('name');
-  //   if (name === 'dogecoin') {
-  //     loadSendTipFloating();
-  //     const content = metas[i].getAttribute('content');
-  //     alert(`Name: ${name} content: ${content}`);
-  //   }
-  // }
-
   // Inject doge API to all websites
   function injectScript(filePath, tag) {
     const node = document.getElementsByTagName(tag)[0];
@@ -304,66 +261,71 @@ import { validateAddress } from './helpers/wallet';
 
   async function onRequestDoginalTransaction({ origin, data }) {
     try {
-      if (!validateAddress(data.recipientAddress)) {
-        throw new Error('Invalid address');
-      }
+      // if (!validateAddress(data.recipientAddress)) {
+      //   throw new Error('Invalid address');
+      // }
 
-      const txid = data.output.split(':')[0];
-      const vout = parseInt(data.output.split(':')[1], 10);
+      // const txid = data.output.split(':')[0];
+      // const vout = parseInt(data.output.split(':')[1], 10);
 
-      if (txid?.length !== 64 || Number.isNaN(vout)) {
-        throw new Error('Invalid output');
-      }
+      // if (txid?.length !== 64 || Number.isNaN(vout)) {
+      //   throw new Error('Invalid output');
+      // }
 
-      const client = await getConnectedClient(origin);
-      let inscriptions = await getAllInscriptions(client?.address);
+      await getConnectedClient(origin);
+      // let inscriptions = await getAllInscriptions(client?.address);
 
-      // Get output values
-      inscriptions = await Promise.all(
-        inscriptions.map(async (nft) => {
-          const tx = await getCachedTx(nft.txid);
+      // // Get output values
+      // inscriptions = await Promise.all(
+      //   inscriptions.map(async (nft) => {
+      //     const tx = await getCachedTx(nft.txid);
 
-          return {
-            ...nft,
-            outputValue: tx.vout[nft.vout].value,
-          };
-        })
-      );
+      //     return {
+      //       ...nft,
+      //       outputValue: tx.vout[nft.vout].value,
+      //     };
+      //   })
+      // );
 
-      const doginal = inscriptions.find(
-        (ins) => ins.txid === txid && ins.vout === vout
-      );
+      // const doginal = inscriptions.find(
+      //   (ins) => ins.txid === txid && ins.vout === vout
+      // );
 
-      if (!doginal) {
-        throw new Error('Doginal not found');
-      }
+      // if (!doginal) {
+      //   throw new Error('Doginal not found');
+      // }
 
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
-          data: {
-            ...data,
-            address: client?.address,
-            outputValue: doginal.outputValue,
-          },
-        },
-        ({ rawTx, fee, amount }) => {
-          if (rawTx && fee && amount) {
-            chrome.runtime.sendMessage({
-              message: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
-              data: {
-                ...data,
-                ...doginal,
-                rawTx,
-                fee,
-                dogeAmount: amount,
-              },
-            });
-          } else {
-            throw new Error('Unable to create doginal transaction');
-          }
-        }
-      );
+      chrome.runtime.sendMessage({
+        message: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
+        data,
+      });
+
+      // chrome.runtime.sendMessage(
+      //   {
+      //     message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
+      //     data: {
+      //       ...data,
+      //       address: client?.address,
+      //       outputValue: doginal.outputValue,
+      //     },
+      //   },
+      //   ({ rawTx, fee, amount }) => {
+      //     if (rawTx && fee && amount) {
+      //       chrome.runtime.sendMessage({
+      //         message: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
+      //         data: {
+      //           ...data,
+      //           ...doginal,
+      //           rawTx,
+      //           fee,
+      //           dogeAmount: amount,
+      //         },
+      //       });
+      //     } else {
+      //       throw new Error('Unable to create doginal transaction');
+      //     }
+      //   }
+      // );
     } catch (e) {
       handleError({
         errorMessage: e.message,

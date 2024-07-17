@@ -32,7 +32,7 @@ const CLIENT_REQUEST_ROUTES = {
 export function ClientRequest() {
   const { wallet, clientRequest, dispatch } = useAppContext();
   const [connectedClient, setConnectedClient] = useState({});
-  const [selectedAddressIndex, setSelectedAddressIndex] = useState();
+  const [connectedAddressIndex, setConnectedAddressIndex] = useState();
   const origin = clientRequest?.params?.origin;
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export function ClientRequest() {
       }
     })();
     getConnectedAddressIndex(origin).then((index) => {
-      setSelectedAddressIndex(index);
+      setConnectedAddressIndex(index);
     });
   }, [origin]);
 
@@ -94,7 +94,7 @@ export function ClientRequest() {
         wallet={wallet}
         dispatch={dispatch}
         connectedClient={connectedClient}
-        selectedAddressIndex={selectedAddressIndex}
+        connectedAddressIndex={connectedAddressIndex}
         handleError={handleError}
         handleWindowClose={handleWindowClose}
       />
