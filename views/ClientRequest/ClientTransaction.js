@@ -77,7 +77,6 @@ export function ClientTransaction({
       );
     })();
   }, [
-    connectedAddressIndex,
     connectedClient.address,
     dogeAmount,
     handleError,
