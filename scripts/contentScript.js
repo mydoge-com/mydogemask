@@ -1,5 +1,9 @@
 import { MESSAGE_TYPES } from './helpers/constants';
-import { getAddressBalance, getConnectedClient } from './helpers/data';
+import {
+  getAddressBalance,
+  getConnectedAddressIndex,
+  getConnectedClient,
+} from './helpers/data';
 import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
 (() => {
@@ -236,86 +240,29 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
     }
   }
 
-  async function onRequestTransaction({ origin, data }) {
-    try {
-      await getConnectedClient(origin);
+  const createClientPopupHandler =
+    ({ messageType, responseType }) =>
+    async ({ data, origin }) => {
+      try {
+        const connectedClient = await getConnectedClient(origin);
+        const connectedAddressIndex = await getConnectedAddressIndex(origin);
 
-      chrome.runtime.sendMessage({
-        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
-        data,
-      });
-    } catch (e) {
-      handleError({
-        errorMessage: e.message,
-        origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-      });
-    }
-  }
-
-  async function onRequestDoginalTransaction({ origin, data }) {
-    try {
-      await getConnectedClient(origin);
-
-      chrome.runtime.sendMessage({
-        message: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
-        data,
-      });
-    } catch (e) {
-      handleError({
-        errorMessage: e.message,
-        origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
-      });
-    }
-  }
-
-  async function onRequestAvailableDRC20Transaction({ origin, data }) {
-    try {
-      await getConnectedClient(origin);
-
-      chrome.runtime.sendMessage({
-        message: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
-        data,
-      });
-    } catch (e) {
-      handleError({
-        errorMessage: e.message,
-        origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-      });
-    }
-  }
-
-  async function onRequestPsbt({ origin, data }) {
-    try {
-      chrome.runtime.sendMessage({
-        message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
-        data,
-      });
-    } catch (e) {
-      handleError({
-        errorMessage: e.message,
-        origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
-      });
-    }
-  }
-
-  async function onRequestSignedMessage({ origin, data }) {
-    try {
-      chrome.runtime.sendMessage({
-        message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
-        data,
-      });
-    } catch (e) {
-      handleError({
-        errorMessage: e.message,
-        origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
-      });
-    }
-  }
+        chrome.runtime.sendMessage({
+          message: messageType,
+          data: {
+            ...data,
+            connectedClient,
+            connectedAddressIndex,
+          },
+        });
+      } catch (e) {
+        handleError({
+          errorMessage: e.message,
+          origin,
+          messageType: responseType,
+        });
+      }
+    };
 
   // Listen to messages from injected script and pass to the respective handler functions tro forward to the background script
   window.addEventListener(
@@ -338,19 +285,37 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
           onGetTransferableDRC20({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
-          onRequestTransaction({ origin: source.origin, data });
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+            responseType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+          })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
-          onRequestDoginalTransaction({ origin: source.origin, data });
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
+            responseType:
+              MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+          })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
-          onRequestAvailableDRC20Transaction({ origin: source.origin, data });
+          createClientPopupHandler({
+            messageType:
+              MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
+            responseType:
+              MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+          })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
-          onRequestPsbt({ origin: source.origin, data });
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
+            responseType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+          })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
-          onRequestSignedMessage({ origin: source.origin, data });
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
+            responseType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+          })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_DISCONNECT:
           onDisconnectClient({ origin: source.origin });
