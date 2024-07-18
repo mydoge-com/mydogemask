@@ -13,6 +13,7 @@ import {
   MIN_TX_AMOUNT,
   ONBOARDING_COMPLETE,
   PASSWORD,
+  SELECTED_ADDRESS_INDEX,
   TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
@@ -1233,7 +1234,12 @@ function onDeleteAddress({ sendResponse, data } = {}) {
 function onDeleteWallet({ sendResponse } = {}) {
   Promise.all([
     clearSessionStorage(),
-    removeLocalValue([PASSWORD, WALLET, ONBOARDING_COMPLETE]),
+    removeLocalValue([
+      PASSWORD,
+      WALLET,
+      ONBOARDING_COMPLETE,
+      SELECTED_ADDRESS_INDEX,
+    ]),
   ])
     .then(() => {
       sendResponse?.(true);
