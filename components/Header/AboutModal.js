@@ -1,6 +1,10 @@
 import { Link, Modal, Text, VStack } from 'native-base';
 
+import { useLinks } from '../../hooks/useLinks';
+
 export const AboutModal = ({ showModal, onClose }) => {
+  const { onLinkClick } = useLinks();
+
   return (
     <Modal isOpen={showModal} onClose={onClose} size='full'>
       <Modal.Content w='100%'>
@@ -23,6 +27,7 @@ export const AboutModal = ({ showModal, onClose }) => {
                 fontWeight: 'semibold',
               }}
               href='https://www.mydoge.com/terms'
+              onPress={() => onLinkClick('https://www.mydoge.com/terms')}
             >
               Terms of Use
             </Link>
@@ -34,6 +39,7 @@ export const AboutModal = ({ showModal, onClose }) => {
                 color: 'blue.500',
                 fontWeight: 'semibold',
               }}
+              onPress={() => onLinkClick('https://www.mydoge.com/privacy')}
             >
               Privacy Policy
             </Link>
@@ -45,6 +51,7 @@ export const AboutModal = ({ showModal, onClose }) => {
                 color: 'blue.500',
                 fontWeight: 'semibold',
               }}
+              onPress={() => onLinkClick('https://mydoge.com')}
             >
               Visit our website
             </Link>
@@ -56,6 +63,7 @@ export const AboutModal = ({ showModal, onClose }) => {
                 color: 'blue.500',
                 fontWeight: 'semibold',
               }}
+              onPress={() => onLinkClick('mailto:support@mydoge.com')}
             >
               Contact us
             </Link>
