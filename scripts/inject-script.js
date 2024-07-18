@@ -230,7 +230,8 @@ class MyDogeWallet {
         reject,
         onSuccess,
         onError,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+        messageType:
+          MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
       });
     });
   }

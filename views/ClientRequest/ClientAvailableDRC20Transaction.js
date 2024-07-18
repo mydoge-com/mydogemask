@@ -207,7 +207,7 @@ const ConfirmationModal = ({
             {
               message:
                 MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
-              data: { ...params, txs, tokenAmount, ticker, txId },
+              data: { tokenAmount, ticker, txId, originTabId, origin },
             },
             () => {
               onClose();
