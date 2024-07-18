@@ -45,6 +45,7 @@ export function ClientPSBT({
   const [indexes] = useState([indexesParam].flat());
 
   useEffect(() => {
+    if (typeof selectedAddressIndex !== 'number') return;
     try {
       setPsbt(decodeRawPsbt(rawTx));
       sendMessage(
@@ -52,9 +53,10 @@ export function ClientPSBT({
           message: MESSAGE_TYPES.SIGN_PSBT,
           data: { rawTx, indexes, selectedAddressIndex, feeOnly: true },
         },
-        ({ fee }) => {
+        ({ fee, amount }) => {
           if (fee) {
             setDogeFee(fee);
+            setDogeAmount(amount);
           }
         }
       );
@@ -67,20 +69,15 @@ export function ClientPSBT({
   }, [handleFailedTransaction, rawTx, indexes, selectedAddressIndex]);
 
   useEffect(() => {
+    if (!psbt) return;
     (async () => {
       if (psbt) {
-        let amount = 0;
-
         const mappedInputs = await Promise.all(
           psbt?.txInputs?.map(async (input, index) => {
             const hash = Buffer.from(input.hash.reverse());
             const txid = hash.toString('hex');
             const tx = await getCachedTx(txid);
             const value = sb.toBitcoin(tx.vout[input.index].value);
-
-            if (indexes.includes(String(index))) {
-              amount += value;
-            }
 
             return {
               txid,
@@ -91,7 +88,6 @@ export function ClientPSBT({
           })
         );
 
-        setDogeAmount(amount);
         setInputs(mappedInputs);
       }
     })();

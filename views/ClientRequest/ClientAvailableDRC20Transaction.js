@@ -72,6 +72,8 @@ export function ClientAvailableDRC20Transaction({
   }, [handleWindowClose, origin, originTabId]);
 
   useEffect(() => {
+    if (!connectedClient?.address || typeof connectedAddressIndex !== 'number')
+      return;
     (async () => {
       setPageLoading(true);
       const balances = [];

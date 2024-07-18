@@ -39,7 +39,6 @@ export function ClientSignedMessage({
   }, []);
 
   const onRejectTransaction = useCallback(() => {
-    console.log('onRejectTransaction');
     sendMessage(
       {
         message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,

@@ -39,6 +39,7 @@ export function ClientTransaction({
   const [transaction, setTransaction] = useState();
 
   useEffect(() => {
+    if (!connectedClient?.address) return;
     (async () => {
       setPageLoading(true);
       const balance = await getAddressBalance(connectedClient.address);
@@ -76,6 +77,7 @@ export function ClientTransaction({
       );
     })();
   }, [
+    connectedAddressIndex,
     connectedClient.address,
     dogeAmount,
     handleError,

@@ -45,6 +45,7 @@ export function ClientDoginalTransaction({
   const [pageLoading, setPageLoading] = useState(false);
 
   useEffect(() => {
+    if (!connectedClient?.address) return;
     (async () => {
       if (!validateAddress(recipientAddress)) {
         handleError({
@@ -111,6 +112,11 @@ export function ClientDoginalTransaction({
           if (rawTx && fee && amount) {
             setTransaction({ rawTx, fee, amount });
           } else {
+            handleError({
+              error: 'Unable to create doginal transaction',
+              messageType:
+                MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+            });
             throw new Error('Unable to create doginal transaction');
           }
         }
