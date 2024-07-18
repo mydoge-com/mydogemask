@@ -203,7 +203,7 @@ export function ClientDoginalTransaction({
           role='button'
           px='28px'
         >
-          Pay
+          Transfer
         </BigButton>
       </HStack>
       <ConfirmationModal
