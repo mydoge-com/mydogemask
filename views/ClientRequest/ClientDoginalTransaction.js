@@ -43,6 +43,7 @@ export function ClientDoginalTransaction({
   const [transaction, setTransaction] = useState();
 
   const [pageLoading, setPageLoading] = useState(false);
+  const [selectedNFT, setSelectedNFT] = useState();
 
   useEffect(() => {
     if (!connectedClient?.address) return;
@@ -95,6 +96,8 @@ export function ClientDoginalTransaction({
         setPageLoading(false);
         return;
       }
+
+      setSelectedNFT(doginal);
 
       sendMessage(
         {
@@ -181,9 +184,10 @@ export function ClientDoginalTransaction({
         overflow='hidden'
         mb='12px'
         mx='20px'
-        maxHeight='100px'
+        maxHeight='120px'
+        maxWidth='150px'
       >
-        <NFTView nft={params} />
+        {selectedNFT ? <NFTView nft={selectedNFT} /> : null}
       </Box>
       <RecipientAddress address={recipientAddress} />
 
