@@ -10,12 +10,11 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { useCachedInscriptionTxs } from '../../hooks/useCachedInscriptionTxs';
 import { useInterval } from '../../hooks/useInterval';
 import { doginals, doginalsV2 } from '../../scripts/api';
-import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import { MESSAGE_TYPES, NFT_PAGE_SIZE } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
 
 const QUERY_INTERVAL = 10000;
-const QUERY_PAGE_SIZE = 10;
 
 export const useTransactions = () => {
   const { wallet, selectedAddressIndex, navigate } = useAppContext();
@@ -55,7 +54,7 @@ export const useTransactions = () => {
 
   const hasMoreTransactions =
     transactionsData &&
-    !(transactionsData[transactionsData.length - 1]?.length < QUERY_PAGE_SIZE);
+    !(transactionsData[transactionsData.length - 1]?.length < NFT_PAGE_SIZE);
 
   const refreshTransactions = () => {
     setTransactionsPage(1);
@@ -81,10 +80,14 @@ export const useTransactions = () => {
         .get(
           `/address/inscriptions?address=${walletAddress}&cursor=${
             cursor ?? 0
-          }&size=${QUERY_PAGE_SIZE}`
+          }&size=${NFT_PAGE_SIZE}`
         )
         .json((res) => {
-          setNFTs([...currentNFTs, ...(res?.result?.list ?? [])]);
+          setNFTs(
+            [...currentNFTs, ...(res?.result?.list ?? [])].sort(
+              (a, b) => a.inscriptionNumber - b.inscriptionNumber
+            )
+          );
           setNFTsTotal(res?.result?.total);
           // Don't increment page on initial fetch, where cursor is undefined
           if (typeof cursor === 'number') {
@@ -104,7 +107,7 @@ export const useTransactions = () => {
         .get(
           `/brc20/tokens?address=${walletAddress}&cursor=${
             cursor || 0
-          }&size=${QUERY_PAGE_SIZE}`
+          }&size=${NFT_PAGE_SIZE}`
         )
         .json((res) => {
           setTokens([...currentTokens, ...(res?.result?.list ?? [])]);
@@ -153,7 +156,7 @@ export const useTransactions = () => {
   const fetchMoreNFTs = useCallback(() => {
     if (hasMoreNFTs) {
       fetchNFTs({
-        cursor: currentNFTPage.current + QUERY_PAGE_SIZE,
+        cursor: currentNFTPage.current + NFT_PAGE_SIZE,
         currentNFTs: NFTs,
       });
     }
@@ -162,7 +165,7 @@ export const useTransactions = () => {
   const fetchMoreTokens = useCallback(() => {
     if (hasMoreTokens) {
       fetchTokens({
-        cursor: currentTokensPage.current + QUERY_PAGE_SIZE,
+        cursor: currentTokensPage.current + NFT_PAGE_SIZE,
         currentTokens: tokens,
       });
     }
