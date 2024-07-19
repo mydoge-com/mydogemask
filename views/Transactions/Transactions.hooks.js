@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import sb from 'satoshi-bitcoin';
 import useSWRInfinite from 'swr/infinite';
 
 import {
@@ -7,10 +6,8 @@ import {
   getTransactionsKey,
 } from '../../dataFetchers/getTransactions';
 import { useCachedInscriptionTxs } from '../../hooks/useCachedInscriptionTxs';
-import { useInterval } from '../../hooks/useInterval';
 import { doginals, doginalsV2 } from '../../scripts/api';
-import { MESSAGE_TYPES, NFT_PAGE_SIZE } from '../../scripts/helpers/constants';
-import { sendMessage } from '../../scripts/helpers/message';
+import { NFT_PAGE_SIZE } from '../../scripts/helpers/constants';
 import { logError } from '../../utils/error';
 
 const QUERY_INTERVAL = 10000;
@@ -59,8 +56,6 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
     setTransactionsPage(1);
   };
 
-  const [balance, setBalance] = useState(null);
-  const [usdPrice, setUSDPrice] = useState(0);
   const [NFTsLoading, setNFTsLoading] = useState(true);
   const [NFTs, setNFTs] = useState();
   const [NFTsTotal, setNFTsTotal] = useState();
@@ -127,33 +122,6 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
     [walletAddress]
   );
 
-  const usdValue = balance ? sb.toBitcoin(balance) * usdPrice : 0;
-  const getAddressBalance = useCallback(() => {
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
-        data: { address: walletAddress },
-      },
-      (walletBalance) => {
-        if (walletBalance) {
-          setBalance(Number(walletBalance));
-        } else {
-          logError(new Error('Failed to get wallet balance'));
-        }
-      }
-    );
-  }, [walletAddress]);
-
-  const getDogecoinPrice = useCallback(() => {
-    sendMessage({ message: MESSAGE_TYPES.GET_DOGECOIN_PRICE }, ({ usd }) => {
-      if (usd) {
-        setUSDPrice(usd);
-      } else {
-        logError(new Error('Failed to get Dogecoin price'));
-      }
-    });
-  }, []);
-
   const hasMoreNFTs = visibleNFTsPage * VISIBLE_NFTS_PER_PAGE < NFTsTotal;
   const hasMoreTokens = tokens?.length < tokensTotal;
 
@@ -183,35 +151,10 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
     if (!wallet || typeof selectedAddressIndex !== 'number') {
       return;
     }
-    getAddressBalance();
-    getDogecoinPrice();
-    fetchTokens();
     fetchNFTs();
-  }, [
-    fetchNFTs,
-    fetchTokens,
-    getAddressBalance,
-    getDogecoinPrice,
-    selectedAddressIndex,
-    wallet,
-    walletAddress,
-  ]);
-
-  useInterval(
-    () => {
-      if (!walletAddress) {
-        return;
-      }
-      getAddressBalance();
-      getDogecoinPrice();
-    },
-    QUERY_INTERVAL,
-    false
-  );
+  }, [fetchNFTs, fetchTokens, selectedAddressIndex, wallet, walletAddress]);
 
   return {
-    balance,
-    usdValue,
     transactions,
     isLoadingTransactions,
     isLoadingMoreTransactions,

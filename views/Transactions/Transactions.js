@@ -19,8 +19,6 @@ const Send = 'assets/send.svg';
 export function Transactions() {
   const { transactionsData } = useAppContext();
   const {
-    balance,
-    usdValue,
     transactions,
     isLoadingTransactions,
     isLoadingMoreTransactions,
@@ -139,7 +137,7 @@ export function Transactions() {
   return (
     <Layout withHeader withConnectStatus p={0}>
       <Box pt='60px'>
-        <Balance balance={balance} usdValue={usdValue} />
+        <Balance walletAddress={activeAddress} />
         <Center>
           <HStack space='24px' pt='14px' pb='16px'>
             <ActionButton icon={Buy} label='Buy' onPress={onBuy} />
