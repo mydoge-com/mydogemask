@@ -1,4 +1,4 @@
-## MyDoge Brwoser API Integration
+## MyDoge Browser API Integration
 
 - See our [demo project](https://github.com/mydoge-com/mydogemask-next-example) for a complete example of MyDoge Wallet API functionality.
 
