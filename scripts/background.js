@@ -17,7 +17,11 @@ import {
   TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
-import { getAllInscriptions, inscribe } from './helpers/doginals';
+import {
+  getAllInscriptions,
+  getSpendableUtxos,
+  inscribe,
+} from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
@@ -88,19 +92,9 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
 
   try {
     // get utxos and inscriptions
-    const utxos = (
-      await nownodes.get(`/utxo/${data.senderAddress}`).json()
-    ).sort((a, b) => {
-      const aValue = sb.toBitcoin(a.value);
-      const bValue = sb.toBitcoin(b.value);
-      return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
-    });
+    const utxos = await getSpendableUtxos(data.senderAddress);
 
     console.log('found utxos', utxos.length);
-
-    const inscriptions = await getAllInscriptions(data.senderAddress);
-
-    console.log('found inscriptions', inscriptions.length);
 
     // estimate fee
     const smartfeeReq = {
@@ -128,25 +122,13 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
     let fee = feePerInput;
     let total = 0;
     let i = 0;
-    let skipped = 0;
 
     console.log('found feerate', feeData.result.feerate);
     console.log('using feePerKb', feePerKB);
     console.log('estimated feePerInput', feePerInput);
 
     for (const utxo of utxos) {
-      // Avoid inscription UTXOs
-      if (
-        inscriptions.find(
-          (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
-        )
-      ) {
-        // console.log('skipping inscription', utxo.txid, utxo.vout);
-        skipped++;
-        continue;
-      }
-
-      const value = sb.toBitcoin(utxo.value);
+      const value = sb.toBitcoin(utxo.outputValue);
 
       total += value;
       fee = feePerInput * (i + 1);
@@ -174,7 +156,6 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
     amount = sanitizeFloatAmount(amount);
     fee = sanitizeFloatAmount(fee);
 
-    console.log('skipped utxos', skipped);
     console.log('num utxos', i);
     console.log('total', total);
     console.log('amount', amount);

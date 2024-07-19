@@ -6,8 +6,9 @@ import {
   Script,
   Transaction,
 } from 'bitcore-lib-doge';
+import sb from 'satoshi-bitcoin';
 
-import { doginals, doginalsV2 } from '../api';
+import { doginals, doginalsV2, mydoge } from '../api';
 import { NFT_PAGE_SIZE } from './constants';
 import { network } from './wallet';
 
@@ -276,46 +277,6 @@ export function inscribe(
   return txs;
 }
 
-export async function getDoginals(address, cursor, result) {
-  let query;
-  await doginalsV2
-    .get(
-      `/address/inscriptions?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
-    )
-    .json((res) => {
-      query = res;
-    });
-
-  // console.log(
-  //   'found',
-  //   query.result.list.length,
-  //   'doginals in page',
-  //   cursor,
-  //   'total',
-  //   query.result.total
-  // );
-
-  result.push(
-    ...query.result.list.map((i) => ({
-      txid: i.output.split(':')[0],
-      vout: parseInt(i.output.split(':')[1], 10),
-      // Return extra data for rendering and transfering
-      outputValue: i.outputValue,
-    }))
-  );
-
-  // console.log(`fetched ${result.length}/${query.result.total} inscriptions`);
-
-  // Fixes an issue where Doginals API returns `total` less than items in `list` array.
-  if (
-    query.result.total > query.result.list.length &&
-    query.result.list.length === NFT_PAGE_SIZE
-  ) {
-    cursor += query.result.list.length;
-    return getDoginals(address, cursor, result);
-  }
-}
-
 export async function getDRC20Inscriptions(address, ticker, cursor, result) {
   const query = await doginalsV2
     .get(
@@ -429,12 +390,48 @@ export async function getAllDRC20(address, result) {
   }
 }
 
+async function getUtxos(address, cursor, result, filter) {
+  const inscriptions = await mydoge
+    .get(
+      `/utxos/${address}?filter=${filter}${cursor ? `&cursor=${cursor}` : ''}`
+    )
+    .json();
+
+  // console.log(
+  //   'found',
+  //   inscriptions.utxos.length,
+  //   filter,
+  //   'utxos in page',
+  //   cursor
+  // );
+
+  result.push(
+    ...inscriptions.utxos.map((i) => ({
+      txid: i.txid,
+      vout: i.vout,
+      outputValue: i.satoshis,
+    }))
+  );
+
+  result = result.sort(
+    (a, b) => sb.toBitcoin(b.outputValue) - sb.toBitcoin(a.outputValue)
+  );
+
+  if (inscriptions.next_cursor) {
+    return getUtxos(address, inscriptions.next_cursor, result, filter);
+  }
+}
+
 export async function getAllInscriptions(address) {
-  const nfts = [];
-  await getDoginals(address, 0, nfts);
+  const inscriptions = [];
+  await getUtxos(address, 0, inscriptions, 'inscriptions');
 
-  const drc20 = [];
-  await getAllDRC20(address, drc20);
+  return inscriptions;
+}
 
-  return [...nfts, ...drc20];
+export async function getSpendableUtxos(address) {
+  const utxos = [];
+  await getUtxos(address, 0, utxos, 'spendable');
+
+  return utxos;
 }
