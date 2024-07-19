@@ -17,11 +17,7 @@ import {
   TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
-import {
-  getAllInscriptions,
-  getSpendableUtxos,
-  inscribe,
-} from './helpers/doginals';
+import { getSpendableUtxos, inscribe } from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
@@ -43,6 +39,7 @@ import {
 } from './helpers/wallet';
 
 const TRANSACTION_PAGE_SIZE = 10;
+const NOWNODES_SLEEP_S = 5;
 
 const sleep = async (time) =>
   new Promise((resolve) => {
@@ -340,50 +337,22 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
 async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
   try {
     // Get utxos
-    let utxos;
-    await nownodes.get(`/utxo/${data.walletAddress}`).json((res) => {
-      utxos = res.sort((a, b) => {
-        const aValue = sb.toBitcoin(a.value);
-        const bValue = sb.toBitcoin(b.value);
-        return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
-      });
-    });
+    let utxos = await getSpendableUtxos(data.walletAddress);
 
     console.log('found utxos', utxos.length);
 
-    const inscriptions = await getAllInscriptions(data.walletAddress);
+    // Map satoshis to integers
+    utxos = await Promise.all(
+      utxos.map(async (utxo) => {
+        return {
+          txid: utxo.txid,
+          vout: utxo.vout,
+          script: utxo.script,
+          satoshis: sb.toSatoshi(sb.toBitcoin(utxo.outputValue)),
+        };
+      })
+    );
 
-    console.log('found inscriptions', inscriptions.length);
-
-    let skipped = 0;
-
-    // Map and cache scripts
-    utxos = (
-      await Promise.all(
-        utxos.map(async (utxo) => {
-          if (
-            inscriptions.find(
-              (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
-            )
-          ) {
-            skipped++;
-            return;
-          }
-
-          const tx = await getCachedTx(utxo.txid);
-          const script = tx.vout[utxo.vout].hex;
-
-          return {
-            txid: utxo.txid,
-            vout: utxo.vout,
-            script,
-            satoshis: parseInt(utxo.value, 10),
-          };
-        })
-      )
-    ).filter((utxo) => utxo);
-
-    console.log('skipped utxos', skipped);
     console.log('num utxos', utxos.length);
 
     const smartfeeReq = {
@@ -520,7 +489,7 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
 
     for await (const signed of data.txs) {
       if (i > 0) {
-        await sleep(10 * 1000); // Nownodes needs some time between txs
+        await sleep(NOWNODES_SLEEP_S * 1000); // Nownodes needs some time between txs
       }
 
       const jsonrpcReq = {

@@ -410,6 +410,7 @@ async function getUtxos(address, cursor, result, filter) {
       txid: i.txid,
       vout: i.vout,
       outputValue: i.satoshis,
+      script: i.script_pubkey,
     }))
   );
 
