@@ -91,7 +91,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
   let amount = sb.toBitcoin(amountSatoshi);
 
   try {
-    // get utxos and inscriptions
+    // get spendable utxos
     const utxos = await getSpendableUtxos(data.senderAddress);
 
     console.log('found utxos', utxos.length);
@@ -225,20 +225,10 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
   console.log('nft tx', txid, vout, amount);
 
   try {
-    // get utxos and inscriptions
-    const utxos = (await nownodes.get(`/utxo/${data.address}`).json()).sort(
-      (a, b) => {
-        const aValue = sb.toBitcoin(a.value);
-        const bValue = sb.toBitcoin(b.value);
-        return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
-      }
-    );
+    // get spendable utxos
+    const utxos = await getSpendableUtxos(data.address);
 
     console.log('found utxos', utxos.length);
-
-    const inscriptions = await getAllInscriptions(data.address);
-
-    console.log('found inscriptions', inscriptions.length);
 
     // estimate fee
     const smartfeeReq = {
@@ -266,24 +256,14 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
     let fee = feePerInput;
     let total = amount;
     let i = 1;
-    let skipped = 0;
 
     console.log('found feerate', feeData.result.feerate);
     console.log('using feePerKb', feePerKB);
     console.log('estimated feePerInput', feePerInput);
 
     for (const utxo of utxos) {
-      // Avoid inscription UTXOs
-      if (
-        inscriptions.find(
-          (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
-        )
-      ) {
-        skipped++;
-        continue;
-      }
+      const value = sb.toBitcoin(utxo.outputValue);
 
-      const value = sb.toBitcoin(utxo.value);
       total += value;
       fee = feePerInput * (i + 1);
       jsonrpcReq.params[0].push({
@@ -302,7 +282,6 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
     total = sanitizeFloatAmount(total);
     fee = sanitizeFloatAmount(fee);
 
-    console.log('skipped utxos', skipped);
     console.log('num utxos', i);
     console.log('total', total);
     console.log('amount', amount);
