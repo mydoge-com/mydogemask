@@ -52,7 +52,7 @@ export const NFTsTab = ({ NFTs, hasMoreNFTs, fetchMoreNFTs, NFTsLoading }) => {
               <FlatList
                 data={NFTs}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.inscriptionNumber}
+                keyExtractor={(item) => item.output}
                 numColumns={2}
                 initialNumToRender={4}
                 windowSize={4}

@@ -5,18 +5,19 @@ import { useParams, useSearchParams } from 'react-router-dom';
 
 import { WalletDetailModal } from '../../components/Header/WalletDetailModal';
 import { Layout } from '../../components/Layout';
+import { useAppContext } from '../../hooks/useAppContext';
 import { ActionButton } from './components/ActionButton';
 import { Balance } from './components/Balance';
 import { NFTsTab } from './components/NFTsTab';
 import { TokensTab } from './components/TokensTab';
 import { TransactionsTab } from './components/TransactionsTab';
-import { useTransactions } from './Transactions.hooks';
 
 const Buy = 'assets/buy.svg';
 const Receive = 'assets/receive.svg';
 const Send = 'assets/send.svg';
 
 export function Transactions() {
+  const { transactionsData } = useAppContext();
   const {
     balance,
     usdValue,
@@ -38,7 +39,7 @@ export function Transactions() {
     selectedAddressIndex,
     navigate,
     cachedInscriptions,
-  } = useTransactions();
+  } = transactionsData;
 
   const [searchParams] = useSearchParams();
 

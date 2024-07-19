@@ -1,6 +1,6 @@
 import dayjs from 'dayjs';
 import { Box, Pressable, Text, Toast, VStack } from 'native-base';
-import { Fragment } from 'react';
+import { Fragment, memo } from 'react';
 
 import { ToastRender } from '../../../components/ToastRender';
 import { useAppContext } from '../../../hooks/useAppContext';
@@ -8,7 +8,7 @@ import { useCachedInscriptionTxs } from '../../../hooks/useCachedInscriptionTxs'
 import { TRANSACTION_TYPES } from '../../../scripts/helpers/constants';
 import { NFTView } from './NFTView';
 
-export const NFT = ({ nft, index, onPress, selected }) => {
+export const NFTComponent = ({ nft, index, onPress, selected }) => {
   const { inscriptionNumber, timestamp, amount, ticker } = nft ?? {};
 
   const { navigate } = useAppContext();
@@ -90,3 +90,7 @@ export const NFT = ({ nft, index, onPress, selected }) => {
     </Fragment>
   );
 };
+
+export const NFT = memo(NFTComponent, (prev, next) => {
+  return prev.nft?.output === next.nft?.output;
+});
