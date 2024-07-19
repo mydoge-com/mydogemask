@@ -5,8 +5,8 @@ import {
   Center,
   HStack,
   Modal,
-  Popover,
   Pressable,
+  ScrollView,
   Spinner,
   Text,
   Toast,
@@ -26,14 +26,13 @@ import { sendMessage } from '../../scripts/helpers/message';
 import { getCachedTx } from '../../scripts/helpers/storage';
 import { decodeRawPsbt } from '../../scripts/helpers/wallet';
 
-export function ClientPSBT({ params, dispatch, connectedClient }) {
-  const {
-    originTabId,
-    origin,
-    rawTx,
-    selectedAddressIndex,
-    indexes: indexesParam,
-  } = params;
+export function ClientPSBT({
+  params,
+  dispatch,
+  connectedClient,
+  connectedAddressIndex: selectedAddressIndex,
+}) {
+  const { originTabId, origin, rawTx, indexes: indexesParam } = params;
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
@@ -46,6 +45,7 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
   const [indexes] = useState([indexesParam].flat());
 
   useEffect(() => {
+    if (typeof selectedAddressIndex !== 'number') return;
     try {
       setPsbt(decodeRawPsbt(rawTx));
       sendMessage(
@@ -54,6 +54,7 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
           data: { rawTx, indexes, selectedAddressIndex, feeOnly: true },
         },
         ({ fee }) => {
+          console.log('fee', fee);
           if (fee) {
             setDogeFee(fee);
           }
@@ -71,7 +72,6 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
     (async () => {
       if (psbt) {
         let amount = 0;
-
         const mappedInputs = await Promise.all(
           psbt?.txInputs?.map(async (input, index) => {
             const hash = Buffer.from(input.hash.reverse());
@@ -79,7 +79,7 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
             const tx = await getCachedTx(txid);
             const value = sb.toBitcoin(tx.vout[input.index].value);
 
-            if (indexes.includes(String(index))) {
+            if (indexes.includes(index)) {
               amount += value;
             }
 
@@ -234,6 +234,9 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
     selectedAddressIndex,
   ]);
 
+  const [inputsModalOpen, setInputsModalOpen] = useState(false);
+  const [outputsModalOpen, setOutputsModalOpen] = useState(false);
+
   if (!psbt) {
     return null;
   }
@@ -254,174 +257,28 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
         <OriginBadge origin={origin} mt='12px' mb='10px' />
         <HStack py='20px' justifyContent='center' space='16px' mt='-10px'>
           {inputs?.length ? (
-            <Popover
-              trigger={(triggerProps) => {
-                return (
-                  <Pressable {...triggerProps}>
-                    <HStack>
-                      <Text
-                        fontSize='14px'
-                        fontWeight='semibold'
-                        color='gray.400'
-                        underline={{ textDecorationLine: 'underline' }}
-                      >
-                        Inputs ({inputs.length})
-                      </Text>
-                    </HStack>
-                  </Pressable>
-                );
-              }}
-            >
-              <Popover.Content>
-                <Popover.Arrow />
-                <Popover.Body>
-                  <VStack space='16px'>
-                    {inputs.map(({ inputIndex, txid, vout, value }) => (
-                      <VStack
-                        alignItems='flex-start'
-                        justifyContent='flex-start'
-                        w='300px'
-                        key={inputIndex}
-                      >
-                        <Text
-                          fontSize='14px'
-                          fontWeight='bold'
-                          paddingBottom='10px'
-                        >
-                          Input Index {inputIndex}
-                        </Text>
-                        <VStack>
-                          <Text
-                            fontSize='10px'
-                            fontWeight='medium'
-                            color='gray.600'
-                          >
-                            Transaction ID
-                          </Text>
-                          <Text
-                            fontSize='12px'
-                            fontWeight='medium'
-                            color='gray.600'
-                            width='300px'
-                          >
-                            {txid}
-                          </Text>
-                        </VStack>
-                        <VStack>
-                          <Text
-                            fontSize='10px'
-                            fontWeight='medium'
-                            color='gray.500'
-                          >
-                            Vout
-                          </Text>
-                          <Text
-                            fontSize='12px'
-                            fontWeight='medium'
-                            color='gray.700'
-                          >
-                            {vout}
-                          </Text>
-                        </VStack>
-                        <VStack>
-                          <Text
-                            fontSize='10px'
-                            fontWeight='medium'
-                            color='gray.600'
-                          >
-                            Value
-                          </Text>
-                          <Text
-                            fontSize='12px'
-                            fontWeight='medium'
-                            color='gray.600'
-                          >
-                            {value}
-                          </Text>
-                        </VStack>
-                      </VStack>
-                    ))}
-                  </VStack>
-                </Popover.Body>
-              </Popover.Content>
-            </Popover>
+            <Pressable onPress={() => setInputsModalOpen(true)}>
+              <Text
+                fontSize='14px'
+                fontWeight='semibold'
+                color='gray.400'
+                underline={{ textDecorationLine: 'underline' }}
+              >
+                Inputs ({inputs.length})
+              </Text>
+            </Pressable>
           ) : null}
           {outputs?.length ? (
-            <Popover
-              trigger={(triggerProps) => {
-                return (
-                  <Pressable {...triggerProps}>
-                    <HStack>
-                      <Text
-                        fontSize='14px'
-                        fontWeight='semibold'
-                        color='gray.400'
-                        underline={{ textDecorationLine: 'underline' }}
-                      >
-                        Outputs ({outputs.length})
-                      </Text>
-                    </HStack>
-                  </Pressable>
-                );
-              }}
-            >
-              <Popover.Content>
-                <Popover.Arrow />
-                <Popover.Body>
-                  <VStack space='16px'>
-                    {outputs.map(({ outputIndex, address, value }) => (
-                      <VStack
-                        alignItems='flex-start'
-                        justifyContent='flex-start'
-                        w='300px'
-                        key={outputIndex}
-                      >
-                        <Text
-                          fontSize='14px'
-                          fontWeight='bold'
-                          paddingBottom='6px'
-                        >
-                          Output Index {outputIndex}
-                        </Text>
-                        <VStack>
-                          <Text
-                            fontSize='10px'
-                            fontWeight='medium'
-                            color='gray.600'
-                          >
-                            Address:{' '}
-                          </Text>
-                          <Text
-                            fontSize='12px'
-                            fontWeight='medium'
-                            color='gray.600'
-                            width='300px'
-                          >
-                            {address}
-                          </Text>
-                        </VStack>
-                        <VStack>
-                          <Text
-                            fontSize='10px'
-                            fontWeight='medium'
-                            color='gray.600'
-                          >
-                            Value
-                          </Text>
-                          <Text
-                            fontSize='12px'
-                            fontWeight='medium'
-                            color='gray.600'
-                          >
-                            {value}
-                          </Text>
-                        </VStack>
-                      </VStack>
-                    ))}
-                  </VStack>
-                </Popover.Body>
-              </Popover.Content>
-            </Popover>
+            <Pressable onPress={() => setOutputsModalOpen(true)}>
+              <Text
+                fontSize='14px'
+                fontWeight='semibold'
+                color='gray.400'
+                underline={{ textDecorationLine: 'underline' }}
+              >
+                Outputs ({outputs.length})
+              </Text>
+            </Pressable>
           ) : null}
         </HStack>
 
@@ -457,6 +314,147 @@ export function ClientPSBT({ params, dispatch, connectedClient }) {
         loading={loading}
         dogeAmount={dogeAmount}
       />
+      <Modal
+        isOpen={inputsModalOpen}
+        onClose={() => setInputsModalOpen(false)}
+        size='xl'
+      >
+        <Modal.Content>
+          <Modal.CloseButton />
+          <Modal.Header>Inputs</Modal.Header>
+          <Modal.Body alignItems='center'>
+            <ScrollView>
+              <VStack space='16px'>
+                {inputs.map(({ inputIndex, txid, vout, value }) => (
+                  <VStack
+                    alignItems='flex-start'
+                    justifyContent='flex-start'
+                    key={inputIndex}
+                  >
+                    <Text
+                      fontSize='14px'
+                      fontWeight='bold'
+                      paddingBottom='10px'
+                    >
+                      Input Index {inputIndex}
+                    </Text>
+                    <VStack>
+                      <Text
+                        fontSize='10px'
+                        fontWeight='medium'
+                        color='gray.600'
+                      >
+                        Transaction ID
+                      </Text>
+                      <Text
+                        fontSize='12px'
+                        fontWeight='medium'
+                        color='gray.600'
+                        width='300px'
+                      >
+                        {txid}
+                      </Text>
+                    </VStack>
+                    <VStack>
+                      <Text
+                        fontSize='10px'
+                        fontWeight='medium'
+                        color='gray.500'
+                      >
+                        Vout
+                      </Text>
+                      <Text
+                        fontSize='12px'
+                        fontWeight='medium'
+                        color='gray.700'
+                      >
+                        {vout}
+                      </Text>
+                    </VStack>
+                    <VStack>
+                      <Text
+                        fontSize='10px'
+                        fontWeight='medium'
+                        color='gray.600'
+                      >
+                        Value
+                      </Text>
+                      <Text
+                        fontSize='12px'
+                        fontWeight='medium'
+                        color='gray.600'
+                      >
+                        {value}
+                      </Text>
+                    </VStack>
+                  </VStack>
+                ))}
+              </VStack>
+            </ScrollView>
+          </Modal.Body>
+        </Modal.Content>
+      </Modal>
+      <Modal
+        isOpen={outputsModalOpen}
+        onClose={() => setOutputsModalOpen(false)}
+        size='xl'
+      >
+        <Modal.Content>
+          <Modal.CloseButton />
+          <Modal.Header>Outputs</Modal.Header>
+          <Modal.Body alignItems='center'>
+            <ScrollView>
+              <VStack space='16px'>
+                {outputs.map(({ outputIndex, address, value }) => (
+                  <VStack
+                    alignItems='flex-start'
+                    justifyContent='flex-start'
+                    w='300px'
+                    key={outputIndex}
+                  >
+                    <Text fontSize='14px' fontWeight='bold' paddingBottom='6px'>
+                      Output Index {outputIndex}
+                    </Text>
+                    <VStack>
+                      <Text
+                        fontSize='10px'
+                        fontWeight='medium'
+                        color='gray.600'
+                      >
+                        Address:{' '}
+                      </Text>
+                      <Text
+                        fontSize='12px'
+                        fontWeight='medium'
+                        color='gray.600'
+                        width='300px'
+                      >
+                        {address}
+                      </Text>
+                    </VStack>
+                    <VStack>
+                      <Text
+                        fontSize='10px'
+                        fontWeight='medium'
+                        color='gray.600'
+                      >
+                        Value
+                      </Text>
+                      <Text
+                        fontSize='12px'
+                        fontWeight='medium'
+                        color='gray.600'
+                      >
+                        {value}
+                      </Text>
+                    </VStack>
+                  </VStack>
+                ))}
+              </VStack>
+            </ScrollView>
+          </Modal.Body>
+        </Modal.Content>
+      </Modal>
     </>
   );
 }

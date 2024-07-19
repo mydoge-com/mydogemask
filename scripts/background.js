@@ -13,6 +13,7 @@ import {
   MIN_TX_AMOUNT,
   ONBOARDING_COMPLETE,
   PASSWORD,
+  SELECTED_ADDRESS_INDEX,
   TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
@@ -59,14 +60,10 @@ function sanitizeFloatAmount(amount) {
  */
 function createClientPopup({ sendResponse, sender, data = {}, messageType }) {
   const params = new URLSearchParams();
-  params.append('originTabId', sender.tab.id);
-  params.append('origin', sender.origin);
+  params.append('originTabId', JSON.stringify(sender.tab.id));
+  params.append('origin', JSON.stringify(sender.origin));
   Object.entries(data).forEach(([key, value]) => {
-    if (Array.isArray(value)) {
-      value.forEach((val) => params.append(key, val));
-    } else {
-      params.append(key, value);
-    }
+    params.append(key, JSON.stringify(value));
   });
   chrome.windows
     .create({
@@ -1237,7 +1234,12 @@ function onDeleteAddress({ sendResponse, data } = {}) {
 function onDeleteWallet({ sendResponse } = {}) {
   Promise.all([
     clearSessionStorage(),
-    removeLocalValue([PASSWORD, WALLET, ONBOARDING_COMPLETE]),
+    removeLocalValue([
+      PASSWORD,
+      WALLET,
+      ONBOARDING_COMPLETE,
+      SELECTED_ADDRESS_INDEX,
+    ]),
   ])
     .then(() => {
       sendResponse?.(true);

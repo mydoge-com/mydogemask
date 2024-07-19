@@ -121,12 +121,8 @@ export const AppContextProvider = ({ children }) => {
         const requestType = url?.hash?.substring(1);
         const params = {};
         url?.searchParams?.forEach((_, key) => {
-          const val = url.searchParams.getAll(key);
-          if (val.length > 1) {
-            params[key] = val;
-          } else {
-            [params[key]] = val;
-          }
+          const val = JSON.parse(url.searchParams.get(key));
+          params[key] = val;
         });
 
         params.originTabId = Number(params.originTabId);

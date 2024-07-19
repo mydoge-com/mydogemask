@@ -38,7 +38,8 @@ export const NFTView = ({ nft = {} }) => {
           height='auto'
           sandbox='allow-same-origin allow-scripts'
           allow
-          style={{ pointerEvents: 'none', border: 'none' }}
+          scrolling='no'
+          style={{ pointerEvents: 'none', border: 'none', overflow: 'hidden' }}
           onLoad={() => setNFTLoaded(true)}
         />
       </>

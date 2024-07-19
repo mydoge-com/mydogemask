@@ -9,7 +9,7 @@ export const MAX_NICKNAME_LENGTH = 18;
 export const FEE_RATE_KB = 0.5;
 export const MAX_UTXOS = 1000;
 export const MIN_TX_AMOUNT = 0.001;
-export const NFT_PAGE_SIZE = 100;
+export const NFT_PAGE_SIZE = 500;
 export const QUERY_CACHE = '@mydoge_QUERY_CACHE';
 export const INSCRIPTION_TXS_CACHE = '@mydoge_INSCRIPTION_TXS_CACHE';
 

@@ -1,57 +1,12 @@
-import BN from 'bn.js';
-
 import { MESSAGE_TYPES } from './helpers/constants';
 import {
   getAddressBalance,
   getConnectedAddressIndex,
   getConnectedClient,
 } from './helpers/data';
-import {
-  // getAllDRC20,
-  getAllInscriptions,
-  // getAllInscriptions,
-  // getDoginals,
-  getDRC20Balances,
-  getDRC20Inscriptions,
-} from './helpers/doginals';
-import { getCachedTx } from './helpers/storage';
-import { validateAddress, validateTransaction } from './helpers/wallet';
+import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
 (() => {
-  // const loadSendTipFloating = async () => {
-  //   const sendTipFloatingBtnExists = document.getElementsByClassName(
-  //     'sendTipFloating-btn'
-  //   )[0];
-
-  //   if (!sendTipFloatingBtnExists) {
-  //     const sendTipBtn = document.createElement('img');
-
-  //     sendTipBtn.src = chrome.runtime.getURL('assets/sendtip.png');
-  //     sendTipBtn.className = 'sendTipFloating-btn';
-  //     sendTipBtn.title = 'Tip This Site';
-  //     sendTipBtn.style =
-  //       'bottom: 10px; right: 10px; position:fixed; z-index: 9999;';
-  //     document.body.appendChild(sendTipBtn);
-  //     sendTipBtn.addEventListener('click', sendTipEventHandler);
-  //   }
-  // };
-
-  // const sendTipEventHandler = async () => {
-  //   onRequestTransaction({});
-  // };
-
-  // TODO: Inject tip button into body if website has dogecoin meta tag
-  // Tip button should be floating (absolutely positioned, bottom right maybe?)
-  // const metas = document.getElementsByTagName('meta');
-  // for (let i = 0; i < metas.length; i++) {
-  //   const name = metas[i].getAttribute('name');
-  //   if (name === 'dogecoin') {
-  //     loadSendTipFloating();
-  //     const content = metas[i].getAttribute('content');
-  //     alert(`Name: ${name} content: ${content}`);
-  //   }
-  // }
-
   // Inject doge API to all websites
   function injectScript(filePath, tag) {
     const node = document.getElementsByTagName(tag)[0];
@@ -285,231 +240,29 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
     }
   }
 
-  async function onRequestTransaction({ origin, data }) {
-    try {
-      const client = await getConnectedClient(origin);
-      const balance = await getAddressBalance(client?.address);
+  const createClientPopupHandler =
+    ({ messageType, responseType }) =>
+    async ({ data, origin }) => {
+      try {
+        const connectedClient = await getConnectedClient(origin);
+        const connectedAddressIndex = await getConnectedAddressIndex(origin);
 
-      const txData = {
-        senderAddress: client.address,
-        recipientAddress: data.recipientAddress,
-        dogeAmount: data.dogeAmount,
-      };
-
-      const error = validateTransaction({
-        ...txData,
-        addressBalance: balance,
-      });
-      if (error) {
-        throw new Error(error);
-      }
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.CREATE_TRANSACTION,
-          data: txData,
-        },
-        ({ rawTx, fee, amount }) => {
-          if (rawTx && fee && amount) {
-            chrome.runtime.sendMessage({
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
-              data: {
-                ...data,
-                rawTx,
-                fee,
-                dogeAmount: amount,
-              },
-            });
-          } else {
-            throw new Error('Unable to create transaction');
-          }
-        }
-      );
-    } catch (e) {
-      handleError({
-        errorMessage: e.message,
-        origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-      });
-    }
-  }
-
-  async function onRequestDoginalTransaction({ origin, data }) {
-    try {
-      if (!validateAddress(data.recipientAddress)) {
-        throw new Error('Invalid address');
-      }
-
-      const txid = data.output.split(':')[0];
-      const vout = parseInt(data.output.split(':')[1], 10);
-
-      if (txid?.length !== 64 || Number.isNaN(vout)) {
-        throw new Error('Invalid output');
-      }
-
-      const client = await getConnectedClient(origin);
-      let inscriptions = await getAllInscriptions(client?.address);
-
-      // Get output values
-      inscriptions = await Promise.all(
-        inscriptions.map(async (nft) => {
-          const tx = await getCachedTx(nft.txid);
-
-          return {
-            ...nft,
-            outputValue: tx.vout[nft.vout].value,
-          };
-        })
-      );
-
-      const doginal = inscriptions.find(
-        (ins) => ins.txid === txid && ins.vout === vout
-      );
-
-      if (!doginal) {
-        throw new Error('Doginal not found');
-      }
-
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
+        chrome.runtime.sendMessage({
+          message: messageType,
           data: {
             ...data,
-            address: client?.address,
-            outputValue: doginal.outputValue,
+            connectedClient,
+            connectedAddressIndex,
           },
-        },
-        ({ rawTx, fee, amount }) => {
-          if (rawTx && fee && amount) {
-            chrome.runtime.sendMessage({
-              message: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
-              data: {
-                ...data,
-                ...doginal,
-                rawTx,
-                fee,
-                dogeAmount: amount,
-              },
-            });
-          } else {
-            throw new Error('Unable to create doginal transaction');
-          }
-        }
-      );
-    } catch (e) {
-      handleError({
-        errorMessage: e.message,
-        origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
-      });
-    }
-  }
-
-  async function onRequestAvailableDRC20Transaction({ origin, data }) {
-    try {
-      const client = await getConnectedClient(origin);
-      const selectedAddressIndex = await getConnectedAddressIndex(origin);
-      const balances = [];
-      await getDRC20Balances(client?.address, 0, balances);
-      const balance = balances.find((ins) => ins.ticker === data.ticker);
-      const ab = new BN(balance.availableBalance);
-      const amt = new BN(data.amount);
-
-      if (!balance || ab.lt(amt)) {
-        throw new Error('Insufficient balance');
+        });
+      } catch (e) {
+        handleError({
+          errorMessage: e.message,
+          origin,
+          messageType: responseType,
+        });
       }
-
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION,
-          data: {
-            ...data,
-            selectedAddressIndex,
-            walletAddress: client?.address,
-            tokenAmount: data.amount,
-          },
-        },
-        ({ txs, fee }) => {
-          if (txs?.length && fee) {
-            chrome.runtime.sendMessage({
-              message: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
-              data: {
-                ...data,
-                txs,
-                fee,
-              },
-            });
-          } else {
-            throw new Error('Unable to create available drc-20 transaction');
-          }
-        }
-      );
-    } catch (e) {
-      handleError({
-        errorMessage: e.message,
-        origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-      });
-    }
-  }
-
-  async function onRequestPsbt({ origin, data }) {
-    try {
-      const selectedAddressIndex = await getConnectedAddressIndex(origin);
-
-      chrome.runtime.sendMessage({
-        message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
-        data: {
-          ...data,
-          selectedAddressIndex,
-        },
-      });
-    } catch (e) {
-      handleError({
-        errorMessage: e.message,
-        origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
-      });
-    }
-  }
-
-  async function onRequestSignedMessage({ origin, data }) {
-    try {
-      const selectedAddressIndex = await getConnectedAddressIndex(origin);
-
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
-          data: {
-            ...data,
-            selectedAddressIndex,
-            message: data.message,
-          },
-        },
-        (response) => {
-          console.log('onRequestSignedMessage response', response);
-          // if (signedMessage) {
-          //   window.postMessage(
-          //     {
-          //       type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
-          //       data: {
-          //         signedMessage,
-          //       },
-          //     },
-          //     origin
-          //   );
-          // } else {
-          //   throw new Error('Unable to sign message');
-          // }
-        }
-      );
-    } catch (e) {
-      handleError({
-        errorMessage: e.message,
-        origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
-      });
-    }
-  }
+    };
 
   // Listen to messages from injected script and pass to the respective handler functions tro forward to the background script
   window.addEventListener(
@@ -532,19 +285,37 @@ import { validateAddress, validateTransaction } from './helpers/wallet';
           onGetTransferableDRC20({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
-          onRequestTransaction({ origin: source.origin, data });
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+            responseType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+          })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
-          onRequestDoginalTransaction({ origin: source.origin, data });
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
+            responseType:
+              MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+          })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
-          onRequestAvailableDRC20Transaction({ origin: source.origin, data });
+          createClientPopupHandler({
+            messageType:
+              MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
+            responseType:
+              MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+          })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
-          onRequestPsbt({ origin: source.origin, data });
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
+            responseType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+          })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
-          onRequestSignedMessage({ origin: source.origin, data });
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
+            responseType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+          })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_DISCONNECT:
           onDisconnectClient({ origin: source.origin });

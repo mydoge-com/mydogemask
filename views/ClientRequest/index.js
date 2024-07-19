@@ -1,10 +1,12 @@
-import { useEffect, useState } from 'react';
+import { Toast } from 'native-base';
+import { useCallback } from 'react';
 
 import { Layout } from '../../components/Layout';
+import { ToastRender } from '../../components/ToastRender';
+import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
-import { getConnectedClient } from '../../scripts/helpers/data';
-import { logError } from '../../utils/error';
+import { sendMessage } from '../../scripts/helpers/message';
 import { ClientAvailableDRC20Transaction } from './ClientAvailableDRC20Transaction';
 import { ClientConnect } from './ClientConnect';
 import { ClientDoginalTransaction } from './ClientDoginalTransaction';
@@ -24,22 +26,47 @@ const CLIENT_REQUEST_ROUTES = {
 
 export function ClientRequest() {
   const { wallet, clientRequest, dispatch } = useAppContext();
-  const [connectedClient, setConnectedClient] = useState({});
-  const origin = clientRequest?.params?.origin;
 
-  useEffect(() => {
-    (async () => {
-      if (!origin) return;
-      const client = await getConnectedClient(origin).catch((e) => logError(e));
-      if (client) {
-        setConnectedClient(client);
-      }
-    })();
-  }, [origin]);
+  const { params } = clientRequest;
 
   const RenderScreen = clientRequest
     ? CLIENT_REQUEST_ROUTES[clientRequest?.requestType]
     : null;
+
+  const handleWindowClose = useCallback(() => {
+    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
+  }, [dispatch]);
+
+  const handleError = useCallback(
+    ({ error = 'Transaction Failed', title = 'Error', messageType }) => {
+      sendMessage(
+        {
+          message: messageType,
+          data: {
+            error,
+            originTabId: clientRequest?.params?.originTabId,
+            origin: clientRequest?.params?.origin,
+          },
+        },
+        () => {
+          Toast.show({
+            duration: 3000,
+            render: () => {
+              return (
+                <ToastRender title={title} description={error} status='error' />
+              );
+            },
+          });
+          handleWindowClose();
+        }
+      );
+    },
+    [
+      clientRequest?.params?.origin,
+      clientRequest?.params?.originTabId,
+      handleWindowClose,
+    ]
+  );
 
   if (!RenderScreen) return null;
 
@@ -49,7 +76,10 @@ export function ClientRequest() {
         params={clientRequest.params}
         wallet={wallet}
         dispatch={dispatch}
-        connectedClient={connectedClient}
+        connectedClient={params.connectedClient}
+        connectedAddressIndex={params.connectedAddressIndex}
+        handleError={handleError}
+        handleWindowClose={handleWindowClose}
       />
     </Layout>
   );

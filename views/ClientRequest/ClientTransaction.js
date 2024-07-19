@@ -4,8 +4,6 @@ import {
   Button,
   Center,
   HStack,
-  Modal,
-  Spinner,
   Text,
   Toast,
   VStack,
@@ -14,30 +12,78 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
+import { ClientPopupLoading } from '../../components/ClientPopupLoading';
 import { OriginBadge } from '../../components/OriginBadge';
 import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
-import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
-import { getConnectedAddressIndex } from '../../scripts/helpers/data';
+import { getAddressBalance } from '../../scripts/helpers/data';
 import { sendMessage } from '../../scripts/helpers/message';
+import { validateTransaction } from '../../scripts/helpers/wallet';
 
-export function ClientTransaction({ params, dispatch, connectedClient }) {
-  const { originTabId, origin, recipientAddress, dogeAmount, rawTx, fee } =
-    params;
+export function ClientTransaction({
+  params,
+  connectedClient,
+  connectedAddressIndex,
+  handleError,
+  handleWindowClose,
+}) {
+  const { originTabId, origin, recipientAddress, dogeAmount } = params;
 
-  const handleWindowClose = useCallback(() => {
-    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  }, [dispatch]);
+  const [pageLoading, setPageLoading] = useState(false);
 
-  const [addressIndex, setAddressIndex] = useState();
+  /**
+   * @type {ReturnType<typeof useState<{ rawTx: string; fee: number; amount: number } | undefined}>>}
+   */
+  const [transaction, setTransaction] = useState();
 
   useEffect(() => {
-    getConnectedAddressIndex(origin).then((index) => {
-      setAddressIndex(index);
-    });
-  }, [origin]);
+    if (!connectedClient?.address) return;
+    (async () => {
+      setPageLoading(true);
+      const balance = await getAddressBalance(connectedClient.address);
+
+      const txData = {
+        senderAddress: connectedClient.address,
+        recipientAddress,
+        dogeAmount,
+      };
+
+      const error = validateTransaction({
+        ...txData,
+        addressBalance: balance,
+      });
+      if (error) {
+        handleError({
+          messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+          error,
+        });
+      }
+
+      sendMessage(
+        { message: MESSAGE_TYPES.CREATE_TRANSACTION, data: txData },
+        ({ rawTx, fee, amount }) => {
+          setPageLoading(false);
+          if (rawTx && fee && amount) {
+            setTransaction({ rawTx, fee, amount });
+          } else {
+            handleError({
+              messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              error: 'Unable to create transaction',
+            });
+          }
+        }
+      );
+    })();
+  }, [
+    connectedClient.address,
+    dogeAmount,
+    handleError,
+    origin,
+    originTabId,
+    recipientAddress,
+  ]);
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -69,6 +115,15 @@ export function ClientTransaction({ params, dispatch, connectedClient }) {
     );
   }, [handleWindowClose, origin, originTabId]);
 
+  if (!transaction)
+    return (
+      <ClientPopupLoading
+        pageLoading={pageLoading}
+        origin={origin}
+        loadingText='Creating transaction...'
+      />
+    );
+
   return (
     <>
       <Box p='8px' bg='brandYellow.500' rounded='full' my='16px'>
@@ -89,7 +144,7 @@ export function ClientTransaction({ params, dispatch, connectedClient }) {
           Ð{dogeAmount}
         </Text>
         <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-          Network fee Ð{fee}
+          Network fee Ð{transaction.fee}
         </Text>
         <HStack alignItems='center' mt='60px' space='12px'>
           <BigButton
@@ -114,8 +169,8 @@ export function ClientTransaction({ params, dispatch, connectedClient }) {
         onClose={onCloseModal}
         origin={origin}
         originTabId={originTabId}
-        rawTx={rawTx}
-        addressIndex={addressIndex}
+        rawTx={transaction.rawTx}
+        addressIndex={connectedAddressIndex}
         handleWindowClose={handleWindowClose}
         recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}
@@ -146,6 +201,8 @@ const ConfirmationModal = ({
         data: { rawTx, selectedAddressIndex: addressIndex },
       },
       (txId) => {
+        setLoading(false);
+        onClose();
         if (txId) {
           sendMessage(
             {
@@ -198,15 +255,15 @@ const ConfirmationModal = ({
         }
       }
     );
-  }, [addressIndex, handleWindowClose, origin, originTabId, rawTx]);
+  }, [addressIndex, handleWindowClose, onClose, origin, originTabId, rawTx]);
 
   return (
     <>
-      <Modal isOpen={loading} full>
+      {/* <Modal isOpen={loading} full>
         <Modal.Body h='600px' justifyContent='center'>
           <Spinner size='lg' />
         </Modal.Body>
-      </Modal>
+      </Modal> */}
       <AlertDialog
         leastDestructiveRef={cancelRef}
         isOpen={showModal}
@@ -234,10 +291,11 @@ const ConfirmationModal = ({
                 colorScheme='coolGray'
                 onPress={onClose}
                 ref={cancelRef}
+                isDisabled={loading}
               >
                 Cancel
               </Button>
-              <BigButton onPress={onSubmit} px='24px'>
+              <BigButton onPress={onSubmit} px='24px' loading={loading}>
                 Confirm
               </BigButton>
             </Button.Group>
