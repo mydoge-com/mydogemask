@@ -14,6 +14,7 @@ import {
 } from './scripts/helpers/constants';
 import { addListener, sendMessage } from './scripts/helpers/message';
 import { getLocalValue, setLocalValue } from './scripts/helpers/storage';
+import { useTransactions } from './views/Transactions/Transactions.hooks';
 
 export const AppContext = createContext(null);
 
@@ -193,13 +194,20 @@ export const AppContextProvider = ({ children }) => {
     });
   }, []);
 
+  const transactionsData = useTransactions({
+    wallet: state.wallet,
+    selectedAddressIndex: state.selectedAddressIndex,
+    navigate,
+  });
+
   const providerValue = useMemo(
     () => ({
       ...state,
       dispatch,
       navigate,
+      transactionsData,
     }),
-    [navigate, state]
+    [navigate, state, transactionsData]
   );
   return (
     <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>

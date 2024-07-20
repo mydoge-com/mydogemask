@@ -1,24 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import sb from 'satoshi-bitcoin';
 import useSWRInfinite from 'swr/infinite';
 
 import {
   getTransactions,
   getTransactionsKey,
 } from '../../dataFetchers/getTransactions';
-import { useAppContext } from '../../hooks/useAppContext';
 import { useCachedInscriptionTxs } from '../../hooks/useCachedInscriptionTxs';
-import { useInterval } from '../../hooks/useInterval';
 import { doginals, doginalsV2 } from '../../scripts/api';
-import { MESSAGE_TYPES, NFT_PAGE_SIZE } from '../../scripts/helpers/constants';
-import { sendMessage } from '../../scripts/helpers/message';
+import { NFT_PAGE_SIZE } from '../../scripts/helpers/constants';
 import { logError } from '../../utils/error';
 
 const QUERY_INTERVAL = 10000;
+const VISIBLE_NFTS_PER_PAGE = 8;
 
-export const useTransactions = () => {
-  const { wallet, selectedAddressIndex, navigate } = useAppContext();
-  const walletAddress = wallet.addresses?.[selectedAddressIndex];
+export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
+  const walletAddress = wallet?.addresses?.[selectedAddressIndex];
 
   const {
     data: transactionsData,
@@ -60,11 +56,10 @@ export const useTransactions = () => {
     setTransactionsPage(1);
   };
 
-  const [balance, setBalance] = useState(null);
-  const [usdPrice, setUSDPrice] = useState(0);
   const [NFTsLoading, setNFTsLoading] = useState(true);
   const [NFTs, setNFTs] = useState();
   const [NFTsTotal, setNFTsTotal] = useState();
+  const [visibleNFTsPage, setVisibleNFTsPage] = useState(1);
 
   const [tokensLoading, setTokensLoading] = useState(true);
   const [tokens, setTokens] = useState();
@@ -123,44 +118,21 @@ export const useTransactions = () => {
     [walletAddress]
   );
 
-  const usdValue = balance ? sb.toBitcoin(balance) * usdPrice : 0;
-  const getAddressBalance = useCallback(() => {
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
-        data: { address: walletAddress },
-      },
-      (walletBalance) => {
-        if (walletBalance) {
-          setBalance(Number(walletBalance));
-        } else {
-          logError(new Error('Failed to get wallet balance'));
-        }
-      }
-    );
-  }, [walletAddress]);
-
-  const getDogecoinPrice = useCallback(() => {
-    sendMessage({ message: MESSAGE_TYPES.GET_DOGECOIN_PRICE }, ({ usd }) => {
-      if (usd) {
-        setUSDPrice(usd);
-      } else {
-        logError(new Error('Failed to get Dogecoin price'));
-      }
-    });
-  }, []);
-
-  const hasMoreNFTs = NFTs?.length < NFTsTotal;
+  const hasMoreNFTs = visibleNFTsPage * VISIBLE_NFTS_PER_PAGE < NFTsTotal;
   const hasMoreTokens = tokens?.length < tokensTotal;
 
   const fetchMoreNFTs = useCallback(() => {
     if (hasMoreNFTs) {
+      if (visibleNFTsPage * VISIBLE_NFTS_PER_PAGE < NFTs?.length) {
+        setVisibleNFTsPage(visibleNFTsPage + 1);
+        return;
+      }
       fetchNFTs({
         cursor: currentNFTPage.current + NFT_PAGE_SIZE,
         currentNFTs: NFTs,
       });
     }
-  }, [fetchNFTs, hasMoreNFTs, NFTs]);
+  }, [hasMoreNFTs, visibleNFTsPage, fetchNFTs, NFTs]);
 
   const fetchMoreTokens = useCallback(() => {
     if (hasMoreTokens) {
@@ -172,36 +144,20 @@ export const useTransactions = () => {
   }, [fetchTokens, hasMoreTokens, tokens]);
 
   useEffect(() => {
-    if (!walletAddress) {
+    if (!wallet || typeof selectedAddressIndex !== 'number') {
       return;
     }
-    getAddressBalance();
-    fetchTokens();
     fetchNFTs();
-  }, [fetchNFTs, fetchTokens, getAddressBalance, walletAddress]);
-
-  useInterval(
-    () => {
-      if (!walletAddress) {
-        return;
-      }
-      getAddressBalance();
-      getDogecoinPrice();
-    },
-    QUERY_INTERVAL,
-    true
-  );
+  }, [fetchNFTs, fetchTokens, selectedAddressIndex, wallet, walletAddress]);
 
   return {
-    balance,
-    usdValue,
     transactions,
     isLoadingTransactions,
     isLoadingMoreTransactions,
     hasMoreTransactions,
     fetchMoreTransactions,
     refreshTransactions,
-    NFTs,
+    NFTs: NFTs?.slice(0, VISIBLE_NFTS_PER_PAGE * visibleNFTsPage),
     hasMoreNFTs,
     fetchMoreNFTs,
     NFTsLoading,
