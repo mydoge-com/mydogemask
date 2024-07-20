@@ -82,13 +82,11 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
     try {
       client = await getConnectedClient(origin);
-      const balances = [];
-      await getDRC20Balances(client?.address, 0, balances);
-      const balance = balances.find((ins) => ins.ticker === data.ticker);
+      const balances = await getDRC20Balances(client?.address, data.ticker);
 
-      if (balance) {
-        availableBalance = balance.availableBalance;
-        transferableBalance = balance.transferableBalance;
+      if (balances.length) {
+        availableBalance = balances[0].availableBalance;
+        transferableBalance = balances[0].transferableBalance;
       }
     } catch (e) {
       handleError({

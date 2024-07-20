@@ -8,7 +8,7 @@ import {
 } from 'bitcore-lib-doge';
 import sb from 'satoshi-bitcoin';
 
-import { doginals, doginalsV2, mydoge } from '../api';
+import { doginalsV2, mydoge } from '../api';
 import { NFT_PAGE_SIZE } from './constants';
 import { network } from './wallet';
 
@@ -313,81 +313,12 @@ export async function getDRC20Inscriptions(address, ticker, cursor, result) {
   }
 }
 
-export async function getDRC20Balances(address, cursor, result) {
-  let query;
-  await doginals
-    .get(
-      `/brc20/tokens?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
-    )
-    .json((res) => {
-      query = res;
-    });
+export async function getDRC20Balances(address, ticker) {
+  const result = await mydoge
+    .get(`/drc20/${address}${ticker ? `?ticker=${ticker}` : ''}`)
+    .json();
 
-  result.push(...query.result.list);
-
-  // console.log(
-  //   'found',
-  //   query.result.list.length,
-  //   'drc20 balances',
-  //   'in page',
-  //   cursor,
-  //   'total',
-  //   total
-  // );
-
-  if (
-    query.result.total > query.result.list.length &&
-    query.result.list.length === NFT_PAGE_SIZE
-  ) {
-    cursor += query.result.list.length;
-    return getDRC20Balances(address, cursor, result);
-  }
-}
-
-export async function getDRC20Tickers(address, cursor, total, result) {
-  let query;
-  await doginals
-    .get(
-      `/brc20/tokens?address=${address}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
-    )
-    .json((res) => {
-      query = res;
-    });
-
-  if (cursor === 0) {
-    total = query.result.total;
-  }
-
-  result.push(
-    ...query.result.list
-      .map((i) => {
-        if (i.transferableBalance !== '0') {
-          return i.ticker;
-        } else {
-          total--;
-        }
-      })
-      .filter((i) => i)
-  );
-
-  if (
-    total > query.result.list.length &&
-    query.result.list.length === NFT_PAGE_SIZE
-  ) {
-    cursor += query.result.list.length;
-    return getDRC20Tickers(address, cursor, total, result);
-  }
-}
-
-export async function getAllDRC20(address, result) {
-  const tickers = [];
-  await getDRC20Tickers(address, 0, 0, tickers);
-
-  for await (const ticker of tickers) {
-    const tickerResult = [];
-    await getDRC20Inscriptions(address, ticker, 0, tickerResult);
-    result.push(...tickerResult);
-  }
+  return result.balances;
 }
 
 async function getUtxos(address, cursor, result, filter) {
