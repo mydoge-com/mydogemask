@@ -138,7 +138,7 @@ export const TransferNFTConfirmation = ({
         {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
       </Text>
       <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-        Sending
+        Transfer to
       </Text>
       <HStack alignItems='center' space='12px' pb='28px'>
         <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
@@ -175,7 +175,7 @@ export const TransferNFTConfirmation = ({
           isDisabled={errors.confirmation}
           loading={loading}
         >
-          Send
+          Transfer
         </BigButton>
       </HStack>
       {errors.confirmation ? (
