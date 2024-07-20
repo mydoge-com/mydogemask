@@ -68,10 +68,6 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
   const currentNFTPage = useRef(0);
   const currentTokensPage = useRef(0);
 
-  useEffect(() => {
-    console.log('nfts', NFTs);
-  }, [NFTs]);
-
   const fetchNFTs = useCallback(
     ({ currentNFTs = [], cursor } = {}) => {
       setNFTsLoading(true);
