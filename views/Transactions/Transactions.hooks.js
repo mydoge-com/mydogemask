@@ -80,7 +80,7 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
         .json((res) => {
           setNFTs(
             [...currentNFTs, ...(res?.result?.list ?? [])].sort(
-              (a, b) => a.inscriptionNumber - b.inscriptionNumber
+              (a, b) => b.inscriptionNumber - a.inscriptionNumber
             )
           );
           setNFTsTotal(res?.result?.total);
