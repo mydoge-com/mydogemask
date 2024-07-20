@@ -1,4 +1,3 @@
-import BN from 'bn.js';
 import {
   AlertDialog,
   Box,
@@ -76,13 +75,11 @@ export function ClientAvailableDRC20Transaction({
       return;
     (async () => {
       setPageLoading(true);
-      const balances = [];
-      await getDRC20Balances(connectedClient?.address, 0, balances);
-      const balance = balances.find((ins) => ins.ticker === ticker);
-      const ab = new BN(balance.availableBalance);
-      const amt = new BN(amount);
+      const balances = await getDRC20Balances(connectedClient?.address, ticker);
+      const ab = Number(balances[0]?.availableBalance || 0);
+      const amt = Number(amount);
 
-      if (!balance || ab.lt(amt)) {
+      if (ab < amt) {
         setPageLoading(false);
         handleError({
           error: 'Insufficient balance',

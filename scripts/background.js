@@ -17,7 +17,7 @@ import {
   TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
-import { getAllInscriptions, inscribe } from './helpers/doginals';
+import { getSpendableUtxos, inscribe } from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
@@ -39,6 +39,7 @@ import {
 } from './helpers/wallet';
 
 const TRANSACTION_PAGE_SIZE = 10;
+const NOWNODES_SLEEP_S = 5;
 
 const sleep = async (time) =>
   new Promise((resolve) => {
@@ -87,20 +88,10 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
   let amount = sb.toBitcoin(amountSatoshi);
 
   try {
-    // get utxos and inscriptions
-    const utxos = (
-      await nownodes.get(`/utxo/${data.senderAddress}`).json()
-    ).sort((a, b) => {
-      const aValue = sb.toBitcoin(a.value);
-      const bValue = sb.toBitcoin(b.value);
-      return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
-    });
+    // get spendable utxos
+    const utxos = await getSpendableUtxos(data.senderAddress);
 
     console.log('found utxos', utxos.length);
-
-    const inscriptions = await getAllInscriptions(data.senderAddress);
-
-    console.log('found inscriptions', inscriptions.length);
 
     // estimate fee
     const smartfeeReq = {
@@ -128,25 +119,13 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
     let fee = feePerInput;
     let total = 0;
     let i = 0;
-    let skipped = 0;
 
     console.log('found feerate', feeData.result.feerate);
     console.log('using feePerKb', feePerKB);
     console.log('estimated feePerInput', feePerInput);
 
     for (const utxo of utxos) {
-      // Avoid inscription UTXOs
-      if (
-        inscriptions.find(
-          (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
-        )
-      ) {
-        // console.log('skipping inscription', utxo.txid, utxo.vout);
-        skipped++;
-        continue;
-      }
-
-      const value = sb.toBitcoin(utxo.value);
+      const value = sb.toBitcoin(utxo.outputValue);
 
       total += value;
       fee = feePerInput * (i + 1);
@@ -174,7 +153,6 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
     amount = sanitizeFloatAmount(amount);
     fee = sanitizeFloatAmount(fee);
 
-    console.log('skipped utxos', skipped);
     console.log('num utxos', i);
     console.log('total', total);
     console.log('amount', amount);
@@ -244,20 +222,10 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
   console.log('nft tx', txid, vout, amount);
 
   try {
-    // get utxos and inscriptions
-    const utxos = (await nownodes.get(`/utxo/${data.address}`).json()).sort(
-      (a, b) => {
-        const aValue = sb.toBitcoin(a.value);
-        const bValue = sb.toBitcoin(b.value);
-        return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
-      }
-    );
+    // get spendable utxos
+    const utxos = await getSpendableUtxos(data.address);
 
     console.log('found utxos', utxos.length);
-
-    const inscriptions = await getAllInscriptions(data.address);
-
-    console.log('found inscriptions', inscriptions.length);
 
     // estimate fee
     const smartfeeReq = {
@@ -285,24 +253,14 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
     let fee = feePerInput;
     let total = amount;
     let i = 1;
-    let skipped = 0;
 
     console.log('found feerate', feeData.result.feerate);
     console.log('using feePerKb', feePerKB);
     console.log('estimated feePerInput', feePerInput);
 
     for (const utxo of utxos) {
-      // Avoid inscription UTXOs
-      if (
-        inscriptions.find(
-          (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
-        )
-      ) {
-        skipped++;
-        continue;
-      }
+      const value = sb.toBitcoin(utxo.outputValue);
 
-      const value = sb.toBitcoin(utxo.value);
       total += value;
       fee = feePerInput * (i + 1);
       jsonrpcReq.params[0].push({
@@ -321,7 +279,6 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
     total = sanitizeFloatAmount(total);
     fee = sanitizeFloatAmount(fee);
 
-    console.log('skipped utxos', skipped);
     console.log('num utxos', i);
     console.log('total', total);
     console.log('amount', amount);
@@ -380,50 +337,22 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
 async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
   try {
     // Get utxos
-    let utxos;
-    await nownodes.get(`/utxo/${data.walletAddress}`).json((res) => {
-      utxos = res.sort((a, b) => {
-        const aValue = sb.toBitcoin(a.value);
-        const bValue = sb.toBitcoin(b.value);
-        return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
-      });
-    });
+    let utxos = await getSpendableUtxos(data.walletAddress);
 
     console.log('found utxos', utxos.length);
 
-    const inscriptions = await getAllInscriptions(data.walletAddress);
+    // Map satoshis to integers
+    utxos = await Promise.all(
+      utxos.map(async (utxo) => {
+        return {
+          txid: utxo.txid,
+          vout: utxo.vout,
+          script: utxo.script,
+          satoshis: sb.toSatoshi(sb.toBitcoin(utxo.outputValue)),
+        };
+      })
+    );
 
-    console.log('found inscriptions', inscriptions.length);
-
-    let skipped = 0;
-
-    // Map and cache scripts
-    utxos = (
-      await Promise.all(
-        utxos.map(async (utxo) => {
-          if (
-            inscriptions.find(
-              (ins) => ins.txid === utxo.txid && ins.vout === utxo.vout
-            )
-          ) {
-            skipped++;
-            return;
-          }
-
-          const tx = await getCachedTx(utxo.txid);
-          const script = tx.vout[utxo.vout].hex;
-
-          return {
-            txid: utxo.txid,
-            vout: utxo.vout,
-            script,
-            satoshis: parseInt(utxo.value, 10),
-          };
-        })
-      )
-    ).filter((utxo) => utxo);
-
-    console.log('skipped utxos', skipped);
     console.log('num utxos', utxos.length);
 
     const smartfeeReq = {
@@ -560,7 +489,7 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
 
     for await (const signed of data.txs) {
       if (i > 0) {
-        await sleep(10 * 1000); // Nownodes needs some time between txs
+        await sleep(NOWNODES_SLEEP_S * 1000); // Nownodes needs some time between txs
       }
 
       const jsonrpcReq = {

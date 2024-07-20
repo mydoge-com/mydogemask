@@ -6,6 +6,7 @@ import {
   DOGINALS_MARKETPLACE_API_URL,
   DOGINALS_WALLET_API_URL,
   DOGINALS_WALLET_API_V2_URL,
+  MYDOGE_BASE_URL,
   NODE_BASE_URL,
   NOWNODES_BASE_URL,
 } from './helpers/constants';
@@ -42,3 +43,5 @@ export const doginalsMarketplace = wretch(
 ).middlewares([retryOptions]);
 
 export const node = wretch(NODE_BASE_URL);
+
+export const mydoge = wretch(MYDOGE_BASE_URL);

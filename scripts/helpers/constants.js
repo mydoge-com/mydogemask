@@ -85,6 +85,7 @@ export const DOGINALS_WALLET_API_V2_URL = 'https://wallet-api.dogeord.io/v2';
 export const DOGINALS_WALLET_API_URL = 'https://wallet-api.dogeord.io';
 export const DOGINALS_MARKETPLACE_API_URL =
   'https://marketplace-api.dogeord.io';
+export const MYDOGE_BASE_URL = 'https://api.mydoge.com';
 
 export const TICKER_ICON_URL =
   'https://drc-20-icons.s3.eu-central-1.amazonaws.com';
