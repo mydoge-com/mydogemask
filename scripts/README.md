@@ -16,8 +16,8 @@ window.addEventListener(
   { once: true }
 );
 
-// Check the extension interface is set and is MyDogeMask
-if (myDogeMask?.isMyDogeMask) {
+// Check the extension interface is set and is MyDoge
+if (myDogeMask?.isMyDoge) {
   try {
     // Each api request supports both promise and callback patterns
 

@@ -27,7 +27,7 @@ const createResponseHandler =
  */
 class MyDogeWallet {
   constructor() {
-    this.isMyDogeMask = true;
+    this.isMyDoge = true;
     console.info('MyDoge API initialized');
   }
 
