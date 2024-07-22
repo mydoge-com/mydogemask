@@ -3,19 +3,12 @@ import { Box, Pressable, Text, Toast, VStack } from 'native-base';
 import { Fragment, memo } from 'react';
 
 import { ToastRender } from '../../../components/ToastRender';
-import { useAppContext } from '../../../hooks/useAppContext';
 import { useCachedInscriptionTxs } from '../../../hooks/useCachedInscriptionTxs';
 import { TRANSACTION_TYPES } from '../../../scripts/helpers/constants';
 import { NFTView } from './NFTView';
 
 export const NFTComponent = ({ nft, index, onPress, selected }) => {
-  const { inscriptionNumber, timestamp, amount, ticker } = nft ?? {};
-
-  const { navigate } = useAppContext();
-
-  const selectToken = () => {
-    navigate(`/Transactions/doginals?selectedNFT=${JSON.stringify(nft)}`);
-  };
+  const { inscriptionNumber, timestamp, amount, ticker, output } = nft ?? {};
 
   const pendingDoginalTxs = useCachedInscriptionTxs({
     filterPending: true,
@@ -30,7 +23,7 @@ export const NFTComponent = ({ nft, index, onPress, selected }) => {
   );
 
   return (
-    <Fragment key={inscriptionNumber}>
+    <Fragment key={output}>
       <Pressable
         onPress={() => {
           if (isNFTPending) {
@@ -50,8 +43,6 @@ export const NFTComponent = ({ nft, index, onPress, selected }) => {
           }
           if (onPress) {
             onPress();
-          } else {
-            selectToken();
           }
         }}
         paddingTop='20px'
