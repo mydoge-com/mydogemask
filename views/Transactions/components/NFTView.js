@@ -22,7 +22,6 @@ export const NFTViewComponent = ({ nft = {} }) => {
 
     iframe.onerror = () => {
       if (retryCount.current < MAX_RETRIES) {
-        console.log('Retrying iframe load');
         retryCount.current += 1;
         setTimeout(() => {
           iframe.src = content;
