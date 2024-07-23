@@ -1,29 +1,42 @@
 import { Center, Spinner } from 'native-base';
-import { Fragment, useMemo, useState } from 'react';
-import MIMEType from 'whatwg-mimetype';
+import { memo, useEffect, useRef, useState } from 'react';
 
-export const NFTView = ({ nft = {} }) => {
+const MAX_RETRIES = 2;
+
+export const NFTViewComponent = ({ nft = {} }) => {
+  const iframeRef = useRef(null);
+  const retryCount = useRef(0);
+
   const { content, contentType } = nft;
   const [nftLoaded, setNFTLoaded] = useState(false);
 
-  const mimeType = useMemo(() => {
-    let mime;
-    try {
-      mime = new MIMEType(contentType);
-    } catch (e) {
-      mime = null;
+  useEffect(() => {
+    if (!iframeRef.current) {
+      return;
     }
-    return mime;
-  }, [contentType]);
+    const iframe = iframeRef.current;
+    iframe.onload = () => {
+      setNFTLoaded(true);
+      retryCount.current = 0;
+    };
 
-  if (!mimeType) {
-    return null;
-  }
+    iframe.onerror = () => {
+      if (retryCount.current < MAX_RETRIES) {
+        retryCount.current += 1;
+        setTimeout(() => {
+          iframe.src = content;
+        }, 200);
+      }
+    };
+  }, [content]);
 
-  if (mimeType.type === 'image') {
+  const isImage = contentType.includes('image');
+  const isText = contentType.includes('text');
+
+  if (isImage) {
     return <img src={content} width='100%' height='auto' alt='NFT' />;
   }
-  if (mimeType.type === 'text') {
+  if (isText) {
     return (
       <>
         {!nftLoaded && (
@@ -32,6 +45,8 @@ export const NFTView = ({ nft = {} }) => {
           </Center>
         )}
         <iframe
+          key={content}
+          ref={iframeRef}
           title='NFT'
           src={content}
           width='100%'
@@ -39,8 +54,12 @@ export const NFTView = ({ nft = {} }) => {
           sandbox='allow-same-origin allow-scripts'
           allow
           scrolling='no'
-          style={{ pointerEvents: 'none', border: 'none', overflow: 'hidden' }}
-          onLoad={() => setNFTLoaded(true)}
+          style={{
+            pointerEvents: 'none',
+            border: 'none',
+            overflow: 'hidden',
+            opacity: nftLoaded ? 1 : 0,
+          }}
         />
       </>
     );
@@ -49,3 +68,8 @@ export const NFTView = ({ nft = {} }) => {
     <img src='./assets/default-nft.webp' width='100%' height='auto' alt='NFT' />
   );
 };
+
+export const NFTView = memo(
+  NFTViewComponent,
+  (prev, next) => prev.nft.output === next.nft.output
+);

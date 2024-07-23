@@ -11,7 +11,7 @@ import { NFT_PAGE_SIZE } from '../../scripts/helpers/constants';
 import { logError } from '../../utils/error';
 
 const QUERY_INTERVAL = 10000;
-const VISIBLE_NFTS_PER_PAGE = 8;
+const VISIBLE_NFTS_PER_PAGE = 6;
 
 export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
   const walletAddress = wallet?.addresses?.[selectedAddressIndex];

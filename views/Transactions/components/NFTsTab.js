@@ -7,29 +7,21 @@ import {
   Text,
   VStack,
 } from 'native-base';
-import { useCallback } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useCallback, useState } from 'react';
 
 import { BigButton } from '../../../components/Button';
-import { useAppContext } from '../../../hooks/useAppContext';
 import { NFT } from './NFT';
 import { NFTModal } from './NFTModal';
 
 export const NFTsTab = ({ NFTs, hasMoreNFTs, fetchMoreNFTs, NFTsLoading }) => {
   const renderItem = useCallback(
-    ({ item, index }) => <NFT nft={item} index={index} />,
+    ({ item, index }) => (
+      <NFT nft={item} index={index} onPress={() => setSelectedNFT(item)} />
+    ),
     []
   );
 
-  const { navigate } = useAppContext();
-
-  const [searchParams] = useSearchParams();
-
-  let selectedNFT = searchParams.get('selectedNFT');
-
-  if (selectedNFT) {
-    selectedNFT = JSON.parse(selectedNFT);
-  }
+  const [selectedNFT, setSelectedNFT] = useState();
 
   return (
     <>
@@ -52,7 +44,6 @@ export const NFTsTab = ({ NFTs, hasMoreNFTs, fetchMoreNFTs, NFTsLoading }) => {
               <FlatList
                 data={NFTs}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.output}
                 numColumns={2}
                 initialNumToRender={4}
                 windowSize={4}
@@ -86,7 +77,7 @@ export const NFTsTab = ({ NFTs, hasMoreNFTs, fetchMoreNFTs, NFTsLoading }) => {
       </Box>
       <NFTModal
         isOpen={!!selectedNFT}
-        onClose={() => navigate(-1)}
+        onClose={() => setSelectedNFT(undefined)}
         nft={selectedNFT}
       />
     </>
