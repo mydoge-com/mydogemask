@@ -144,11 +144,12 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
   }, [fetchTokens, hasMoreTokens, tokens]);
 
   useEffect(() => {
-    if (!wallet || typeof selectedAddressIndex !== 'number') {
+    if (!walletAddress) {
       return;
     }
     fetchNFTs();
-  }, [fetchNFTs, fetchTokens, selectedAddressIndex, wallet, walletAddress]);
+    fetchTokens();
+  }, [fetchNFTs, fetchTokens, walletAddress]);
 
   return {
     transactions,

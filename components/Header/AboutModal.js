@@ -6,8 +6,8 @@ export const AboutModal = ({ showModal, onClose }) => {
   const { onLinkClick } = useLinks();
 
   return (
-    <Modal isOpen={showModal} onClose={onClose} size='full'>
-      <Modal.Content w='100%'>
+    <Modal isOpen={showModal} onClose={onClose} size='xl'>
+      <Modal.Content>
         <Modal.CloseButton />
         <Modal.Header>About</Modal.Header>
         <Modal.Body pt='20px' pb='36px'>
