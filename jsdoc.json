@@ -1,0 +1,9 @@
+{
+  "opts": {
+    "template": "node_modules/clean-jsdoc-theme",
+    "theme_opts": {
+      "homepageTitle": "MyDoge Browser API",
+      "favicon": "favicon.ico"
+    }
+  }
+}

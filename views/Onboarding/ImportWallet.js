@@ -1,5 +1,6 @@
 import { Text, VStack } from 'native-base';
 import { useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { BackButton } from '../../components/BackButton';
 import { Footer } from '../../components/Footer';
@@ -9,12 +10,13 @@ import { useAppContext } from '../../hooks/useAppContext';
 import { OnboardingLayout } from './OnboardingLayout';
 
 export const ImportWallet = () => {
-  const { navigate, dispatch } = useAppContext();
+  const navigate = useNavigate();
+  const { dispatch } = useAppContext();
   const onConfirm = useCallback(
     ({ authenticated, wallet }) => {
       dispatch({
         type: DISPATCH_TYPES.SIGN_IN,
-        payload: { authenticated, wallet, navigate: 'Success' },
+        payload: { authenticated, wallet, navigate: '/Success' },
       });
       dispatch({
         type: DISPATCH_TYPES.SET_ONBOARDING_COMPLETE,
@@ -25,7 +27,7 @@ export const ImportWallet = () => {
   );
 
   const onBack = useCallback(() => {
-    navigate('Intro');
+    navigate(-1);
   }, [navigate]);
 
   return (
@@ -37,7 +39,7 @@ export const ImportWallet = () => {
             Import <Text fontWeight='bold'>Wallet</Text>
           </Text>
           <Text color='gray.500' fontSize='14px'>
-            Enter your secret seed phrase to import your wallet into MyDogeMask
+            Enter your secret seed phrase to import your wallet into MyDoge
           </Text>
           <WalletRestore
             confirmBefore={false}

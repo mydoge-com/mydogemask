@@ -1,9 +1,19 @@
-import { Avatar, Box, Button, Center, HStack, Input, Text } from 'native-base';
+import {
+  Avatar,
+  Box,
+  Button,
+  Center,
+  HStack,
+  Input,
+  Text,
+  Toast,
+} from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { IoSwapVerticalOutline } from 'react-icons/io5';
 import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
+import { ToastRender } from '../../components/ToastRender';
 import { useInterval } from '../../hooks/useInterval';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
@@ -27,6 +37,7 @@ export const AmountScreen = ({
   const [addressBalance, setAddressBalance] = useState();
   const dogeInputRef = useRef(null);
   const fiatInputRef = useRef(null);
+  const [loading, setLoading] = useState(false);
 
   const getDogecoinPrice = useCallback(() => {
     sendMessage({ message: MESSAGE_TYPES.GET_DOGECOIN_PRICE }, ({ usd }) => {
@@ -120,6 +131,7 @@ export const AmountScreen = ({
   }, [addressBalance, onChangeTextDoge]);
 
   const onSubmit = useCallback(() => {
+    setLoading(true);
     const txData = {
       senderAddress: walletAddress,
       recipientAddress: formData.address.trim(),
@@ -131,6 +143,7 @@ export const AmountScreen = ({
     });
     if (error) {
       setErrors({ ...errors, dogeAmount: error });
+      setLoading(false);
     } else {
       sendMessage(
         {
@@ -138,7 +151,7 @@ export const AmountScreen = ({
           data: txData,
         },
         ({ rawTx, fee, amount }) => {
-          if (rawTx && fee && amount) {
+          if (rawTx && fee !== undefined && amount) {
             setFormData({
               ...formData,
               rawTx,
@@ -146,6 +159,23 @@ export const AmountScreen = ({
               dogeAmount: amount,
             });
             setFormPage('confirmation');
+            setLoading(false);
+          } else {
+            setLoading(false);
+            Toast.show({
+              title: 'Error',
+              description: 'Error creating transaction',
+              duration: 3000,
+              render: () => {
+                return (
+                  <ToastRender
+                    title='Error'
+                    description='Error creating transaction'
+                    status='error'
+                  />
+                );
+              },
+            });
           }
         }
       );
@@ -164,10 +194,10 @@ export const AmountScreen = ({
     <Center>
       <Text fontSize='sm' color='gray.500' textAlign='center' mb='8px'>
         <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          Wallet {selectedAddressIndex + 1}
+          Address {selectedAddressIndex + 1}
         </Text>
         {'  '}
-        {walletAddress.slice(0, 8)}...{formData.address.slice(-4)}
+        {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
       </Text>
       <Text fontSize='xl' pb='4px' textAlign='center' fontWeight='semibold'>
         Paying
@@ -330,6 +360,7 @@ export const AmountScreen = ({
           isDisabled={
             !Number(formData.dogeAmount) || !addressBalance || errors.dogeAmount
           }
+          loading={loading}
         >
           Next
         </BigButton>

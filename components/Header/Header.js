@@ -24,11 +24,14 @@ import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
 import { BackButton } from '../BackButton';
 import { BigButton } from '../Button';
+import { WalletAddress } from '../WalletAddress';
 import { AboutModal } from './AboutModal';
 import { CreateAddressModal } from './CreateAddressModal';
 import { DeleteAddressModal } from './DeleteAddressModal';
 import { SecurityModal } from './SecurityModal';
 import { WalletDetailModal } from './WalletDetailModal';
+
+const User = 'assets/user.svg';
 
 export const Header = ({
   withCancelButton,
@@ -89,12 +92,12 @@ export const Header = ({
           position='absolute'
           left='12px'
           pt='8px'
-          onPress={() => navigate(cancelRoute)}
+          onPress={() => navigate(cancelRoute ?? -1)}
         />
       ) : null}
       <Text
         fontWeight='medium'
-        fontSize='lg'
+        fontSize='md'
         pb='12px'
         px='12px'
         color={addressColor || 'white'}
@@ -113,14 +116,14 @@ export const Header = ({
               accessibilityLabel='Accounts menu'
               {...triggerProps}
               onPress={openMenu.current}
+              borderRadius='1000px'
+              h='36px'
+              w='36px'
+              alignItems='center'
+              justifyContent='center'
+              backgroundColor='gray.100'
             >
-              <Avatar
-                source={{
-                  uri: '/assets/default-avatar.png',
-                }}
-                size='36px'
-                alt='Avatar'
-              />
+              <Image source={User} width='20px' height='25px' alt='Menu' />
             </Pressable>
           );
         }}
@@ -156,12 +159,13 @@ export const Header = ({
                       ) : null}
                     </Box>
                     <Avatar
-                      source={{
-                        uri: '/assets/default-avatar.png',
-                      }}
                       size='30px'
+                      bg='brandYellow.500'
+                      _text={{ color: 'gray.800' }}
                       mr='12px'
-                    />
+                    >
+                      {address.substring(0, 2)}
+                    </Avatar>
                     <VStack>
                       <Text
                         fontSize='md'
@@ -365,17 +369,9 @@ const DetailPopup = ({
           {client ? (
             <VStack>
               <Text>You have 1 account connected to this site.</Text>
-              <Text
-                fontSize='sm'
-                fontWeight='semibold'
-                color='gray.500'
-                textAlign='center'
-                pb='8px'
-                pt='8px'
-              >
-                {client.address.slice(0, 8)}...
-                {client.address.slice(-4)}
-              </Text>
+              <Box py='8px'>
+                <WalletAddress address={client.address} />
+              </Box>
               <Text fontSize='10px' color='gray.500'>
                 This website can see your address, account balance, activity,
                 and suggest transactions to approve
@@ -383,7 +379,7 @@ const DetailPopup = ({
             </VStack>
           ) : (
             <Text>
-              MyDogeMask is not connected to this website. To connect, find and
+              MyDoge is not connected to this website. To connect, find and
               click the Connect button on the site.
             </Text>
           )}

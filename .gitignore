@@ -11,6 +11,7 @@
 # next.js
 /.next/
 /out/
+/build/
 
 # misc
 .DS_Store
@@ -55,3 +56,5 @@ yarn-error.log*
 
 .env
 build.zip
+
+/scripts/node_modules

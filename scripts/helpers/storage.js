@@ -1,5 +1,7 @@
 // Wrapper functions for chrome.storage.local and chrome.storage.session. Adds a wrapper for localStorage and sessionStorage in development mode.
 
+import { nownodes } from '../api';
+
 const dev = process.env.NODE_ENV === 'development';
 
 export const getSessionValue = (key) => {
@@ -19,11 +21,19 @@ export const getLocalValue = (key) => {
     return Promise.resolve(value);
   }
 
-  return chrome.storage.local.get([key]).then((result) => {
-    return result[key];
-  });
+  return chrome.storage.local
+    .get([key])
+    .then((result) => {
+      return result[key];
+    })
+    .catch(() => null);
 };
 
+/**
+ * Sets the values in the session storage or Chrome storage.
+ * @param {Object} keyValues - An object containing key-value pairs to be stored.
+ * @returns {Promise} A promise that resolves when the values are successfully stored.
+ */
 export const setSessionValue = (keyValues) => {
   if (dev) {
     Object.keys(keyValues).forEach((key) => {
@@ -34,6 +44,11 @@ export const setSessionValue = (keyValues) => {
   return chrome.storage.session.set(keyValues);
 };
 
+/**
+ * Sets the values of the specified keys in the local storage.
+ * @param {Object} keyValues - An object containing key-value pairs to be set in the local storage.
+ * @returns {Promise} A promise that resolves when the values are successfully set in the local storage.
+ */
 export const setLocalValue = (keyValues) => {
   if (dev) {
     Object.keys(keyValues).forEach((key) => {
@@ -87,3 +102,14 @@ export const clearLocalStorage = () => {
   }
   return chrome.storage.local.clear();
 };
+
+export async function getCachedTx(txid) {
+  let tx = await getLocalValue(txid);
+
+  if (!tx || !tx.vout || tx.confirmations === 0) {
+    tx = await nownodes.get(`/tx/${txid}`).json();
+    await setLocalValue({ [txid]: tx });
+  }
+
+  return tx;
+}

@@ -3,6 +3,9 @@ import '../styles/globals.css';
 import { extendTheme, NativeBaseProvider } from 'native-base';
 import Head from 'next/head';
 import NoSSR from 'react-no-ssr';
+import {
+  MemoryRouter,
+} from "react-router-dom";
 
 import { AppContextProvider } from '../Context';
 
@@ -25,14 +28,16 @@ const theme = extendTheme({
 function MyApp({ Component, pageProps }) {
   return (
     <NoSSR>
-      <AppContextProvider>
-        <NativeBaseProvider isSSR={false} theme={theme}>
-          <Head>
-            <title>MyDogeMask</title>
-          </Head>
-          <Component {...pageProps} />
-        </NativeBaseProvider>
-      </AppContextProvider>
+        <MemoryRouter>
+          <AppContextProvider>
+            <NativeBaseProvider isSSR={false} theme={theme}>
+              <Head>
+                <title>MyDoge</title>
+              </Head>
+              <Component {...pageProps} />
+            </NativeBaseProvider>
+          </AppContextProvider>
+        </MemoryRouter>
     </NoSSR>
   );
 }

@@ -20,7 +20,7 @@ export const Success = () => {
       <VStack px='15%' justifyContent='center' h='100%'>
         <VStack bg='white' py='40px' rounded='sm' px='40px' mt='20px'>
           <Text fontSize='2xl'>
-            Welcome to <Text fontWeight='bold'>MyDogeMask</Text>
+            Welcome to <Text fontWeight='bold'>MyDoge</Text>
           </Text>
           <Image
             source={{ uri: '/assets/such-doge.png' }}

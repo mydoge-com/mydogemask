@@ -1,14 +1,9 @@
 import { Text } from 'native-base';
-import { useCallback } from 'react';
+
+import { useLinks } from '../hooks/useLinks';
 
 export const Footer = ({ ...props }) => {
-  const onClickFAQ = useCallback(() => {
-    if (chrome?.tabs) {
-      chrome.tabs.create({ url: 'https://www.mydoge.com/#faq' });
-    } else {
-      window.open('https://www.mydoge.com/#faq', '_blank');
-    }
-  }, []);
+  const { onLinkClick } = useLinks();
 
   return (
     <Text textAlign='center' mt='80px' color='gray.400' {...props}>
@@ -18,7 +13,11 @@ export const Footer = ({ ...props }) => {
         underline
         fontWeight='medium'
         onClickFAQ
-        onPress={onClickFAQ}
+        onPress={() =>
+          onLinkClick(
+            'https://intercom.help/mydoge/en/collections/3278627-mydoge-faq'
+          )
+        }
       >
         Frequently Asked Questions
       </Text>
