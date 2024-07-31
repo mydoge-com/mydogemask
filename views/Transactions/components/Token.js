@@ -1,18 +1,56 @@
 import { Avatar, HStack, Pressable, Text, VStack } from 'native-base';
-import { Fragment, useState } from 'react';
+import { Fragment } from 'react';
 
-import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
-import { TokenModal } from './TokenModal';
+import { useAppContext } from '../../../hooks/useAppContext';
+import {
+  TICKER_ICON_URL,
+  TRANSACTION_TYPES,
+} from '../../../scripts/helpers/constants';
 
 export const Token = ({
+  token: {
+    overallBalance,
+    ticker,
+    transferableBalance: transferable,
+    availableBalance: available,
+  },
   token,
-  token: { overallBalance, ticker, transferableBalance },
+  pendingTxs,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  
+  const { navigate } = useAppContext();
+
+  // Pending transfer inscriptions
+  const pendingTransferTxs = pendingTxs?.filter(
+    (tx) => tx.txType === TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX
+  );
+  const pendingTransferAmount = pendingTransferTxs?.length
+    ? pendingTransferTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
+    : 0;
+  const transferableBalance = Number(transferable) - pendingTransferAmount;
+
+  // Pending available inscriptions
+  const pendingAvailableTxs = pendingTxs?.filter(
+    (tx) => tx.txType === TRANSACTION_TYPES.DRC20_AVAILABLE_TX
+  );
+  const pendingAvailableAmount = pendingAvailableTxs?.length
+    ? pendingAvailableTxs.reduce((acc, tx) => acc + Number(tx.tokenAmount), 0)
+    : 0;
+  const availableBalance = Number(available) - pendingAvailableAmount;
+
+  const selectToken = () => {
+    navigate(
+      `/Transactions/tokens?selectedToken=${JSON.stringify({
+        ...token,
+        transferableBalance,
+        pendingTransferAmount,
+        pendingAvailableAmount,
+        availableBalance,
+      })}`
+    );
+  };
   return (
     <Fragment key={ticker}>
-      <Pressable onPress={() => setIsOpen(true)} paddingTop='10px'>
+      <Pressable onPress={() => selectToken(token)} paddingTop='10px'>
         <HStack p='2px' alignItems='center'>
           <Avatar
             size='sm'
@@ -46,17 +84,12 @@ export const Token = ({
                 _light={{ color: 'gray.400' }}
                 _dark={{ color: 'gray.500' }}
               >
-                {transferableBalance}
+                {Number(transferableBalance).toLocaleString()}
               </Text>
             </HStack>
           </VStack>
         </HStack>
       </Pressable>
-      <TokenModal
-        isOpen={isOpen}
-        token={token}
-        onClose={() => setIsOpen(false)}
-      />
     </Fragment>
   );
 };

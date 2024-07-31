@@ -49,7 +49,7 @@ export const ConfirmationScreen = ({
         // Process transaction
         sendMessage(
           {
-            message: 'sendTransaction',
+            message: MESSAGE_TYPES.SEND_TRANSACTION,
             data: { rawTx: formData.rawTx, selectedAddressIndex },
           },
           (txId) => {
@@ -60,14 +60,14 @@ export const ConfirmationScreen = ({
                 render: () => {
                   return (
                     <ToastRender
-                      description='Trasaction Sent'
+                      description='Transaction Sent'
                       status='success'
                     />
                   );
                 },
               });
 
-              navigate('Transactions');
+              navigate('/Transactions/?refresh=1');
             } else {
               setLoading(false);
               Toast.show({
@@ -112,10 +112,10 @@ export const ConfirmationScreen = ({
       </Text>
       <Text fontSize='sm' color='gray.500' textAlign='center' mb='12px'>
         <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          Wallet {selectedAddressIndex + 1}
+          Address {selectedAddressIndex + 1}
         </Text>
         {'  '}
-        {walletAddress.slice(0, 8)}...{formData.address.slice(-4)}
+        {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
       </Text>
       <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
         Paying

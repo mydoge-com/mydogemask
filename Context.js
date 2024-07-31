@@ -5,10 +5,16 @@ import {
   useMemo,
   useReducer,
 } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { messageHandler } from './scripts/background';
-import { MESSAGE_TYPES } from './scripts/helpers/constants';
+import {
+  MESSAGE_TYPES,
+  SELECTED_ADDRESS_INDEX,
+} from './scripts/helpers/constants';
 import { addListener, sendMessage } from './scripts/helpers/message';
+import { getLocalValue, setLocalValue } from './scripts/helpers/storage';
+import { useTransactions } from './views/Transactions/Transactions.hooks';
 
 export const AppContext = createContext(null);
 
@@ -17,6 +23,7 @@ export const DISPATCH_TYPES = {
   SET_ONBOARDING_COMPLETE: 'SET_ONBOARDING_COMPLETE',
   SET_AUTHENTICATED: 'SET_AUTHENTICATED',
   SET_WALLET: 'SET_WALLET',
+  SET_CONTEXT_LOADED: 'SET_CONTEXT_LOADED',
   SIGN_OUT: 'SIGN_OUT',
   SIGN_IN: 'SIGN_IN',
   SELECT_WALLET: 'SELECT_WALLET',
@@ -25,70 +32,76 @@ export const DISPATCH_TYPES = {
   COMPLETE_ONBOARDING: 'COMPLETE_ONBOARDING',
 };
 
-const CLIENT_REQUEST_ROUTES = {
-  [MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION]: 'ClientConnect',
-  [MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION]: 'ClientTransaction',
-};
-
-const reducer = (state, { type, payload }) => {
-  switch (type) {
-    case DISPATCH_TYPES.SET_CURRENT_ROUTE:
-      return { ...state, currentRoute: payload.route };
-    case DISPATCH_TYPES.SET_ONBOARDING_COMPLETE:
-      return { ...state, onboardingComplete: payload };
-    case DISPATCH_TYPES.SET_AUTHENTICATED:
-      return { ...state, authenticated: payload };
-    case DISPATCH_TYPES.SET_WALLET:
-      return { ...state, wallet: payload.wallet };
-    case DISPATCH_TYPES.SIGN_OUT:
-      return {
-        ...state,
-        authenticated: false,
-        wallet: undefined,
-        currentRoute: payload?.navigate ?? 'Password',
-      };
-    case DISPATCH_TYPES.SIGN_IN:
-      return {
-        ...state,
-        authenticated: payload?.authenticated,
-        wallet: payload?.wallet,
-        currentRoute:
-          payload?.navigate ??
-          CLIENT_REQUEST_ROUTES[state.clientRequest?.requestType] ??
-          'Transactions',
-      };
-    case DISPATCH_TYPES.COMPLETE_ONBOARDING:
-      return {
-        ...state,
-        currentRoute:
-          payload?.navigate ??
-          CLIENT_REQUEST_ROUTES[state.clientRequest?.requestType] ??
-          'Transactions',
-      };
-    case DISPATCH_TYPES.SELECT_WALLET:
-      return { ...state, selectedAddressIndex: payload.index };
-    case DISPATCH_TYPES.SET_CLIENT_REQUEST:
-      return { ...state, clientRequest: payload.clientRequest };
-    case DISPATCH_TYPES.CLEAR_CLIENT_REQUEST:
-      setTimeout(() => window?.close(), 1000);
-      return { ...state };
-    default:
-      return state;
-  }
-};
-
 export const AppContextProvider = ({ children }) => {
+  const reducer = useCallback(
+    (state, { type, payload }) => {
+      switch (type) {
+        case DISPATCH_TYPES.SET_CURRENT_ROUTE:
+          navigate(payload.route);
+          return { ...state };
+        case DISPATCH_TYPES.SET_ONBOARDING_COMPLETE:
+          return { ...state, onboardingComplete: payload };
+        case DISPATCH_TYPES.SET_AUTHENTICATED:
+          return { ...state, authenticated: payload };
+        case DISPATCH_TYPES.SET_WALLET:
+          return { ...state, wallet: payload.wallet };
+        case DISPATCH_TYPES.SIGN_OUT:
+          navigate(payload?.navigate ?? 'Password');
+          return {
+            ...state,
+            authenticated: false,
+            wallet: undefined,
+          };
+        case DISPATCH_TYPES.SIGN_IN:
+          navigate(
+            payload?.navigate
+              ? payload?.navigate
+              : state.clientRequest
+              ? 'ClientRequest'
+              : 'Transactions'
+          );
+          return {
+            ...state,
+            authenticated: payload?.authenticated,
+            wallet: payload?.wallet,
+          };
+        case DISPATCH_TYPES.COMPLETE_ONBOARDING:
+          navigate(
+            payload?.navigate
+              ? payload?.navigate
+              : state.clientRequest
+              ? 'ClientRequest'
+              : 'Transactions'
+          );
+          return {
+            ...state,
+          };
+        case DISPATCH_TYPES.SELECT_WALLET:
+          setLocalValue({ [SELECTED_ADDRESS_INDEX]: payload.index });
+          return { ...state, selectedAddressIndex: payload.index };
+        case DISPATCH_TYPES.SET_CLIENT_REQUEST:
+          return { ...state, clientRequest: payload.clientRequest };
+        case DISPATCH_TYPES.CLEAR_CLIENT_REQUEST:
+          setTimeout(() => window?.close(), 2000);
+          return { ...state };
+        case DISPATCH_TYPES.SET_CONTEXT_LOADED:
+          return { ...state, ready: payload.ready };
+        default:
+          return state;
+      }
+    },
+    [navigate]
+  );
   const [state, dispatch] = useReducer(reducer, {
     authenticated: false,
     onboardingComplete: undefined,
     wallet: undefined,
-    currentRoute: undefined,
     selectedAddressIndex: 0,
+    txTabIndex: 0,
+    ready: false,
   });
 
-  const navigate = useCallback((route) => {
-    dispatch({ type: DISPATCH_TYPES.SET_CURRENT_ROUTE, payload: { route } });
-  }, []);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -108,9 +121,11 @@ export const AppContextProvider = ({ children }) => {
 
         const requestType = url?.hash?.substring(1);
         const params = {};
-        url?.searchParams?.forEach((value, key) => {
-          params[key] = value;
+        url?.searchParams?.forEach((_, key) => {
+          const val = JSON.parse(url.searchParams.get(key));
+          params[key] = val;
         });
+
         params.originTabId = Number(params.originTabId);
         if (requestType && params?.originTabId && params?.origin) {
           const clientRequest = {
@@ -154,25 +169,45 @@ export const AppContextProvider = ({ children }) => {
                     wallet,
                   },
                 });
-              } else {
-                navigate('Password');
               }
+              dispatch({
+                type: DISPATCH_TYPES.SET_CONTEXT_LOADED,
+                payload: { ready: true },
+              });
             }
           );
         } else {
-          navigate('Intro');
+          dispatch({
+            type: DISPATCH_TYPES.SET_CONTEXT_LOADED,
+            payload: { ready: true },
+          });
         }
       }
     );
-  }, [navigate]);
+    getLocalValue(SELECTED_ADDRESS_INDEX).then((index) => {
+      if (typeof index === 'number') {
+        dispatch({
+          type: DISPATCH_TYPES.SELECT_WALLET,
+          payload: { index },
+        });
+      }
+    });
+  }, []);
+
+  const transactionsData = useTransactions({
+    wallet: state.wallet,
+    selectedAddressIndex: state.selectedAddressIndex,
+    navigate,
+  });
 
   const providerValue = useMemo(
     () => ({
       ...state,
       dispatch,
       navigate,
+      transactionsData,
     }),
-    [navigate, state]
+    [navigate, state, transactionsData]
   );
   return (
     <AppContext.Provider value={providerValue}>{children}</AppContext.Provider>

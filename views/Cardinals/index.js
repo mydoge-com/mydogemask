@@ -1,3 +1,3 @@
-import { Drc20TransferHistory } from './Drc20TransferHistory';
+import { TransferHistory } from './TransferHistory';
 import { TransferDetailScreen } from './TransferDetailScreen'
-export { Drc20TransferHistory, TransferDetailScreen };
+export { TransferHistory, TransferDetailScreen };

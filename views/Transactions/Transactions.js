@@ -1,42 +1,54 @@
 import { Box, Center, HStack, Text } from 'native-base';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { SceneMap, TabBar, TabView } from 'react-native-tab-view';
+import { useParams, useSearchParams } from 'react-router-dom';
 
 import { WalletDetailModal } from '../../components/Header/WalletDetailModal';
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
 import { ActionButton } from './components/ActionButton';
 import { Balance } from './components/Balance';
-import { CollectiblesTab } from './components/CollectiblesTab';
+import { NFTsTab } from './components/NFTsTab';
 import { TokensTab } from './components/TokensTab';
 import { TransactionsTab } from './components/TransactionsTab';
 import { CardinalsTab } from '../Cardinals/components/CardinalsTab';
-import { useTransactions } from './Transactions.hooks';
-
 
 const Buy = 'assets/buy.svg';
 const Receive = 'assets/receive.svg';
 const Send = 'assets/send.svg';
 
 export function Transactions() {
+  const { transactionsData } = useAppContext();
   const {
-    balance,
-    usdValue,
+    transactions,
+    isLoadingTransactions,
+    isLoadingMoreTransactions,
+    hasMoreTransactions,
+    fetchMoreTransactions,
+    refreshTransactions,
     NFTs,
     hasMoreNFTs,
     fetchMoreNFTs,
     NFTsLoading,
-    transactions,
-    loading,
-    hasMore,
-    fetchMore,
     tokens,
     tokensLoading,
     hasMoreTokens,
     fetchMoreTokens,
-  } = useTransactions();
+    wallet,
+    selectedAddressIndex,
+    navigate,
+    cachedInscriptions,
+  } = transactionsData;
 
-  const { wallet, navigate, selectedAddressIndex } = useAppContext();
+  const [searchParams] = useSearchParams();
+
+  const shouldRefresh = searchParams.get('refresh');
+
+  useEffect(() => {
+    if (shouldRefresh) {
+      refreshTransactions();
+    }
+  }, [shouldRefresh, refreshTransactions]);
 
   const activeAddress = wallet.addresses[selectedAddressIndex];
 
@@ -47,7 +59,6 @@ export function Transactions() {
     window.open(`https://buy.getdoge.com/?addr=${activeAddress}`);
   }, [activeAddress]);
 
-  const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: 'transactions', title: 'Transactions' },
     { key: 'cardinals', title: 'Cardinals' },
@@ -57,7 +68,7 @@ export function Transactions() {
 
   const NFTsRoute = useCallback(() => {
     return (
-      <CollectiblesTab
+      <NFTsTab
         NFTs={NFTs}
         hasMoreNFTs={hasMoreNFTs}
         fetchMoreNFTs={fetchMoreNFTs}
@@ -72,105 +83,71 @@ export function Transactions() {
     setAddressDetailOpen((val) => !val);
   }, []);
 
-  // const TransactionsRoute = useCallback(
-  //   () => (
-  //     <TransactionsTab
-  //       toggleReceiveModal={toggleReceiveModal}
-  //       onBuy={onBuy}
-  //       transactions={transactions}
-  //       loading={loading}
-  //       hasMore={hasMore}
-  //       fetchMore={fetchMore}
-  //     />
-  //   ),
-  //   [toggleReceiveModal, onBuy, transactions, loading, hasMore, fetchMore]
-  // );
-  // const CardinalsRoute = useCallback(
-  //   () => (
-  //     <CardinalsTab
-  //       toggleReceiveModal={toggleReceiveModal}
-  //       onBuy={onBuy}
-  //       transactions={transactions}
-  //       loading={loading}
-  //       hasMore={hasMore}
-  //       fetchMore={fetchMore}
-  //     />
-  //   ),
-  //   [toggleReceiveModal, onBuy, transactions, loading, hasMore, fetchMore]
-  // );
-  
-  // const TokensRoute = useCallback(
-  //   () => (
-  //     <TokensTab
-  //       tokens={tokens}
-  //       tokensLoading={tokensLoading}
-  //       hasMoreTokens={hasMoreTokens}
-  //       fetchMoreTokens={fetchMoreTokens}
-  //     />
-  //   ),
-  //   [fetchMoreTokens, hasMoreTokens, tokens, tokensLoading]
-  // );
+  const TransactionsRoute = useCallback(
+    () => (
+      <TransactionsTab
+        toggleReceiveModal={toggleReceiveModal}
+        onBuy={onBuy}
+        transactions={transactions}
+        loading={isLoadingTransactions}
+        hasMore={hasMoreTransactions}
+        fetchMore={fetchMoreTransactions}
+        isLoadingMore={isLoadingMoreTransactions}
+        cachedInscriptions={cachedInscriptions}
+      />
+    ),
+    [
+      toggleReceiveModal,
+      onBuy,
+      transactions,
+      isLoadingTransactions,
+      hasMoreTransactions,
+      fetchMoreTransactions,
+      isLoadingMoreTransactions,
+      cachedInscriptions,
+    ]
+  );
 
-  // const renderScene = useMemo(
-  //   () =>
-  //     SceneMap({
-  //       transactions: TransactionsRoute,
-  //       tokens: TokensRoute,
-  //       doginals: NFTsRoute,
-  //       cardinals: CardinalsRoute
-  //     }),
-  //   [NFTsRoute, TokensRoute, TransactionsRoute, CardinalsRoute]
-  // );
-  const renderScene = ({ route }) => {
-    switch (route.key) {
-      case 'transactions':
-        return index === 0 ? (
-          <TransactionsTab
-            toggleReceiveModal={toggleReceiveModal}
-            onBuy={onBuy}
-            transactions={transactions}
-            loading={loading}
-            hasMore={hasMore}
-            fetchMore={fetchMore}
-          />
-        ) : null;
-      case 'tokens':
-        return index === 3 ? (
-          <TokensTab
-            tokens={tokens}
-            tokensLoading={tokensLoading}
-            hasMoreTokens={hasMoreTokens}
-            fetchMoreTokens={fetchMoreTokens}
-          />
-        ) : null;
-      case 'doginals':
-        return index === 2 ? (
-          <CollectiblesTab
-            NFTs={NFTs}
-            hasMoreNFTs={hasMoreNFTs}
-            fetchMoreNFTs={fetchMoreNFTs}
-            NFTsLoading={NFTsLoading}
-          />
-        ) : null;
-      case 'cardinals':
-        return index === 1 ? (
-          <CardinalsTab
-            toggleReceiveModal={toggleReceiveModal}
-            onBuy={onBuy}
-            transactions={transactions}
-            loading={loading}
-            hasMore={hasMore}
-            fetchMore={fetchMore}
-          />
-        ) : null;
-      default:
-        return null;
-    }
-  };
+  const TokensRoute = useCallback(
+    () => (
+      <TokensTab
+        tokens={tokens}
+        tokensLoading={tokensLoading}
+        hasMoreTokens={hasMoreTokens}
+        fetchMoreTokens={fetchMoreTokens}
+      />
+    ),
+    [fetchMoreTokens, hasMoreTokens, tokens, tokensLoading]
+  );
+
+  const CardinalsRoute = useCallback(
+    () => (
+      <CardinalsTab/>
+    ),
+    []
+  );
+
+  const renderScene = useMemo(
+    () =>
+      SceneMap({
+        transactions: TransactionsRoute,
+        cardinals: CardinalsRoute,
+        tokens: TokensRoute,
+        doginals: NFTsRoute,
+      }),
+    [NFTsRoute, TokensRoute, TransactionsRoute, CardinalsRoute]
+  );
+
+  const { tab } = useParams();
+  
+  const [txTabIndex, setTxTabIndex] = useState(
+    routes.findIndex((r) => r.key === tab) ?? 0
+  );
+
   return (
     <Layout withHeader withConnectStatus p={0}>
       <Box pt='60px'>
-        <Balance balance={balance} usdValue={usdValue} />
+        <Balance walletAddress={activeAddress} />
         <Center>
           <HStack space='24px' pt='14px' pb='16px'>
             <ActionButton icon={Buy} label='Buy' onPress={onBuy} />
@@ -189,9 +166,9 @@ export function Transactions() {
           </HStack>
         </Center>
         <TabView
-          navigationState={{ index, routes }}
+          navigationState={{ index: txTabIndex, routes }}
           renderScene={renderScene}
-          onIndexChange={setIndex}
+          onIndexChange={setTxTabIndex}
           initialLayout={{ width: 375 }}
           renderTabBar={(props) => (
             <TabBar

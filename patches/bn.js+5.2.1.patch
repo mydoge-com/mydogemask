@@ -1,0 +1,35 @@
+diff --git a/node_modules/bn.js/lib/bn.js b/node_modules/bn.js/lib/bn.js
+index adecc94..a94a89c 100644
+--- a/node_modules/bn.js/lib/bn.js
++++ b/node_modules/bn.js/lib/bn.js
+@@ -48,12 +48,14 @@
+   BN.BN = BN;
+   BN.wordSize = 26;
+ 
+-  var Buffer;
++  var BNBuffer;
+   try {
+-    if (typeof window !== 'undefined' && typeof window.Buffer !== 'undefined') {
+-      Buffer = window.Buffer;
++    if (typeof Buffer !== 'undefined') {
++      BNBuffer = Buffer;
++    } else if (typeof window !== 'undefined' && typeof window.Buffer !== 'undefined') {
++      BNBuffer = window.Buffer;
+     } else {
+-      Buffer = require('buffer').Buffer;
++      BNBuffer = require('buffer').Buffer;
+     }
+   } catch (e) {
+   }
+@@ -553,9 +555,9 @@
+     return this.toString(16, 2);
+   };
+ 
+-  if (Buffer) {
++  if (BNBuffer) {
+     BN.prototype.toBuffer = function toBuffer (endian, length) {
+-      return this.toArrayLike(Buffer, endian, length);
++      return this.toArrayLike(BNBuffer, endian, length);
+     };
+   }
+ 

@@ -194,10 +194,10 @@ export const AmountScreen = ({
     <Center>
       <Text fontSize='sm' color='gray.500' textAlign='center' mb='8px'>
         <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          Wallet {selectedAddressIndex + 1}
+          Address {selectedAddressIndex + 1}
         </Text>
         {'  '}
-        {walletAddress.slice(0, 8)}...{formData.address.slice(-4)}
+        {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
       </Text>
       <Text fontSize='xl' pb='4px' textAlign='center' fontWeight='semibold'>
         Paying

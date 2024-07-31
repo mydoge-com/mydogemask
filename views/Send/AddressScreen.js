@@ -1,7 +1,9 @@
-import { Input, Text } from 'native-base';
-import { useCallback } from 'react';
+import { AlertDialog, Button, Input, Text } from 'native-base';
+import { useCallback, useEffect, useState } from 'react';
 
 import { BigButton } from '../../components/Button';
+import { useAppContext } from '../../hooks/useAppContext';
+import { useCachedInscriptionTxs } from '../../hooks/useCachedInscriptionTxs';
 import { validateAddress } from '../../scripts/helpers/wallet';
 
 export const AddressScreen = ({
@@ -19,6 +21,8 @@ export const AddressScreen = ({
     },
     [formData, setErrors, setFormData]
   );
+
+  const { navigate } = useAppContext();
 
   const validate = useCallback(() => {
     if (!validateAddress(formData.address.trim())) {
@@ -43,6 +47,16 @@ export const AddressScreen = ({
       setFormPage('amount');
     }
   }, [setFormPage, validate]);
+
+  const [pendingTxsDialogOpen, setPendingTxsDialogOpen] = useState(false);
+
+  const pendingTxs = useCachedInscriptionTxs({ filterPending: true });
+
+  useEffect(() => {
+    if (pendingTxs.length > 0) {
+      setPendingTxsDialogOpen(true);
+    }
+  }, [pendingTxs]);
 
   return (
     <>
@@ -86,6 +100,38 @@ export const AddressScreen = ({
       >
         Next
       </BigButton>
+      <AlertDialog
+        isOpen={pendingTxsDialogOpen}
+        onClose={() => setPendingTxsDialogOpen(false)}
+      >
+        <AlertDialog.Content>
+          <AlertDialog.CloseButton />
+          <AlertDialog.Header>Pending Inscriptions</AlertDialog.Header>
+          <AlertDialog.Body>
+            You have pending inscriptions that may not yet be indexed.
+            Proceeding with this transaction may result in the loss of these
+            inscriptions.
+          </AlertDialog.Body>
+          <AlertDialog.Footer>
+            <Button.Group space={2}>
+              <Button
+                variant='unstyled'
+                colorScheme='coolGray'
+                onPress={() => navigate(-1)}
+              >
+                Go back
+              </Button>
+              <BigButton
+                variant='danger'
+                onPress={() => setPendingTxsDialogOpen(false)}
+                px='24px'
+              >
+                I understand
+              </BigButton>
+            </Button.Group>
+          </AlertDialog.Footer>
+        </AlertDialog.Content>
+      </AlertDialog>
     </>
   );
 };

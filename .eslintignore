@@ -1,0 +1,7 @@
+.next
+build
+node_modules
+pages
+patches
+public
+styles

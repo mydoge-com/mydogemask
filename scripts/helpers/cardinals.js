@@ -45,7 +45,7 @@ export const amountToDec = (val) => {
   return new BigNumber(val).dividedBy(new BigNumber(10).pow(8))
 }
 
-export function shortAddress(address, len = 5) {
+export function shortAddress(address, len = 10) {
   if (!address) return '';
   if (address.length <= len * 2) return address;
   return address.slice(0, len) + '...' + address.slice(address.length - len);

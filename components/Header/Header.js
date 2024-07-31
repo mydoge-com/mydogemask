@@ -24,6 +24,7 @@ import { sendMessage } from '../../scripts/helpers/message';
 import { logError } from '../../utils/error';
 import { BackButton } from '../BackButton';
 import { BigButton } from '../Button';
+import { WalletAddress } from '../WalletAddress';
 import { AboutModal } from './AboutModal';
 import { CreateAddressModal } from './CreateAddressModal';
 import { DeleteAddressModal } from './DeleteAddressModal';
@@ -91,12 +92,12 @@ export const Header = ({
           position='absolute'
           left='12px'
           pt='8px'
-          onPress={() => navigate(cancelRoute)}
+          onPress={() => navigate(cancelRoute ?? -1)}
         />
       ) : null}
       <Text
         fontWeight='medium'
-        fontSize='lg'
+        fontSize='md'
         pb='12px'
         px='12px'
         color={addressColor || 'white'}
@@ -157,13 +158,6 @@ export const Header = ({
                         <FiCheck color='#54a937' size='22px' />
                       ) : null}
                     </Box>
-                    {/* <Avatar
-                      source={{
-                        uri: '/assets/default-avatar.png',
-                      }}
-                      size='30px'
-                      mr='12px'
-                    /> */}
                     <Avatar
                       size='30px'
                       bg='brandYellow.500'
@@ -375,17 +369,9 @@ const DetailPopup = ({
           {client ? (
             <VStack>
               <Text>You have 1 account connected to this site.</Text>
-              <Text
-                fontSize='sm'
-                fontWeight='semibold'
-                color='gray.500'
-                textAlign='center'
-                pb='8px'
-                pt='8px'
-              >
-                {client.address.slice(0, 8)}...
-                {client.address.slice(-4)}
-              </Text>
+              <Box py='8px'>
+                <WalletAddress address={client.address} />
+              </Box>
               <Text fontSize='10px' color='gray.500'>
                 This website can see your address, account balance, activity,
                 and suggest transactions to approve
@@ -393,7 +379,7 @@ const DetailPopup = ({
             </VStack>
           ) : (
             <Text>
-              MyDogeMask is not connected to this website. To connect, find and
+              MyDoge is not connected to this website. To connect, find and
               click the Connect button on the site.
             </Text>
           )}

@@ -1,49 +1,87 @@
 import dayjs from 'dayjs';
-import { Box, Pressable, Text, VStack } from 'native-base';
-import { Fragment, useState } from 'react';
-import MIMEType from 'whatwg-mimetype';
+import { Box, Pressable, Text, Toast, VStack } from 'native-base';
+import { Fragment, memo } from 'react';
 
-import { NFTModal } from './NFTModal';
+import { ToastRender } from '../../../components/ToastRender';
+import { useCachedInscriptionTxs } from '../../../hooks/useCachedInscriptionTxs';
+import { TRANSACTION_TYPES } from '../../../scripts/helpers/constants';
+import { NFTView } from './NFTView';
 
-export const NFT = ({
-  nft: { content, inscriptionNumber, timestamp, contentType },
-  nft,
-  index,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const onClose = () => setIsOpen(false);
-  const mimeType = new MIMEType(contentType);
+export const NFTComponent = ({ nft, index, onPress, selected }) => {
+  const { inscriptionNumber, timestamp, amount, ticker, output } = nft ?? {};
+
+  const pendingDoginalTxs = useCachedInscriptionTxs({
+    filterPending: true,
+  }).filter(
+    (tx) =>
+      tx.txType === TRANSACTION_TYPES.DOGINAL_TX ||
+      tx.txType === TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX
+  );
+
+  const isNFTPending = pendingDoginalTxs?.find(
+    (tx) => tx.output === nft?.output
+  );
+
   return (
-    <Fragment key={inscriptionNumber}>
-      <Pressable onPress={() => setIsOpen(true)} paddingTop='20px' flex={1/2} paddingLeft={ index % 2 === 0 ? 0: '6px'} paddingRight={ index % 2 === 0 ? '6px': 0}>
-        <VStack p='10px' borderRadius='12px' bg='gray.100'>
-          <Box width='100%' borderRadius='6px' overflow='hidden' alignItems='center' justifyContent='center' maxH={'130px'}>
-            <NFTView content={content} mimeType={mimeType} />
+    <Fragment key={output}>
+      <Pressable
+        onPress={() => {
+          if (isNFTPending) {
+            Toast.show({
+              duration: 3000,
+              render: () => {
+                return (
+                  <ToastRender
+                    title='Unable to select NFT'
+                    description="There's a pending transfer of this NFT. Check your transaction history for more details."
+                    status='info'
+                  />
+                );
+              },
+            });
+            return;
+          }
+          if (onPress) {
+            onPress();
+          }
+        }}
+        paddingTop='20px'
+        flex={1 / 2}
+        paddingLeft={index % 2 === 0 ? 0 : '6px'}
+        paddingRight={index % 2 === 0 ? '6px' : 0}
+      >
+        <VStack
+          p='10px'
+          borderRadius='12px'
+          bg='gray.100'
+          {...(selected ? { bg: 'amber.100' } : {})}
+        >
+          <Box
+            width='100%'
+            borderRadius='6px'
+            overflow='hidden'
+            alignItems='center'
+            justifyContent='center'
+            maxH='130px'
+          >
+            <NFTView nft={nft} />
           </Box>
 
           <Text fontSize='16px' fontWeight='bold' color='yellow.600' pt='10px'>
-            # {inscriptionNumber}
+            {ticker ? `${ticker} ${amount}` : `# ${inscriptionNumber}`}
           </Text>
 
-          <Text fontSize='12px' fontWeight='medium' color='gray.500'>
-            {dayjs(timestamp * 1000).format('YYYY-MM-DD')}
-          </Text>
+          {timestamp && (
+            <Text fontSize='12px' fontWeight='medium' color='gray.500'>
+              {dayjs(timestamp * 1000).format('YYYY-MM-DD')}
+            </Text>
+          )}
         </VStack>
       </Pressable>
-      <NFTModal isOpen={isOpen} onClose={onClose} nft={nft}>
-        <NFTView content={content} mimeType={mimeType} />
-      </NFTModal>
     </Fragment>
   );
 };
 
-export const NFTView = ({ content, mimeType }) => {
-  switch (mimeType.type) {
-    case 'image':
-      return <img src={content} width='100%' height='auto' alt='NFT' />;
-    case 'text':
-      return <iframe src={content} width='100%' height='auto' sandbox='allow-same-origin allow-scripts' allow />;
-    default:
-      return <img src='./assets/default-nft.webp' width='100%' height='auto' alt='NFT' />;
-  }
-}
+export const NFT = memo(NFTComponent, (prev, next) => {
+  return prev.nft?.output === next.nft?.output;
+});

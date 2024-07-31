@@ -1,29 +1,27 @@
-import {
-  Address,
-  // Opcode,
-  // PrivateKey,
-  // Script,
-  Transaction,
-} from 'bitcore-lib-doge';
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { apiKey, doginals, node, nownodes } from './api';
+import { apiKey, node, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
   CONNECTED_CLIENTS,
   FEE_RATE_KB,
+  INSCRIPTION_TXS_CACHE,
   MAX_UTXOS,
   MESSAGE_TYPES,
   MIN_TX_AMOUNT,
   ONBOARDING_COMPLETE,
   PASSWORD,
+  SELECTED_ADDRESS_INDEX,
+  TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
+import { getSpendableUtxos, inscribe } from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
+  getCachedTx,
   getLocalValue,
   getSessionValue,
   removeLocalValue,
@@ -35,67 +33,53 @@ import {
   generateChild,
   generatePhrase,
   generateRoot,
+  signMessage,
+  signRawPsbt,
   signRawTx,
 } from './helpers/wallet';
 
 const TRANSACTION_PAGE_SIZE = 10;
+const NOWNODES_SLEEP_S = 5;
+
+const sleep = async (time) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, time);
+  });
 
 function sanitizeFloatAmount(amount) {
   return sb.toBitcoin(Math.trunc(sb.toSatoshi(amount)));
 }
 
-async function getInscriptions(address) {
-  let cursor = 0;
-  const size = 100;
-  const result = [];
-  const query = await doginals
-    .get(
-      `/address/inscriptions?address=${address}&cursor=${cursor}&size=${size}`
-    )
-    .json();
-
-  console.log(
-    'found',
-    query.result.list.length,
-    'inscriptions in page',
-    cursor,
-    'total',
-    query.result.total
-  );
-
-  result.push(
-    ...query.result.list.map((i) => ({
-      txid: i.output.split(':')[0],
-      vout: parseInt(i.output.split(':')[1], 10),
-      genesis: i.genesisTransaction,
-    }))
-  );
-
-  while (query.result.total !== result.length) {
-    cursor += 1;
-    query = await doginals
-      .get(
-        `/address/inscriptions?address=${address}&cursor=${cursor}&size=${size}`
-      )
-      .json();
-
-    console.log(
-      'found',
-      query.result.list.length,
-      'inscriptions in page',
-      cursor
-    );
-
-    result.push(
-      ...query.result.list.map((i) => ({
-        txid: i.output.split(':')[0],
-        vout: parseInt(i.output.split(':')[1], 10),
-        genesis: i.genesisTransaction,
-      }))
-    );
-  }
-
-  return result;
+/**
+ * Creates a client popup window.
+ *
+ * @param {Object} options - The options for creating the client popup.
+ * @param {Function} options.sendResponse - The function to send a response to the sender.
+ * @param {Object} options.sender - The sender object containing information about the sender.
+ * @param {Object} [options.data={}] - Additional data to be passed to the popup window.
+ * @param {string} options.messageType - The type of message to be sent to the popup window.
+ */
+function createClientPopup({ sendResponse, sender, data = {}, messageType }) {
+  const params = new URLSearchParams();
+  params.append('originTabId', JSON.stringify(sender.tab.id));
+  params.append('origin', JSON.stringify(sender.origin));
+  Object.entries(data).forEach(([key, value]) => {
+    params.append(key, JSON.stringify(value));
+  });
+  chrome.windows
+    .create({
+      url: `index.html?${params.toString()}#${messageType}`,
+      type: 'popup',
+      width: data.isOnboardingPending ? 800 : 357,
+      height: 640,
+    })
+    .then((tab) => {
+      if (tab) {
+        sendResponse?.({ originTabId: sender.tab.id });
+      } else {
+        sendResponse?.(false);
+      }
+    });
 }
 
 // Build a raw transaction and determine fee
@@ -104,18 +88,11 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
   let amount = sb.toBitcoin(amountSatoshi);
 
   try {
-    // get utxos and inscriptions
-    const utxos = (
-      await nownodes.get(`/utxo/${data.senderAddress}`).json()
-    ).sort((a, b) => {
-      const aValue = sb.toBitcoin(a.value);
-      const bValue = sb.toBitcoin(b.value);
-      return bValue > aValue ? 1 : bValue < aValue ? -1 : a.height - b.height;
-    });
+    // get spendable utxos
+    const utxos = await getSpendableUtxos(data.senderAddress);
 
     console.log('found utxos', utxos.length);
 
-    const inscriptions = await getInscriptions(data.senderAddress);
     // estimate fee
     const smartfeeReq = {
       API_key: apiKey,
@@ -148,17 +125,8 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
     console.log('estimated feePerInput', feePerInput);
 
     for (const utxo of utxos) {
-      // Check cached utxo
+      const value = sb.toBitcoin(utxo.outputValue);
 
-      // Avoid inscription UTXOs
-      if (
-        inscriptions.find((i) => i.txid === utxo.txid && i.vout === utxo.vout)
-      ) {
-        console.log('skipping inscription utxo', utxo.txid, utxo.vout);
-        continue;
-      }
-
-      const value = sb.toBitcoin(utxo.value);
       total += value;
       fee = feePerInput * (i + 1);
       jsonrpcReq.params[0].push({
@@ -169,6 +137,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
       i++;
 
       if (total >= amount + fee) {
+        console.log('utxo', i, total, '>=', amount + fee);
         break;
       }
 
@@ -245,6 +214,211 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
   }
 }
 
+async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
+  const txid = data.output.split(':')[0];
+  const vout = parseInt(data.output.split(':')[1], 10);
+  const amount = sb.toBitcoin(data.outputValue);
+
+  console.log('nft tx', txid, vout, amount);
+
+  try {
+    // get spendable utxos
+    const utxos = await getSpendableUtxos(data.address);
+
+    console.log('found utxos', utxos.length);
+
+    // estimate fee
+    const smartfeeReq = {
+      API_key: apiKey,
+      jsonrpc: '2.0',
+      id: `${data.address}_estimatesmartfee_${Date.now()}`,
+      method: 'estimatesmartfee',
+      params: [2], // confirm within x blocks
+    };
+    const feeData = await node.post(smartfeeReq).json();
+    const feePerKB = feeData.result.feerate || FEE_RATE_KB;
+    const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
+    const jsonrpcReq = {
+      API_key: apiKey,
+      jsonrpc: '2.0',
+      id: `${data.address}_create_${Date.now()}`,
+      method: 'createrawtransaction',
+      params: [
+        [{ txid, vout }],
+        {
+          [data.recipientAddress]: amount,
+        },
+      ],
+    };
+    let fee = feePerInput;
+    let total = amount;
+    let i = 1;
+
+    console.log('found feerate', feeData.result.feerate);
+    console.log('using feePerKb', feePerKB);
+    console.log('estimated feePerInput', feePerInput);
+
+    for (const utxo of utxos) {
+      const value = sb.toBitcoin(utxo.outputValue);
+
+      total += value;
+      fee = feePerInput * (i + 1);
+      jsonrpcReq.params[0].push({
+        txid: utxo.txid,
+        vout: utxo.vout,
+      });
+
+      console.log('utxo', i + 1, total, '>=', amount + fee);
+      i++;
+
+      if (total >= amount + fee) {
+        break;
+      }
+    }
+
+    total = sanitizeFloatAmount(total);
+    fee = sanitizeFloatAmount(fee);
+
+    console.log('num utxos', i);
+    console.log('total', total);
+    console.log('amount', amount);
+    console.log('estimated fee', fee);
+
+    // Detect insufficient funds, discounting estimated fee from amount to allow for max send
+    if (total - fee < MIN_TX_AMOUNT) {
+      throw new Error(
+        `Insufficient funds ${total} < ${amount} + ${fee} with ${i}/${utxos.length} inputs`
+      );
+    }
+
+    // Set a dummy amount in the change address
+    jsonrpcReq.params[1][data.address] = feePerInput;
+    const estimateRes = await node.post(jsonrpcReq).json();
+    const size = estimateRes.result.length / 2;
+
+    console.log('tx size', size);
+
+    fee = Math.max(sanitizeFloatAmount((size / 1000) * feePerKB), feePerInput);
+
+    console.log('calculated fee', fee);
+
+    // Add change address and amount if enough, otherwise add to fee
+    const changeSatoshi = Math.trunc(
+      sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee)
+    );
+
+    console.log('calculated change', changeSatoshi);
+
+    if (changeSatoshi >= 0) {
+      const changeAmount = sb.toBitcoin(changeSatoshi);
+      if (changeAmount >= MIN_TX_AMOUNT) {
+        jsonrpcReq.params[1][data.address] = changeAmount;
+      } else {
+        delete jsonrpcReq.params[1][data.address];
+        fee += changeAmount;
+      }
+    }
+
+    const rawTx = await node.post(jsonrpcReq).json();
+
+    console.log('raw tx', rawTx.result);
+
+    sendResponse?.({
+      rawTx: rawTx.result,
+      fee,
+      amount,
+    });
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+}
+
+async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
+  try {
+    // Get utxos
+    let utxos = await getSpendableUtxos(data.walletAddress);
+
+    console.log('found utxos', utxos.length);
+
+    // Map satoshis to integers
+    utxos = await Promise.all(
+      utxos.map(async (utxo) => {
+        return {
+          txid: utxo.txid,
+          vout: utxo.vout,
+          script: utxo.script,
+          satoshis: sb.toSatoshi(sb.toBitcoin(utxo.outputValue)),
+        };
+      })
+    );
+
+    console.log('num utxos', utxos.length);
+
+    const smartfeeReq = {
+      API_key: apiKey,
+      jsonrpc: '2.0',
+      id: `${data.address}_estimatesmartfee_${Date.now()}`,
+      method: 'estimatesmartfee',
+      params: [2], // confirm within x blocks
+    };
+    const feeData = await node.post(smartfeeReq).json();
+    const feePerKB = sb.toSatoshi(feeData.result.feerate || FEE_RATE_KB);
+
+    console.log('found feePerKB', feePerKB);
+
+    // Build the inscription json
+    const inscription = `{"p":"drc-20","op":"transfer","tick":"${data.ticker}","amt":"${data.tokenAmount}"}`;
+    const inscriptionHex = Buffer.from(inscription).toString('hex');
+
+    console.log('inscription', inscription, inscriptionHex);
+
+    // Fetch the keys and inscribe the transactions
+    const [wallet, password] = await Promise.all([
+      getLocalValue(WALLET),
+      getSessionValue(PASSWORD),
+    ]);
+
+    const decryptedWallet = decrypt({
+      data: wallet,
+      password,
+    });
+
+    if (!decryptedWallet) {
+      sendResponse?.(false);
+    }
+
+    const txs = inscribe(
+      utxos,
+      data.walletAddress,
+      decryptedWallet.children[data.selectedAddressIndex],
+      feePerKB,
+      'text/plain;charset=utf8',
+      inscriptionHex
+    );
+
+    console.log('inscription txs', txs);
+
+    let fee = 0;
+
+    for (const tx of txs) {
+      fee += tx.getFee();
+    }
+
+    fee = sb.toBitcoin(fee);
+
+    console.log('calculated fee', fee);
+
+    sendResponse?.({
+      txs: txs.map((tx) => tx.toString()),
+      fee,
+    });
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+}
+
 function onSendTransaction({ data = {}, sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
     ([wallet, password]) => {
@@ -269,10 +443,10 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
       };
       node
         .post(jsonrpcReq)
-        .json((jsonrpcRes) => {
+        .json(async (jsonrpcRes) => {
           // Open offscreen notification page to handle transaction status notifications
           chrome.offscreen
-            .createDocument({
+            ?.createDocument({
               url: chrome.runtime.getURL(
                 `notification.html/?txId=${jsonrpcRes.result}`
               ),
@@ -280,6 +454,23 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
               justification: 'Handle transaction status notifications',
             })
             .catch(() => {});
+
+          // Cache transaction if it's a DRC20 transaction
+
+          if (data.txType) {
+            const txsCache = (await getLocalValue(INSCRIPTION_TXS_CACHE)) ?? [];
+
+            txsCache.push({
+              txs: [jsonrpcRes.result],
+              txType: data.txType,
+              timestamp: Date.now(),
+              ticker: data.ticker,
+              tokenAmount: data.tokenAmount,
+              output: data.output,
+            });
+
+            setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
+          }
 
           sendResponse(jsonrpcRes.result);
         })
@@ -291,8 +482,174 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
   );
 }
 
-async function onRequestTransaction({
-  data: { recipientAddress, dogeAmount, rawTx, fee } = {},
+async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
+  try {
+    const results = [];
+    let i = 0;
+
+    for await (const signed of data.txs) {
+      if (i > 0) {
+        await sleep(NOWNODES_SLEEP_S * 1000); // Nownodes needs some time between txs
+      }
+
+      const jsonrpcReq = {
+        API_key: apiKey,
+        jsonrpc: '2.0',
+        id: `send_${Date.now()}`,
+        method: 'sendrawtransaction',
+        params: [signed],
+      };
+
+      console.log(
+        `sending inscribe transfer tx ${i + 1} of ${data.txs.length}`,
+        jsonrpcReq.params[0]
+      );
+
+      const jsonrpcRes = await node.post(jsonrpcReq).json();
+      results.push(jsonrpcRes.result);
+      i++;
+    }
+
+    console.log(`inscription id ${results[1]}i0`);
+
+    // Open offscreen notification page to handle transaction status notifications
+    chrome.offscreen
+      ?.createDocument({
+        url: chrome.runtime.getURL(`notification.html/?txId=${results[1]}`),
+        reasons: ['BLOBS'],
+        justification: 'Handle transaction status notifications',
+      })
+      .catch(() => {});
+
+    const txsCache = (await getLocalValue(INSCRIPTION_TXS_CACHE)) ?? [];
+
+    txsCache.push({
+      txs: results,
+      txType: TRANSACTION_TYPES.DRC20_AVAILABLE_TX,
+      tokenAmount: data.tokenAmount,
+      timestamp: Date.now(),
+      ticker: data.ticker,
+    });
+
+    setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
+
+    sendResponse(results[1]);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+}
+
+async function onSignPsbt({ data = {}, sendResponse } = {}) {
+  try {
+    const [wallet, password] = await Promise.all([
+      getLocalValue(WALLET),
+      getSessionValue(PASSWORD),
+    ]);
+
+    const decryptedWallet = decrypt({
+      data: wallet,
+      password,
+    });
+    if (!decryptedWallet) {
+      sendResponse?.(false);
+    }
+
+    const { rawTx, fee, amount } = signRawPsbt(
+      data.rawTx,
+      data.indexes,
+      decryptedWallet.children[data.selectedAddressIndex],
+      !data.feeOnly
+    );
+
+    sendResponse?.({
+      rawTx,
+      fee,
+      amount,
+    });
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+
+  return true;
+}
+
+async function onSendPsbt({ data = {}, sendResponse } = {}) {
+  try {
+    const jsonrpcReq = {
+      API_key: apiKey,
+      jsonrpc: '2.0',
+      id: `send_${Date.now()}`,
+      method: 'sendrawtransaction',
+      params: [data.rawTx],
+    };
+
+    console.log(`sending signed psbt`, jsonrpcReq.params[0]);
+
+    const jsonrpcRes = await node.post(jsonrpcReq).json();
+
+    console.log(`tx id ${jsonrpcRes.result}`);
+
+    // Open offscreen notification page to handle transaction status notifications
+    chrome.offscreen
+      ?.createDocument({
+        url: chrome.runtime.getURL(
+          `notification.html/?txId=${jsonrpcRes.result}`
+        ),
+        reasons: ['BLOBS'],
+        justification: 'Handle transaction status notifications',
+      })
+      .catch(() => {});
+
+    sendResponse(jsonrpcRes.result);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+}
+
+async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+      }
+
+      const signedMessage = signMessage(
+        data.message,
+        decryptedWallet.children[data.selectedAddressIndex]
+      );
+
+      sendResponse?.(signedMessage);
+    }
+  );
+}
+
+async function onRequestTransaction({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+  });
+  return true;
+}
+
+async function onRequestDoginalTransaction({
+  data = {},
   sendResponse,
   sender,
 } = {}) {
@@ -303,33 +660,67 @@ async function onRequestTransaction({
     sendResponse?.(false);
     return;
   }
-  const params = new URLSearchParams();
-  Object.entries({
-    originTabId: sender.tab.id,
-    origin: sender.origin,
-    recipientAddress,
-    dogeAmount,
-    rawTx,
-    fee,
-  }).forEach(([key, value]) => {
-    params.append(key, value);
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
   });
-  chrome.windows
-    .create({
-      url: `index.html?${params.toString()}#${
-        MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION
-      }`,
-      type: 'popup',
-      width: 357,
-      height: 640,
-    })
-    .then((tab) => {
-      if (tab) {
-        sendResponse?.({ originTabId: sender.tab.id });
-      } else {
-        sendResponse?.(false);
-      }
-    });
+  return true;
+}
+
+async function onRequestAvailableDRC20Transaction({
+  data,
+  sendResponse,
+  sender,
+} = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
+  });
+  return true;
+}
+
+async function onRequestPsbt({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
+  });
+  return true;
+}
+
+async function onRequestSignedMessage({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
+  });
   return true;
 }
 
@@ -447,9 +838,7 @@ async function onGetTransactions({ data, sendResponse } = {}) {
         return;
       }
       const transactions = (
-        await Promise.all(
-          txIds.map((txId) => nownodes.get(`/tx/${txId}`).json())
-        )
+        await Promise.all(txIds.map((txId) => getCachedTx(txId)))
       ).sort((a, b) => b.blockTime - a.blockTime);
       sendResponse?.({ transactions, totalPages, page });
     })
@@ -521,6 +910,7 @@ function onUpdateAddressNickname({ sendResponse, data } = {}) {
         data: wallet,
         password,
       });
+
       if (!decryptedWallet) {
         sendResponse?.(false);
         return;
@@ -555,22 +945,12 @@ async function onConnectionRequest({ sendResponse, sender } = {}) {
   const params = new URLSearchParams();
   params.append('originTabId', sender.tab.id);
   params.append('origin', sender.origin);
-  chrome.windows
-    .create({
-      url: `index.html?${params.toString()}#${
-        MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION
-      }`,
-      type: 'popup',
-      width: onboardingComplete ? 357 : 800,
-      height: 640,
-    })
-    .then((tab) => {
-      if (tab) {
-        sendResponse?.({ originTabId: sender.tab.id });
-      } else {
-        sendResponse?.(false);
-      }
-    });
+  createClientPopup({
+    sendResponse,
+    sender,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION,
+    data: { isOnboardingPending: !onboardingComplete },
+  });
   return true;
 }
 
@@ -619,6 +999,32 @@ async function onDisconnectClient({ sendResponse, data: { origin } } = {}) {
   return true;
 }
 
+async function onApproveAvailableDRC20Transaction({
+  sendResponse,
+  data: { txId, error, originTabId, origin, ticker, tokenAmount },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+      data: {
+        txId,
+        ticker,
+        amount: tokenAmount,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
 async function onApproveTransaction({
   sendResponse,
   data: { txId, error, originTabId, origin },
@@ -635,6 +1041,78 @@ async function onApproveTransaction({
   } else {
     chrome.tabs?.sendMessage(originTabId, {
       type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
+async function onApproveDoginalTransaction({
+  sendResponse,
+  data: { txId, error, originTabId, origin },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      data: {
+        txId,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
+async function onApprovePsbt({
+  sendResponse,
+  data: { txId, error, originTabId, origin },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+      data: {
+        txId,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
+async function onApproveSignedMessage({
+  sendResponse,
+  data: { signedMessage, error, originTabId, origin },
+} = {}) {
+  if (signedMessage) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+      data: {
+        signedMessage,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
       error,
       origin,
     });
@@ -685,7 +1163,12 @@ function onDeleteAddress({ sendResponse, data } = {}) {
 function onDeleteWallet({ sendResponse } = {}) {
   Promise.all([
     clearSessionStorage(),
-    removeLocalValue([PASSWORD, WALLET, ONBOARDING_COMPLETE]),
+    removeLocalValue([
+      PASSWORD,
+      WALLET,
+      ONBOARDING_COMPLETE,
+      SELECTED_ADDRESS_INDEX,
+    ]),
   ])
     .then(() => {
       sendResponse?.(true);
@@ -761,7 +1244,7 @@ async function onNotifyTransactionSuccess({ data: { txId } } = {}) {
             }.`,
           });
 
-          chrome.offscreen.closeDocument().catch(() => {});
+          chrome.offscreen?.closeDocument().catch(() => {});
         } else if (!transaction) {
           chrome.notifications.create({
             type: 'basic',
@@ -769,7 +1252,7 @@ async function onNotifyTransactionSuccess({ data: { txId } } = {}) {
             iconUrl: '../assets/mydoge128.png',
             message: `Transaction details could not be retrieved for \`${txId}\`.`,
           });
-          chrome.offscreen.closeDocument();
+          chrome.offscreen?.closeDocument();
         }
       },
     });
@@ -791,8 +1274,26 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CREATE_TRANSACTION:
       onCreateTransaction({ data, sendResponse });
       break;
+    case MESSAGE_TYPES.CREATE_NFT_TRANSACTION:
+      onCreateNFTTransaction({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION:
+      onInscribeTransferTransaction({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.SIGN_PSBT:
+      onSignPsbt({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.SEND_PSBT:
+      onSendPsbt({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.SIGN_MESSAGE:
+      onCreateSignedMessage({ data, sendResponse });
+      break;
     case MESSAGE_TYPES.SEND_TRANSACTION:
       onSendTransaction({ data, sender, sendResponse });
+      break;
+    case MESSAGE_TYPES.SEND_TRANSFER_TRANSACTION:
+      onSendInscribeTransfer({ data, sender, sendResponse });
       break;
     case MESSAGE_TYPES.IS_ONBOARDING_COMPLETE:
       getOnboardingStatus({ data, sendResponse, sender });
@@ -832,6 +1333,30 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE:
       onApproveTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
+      onRequestDoginalTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
+      onApproveDoginalTransaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
+      onRequestAvailableDRC20Transaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
+      onRequestPsbt({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE:
+      onApprovePsbt({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
+      onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
+      onRequestSignedMessage({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
+      onApproveSignedMessage({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });

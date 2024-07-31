@@ -1,42 +1,12 @@
 import { MESSAGE_TYPES } from './helpers/constants';
-import { getAddressBalance, getConnectedClient } from './helpers/data';
-import { validateTransaction } from './helpers/wallet';
+import {
+  getAddressBalance,
+  getConnectedAddressIndex,
+  getConnectedClient,
+} from './helpers/data';
+import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
 (() => {
-  // const loadSendTipFloating = async () => {
-  //   const sendTipFloatingBtnExists = document.getElementsByClassName(
-  //     'sendTipFloating-btn'
-  //   )[0];
-
-  //   if (!sendTipFloatingBtnExists) {
-  //     const sendTipBtn = document.createElement('img');
-
-  //     sendTipBtn.src = chrome.runtime.getURL('assets/sendtip.png');
-  //     sendTipBtn.className = 'sendTipFloating-btn';
-  //     sendTipBtn.title = 'Tip This Site';
-  //     sendTipBtn.style =
-  //       'bottom: 10px; right: 10px; position:fixed; z-index: 9999;';
-  //     document.body.appendChild(sendTipBtn);
-  //     sendTipBtn.addEventListener('click', sendTipEventHandler);
-  //   }
-  // };
-
-  // const sendTipEventHandler = async () => {
-  //   onRequestTransaction({});
-  // };
-
-  // TODO: Inject tip button into body if website has dogecoin meta tag
-  // Tip button should be floating (absolutely positioned, bottom right maybe?)
-  // const metas = document.getElementsByTagName('meta');
-  // for (let i = 0; i < metas.length; i++) {
-  //   const name = metas[i].getAttribute('name');
-  //   if (name === 'dogecoin') {
-  //     loadSendTipFloating();
-  //     const content = metas[i].getAttribute('content');
-  //     alert(`Name: ${name} content: ${content}`);
-  //   }
-  // }
-
   // Inject doge API to all websites
   function injectScript(filePath, tag) {
     const node = document.getElementsByTagName(tag)[0];
@@ -68,7 +38,7 @@ import { validateTransaction } from './helpers/wallet';
       (response) => {
         if (!response) {
           handleError({
-            errorMessage: 'Unable to connect to MyDogeMask',
+            errorMessage: 'Unable to connect to MyDoge',
             origin,
             messageType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
           });
@@ -105,6 +75,74 @@ import { validateTransaction } from './helpers/wallet';
     }
   }
 
+  async function onGetDRC20Balance({ origin, data }) {
+    let client;
+    let availableBalance = '0';
+    let transferableBalance = '0';
+
+    try {
+      client = await getConnectedClient(origin);
+      const balances = await getDRC20Balances(client?.address, data.ticker);
+
+      if (balances.length) {
+        availableBalance = balances[0].availableBalance;
+        transferableBalance = balances[0].transferableBalance;
+      }
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE_RESPONSE,
+      });
+      return;
+    }
+    if (client) {
+      window.postMessage(
+        {
+          type: MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE_RESPONSE,
+          data: {
+            availableBalance,
+            transferableBalance,
+            ticker: data.ticker,
+            address: client.address,
+          },
+        },
+        origin
+      );
+    }
+  }
+
+  async function onGetTransferableDRC20({ origin, data }) {
+    let client;
+    const inscriptions = [];
+
+    try {
+      client = await getConnectedClient(origin);
+      await getDRC20Inscriptions(client?.address, data.ticker, 0, inscriptions);
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE,
+      });
+      return;
+    }
+
+    if (client) {
+      window.postMessage(
+        {
+          type: MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE,
+          data: {
+            inscriptions,
+            ticker: data.ticker,
+            address: client.address,
+          },
+        },
+        origin
+      );
+    }
+  }
+
   async function onGetConnectionStatus({ origin }) {
     try {
       const client = await getConnectedClient(origin);
@@ -120,7 +158,7 @@ import { validateTransaction } from './helpers/wallet';
           origin
         );
       } else {
-        throw new Error('MyDogeMask is not connected to this website');
+        throw new Error('MyDoge is not connected to this website');
       }
     } catch (e) {
       handleError({
@@ -200,53 +238,29 @@ import { validateTransaction } from './helpers/wallet';
     }
   }
 
-  async function onRequestTransaction({ origin, data }) {
-    try {
-      const client = await getConnectedClient(origin);
-      const balance = await getAddressBalance(client?.address);
+  const createClientPopupHandler =
+    ({ messageType, responseType }) =>
+    async ({ data, origin }) => {
+      try {
+        const connectedClient = await getConnectedClient(origin);
+        const connectedAddressIndex = await getConnectedAddressIndex(origin);
 
-      const txData = {
-        senderAddress: client.address,
-        recipientAddress: data.recipientAddress,
-        dogeAmount: data.dogeAmount,
-      };
-
-      const error = validateTransaction({
-        ...txData,
-        addressBalance: balance,
-      });
-      if (error) {
-        throw new Error(error);
+        chrome.runtime.sendMessage({
+          message: messageType,
+          data: {
+            ...data,
+            connectedClient,
+            connectedAddressIndex,
+          },
+        });
+      } catch (e) {
+        handleError({
+          errorMessage: e.message,
+          origin,
+          messageType: responseType,
+        });
       }
-      chrome.runtime.sendMessage(
-        {
-          message: MESSAGE_TYPES.CREATE_TRANSACTION,
-          data: txData,
-        },
-        ({ rawTx, fee, amount }) => {
-          if (rawTx && fee && amount) {
-            chrome.runtime.sendMessage({
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
-              data: {
-                ...data,
-                rawTx,
-                fee,
-                dogeAmount: amount,
-              },
-            });
-          } else {
-            throw new Error('Unable to create transaction');
-          }
-        }
-      );
-    } catch (e) {
-      handleError({
-        errorMessage: e.message,
-        origin,
-        messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-      });
-    }
-  }
+    };
 
   // Listen to messages from injected script and pass to the respective handler functions tro forward to the background script
   window.addEventListener(
@@ -262,8 +276,44 @@ import { validateTransaction } from './helpers/wallet';
         case MESSAGE_TYPES.CLIENT_GET_BALANCE:
           onGetBalance({ origin: source.origin });
           break;
+        case MESSAGE_TYPES.CLIENT_GET_DRC20_BALANCE:
+          onGetDRC20Balance({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20:
+          onGetTransferableDRC20({ origin: source.origin, data });
+          break;
         case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
-          onRequestTransaction({ origin: source.origin, data });
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
+            responseType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+          })({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
+            responseType:
+              MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+          })({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
+          createClientPopupHandler({
+            messageType:
+              MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
+            responseType:
+              MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+          })({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
+            responseType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+          })({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
+            responseType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+          })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_DISCONNECT:
           onDisconnectClient({ origin: source.origin });

@@ -28,7 +28,7 @@
     }
   ],
   "action": {
-    "default_title": "MyDogeMask",
+    "default_title": "MyDoge",
     "default_popup": "index.html"
   }
 }
