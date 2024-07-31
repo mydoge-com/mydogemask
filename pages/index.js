@@ -10,13 +10,14 @@ import {
   CreateWallet,
   ImportWallet,
   Intro,
-  Success,
+  Success
 } from '../views/Onboarding';
 import { Send } from '../views/Send';
 import { Transactions } from '../views/Transactions';
 import { TransferNFT } from '../views/TransferNFT';
 import { TransferToken } from '../views/TransferToken';
-
+import { TransferHistory } from '../views/Cardinals/TransferHistory';
+import { TransferDetailScreen } from '../views/Cardinals/TransferDetailScreen';
 export default function App() {
   const { authenticated, wallet, onboardingComplete, ready } = useAppContext();
 
@@ -43,6 +44,8 @@ export default function App() {
       <Route path='/InscribeToken' element={<InscribeToken />} />
       <Route path='/TransferToken' element={<TransferToken />} />
       <Route path='/ClientRequest' element={<ClientRequest />} />
+      <Route path='/TransferHistory' element={<TransferHistory />} />
+      <Route path='/TransferDetailScreen' element={<TransferDetailScreen />} />
     </Routes>
   );
 }

@@ -11,6 +11,7 @@ import { Balance } from './components/Balance';
 import { NFTsTab } from './components/NFTsTab';
 import { TokensTab } from './components/TokensTab';
 import { TransactionsTab } from './components/TransactionsTab';
+import { CardinalsTab } from '../Cardinals/components/CardinalsTab';
 
 const Buy = 'assets/buy.svg';
 const Receive = 'assets/receive.svg';
@@ -60,6 +61,7 @@ export function Transactions() {
 
   const [routes] = useState([
     { key: 'transactions', title: 'Transactions' },
+    { key: 'cardinals', title: 'Cardinals' },
     { key: 'doginals', title: 'Doginals' },
     { key: 'tokens', title: 'Tokens' },
   ]);
@@ -118,18 +120,26 @@ export function Transactions() {
     [fetchMoreTokens, hasMoreTokens, tokens, tokensLoading]
   );
 
+  const CardinalsRoute = useCallback(
+    () => (
+      <CardinalsTab/>
+    ),
+    []
+  );
+
   const renderScene = useMemo(
     () =>
       SceneMap({
         transactions: TransactionsRoute,
+        cardinals: CardinalsRoute,
         tokens: TokensRoute,
         doginals: NFTsRoute,
       }),
-    [NFTsRoute, TokensRoute, TransactionsRoute]
+    [NFTsRoute, TokensRoute, TransactionsRoute, CardinalsRoute]
   );
 
   const { tab } = useParams();
-
+  
   const [txTabIndex, setTxTabIndex] = useState(
     routes.findIndex((r) => r.key === tab) ?? 0
   );
@@ -194,3 +204,4 @@ export function Transactions() {
     </Layout>
   );
 }
+

@@ -9,6 +9,7 @@ import {
   MYDOGE_BASE_URL,
   NODE_BASE_URL,
   NOWNODES_BASE_URL,
+  CARDINALS_WALLET_API_URL
 } from './helpers/constants';
 
 export const apiKey = process.env.NEXT_PUBLIC_NOWNODES_API_KEY;
@@ -44,4 +45,5 @@ export const doginalsMarketplace = wretch(
 
 export const node = wretch(NODE_BASE_URL);
 
+export const cardinals = wretch(CARDINALS_WALLET_API_URL);
 export const mydoge = wretch(MYDOGE_BASE_URL);
