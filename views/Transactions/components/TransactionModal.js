@@ -54,7 +54,7 @@ export const TransactionModal = ({
                 bg='brandYellow.500'
                 _text={{ color: 'gray.800' }}
               >
-                {address.substring(0, 2)}
+                {address?.substring(0, 2)}
               </Avatar>
               <Text
                 fontSize='sm'
@@ -62,7 +62,7 @@ export const TransactionModal = ({
                 color='gray.500'
                 textAlign='center'
               >
-                {address.slice(0, 8)}...{address.slice(-4)}
+                {address?.slice(0, 8)}...{address?.slice(-4)}
               </Text>
               <Button
                 variant='subtle'

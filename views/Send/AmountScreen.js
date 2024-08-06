@@ -134,7 +134,7 @@ export const AmountScreen = ({
     setLoading(true);
     const txData = {
       senderAddress: walletAddress,
-      recipientAddress: formData.address.trim(),
+      recipientAddress: formData.address?.trim(),
       dogeAmount: formData.dogeAmount,
     };
     const error = validateTransaction({
@@ -197,14 +197,14 @@ export const AmountScreen = ({
           Address {selectedAddressIndex + 1}
         </Text>
         {'  '}
-        {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
+        {walletAddress?.slice(0, 8)}...{walletAddress?.slice(-4)}
       </Text>
       <Text fontSize='xl' pb='4px' textAlign='center' fontWeight='semibold'>
         Paying
       </Text>
       <HStack alignItems='center' space='12px' pb='28px'>
         <Avatar size='sm' bg='brandYellow.500' _text={{ color: 'gray.800' }}>
-          {formData.address.substring(0, 2)}
+          {formData.address?.substring(0, 2)}
         </Avatar>
         <Text
           fontSize='md'
@@ -212,7 +212,7 @@ export const AmountScreen = ({
           color='gray.500'
           textAlign='center'
         >
-          {formData.address.slice(0, 8)}...{formData.address.slice(-4)}
+          {formData.address?.slice(0, 8)}...{formData.address?.slice(-4)}
         </Text>
       </HStack>
       <Box

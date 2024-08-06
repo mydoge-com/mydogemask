@@ -164,7 +164,7 @@ export const Header = ({
                       _text={{ color: 'gray.800' }}
                       mr='12px'
                     >
-                      {address.substring(0, 2)}
+                      {address?.substring(0, 2)}
                     </Avatar>
                     <VStack>
                       <Text
@@ -176,7 +176,7 @@ export const Header = ({
                         {wallet.nicknames?.[address] ?? `Address ${i + 1}`}
                       </Text>
                       <Text fontSize='sm' color='gray.500'>
-                        {address.slice(0, 8)}...{address.slice(-4)}
+                        {address?.slice(0, 8)}...{address?.slice(-4)}
                       </Text>
                     </VStack>
                   </HStack>
