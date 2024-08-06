@@ -20,8 +20,8 @@ import { BigButton } from '../Button';
 
 export const SecurityModal = ({ showModal, onClose }) => {
   return (
-    <Modal isOpen={showModal} onClose={onClose} size='full'>
-      <Modal.Content w='100%'>
+    <Modal isOpen={showModal} onClose={onClose} size='xl'>
+      <Modal.Content>
         <Modal.CloseButton />
         <Modal.Body alignItems='center' pt='54px' pb='36px'>
           <BackupWallet />
