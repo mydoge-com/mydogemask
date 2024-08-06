@@ -27,12 +27,12 @@ export const Transaction = ({
               bg='brandYellow.500'
               _text={{ color: 'gray.800' }}
             >
-              {address.substring(0, 2)}
+              {address?.substring(0, 2)}
             </Avatar>
           </VStack>
           <VStack flex={1}>
             <Text fontSize='xs' fontWeight='medium'>
-              {address.slice(0, 8)}...{address.slice(-4)}
+              {address?.slice(0, 8)}...{address?.slice(-4)}
             </Text>
 
             <HStack space='6px'>

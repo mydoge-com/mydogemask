@@ -143,7 +143,7 @@ export const InscribeTokenAmount = ({
           {walletNickname ?? `Wallet: ${selectedAddressIndex + 1}`}
         </Text>
         <Text fontSize='sm' color='gray.500'>
-          {walletAddress.slice(0, 8)}...{walletAddress.slice(-4)}
+          {walletAddress?.slice(0, 8)}...{walletAddress?.slice(-4)}
         </Text>
       </HStack>
       <Text

@@ -75,7 +75,7 @@ export const InscribeTokenConfirmation = ({
           Address {selectedAddressIndex + 1}
         </Text>
         {'  '}
-        {walletAddress.slice(0, 8)}
+        {walletAddress?.slice(0, 8)}
       </Text>
       <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
         Inscribing

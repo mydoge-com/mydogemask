@@ -61,7 +61,7 @@ export const Token = ({
             }}
             mr='12px'
           >
-            {ticker.substring(0, 2).toUpperCase()}
+            {ticker?.substring(0, 2).toUpperCase()}
           </Avatar>
           <Text fontSize='md' fontWeight='medium' flex={1}>
             {ticker}
