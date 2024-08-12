@@ -16,6 +16,8 @@ export const SPENT_UTXOS_CACHE = '@mydoge_SPENT_UTXOS_CACHE';
 
 export const TRANSACTION_PAGE_SIZE = 10;
 
+export const TRANSACTION_PAGE_SIZE = 10;
+
 export const TRANSACTION_TYPES = {
   DRC20_AVAILABLE_TX: 'drc20_available_tx',
   DRC20_SEND_INSCRIPTION_TX: 'drc20_send_inscription_tx',
