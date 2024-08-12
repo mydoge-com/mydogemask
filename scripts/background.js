@@ -14,6 +14,7 @@ import {
   ONBOARDING_COMPLETE,
   PASSWORD,
   SELECTED_ADDRESS_INDEX,
+  TRANSACTION_PAGE_SIZE,
   TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
@@ -38,7 +39,6 @@ import {
   signRawTx,
 } from './helpers/wallet';
 
-const TRANSACTION_PAGE_SIZE = 10;
 const NOWNODES_SLEEP_S = 5;
 
 const sleep = async (time) =>

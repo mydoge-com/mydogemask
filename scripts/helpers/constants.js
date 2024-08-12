@@ -13,6 +13,8 @@ export const NFT_PAGE_SIZE = 500;
 export const QUERY_CACHE = '@mydoge_QUERY_CACHE';
 export const INSCRIPTION_TXS_CACHE = '@mydoge_INSCRIPTION_TXS_CACHE';
 
+export const TRANSACTION_PAGE_SIZE = 10;
+
 export const TRANSACTION_TYPES = {
   DRC20_AVAILABLE_TX: 'drc20_available_tx',
   DRC20_SEND_INSCRIPTION_TX: 'drc20_send_inscription_tx',
