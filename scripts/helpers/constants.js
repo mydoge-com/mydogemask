@@ -12,6 +12,7 @@ export const MIN_TX_AMOUNT = 0.001;
 export const NFT_PAGE_SIZE = 500;
 export const QUERY_CACHE = '@mydoge_QUERY_CACHE';
 export const INSCRIPTION_TXS_CACHE = '@mydoge_INSCRIPTION_TXS_CACHE';
+export const SPENT_UTXOS_CACHE = '@mydoge_SPENT_UTXOS_CACHE';
 
 export const TRANSACTION_PAGE_SIZE = 10;
 
