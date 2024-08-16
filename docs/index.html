@@ -81,7 +81,7 @@ if (myDogeMask?.isMyDoge) {
     // Request the signing of a psbt
     // Generates a popup to be confirmed by the user
     // Promise will reject or onError will be called if canceled
-    const psbtRes = await myDogeMask.requestPSBT({ rawTx: 'the raw tx hex', index: 1, /*onSuccess, onError*/);
+    const psbtRes = await myDogeMask.requestPsbt({ rawTx: 'the raw tx hex', indexes: [1, 2], /*onSuccess, onError*/);
     console.log('psbt result', psbtRes);
     // { &quot;txId&quot;: &quot;b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0&quot; }
 
