@@ -1233,11 +1233,13 @@ function getOnboardingStatus({ sendResponse } = {}) {
 }
 
 function getAuthStatus({ sendResponse } = {}) {
-  Promise.all([getSessionValue(AUTHENTICATED), getSessionValue(WALLET)]).then(
-    ([authenticated, wallet]) => {
-      sendResponse?.({ authenticated, wallet });
-    }
-  );
+  Promise.all([
+    getSessionValue(AUTHENTICATED),
+    getSessionValue(WALLET),
+    getLocalValue(SELECTED_ADDRESS_INDEX),
+  ]).then(([authenticated, wallet, selectedAddressIndex]) => {
+    sendResponse?.({ authenticated, wallet, selectedAddressIndex });
+  });
 }
 
 function signOut({ sendResponse } = {}) {

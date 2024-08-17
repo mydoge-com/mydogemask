@@ -157,8 +157,6 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
     fetchTokens();
   }, [fetchNFTs, fetchTokens, walletAddress]);
 
-  console.log('hasMoreTransactions', hasMoreTransactions);
-
   return {
     transactions,
     isLoadingTransactions,

@@ -57,6 +57,23 @@ export const getWallet = () => {
   });
 };
 
+export const getSelectedAddress = () => {
+  return new Promise((resolve, reject) => {
+    sendMessage(
+      {
+        message: MESSAGE_TYPES.IS_SESSION_AUTHENTICATED,
+      },
+      ({ wallet, selectedAddressIndex = 0 }) => {
+        if (wallet) {
+          resolve(wallet.addresses[selectedAddressIndex]);
+        } else {
+          reject(new Error('Unable to get wallet address'));
+        }
+      }
+    );
+  });
+};
+
 export const getAddressBalance = (address) => {
   return new Promise((resolve, reject) => {
     sendMessage(
