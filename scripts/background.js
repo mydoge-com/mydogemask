@@ -1,7 +1,7 @@
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { apiKey, node, nownodes } from './api';
+import { apiKey, mydoge, nownodes } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
@@ -101,7 +101,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
       method: 'estimatesmartfee',
       params: [2], // confirm within x blocks
     };
-    const feeData = await node.post(smartfeeReq).json();
+    const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
     const feePerKB = feeData.result.feerate || FEE_RATE_KB;
     const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
     const jsonrpcReq = {
@@ -167,7 +167,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
 
     // Set a dummy amount in the change address
     jsonrpcReq.params[1][data.senderAddress] = feePerInput;
-    const estimateRes = await node.post(jsonrpcReq).json();
+    const estimateRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
     const size = estimateRes.result.length / 2;
 
     console.log('tx size', size);
@@ -199,7 +199,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
       }
     }
 
-    const rawTx = await node.post(jsonrpcReq).json();
+    const rawTx = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
 
     console.log('raw tx', rawTx.result);
 
@@ -235,7 +235,7 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
       method: 'estimatesmartfee',
       params: [2], // confirm within x blocks
     };
-    const feeData = await node.post(smartfeeReq).json();
+    const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
     const feePerKB = feeData.result.feerate || FEE_RATE_KB;
     const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
     const jsonrpcReq = {
@@ -293,7 +293,7 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
 
     // Set a dummy amount in the change address
     jsonrpcReq.params[1][data.address] = feePerInput;
-    const estimateRes = await node.post(jsonrpcReq).json();
+    const estimateRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
     const size = estimateRes.result.length / 2;
 
     console.log('tx size', size);
@@ -319,7 +319,7 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
       }
     }
 
-    const rawTx = await node.post(jsonrpcReq).json();
+    const rawTx = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
 
     console.log('raw tx', rawTx.result);
 
@@ -362,7 +362,7 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
       method: 'estimatesmartfee',
       params: [2], // confirm within x blocks
     };
-    const feeData = await node.post(smartfeeReq).json();
+    const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
     const feePerKB = sb.toSatoshi(feeData.result.feerate || FEE_RATE_KB);
 
     console.log('found feePerKB', feePerKB);
@@ -421,63 +421,62 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
 
 function onSendTransaction({ data = {}, sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-    ([wallet, password]) => {
-      const decryptedWallet = decrypt({
-        data: wallet,
-        password,
-      });
-      if (!decryptedWallet) {
+    async ([wallet, password]) => {
+      try {
+        const decryptedWallet = decrypt({
+          data: wallet,
+          password,
+        });
+        if (!decryptedWallet) {
+          sendResponse?.(false);
+        }
+        const signed = signRawTx(
+          data.rawTx,
+          decryptedWallet.children[data.selectedAddressIndex]
+        );
+
+        const jsonrpcReq = {
+          API_key: apiKey,
+          jsonrpc: '2.0',
+          id: `${data.senderAddress}_send_${Date.now()}`,
+          method: 'sendrawtransaction',
+          params: [signed],
+        };
+        const jsonrpcRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
+
+        // Open offscreen notification page to handle transaction status notifications
+        chrome.offscreen
+          ?.createDocument({
+            url: chrome.runtime.getURL(
+              `notification.html/?txId=${jsonrpcRes.result}`
+            ),
+            reasons: ['BLOBS'],
+            justification: 'Handle transaction status notifications',
+          })
+          .catch(() => {});
+
+        // Cache transaction if it's a DRC20 transaction
+
+        if (data.txType) {
+          const txsCache = (await getLocalValue(INSCRIPTION_TXS_CACHE)) ?? [];
+
+          txsCache.push({
+            txs: [jsonrpcRes.result],
+            txType: data.txType,
+            timestamp: Date.now(),
+            ticker: data.ticker,
+            tokenAmount: data.tokenAmount,
+            output: data.output,
+          });
+
+          setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
+        }
+
+        sendResponse(jsonrpcRes.result);
+      } catch (err) {
+        logError(err);
         sendResponse?.(false);
       }
-      const signed = signRawTx(
-        data.rawTx,
-        decryptedWallet.children[data.selectedAddressIndex]
-      );
-
-      const jsonrpcReq = {
-        API_key: apiKey,
-        jsonrpc: '2.0',
-        id: `${data.senderAddress}_send_${Date.now()}`,
-        method: 'sendrawtransaction',
-        params: [signed],
-      };
-      node
-        .post(jsonrpcReq)
-        .json(async (jsonrpcRes) => {
-          // Open offscreen notification page to handle transaction status notifications
-          chrome.offscreen
-            ?.createDocument({
-              url: chrome.runtime.getURL(
-                `notification.html/?txId=${jsonrpcRes.result}`
-              ),
-              reasons: ['BLOBS'],
-              justification: 'Handle transaction status notifications',
-            })
-            .catch(() => {});
-
-          // Cache transaction if it's a DRC20 transaction
-
-          if (data.txType) {
-            const txsCache = (await getLocalValue(INSCRIPTION_TXS_CACHE)) ?? [];
-
-            txsCache.push({
-              txs: [jsonrpcRes.result],
-              txType: data.txType,
-              timestamp: Date.now(),
-              ticker: data.ticker,
-              tokenAmount: data.tokenAmount,
-              output: data.output,
-            });
-
-            setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
-          }
-
-          sendResponse(jsonrpcRes.result);
-        })
-        .catch((err) => {
-          logError(err);
-          sendResponse?.(false);
-        });
     }
   );
 }
@@ -505,7 +504,7 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
         jsonrpcReq.params[0]
       );
 
-      const jsonrpcRes = await node.post(jsonrpcReq).json();
+      const jsonrpcRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
       results.push(jsonrpcRes.result);
       i++;
     }
@@ -587,7 +586,7 @@ async function onSendPsbt({ data = {}, sendResponse } = {}) {
 
     console.log(`sending signed psbt`, jsonrpcReq.params[0]);
 
-    const jsonrpcRes = await node.post(jsonrpcReq).json();
+    const jsonrpcRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
 
     console.log(`tx id ${jsonrpcRes.result}`);
 
