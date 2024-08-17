@@ -1,7 +1,7 @@
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { apiKey, mydoge, nownodes } from './api';
+import { mydoge } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
@@ -95,7 +95,6 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
 
     // estimate fee
     const smartfeeReq = {
-      API_key: apiKey,
       jsonrpc: '2.0',
       id: `${data.senderAddress}_estimatesmartfee_${Date.now()}`,
       method: 'estimatesmartfee',
@@ -105,7 +104,6 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
     const feePerKB = feeData.result.feerate || FEE_RATE_KB;
     const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
     const jsonrpcReq = {
-      API_key: apiKey,
       jsonrpc: '2.0',
       id: `${data.senderAddress}_create_${Date.now()}`,
       method: 'createrawtransaction',
@@ -229,7 +227,6 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
 
     // estimate fee
     const smartfeeReq = {
-      API_key: apiKey,
       jsonrpc: '2.0',
       id: `${data.address}_estimatesmartfee_${Date.now()}`,
       method: 'estimatesmartfee',
@@ -239,7 +236,6 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
     const feePerKB = feeData.result.feerate || FEE_RATE_KB;
     const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
     const jsonrpcReq = {
-      API_key: apiKey,
       jsonrpc: '2.0',
       id: `${data.address}_create_${Date.now()}`,
       method: 'createrawtransaction',
@@ -356,7 +352,6 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
     console.log('num utxos', utxos.length);
 
     const smartfeeReq = {
-      API_key: apiKey,
       jsonrpc: '2.0',
       id: `${data.address}_estimatesmartfee_${Date.now()}`,
       method: 'estimatesmartfee',
@@ -436,7 +431,6 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
         );
 
         const jsonrpcReq = {
-          API_key: apiKey,
           jsonrpc: '2.0',
           id: `${data.senderAddress}_send_${Date.now()}`,
           method: 'sendrawtransaction',
@@ -492,7 +486,6 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       }
 
       const jsonrpcReq = {
-        API_key: apiKey,
         jsonrpc: '2.0',
         id: `send_${Date.now()}`,
         method: 'sendrawtransaction',
@@ -577,7 +570,6 @@ async function onSignPsbt({ data = {}, sendResponse } = {}) {
 async function onSendPsbt({ data = {}, sendResponse } = {}) {
   try {
     const jsonrpcReq = {
-      API_key: apiKey,
       jsonrpc: '2.0',
       id: `send_${Date.now()}`,
       method: 'sendrawtransaction',
@@ -771,46 +763,34 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
   return true;
 }
 
-function onGetDogecoinPrice({ sendResponse } = {}) {
-  nownodes
-    .get('/tickers/?currency=usd')
-    .json((response) => {
-      sendResponse?.(response.rates);
-    })
-    .catch((err) => {
-      logError(err);
-      sendResponse?.(false);
-    });
-  return true;
+async function onGetDogecoinPrice({ sendResponse } = {}) {
+  try {
+    const response = (
+      await mydoge.get('/wallet/info', {
+        params: { route: '/tickers/?currency=usd' },
+      })
+    ).data;
+
+    sendResponse?.(response.rates);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
 }
 
-function onGetAddressBalance({ data, sendResponse } = {}) {
-  if (data.addresses) {
-    Promise.all(
-      data.addresses.map((address) =>
-        nownodes.get(`/address/${address}`).json((response) => response.balance)
-      )
-    )
-      .then((balances) => {
-        sendResponse?.(balances);
+async function onGetAddressBalance({ data, sendResponse } = {}) {
+  try {
+    const response = (
+      await mydoge.get('/wallet/info', {
+        params: { route: `/address/${data.address}` },
       })
-      .catch((err) => {
-        logError(err);
-        sendResponse?.(false);
-      });
+    ).data;
 
-    return true;
+    sendResponse?.(response.balance);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
   }
-  nownodes
-    .get(`/address/${data.address}`)
-    .json((response) => {
-      sendResponse?.(response.balance);
-    })
-    .catch((err) => {
-      logError(err);
-      sendResponse?.(false);
-    });
-  return true;
 }
 
 async function onGetTransactions({ data, sendResponse } = {}) {
@@ -819,46 +799,48 @@ async function onGetTransactions({ data, sendResponse } = {}) {
   let totalPages;
   let page;
 
-  nownodes
-    .get(
-      `/address/${data.address}?page=${
-        data.page || 1
-      }&pageSize=${TRANSACTION_PAGE_SIZE}`
-    )
-    .json((response) => {
-      txIds = response.txids;
-      totalPages = response.totalPages;
-      page = response.page;
-    })
-    // Get tx details
-    .then(async () => {
-      if (!txIds?.length) {
-        sendResponse?.({ transactions: [], totalPages, page });
-        return;
-      }
-      const transactions = (
-        await Promise.all(txIds.map((txId) => getCachedTx(txId)))
-      ).sort((a, b) => b.blockTime - a.blockTime);
-      sendResponse?.({ transactions, totalPages, page });
-    })
-    .catch((err) => {
-      logError(err);
-      sendResponse?.(false);
-    });
-  return true;
+  try {
+    const response = (
+      await mydoge.get('/wallet/info', {
+        params: {
+          route: `/address/${data.address}?page=${
+            data.page || 1
+          }&pageSize=${TRANSACTION_PAGE_SIZE}`,
+        },
+      })
+    ).data;
+
+    txIds = response.txids;
+    totalPages = response.totalPages;
+    page = response.page;
+
+    if (!txIds?.length) {
+      sendResponse?.({ transactions: [], totalPages, page });
+      return;
+    }
+
+    const transactions = (
+      await Promise.all(txIds.map((txId) => getCachedTx(txId)))
+    ).sort((a, b) => b.blockTime - a.blockTime);
+
+    sendResponse?.({ transactions, totalPages, page });
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
 }
 
-function onGetTransactionDetails({ data, sendResponse } = {}) {
-  nownodes
-    .get(`/tx/${data.txId}`)
-    .json((transaction) => {
-      sendResponse?.(transaction);
-    })
-    .catch((err) => {
-      logError(err);
-      sendResponse?.(false);
-    });
-  return true;
+async function onGetTransactionDetails({ data, sendResponse } = {}) {
+  try {
+    const transaction = (
+      await mydoge.get('wallet/info', { params: { route: `/tx/${data.txId}` } })
+    ).data;
+
+    sendResponse?.(transaction);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
 }
 
 function onGenerateAddress({ sendResponse, data } = {}) {
