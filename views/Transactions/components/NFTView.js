@@ -7,8 +7,9 @@ export const NFTViewComponent = ({ nft = {} }) => {
   const iframeRef = useRef(null);
   const retryCount = useRef(0);
 
-  const { content, contentType } = nft;
+  const {preview} = nft;
   const [nftLoaded, setNFTLoaded] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   useEffect(() => {
     if (!iframeRef.current) {
@@ -24,49 +25,48 @@ export const NFTViewComponent = ({ nft = {} }) => {
       if (retryCount.current < MAX_RETRIES) {
         retryCount.current += 1;
         setTimeout(() => {
-          iframe.src = content;
+          iframe.src = preview;
         }, 200);
+      } else {
+        setLoadFailed(true); // Mark load as failed after max retries
       }
     };
-  }, [content]);
+  }, [preview]);
 
-  const isImage = contentType.includes('image');
-  const isText = contentType.includes('text');
 
-  if (isImage) {
-    return <img src={content} width='100%' height='auto' alt='NFT' />;
-  }
-  if (isText) {
+  if (loadFailed) {
     return (
-      <>
-        {!nftLoaded && (
-          <Center position='absolute' width='100%' height='100%' zIndex={-1}>
-            <Spinner color='amber.400' />
-          </Center>
-        )}
-        <iframe
-          key={content}
-          ref={iframeRef}
-          title='NFT'
-          src={content}
-          width='100%'
-          height='auto'
-          sandbox='allow-same-origin allow-scripts'
-          allow
-          scrolling='no'
-          style={{
-            pointerEvents: 'none',
-            border: 'none',
-            overflow: 'hidden',
-            opacity: nftLoaded ? 1 : 0,
-          }}
-        />
-      </>
+        <img src='./assets/default-nft.webp' width='100%' height='auto' alt='NFT' />
     );
   }
+
   return (
-    <img src='./assets/default-nft.webp' width='100%' height='auto' alt='NFT' />
+    <>
+      {!nftLoaded && (
+        <Center position='absolute' width='100%' height='100%' zIndex={-1}>
+          <Spinner color='amber.400' />
+        </Center>
+      )}
+      <iframe
+        key={preview}
+        ref={iframeRef}
+        title='NFT'
+        src={preview}
+        width='100%'
+        height='auto'
+        sandbox='allow-same-origin allow-scripts'
+        allow
+        scrolling='no'
+        style={{
+          pointerEvents: 'none',
+          border: 'none',
+          overflow: 'hidden',
+          opacity: nftLoaded ? 1 : 0,
+        }}
+      />
+    </>
   );
+
 };
 
 export const NFTView = memo(
