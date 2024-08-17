@@ -314,19 +314,19 @@ export async function getDRC20Inscriptions(address, ticker, cursor, result) {
 }
 
 export async function getDRC20Balances(address, ticker) {
-  const result = await mydoge
-    .get(`/drc20/${address}${ticker ? `?ticker=${ticker}` : ''}`)
-    .json();
+  const result = (
+    await mydoge.get(`/drc20/${address}${ticker ? `?ticker=${ticker}` : ''}`)
+  ).data;
 
   return result.balances;
 }
 
 async function getUtxos(address, cursor, result, filter) {
-  const inscriptions = await mydoge
-    .get(
+  const inscriptions = (
+    await mydoge.get(
       `/utxos/${address}?filter=${filter}${cursor ? `&cursor=${cursor}` : ''}`
     )
-    .json();
+  ).data;
 
   // console.log(
   //   'found',
