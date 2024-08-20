@@ -14,6 +14,8 @@ import {
   ONBOARDING_COMPLETE,
   PASSWORD,
   SELECTED_ADDRESS_INDEX,
+  SPENT_UTXOS_CACHE,
+  TRANSACTION_PAGE_SIZE,
   TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
@@ -29,6 +31,7 @@ import {
   setSessionValue,
 } from './helpers/storage';
 import {
+  decodeRawTx,
   generateAddress,
   generateChild,
   generatePhrase,
@@ -38,7 +41,6 @@ import {
   signRawTx,
 } from './helpers/wallet';
 
-const TRANSACTION_PAGE_SIZE = 10;
 const NOWNODES_SLEEP_S = 5;
 
 const sleep = async (time) =>
@@ -89,7 +91,13 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
 
   try {
     // get spendable utxos
-    const utxos = await getSpendableUtxos(data.senderAddress);
+    let utxos = await getSpendableUtxos(data.senderAddress);
+
+    const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
+
+    utxos = utxos.filter(
+      (utxo) => !spentUtxosCache.find((cache) => cache.txid === utxo.txid)
+    );
 
     console.log('found utxos', utxos.length);
 
@@ -455,8 +463,23 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
             })
             .catch(() => {});
 
-          // Cache transaction if it's a DRC20 transaction
+          // cache spent utxos
+          const tx = decodeRawTx(signed);
+          // Get the input UTXOs
+          const inputUtxos = tx.ins.map((input) => {
+            const txid = Buffer.from(input.hash.reverse()).toString('hex');
+            return {
+              txid,
+              vout: input.index,
+              timestamp: Date.now(),
+            };
+          });
+          const spentUtxosCache =
+            (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
+          spentUtxosCache.push(...inputUtxos);
+          setLocalValue({ [SPENT_UTXOS_CACHE]: spentUtxosCache });
 
+          // Cache transaction if it's a DRC20 transaction
           if (data.txType) {
             const txsCache = (await getLocalValue(INSCRIPTION_TXS_CACHE)) ?? [];
 
@@ -1210,11 +1233,13 @@ function getOnboardingStatus({ sendResponse } = {}) {
 }
 
 function getAuthStatus({ sendResponse } = {}) {
-  Promise.all([getSessionValue(AUTHENTICATED), getSessionValue(WALLET)]).then(
-    ([authenticated, wallet]) => {
-      sendResponse?.({ authenticated, wallet });
-    }
-  );
+  Promise.all([
+    getSessionValue(AUTHENTICATED),
+    getSessionValue(WALLET),
+    getLocalValue(SELECTED_ADDRESS_INDEX),
+  ]).then(([authenticated, wallet, selectedAddressIndex]) => {
+    sendResponse?.({ authenticated, wallet, selectedAddressIndex });
+  });
 }
 
 function signOut({ sendResponse } = {}) {
