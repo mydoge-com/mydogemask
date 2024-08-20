@@ -5,8 +5,6 @@ import { retry } from 'wretch/middlewares';
 
 import {
   DOGINALS_MARKETPLACE_API_URL,
-  DOGINALS_WALLET_API_URL,
-  DOGINALS_WALLET_API_V2_URL,
   MYDOGE_BASE_URL,
 } from './helpers/constants';
 
@@ -20,13 +18,6 @@ const retryOptions = retry({
   resolveWithLatestResponse: false,
   skip: (_, opts) => opts.method !== 'GET',
 });
-
-export const doginals = wretch(DOGINALS_WALLET_API_URL).middlewares([
-  retryOptions,
-]);
-export const doginalsV2 = wretch(DOGINALS_WALLET_API_V2_URL).middlewares([
-  retryOptions,
-]);
 
 export const doginalsMarketplace = wretch(
   DOGINALS_MARKETPLACE_API_URL
