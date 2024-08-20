@@ -15,7 +15,7 @@ import { BsInfoCircleFill } from 'react-icons/bs';
 
 import { BigButton } from '../../../components/Button';
 import { useAppContext } from '../../../hooks/useAppContext';
-import { doginalsMarketplace } from '../../../scripts/api';
+import { mydoge } from '../../../scripts/api';
 import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
 import { logError } from '../../../utils/error';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
@@ -34,10 +34,10 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
   } = token ?? {};
 
   const fetchTokenDetails = useCallback(() => {
-    doginalsMarketplace
-      .get(`/drc20/data?tick=${ticker}`)
-      .json((res) => {
-        setTokenDetails(res);
+    mydoge
+      .get(`/drc20/data/${ticker}`)
+      .then((res) => {
+        setTokenDetails(res.data);
       })
       .catch(logError);
   }, [ticker]);

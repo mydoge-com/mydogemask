@@ -79,8 +79,6 @@ export const MESSAGE_TYPES = {
   NOTIFY_TRANSACTION_SUCCESS: 'notifyTransactionSuccess',
 };
 
-export const DOGINALS_MARKETPLACE_API_URL =
-  'https://marketplace-api.dogeord.io';
 export const MYDOGE_BASE_URL = 'https://api.mydoge.com'; // 'http://localhost:3000';
 
 export const TICKER_ICON_URL =
