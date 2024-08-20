@@ -6,7 +6,7 @@ import {
   getTransactionsKey,
 } from '../../dataFetchers/getTransactions';
 import { useCachedInscriptionTxs } from '../../hooks/useCachedInscriptionTxs';
-import { doginals, mydoge } from '../../scripts/api';
+import { mydoge } from '../../scripts/api';
 import { NFT_PAGE_SIZE } from '../../scripts/helpers/constants';
 import { logError } from '../../utils/error';
 
@@ -75,7 +75,7 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
         const res = (await mydoge.get(`/inscriptions/${walletAddress}`)).data;
 
         setNFTs(
-          [...currentNFTs, ...(res?.list ?? [])].sort(
+          [...currentNFTs, ...(res.list ?? [])].sort(
             (a, b) => b.height - a.height
           )
         );
@@ -94,24 +94,32 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
   );
 
   const fetchTokens = useCallback(
-    ({ cursor, currentTokens = [] } = {}) => {
+    async ({ cursor, currentTokens = [] } = {}) => {
       setTokensLoading(true);
-      doginals
-        .get(
-          `/brc20/tokens?address=${walletAddress}&cursor=${
-            cursor || 0
-          }&size=${NFT_PAGE_SIZE}`
-        )
-        .json((res) => {
-          setTokens([...currentTokens, ...(res?.result?.list ?? [])]);
-          setTokensTotal(res?.result?.total);
-          // Don't increment page on initial fetch, where cursor is undefined
-          if (typeof cursor === 'number') {
-            currentTokensPage.current = cursor;
-          }
-        })
-        .catch(logError)
-        .finally(() => setTokensLoading(false));
+      try {
+        const res = (await mydoge.get(`/drc20/${walletAddress}`)).data;
+        console.log('token', res.balances[0]);
+        setTokens(
+          [...currentTokens, ...(res.balances ?? [])].sort((a, b) => {
+            if (a.ticker < b.ticker) {
+              return -1;
+            }
+            if (a.ticker > b.ticker) {
+              return 1;
+            }
+            return 0;
+          })
+        );
+        setTokensTotal(res?.result?.total);
+        // Don't increment page on initial fetch, where cursor is undefined
+        if (typeof cursor === 'number') {
+          currentTokensPage.current = cursor;
+        }
+      } catch (e) {
+        logError(e);
+      } finally {
+        setTokensLoading(false);
+      }
     },
     [walletAddress]
   );
