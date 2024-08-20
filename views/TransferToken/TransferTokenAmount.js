@@ -36,12 +36,9 @@ export const TransferTokenAmount = ({
     (async () => {
       try {
         setLoading(true);
-        const results = [];
-        await getDRC20Inscriptions(
+        const results = await getDRC20Inscriptions(
           walletAddress,
-          selectedToken.ticker,
-          0,
-          results
+          selectedToken.ticker
         );
         // Get output values
         const transfers = await Promise.all(

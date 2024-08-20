@@ -98,7 +98,7 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
       setTokensLoading(true);
       try {
         const res = (await mydoge.get(`/drc20/${walletAddress}`)).data;
-        console.log('token', res.balances[0]);
+
         setTokens(
           [...currentTokens, ...(res.balances ?? [])].sort((a, b) => {
             if (a.ticker < b.ticker) {
@@ -110,7 +110,7 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
             return 0;
           })
         );
-        setTokensTotal(res?.result?.total);
+        setTokensTotal(res.total);
         // Don't increment page on initial fetch, where cursor is undefined
         if (typeof cursor === 'number') {
           currentTokensPage.current = cursor;
