@@ -7,6 +7,8 @@ import * as Validator from 'multicoin-address-validator';
 import sb from 'satoshi-bitcoin';
 
 import { MIN_TX_AMOUNT } from '../../constants/Doge';
+import { SPENT_UTXOS_CACHE } from './constants';
+import { getLocalValue, setLocalValue } from './storage';
 
 // Dogecoin mainnet
 export const network = {
@@ -123,36 +125,19 @@ export function signMessage(message, wif) {
     .toString('hex');
 }
 
-// export async function generateRawTx(sender, recipient, amount, utxos) {
-//   const dogecoin = await DogecoinJS.init();
-//   const index = dogecoin.startTransaction();
-//   let total = 0;
-//   const fee = 0.01;
-
-//   for (let i = 0; i < utxos.length; i++) {
-//     const utxo = utxos[i];
-//     console.log('utxo', utxo);
-//     const value = sb.toBitcoin(utxo.value);
-//     total += value;
-//     console.log(
-//       `added tx value ${value} for total ${total} > ${amount} + ${fee}`
-//     );
-//     dogecoin.addUTXO(index, utxo.txid, utxo.vout);
-
-//     if (total > amount + fee) {
-//       break;
-//     }
-//   }
-
-//   dogecoin.addOutput(index, recipient, `${amount}`);
-//   const rawTx = dogecoin.finalizeTransaction(
-//     index,
-//     recipient,
-//     `${fee}`,
-//     `${total}`,
-//     sender
-//   );
-
-//   console.log('rawTx', rawTx);
-//   return { rawTx, fee };
-// }
+export async function cacheSignedTx(signed) {
+  // cache spent utxos
+  const tx = decodeRawTx(signed);
+  // Get the input UTXOs
+  const inputUtxos = tx.ins.map((input) => {
+    const txid = Buffer.from(input.hash.reverse()).toString('hex');
+    return {
+      txid,
+      vout: input.index,
+      timestamp: Date.now(),
+    };
+  });
+  const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
+  spentUtxosCache.push(...inputUtxos);
+  setLocalValue({ [SPENT_UTXOS_CACHE]: spentUtxosCache });
+}

@@ -13,6 +13,7 @@ export const QUERY_CACHE = '@mydoge_QUERY_CACHE';
 export const INSCRIPTION_TXS_CACHE = '@mydoge_INSCRIPTION_TXS_CACHE';
 export const SPENT_UTXOS_CACHE = '@mydoge_SPENT_UTXOS_CACHE';
 
+export const BLOCK_CONFIRMATIONS = 1;
 export const TRANSACTION_PAGE_SIZE = 10;
 
 export const TRANSACTION_TYPES = {

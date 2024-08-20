@@ -5,6 +5,7 @@ import { mydoge } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
+  BLOCK_CONFIRMATIONS,
   CONNECTED_CLIENTS,
   FEE_RATE_KB,
   INSCRIPTION_TXS_CACHE,
@@ -31,7 +32,7 @@ import {
   setSessionValue,
 } from './helpers/storage';
 import {
-  decodeRawTx,
+  cacheSignedTx,
   generateAddress,
   generateChild,
   generatePhrase,
@@ -106,7 +107,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
       jsonrpc: '2.0',
       id: `${data.senderAddress}_estimatesmartfee_${Date.now()}`,
       method: 'estimatesmartfee',
-      params: [2], // confirm within x blocks
+      params: [BLOCK_CONFIRMATIONS], // confirm within x blocks
     };
     const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
     const feePerKB = feeData.result.feerate || FEE_RATE_KB;
@@ -229,7 +230,13 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
 
   try {
     // get spendable utxos
-    const utxos = await getSpendableUtxos(data.address);
+    let utxos = await getSpendableUtxos(data.address);
+
+    const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
+
+    utxos = utxos.filter(
+      (utxo) => !spentUtxosCache.find((cache) => cache.txid === utxo.txid)
+    );
 
     console.log('found utxos', utxos.length);
 
@@ -238,7 +245,7 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
       jsonrpc: '2.0',
       id: `${data.address}_estimatesmartfee_${Date.now()}`,
       method: 'estimatesmartfee',
-      params: [2], // confirm within x blocks
+      params: [BLOCK_CONFIRMATIONS], // confirm within x blocks
     };
     const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
     const feePerKB = feeData.result.feerate || FEE_RATE_KB;
@@ -343,6 +350,12 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
     // Get utxos
     let utxos = await getSpendableUtxos(data.walletAddress);
 
+    const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
+
+    utxos = utxos.filter(
+      (utxo) => !spentUtxosCache.find((cache) => cache.txid === utxo.txid)
+    );
+
     console.log('found utxos', utxos.length);
 
     // Map satoshis to integers
@@ -363,7 +376,7 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
       jsonrpc: '2.0',
       id: `${data.address}_estimatesmartfee_${Date.now()}`,
       method: 'estimatesmartfee',
-      params: [2], // confirm within x blocks
+      params: [BLOCK_CONFIRMATIONS], // confirm within x blocks
     };
     const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
     const feePerKB = sb.toSatoshi(feeData.result.feerate || FEE_RATE_KB);
@@ -457,20 +470,8 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
           })
           .catch(() => {});
 
-        // cache spent utxos
-        const tx = decodeRawTx(signed);
-        // Get the input UTXOs
-        const inputUtxos = tx.ins.map((input) => {
-          const txid = Buffer.from(input.hash.reverse()).toString('hex');
-          return {
-            txid,
-            vout: input.index,
-            timestamp: Date.now(),
-          };
-        });
-        const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
-        spentUtxosCache.push(...inputUtxos);
-        setLocalValue({ [SPENT_UTXOS_CACHE]: spentUtxosCache });
+        // Cache spent utxos
+        await cacheSignedTx(signed);
 
         // Cache transaction if it's a DRC20 transaction
         if (data.txType) {
@@ -520,6 +521,8 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       );
 
       const jsonrpcRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
+      await cacheSignedTx(signed);
+
       results.push(jsonrpcRes.result);
       i++;
     }
@@ -614,6 +617,8 @@ async function onSendPsbt({ data = {}, sendResponse } = {}) {
         justification: 'Handle transaction status notifications',
       })
       .catch(() => {});
+
+    await cacheSignedTx(data.rawTx);
 
     sendResponse(jsonrpcRes.result);
   } catch (err) {
