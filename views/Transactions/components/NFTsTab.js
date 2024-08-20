@@ -9,7 +9,7 @@ import {
 } from 'native-base';
 import { useCallback, useState } from 'react';
 
-// import { BigButton } from '../../../components/Button';
+import { BigButton } from '../../../components/Button';
 import { NFT } from './NFT';
 import { NFTModal } from './NFTModal';
 
@@ -35,8 +35,8 @@ export const NFTsTab = ({ NFTs, hasMoreNFTs, fetchMoreNFTs, NFTsLoading }) => {
             <Text color='gray.500' pt='24px' pb='32px'>
               No NFTs found
             </Text>
-            {/* <Text fontSize='16px'>To get started, buy NFTs</Text>
-            <BigButton mt='24px'>Buy NFTs</BigButton> */}
+            <Text fontSize='16px'>To get started, buy NFTs</Text>
+            <BigButton mt='24px'>Buy NFTs</BigButton>
           </VStack>
         ) : (
           <Box px='20px'>

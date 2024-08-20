@@ -7,10 +7,7 @@ import {
 } from '../../dataFetchers/getTransactions';
 import { useCachedInscriptionTxs } from '../../hooks/useCachedInscriptionTxs';
 import { doginals, doginalsV2 } from '../../scripts/api';
-import {
-  NFT_PAGE_SIZE,
-  TRANSACTION_PAGE_SIZE,
-} from '../../scripts/helpers/constants';
+import { NFT_PAGE_SIZE } from '../../scripts/helpers/constants';
 import { logError } from '../../utils/error';
 
 const QUERY_INTERVAL = 10000;
@@ -53,10 +50,7 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
 
   const hasMoreTransactions =
     transactionsData &&
-    !(
-      transactionsData[transactionsData.length - 1]?.length <
-      TRANSACTION_PAGE_SIZE
-    );
+    !(transactionsData[transactionsData.length - 1]?.length < NFT_PAGE_SIZE);
 
   const refreshTransactions = () => {
     setTransactionsPage(1);

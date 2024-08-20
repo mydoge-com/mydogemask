@@ -49,8 +49,8 @@ export const QRCode = (props) => {
           <Rect
             fill={i === 0 ? 'black' : i === 1 ? 'white' : 'black'} // color values = outer ring, inner ring, center dot
             height={cellSize * (7 - i * 2)}
-            // rx={(i - 3) * -6 + (i === 0 ? 2 : 0)} // calculated border radius for corner squares
-            // ry={(i - 3) * -6 + (i === 0 ? 2 : 0)} // calculated border radius for corner squares
+            rx={(i - 3) * -6 + (i === 0 ? 2 : 0)} // calculated border radius for corner squares
+            ry={(i - 3) * -6 + (i === 0 ? 2 : 0)} // calculated border radius for corner squares
             width={cellSize * (7 - i * 2)}
             x={x1 + cellSize * i}
             y={y1 + cellSize * i}

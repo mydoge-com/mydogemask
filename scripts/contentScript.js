@@ -3,7 +3,6 @@ import {
   getAddressBalance,
   getConnectedAddressIndex,
   getConnectedClient,
-  getSelectedAddress,
 } from './helpers/data';
 import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
@@ -147,7 +146,6 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
   async function onGetConnectionStatus({ origin }) {
     try {
       const client = await getConnectedClient(origin);
-      const selectedAddress = await getSelectedAddress();
       if (client) {
         window.postMessage(
           {
@@ -155,7 +153,6 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
             data: {
               connected: true,
               address: client.address,
-              selectedWalletAddress: selectedAddress,
             },
           },
           origin

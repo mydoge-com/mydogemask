@@ -13,7 +13,7 @@ import {
   SELECTED_ADDRESS_INDEX,
 } from './scripts/helpers/constants';
 import { addListener, sendMessage } from './scripts/helpers/message';
-import { setLocalValue } from './scripts/helpers/storage';
+import { getLocalValue, setLocalValue } from './scripts/helpers/storage';
 import { useTransactions } from './views/Transactions/Transactions.hooks';
 
 export const AppContext = createContext(null);
@@ -160,7 +160,7 @@ export const AppContextProvider = ({ children }) => {
           });
           sendMessage(
             { message: MESSAGE_TYPES.IS_SESSION_AUTHENTICATED },
-            async ({ wallet, authenticated, selectedAddressIndex }) => {
+            async ({ wallet, authenticated }) => {
               if (authenticated && wallet) {
                 dispatch({
                   type: DISPATCH_TYPES.SIGN_IN,
@@ -168,12 +168,6 @@ export const AppContextProvider = ({ children }) => {
                     authenticated,
                     wallet,
                   },
-                });
-              }
-              if (typeof selectedAddressIndex === 'number') {
-                dispatch({
-                  type: DISPATCH_TYPES.SELECT_WALLET,
-                  payload: { index: selectedAddressIndex },
                 });
               }
               dispatch({
@@ -190,6 +184,14 @@ export const AppContextProvider = ({ children }) => {
         }
       }
     );
+    getLocalValue(SELECTED_ADDRESS_INDEX).then((index) => {
+      if (typeof index === 'number') {
+        dispatch({
+          type: DISPATCH_TYPES.SELECT_WALLET,
+          payload: { index },
+        });
+      }
+    });
   }, []);
 
   const transactionsData = useTransactions({
