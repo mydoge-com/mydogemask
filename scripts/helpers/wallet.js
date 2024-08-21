@@ -21,7 +21,7 @@ export const network = {
   },
   pubKeyHash: 0x1e,
   scriptHash: 0x16,
-  wif: 0x80,
+  wif: 0x9e,
 };
 
 export function generatePhrase() {
