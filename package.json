@@ -26,6 +26,7 @@
     "crypto-js": "^4.1.1",
     "dayjs": "^1.11.7",
     "dotenv": "^16.4.5",
+    "elliptic": "^6.5.7",
     "expo-font": "^10.0.3",
     "ky": "^0.33.1",
     "multicoin-address-validator": "0.5.10",
@@ -46,7 +47,8 @@
     "satoshi-bitcoin": "1.0.5",
     "secure-ls": "^1.2.6",
     "swr": "^2.2.5",
-    "timeago-react": "^3.0.5"
+    "timeago-react": "^3.0.5",
+    "wif": "^5.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.24.6",

@@ -33,6 +33,7 @@ import {
 } from './helpers/storage';
 import {
   cacheSignedTx,
+  decryptData,
   fromWIF,
   generateAddress,
   generateChild,
@@ -628,7 +629,7 @@ async function onSendPsbt({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
+async function onSignMessage({ data = {}, sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
     ([wallet, password]) => {
       const decryptedWallet = decrypt({
@@ -643,6 +644,28 @@ async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
       const signedMessage = signMessage(
         data.message,
         decryptedWallet.children[data.selectedAddressIndex]
+      );
+
+      sendResponse?.(signedMessage);
+    }
+  );
+}
+
+async function onDecryptMessage({ data = {}, sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+      }
+
+      const signedMessage = decryptData(
+        decryptedWallet.children[data.selectedAddressIndex],
+        data.message
       );
 
       sendResponse?.(signedMessage);
@@ -739,6 +762,23 @@ async function onRequestSignedMessage({ data, sendResponse, sender } = {}) {
     sender,
     data,
     messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
+  });
+  return true;
+}
+
+async function onRequestDecryptedMessage({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE,
   });
   return true;
 }
@@ -1182,6 +1222,30 @@ async function onApproveSignedMessage({
   return true;
 }
 
+async function onApproveDecryptedMessage({
+  sendResponse,
+  data: { decryptedMessage, error, originTabId, origin },
+} = {}) {
+  if (decryptedMessage) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+      data: {
+        decryptedMessage,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
 async function onGetConnectedClients({ sendResponse } = {}) {
   const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || {};
   sendResponse(connectedClients);
@@ -1406,7 +1470,10 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       onSendPsbt({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SIGN_MESSAGE:
-      onCreateSignedMessage({ data, sendResponse });
+      onSignMessage({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.DECRYPT_MESSAGE:
+      onDecryptMessage({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SEND_TRANSACTION:
       onSendTransaction({ data, sender, sendResponse });
@@ -1474,8 +1541,14 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
       onRequestSignedMessage({ data, sendResponse, sender });
       break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE:
+      onRequestDecryptedMessage({ data, sendResponse, sender });
+      break;
     case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
       onApproveSignedMessage({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE:
+      onApproveDecryptedMessage({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });
