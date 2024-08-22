@@ -813,13 +813,20 @@ async function onGetDogecoinPrice({ sendResponse } = {}) {
 
 async function onGetAddressBalance({ data, sendResponse } = {}) {
   try {
-    const response = (
-      await mydoge.get('/wallet/info', {
-        params: { route: `/address/${data.address}` },
-      })
-    ).data;
+    const addresses = data.addresses?.length ? data.addresses : [data.address];
+    const balances = await Promise.all(
+      addresses.map(async (address) => {
+        const response = (
+          await mydoge.get('/wallet/info', {
+            params: { route: `/address/${address}` },
+          })
+        ).data;
 
-    sendResponse?.(response.balance);
+        return response.balance;
+      })
+    );
+
+    sendResponse?.(balances.length > 1 ? balances : balances[0]);
   } catch (err) {
     logError(err);
     sendResponse?.(false);
@@ -984,7 +991,15 @@ async function onConnectionRequest({ sendResponse, sender } = {}) {
 // Handle the user's response to the connection request popup and send a message to the content script with the response
 async function onApproveConnection({
   sendResponse,
-  data: { approved, address, balance, originTabId, origin, error },
+  data: {
+    approved,
+    address,
+    selectedAddressIndex,
+    balance,
+    originTabId,
+    origin,
+    error,
+  },
 } = {}) {
   if (approved) {
     const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || {};
@@ -994,16 +1009,35 @@ async function onApproveConnection({
         [origin]: { address, originTabId, origin },
       },
     });
-    chrome.tabs?.sendMessage(originTabId, {
-      type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
-      data: {
-        approved: true,
-        address,
-        balance,
-      },
-      origin,
-    });
-    sendResponse(true);
+
+    Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+      ([wallet, password]) => {
+        const decryptedWallet = decrypt({
+          data: wallet,
+          password,
+        });
+
+        if (!decryptedWallet) {
+          sendResponse?.(false);
+          return;
+        }
+
+        chrome.tabs?.sendMessage(originTabId, {
+          type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+          data: {
+            approved: true,
+            publicKey: fromWIF(
+              decryptedWallet.children[selectedAddressIndex]
+            ).publicKey.toString('hex'),
+            address,
+            balance,
+          },
+          origin,
+        });
+
+        sendResponse(true);
+      }
+    );
   } else {
     chrome.tabs?.sendMessage(originTabId, {
       type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,

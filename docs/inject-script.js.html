@@ -40,7 +40,7 @@ class MyDogeWallet {
    * @param {function({ approved: boolean, address: string, balance: number }): void} [onSuccess] - Optional callback function to execute upon successful connection.
    *                                                           Receives an object containing the wallet address and balance.
    * @param {function(string): void} [onError] - Optional callback function to execute upon connection error.
-   * @returns {Promise&lt;{ approved: boolean, address: string, balance: number }>} Promise object representing the outcome of the connection attempt, resolving to an object with the wallet address.
+   * @returns {Promise&lt;{ approved: boolean, address: string, publicKey: string, balance: number }>} Promise object representing the outcome of the connection attempt, resolving to an object with the connected address information.
    * @method
    * @example
    * connect(
