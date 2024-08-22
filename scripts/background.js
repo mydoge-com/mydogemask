@@ -768,6 +768,11 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
       password: data.password,
     });
 
+    const sessionWallet = {
+      addresses: wallet.addresses,
+      nicknames: wallet.nicknames,
+    };
+
     Promise.all([
       setLocalValue({
         [PASSWORD]: encryptedPassword,
@@ -776,12 +781,12 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
       }),
       setSessionValue({
         [AUTHENTICATED]: true,
-        [WALLET]: wallet,
+        [WALLET]: sessionWallet,
         [PASSWORD]: data.password,
       }),
     ])
       .then(() => {
-        sendResponse?.({ authenticated: true, wallet });
+        sendResponse?.({ authenticated: true, wallet: sessionWallet });
       })
       .catch(() => sendResponse?.(false));
   } else {
@@ -872,9 +877,9 @@ async function onGetTransactionDetails({ data, sendResponse } = {}) {
 
 function onGenerateAddress({ sendResponse, data } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-    ([wallet, password]) => {
+    ([encryptedWallet, password]) => {
       const decryptedWallet = decrypt({
-        data: wallet,
+        data: encryptedWallet,
         password,
       });
       if (!decryptedWallet) {
@@ -892,18 +897,25 @@ function onGenerateAddress({ sendResponse, data } = {}) {
           ? data.nickname
           : `Address ${decryptedWallet.addresses.length}`,
       };
-      const encryptedWallet = encrypt({
+      encryptedWallet = encrypt({
         data: decryptedWallet,
         password,
       });
+
+      const sessionWallet = {
+        addresses: decryptedWallet.addresses,
+        nicknames: decryptedWallet.nicknames,
+      };
       Promise.all([
-        setSessionValue({ [WALLET]: decryptedWallet }),
+        setSessionValue({
+          [WALLET]: sessionWallet,
+        }),
         setLocalValue({
           [WALLET]: encryptedWallet,
         }),
       ])
         .then(() => {
-          sendResponse?.({ wallet: decryptedWallet });
+          sendResponse?.({ wallet: sessionWallet });
         })
         .catch(() => sendResponse?.(false));
     }
@@ -931,14 +943,20 @@ function onUpdateAddressNickname({ sendResponse, data } = {}) {
         data: decryptedWallet,
         password,
       });
+      const sessionWallet = {
+        addresses: decryptedWallet.addresses,
+        nicknames: decryptedWallet.nicknames,
+      };
       Promise.all([
-        setSessionValue({ [WALLET]: decryptedWallet }),
+        setSessionValue({
+          [WALLET]: sessionWallet,
+        }),
         setLocalValue({
           [WALLET]: encryptedWallet,
         }),
       ])
         .then(() => {
-          sendResponse?.({ wallet: decryptedWallet });
+          sendResponse?.({ wallet: sessionWallet });
         })
         .catch(() => sendResponse?.(false));
     }
@@ -1153,14 +1171,21 @@ function onDeleteAddress({ sendResponse, data } = {}) {
         data: decryptedWallet,
         password,
       });
+
+      const sessionWallet = {
+        addresses: decryptedWallet.addresses,
+        nicknames: decryptedWallet.nicknames,
+      };
       Promise.all([
-        setSessionValue({ [WALLET]: decryptedWallet }),
+        setSessionValue({
+          [WALLET]: sessionWallet,
+        }),
         setLocalValue({
           [WALLET]: encryptedWallet,
         }),
       ])
         .then(() => {
-          sendResponse?.({ wallet: decryptedWallet });
+          sendResponse?.({ wallet: sessionWallet });
         })
         .catch(() => sendResponse?.(false));
     }
@@ -1198,14 +1223,29 @@ function onAuthenticate({ data = {}, sendResponse } = {}) {
         password: data.password,
       });
       const authenticated = decryptedPass === hash(data.password);
+      const sessionWallet = {
+        addresses: decryptedWallet?.addresses,
+        nicknames: decryptedWallet?.nicknames,
+      };
       if (authenticated) {
         setSessionValue({
           [AUTHENTICATED]: true,
-          [WALLET]: decryptedWallet,
+          [WALLET]: sessionWallet,
           [PASSWORD]: data.password,
         });
+        if (data._dangerouslyReturnSecretPhrase)
+          sessionWallet.phrase = decryptedWallet.phrase;
+
+        sendResponse?.({
+          authenticated,
+          wallet: sessionWallet,
+        });
+      } else {
+        sendResponse?.({
+          authenticated,
+          wallet: null,
+        });
       }
-      sendResponse?.({ authenticated, wallet: decryptedWallet });
     }
   );
   return true;

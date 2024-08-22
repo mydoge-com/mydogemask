@@ -4,7 +4,10 @@ import React, { useCallback, useState } from 'react';
 import { MESSAGE_TYPES } from '../scripts/helpers/constants';
 import { sendMessage } from '../scripts/helpers/message';
 
-export const useAuth = ({ onValidAuth }) => {
+export const useAuth = ({
+  onValidAuth,
+  _dangerouslyReturnSecretPhrase = false,
+}) => {
   const [password, setPassword] = useState('');
   const onChangeText = useCallback((text) => {
     setErrors({});
@@ -13,8 +16,12 @@ export const useAuth = ({ onValidAuth }) => {
 
   const onSubmit = useCallback(() => {
     sendMessage(
-      { message: MESSAGE_TYPES.AUTHENTICATE, data: { password } },
+      {
+        message: MESSAGE_TYPES.AUTHENTICATE,
+        data: { password, _dangerouslyReturnSecretPhrase },
+      },
       ({ authenticated, wallet }) => {
+        console.log('wallet', wallet);
         if (authenticated && wallet) {
           setErrors({});
           onValidAuth?.({ authenticated, wallet });
@@ -23,7 +30,7 @@ export const useAuth = ({ onValidAuth }) => {
         }
       }
     );
-  }, [errors, onValidAuth, password]);
+  }, [_dangerouslyReturnSecretPhrase, errors, onValidAuth, password]);
 
   const [errors, setErrors] = useState({});
 
