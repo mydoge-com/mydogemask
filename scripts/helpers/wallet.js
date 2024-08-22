@@ -48,10 +48,10 @@ export function generateAddress(child) {
   }).address;
 }
 
-export function fromWIF(wif) {
+export function fromWIF(wifKey) {
   let pair;
   try {
-    pair = new bitcoin.ECPair.fromWIF(wif, network); // eslint-disable-line
+    pair = new bitcoin.ECPair.fromWIF(wifKey, network); // eslint-disable-line
   } catch (e) {
     console.error(e.message);
   }
