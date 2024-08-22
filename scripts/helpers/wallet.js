@@ -29,7 +29,7 @@ export function generatePhrase() {
 }
 
 export function generateRoot(phrase) {
-  return bip32.fromSeed(bip39.mnemonicToSeedSync(phrase));
+  return bip32.fromSeed(bip39.mnemonicToSeedSync(phrase), network);
 }
 
 export function generateChild(root, idx) {
@@ -44,7 +44,13 @@ export function generateAddress(child) {
 }
 
 export function fromWIF(wif) {
-  return new bitcoin.ECPair.fromWIF(wif, network); // eslint-disable-line
+  let pair;
+  try {
+    pair = new bitcoin.ECPair.fromWIF(wif, network); // eslint-disable-line
+  } catch (e) {
+    console.error(e.message);
+  }
+  return pair;
 }
 
 export function decodeRawPsbt(rawTx) {

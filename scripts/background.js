@@ -33,6 +33,7 @@ import {
 } from './helpers/storage';
 import {
   cacheSignedTx,
+  fromWIF,
   generateAddress,
   generateChild,
   generatePhrase,
@@ -1218,23 +1219,57 @@ function onAuthenticate({ data = {}, sendResponse } = {}) {
         password: data.password,
       });
 
-      const decryptedWallet = decrypt({
-        data: encryptedWallet,
-        password: data.password,
-      });
       const authenticated = decryptedPass === hash(data.password);
-      const sessionWallet = {
-        addresses: decryptedWallet?.addresses,
-        nicknames: decryptedWallet?.nicknames,
-      };
+
       if (authenticated) {
+        const decryptedWallet = decrypt({
+          data: encryptedWallet,
+          password: data.password,
+        });
+
+        if (!decryptedWallet) {
+          sendResponse?.(false);
+          return;
+        }
+
+        // MIGRATE Bitcon WIF to Dogecoin WIF
+        if (!fromWIF(decryptedWallet.root)) {
+          const root = generateRoot(decryptedWallet.phrase);
+          const numChildren = decryptedWallet.children.length;
+          decryptedWallet.root = root.toWIF();
+          decryptedWallet.children = [];
+
+          for (let i = 0; i < numChildren; i++) {
+            const child = generateChild(root, i);
+            decryptedWallet.children.push(child.toWIF());
+          }
+
+          const migratedWallet = encrypt({
+            data: decryptedWallet,
+            password: data.password,
+          });
+
+          setLocalValue({
+            [WALLET]: migratedWallet,
+          });
+
+          console.info('migrated wif format');
+        }
+
+        const sessionWallet = {
+          addresses: decryptedWallet.addresses,
+          nicknames: decryptedWallet.nicknames,
+        };
+
         setSessionValue({
           [AUTHENTICATED]: true,
           [WALLET]: sessionWallet,
           [PASSWORD]: data.password,
         });
-        if (data._dangerouslyReturnSecretPhrase)
+
+        if (data._dangerouslyReturnSecretPhrase) {
           sessionWallet.phrase = decryptedWallet.phrase;
+        }
 
         sendResponse?.({
           authenticated,
