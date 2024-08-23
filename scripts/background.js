@@ -1354,6 +1354,8 @@ function onAuthenticate({ data = {}, sendResponse } = {}) {
           console.info('migrated wif format');
         }
 
+        // decryptedWallet.children.forEach((wif) => console.log(wif));
+
         const sessionWallet = {
           addresses: decryptedWallet.addresses,
           nicknames: decryptedWallet.nicknames,
