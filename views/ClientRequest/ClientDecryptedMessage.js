@@ -74,7 +74,7 @@ export function ClientDecryptedMessage({
       <Center pt='16px'>
         <WalletAddress address={connectedClient.address} />
         <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-          Signing
+          Decrypting
         </Text>
         <OriginBadge origin={origin} mt='12px' mb='20px' />
         <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
@@ -165,7 +165,7 @@ const ConfirmationModal = ({
             () => {
               Toast.show({
                 title: 'Error',
-                description: 'Message Signing Failed',
+                description: 'Message Decrypting Failed',
                 duration: 3000,
                 render: () => {
                   return (
