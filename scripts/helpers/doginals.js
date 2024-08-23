@@ -329,7 +329,7 @@ async function getUtxos(address, cursor, result, filter) {
   }
 }
 
-export async function getAllInscriptions(address) {
+export async function getInscriptionsUtxos(address) {
   const inscriptions = [];
   await getUtxos(address, 0, inscriptions, 'inscriptions');
 

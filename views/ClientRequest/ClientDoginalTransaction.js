@@ -18,7 +18,7 @@ import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
-import { getAllInscriptions } from '../../scripts/helpers/doginals';
+import { getInscriptionsUtxos } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
 import { getCachedTx } from '../../scripts/helpers/storage';
 import { validateAddress } from '../../scripts/helpers/wallet';
@@ -68,21 +68,10 @@ export function ClientDoginalTransaction({
         });
         return;
       }
+
       setPageLoading(true);
-      let inscriptions = await getAllInscriptions(connectedClient?.address);
 
-      // Get output values
-      inscriptions = await Promise.all(
-        inscriptions.map(async (nft) => {
-          const tx = await getCachedTx(nft.txid);
-
-          return {
-            ...nft,
-            outputValue: tx.vout[nft.vout].value,
-          };
-        })
-      );
-
+      const inscriptions = await getInscriptionsUtxos(connectedClient?.address);
       const doginal = inscriptions.find(
         (ins) => ins.txid === txid && ins.vout === vout
       );
