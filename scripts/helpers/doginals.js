@@ -297,22 +297,16 @@ export async function getDRC20Balances(address, ticker) {
 }
 
 async function getUtxos(address, cursor, result, filter) {
-  const inscriptions = (
+  const query = (
     await mydoge.get(
       `/utxos/${address}?filter=${filter}${cursor ? `&cursor=${cursor}` : ''}`
     )
   ).data;
 
-  // console.log(
-  //   'found',
-  //   inscriptions.utxos.length,
-  //   filter,
-  //   'utxos in page',
-  //   cursor
-  // );
+  // console.log('found', query.utxos.length, filter, 'utxos in page', cursor);
 
   result.push(
-    ...inscriptions.utxos.map((i) => ({
+    ...query.utxos.map((i) => ({
       txid: i.txid,
       vout: i.vout,
       outputValue: i.satoshis,
@@ -324,8 +318,8 @@ async function getUtxos(address, cursor, result, filter) {
     (a, b) => sb.toBitcoin(b.outputValue) - sb.toBitcoin(a.outputValue)
   );
 
-  if (inscriptions.next_cursor) {
-    return getUtxos(address, inscriptions.next_cursor, result, filter);
+  if (query.next_cursor) {
+    return getUtxos(address, query.next_cursor, result, filter);
   }
 }
 

@@ -20,7 +20,6 @@ import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getInscriptionsUtxos } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
-import { getCachedTx } from '../../scripts/helpers/storage';
 import { validateAddress } from '../../scripts/helpers/wallet';
 import { NFTView } from '../Transactions/components/NFTView';
 
