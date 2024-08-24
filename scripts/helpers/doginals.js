@@ -305,7 +305,7 @@ async function getUtxos(address, cursor, result, filter, tx = null) {
 
   let { utxos } = query;
 
-  console.log('found', query.utxos.length, filter, 'utxos in page', cursor);
+  // console.log('found', query.utxos.length, filter, 'utxos in page', cursor);
 
   if (tx) {
     utxos = utxos.filter(
