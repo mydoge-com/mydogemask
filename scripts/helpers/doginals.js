@@ -296,23 +296,36 @@ export async function getDRC20Balances(address, ticker) {
   return result.balances;
 }
 
-async function getUtxos(address, cursor, result, filter) {
+async function getUtxos(address, cursor, result, filter, tx = null) {
   const query = (
     await mydoge.get(
       `/utxos/${address}?filter=${filter}${cursor ? `&cursor=${cursor}` : ''}`
     )
   ).data;
 
-  // console.log('found', query.utxos.length, filter, 'utxos in page', cursor);
+  let { utxos } = query;
+
+  console.log('found', query.utxos.length, filter, 'utxos in page', cursor);
+
+  if (tx) {
+    utxos = utxos.filter(
+      (utxo) => utxo.txid === tx.txid && utxo.vout === tx.vout
+    );
+  }
 
   result.push(
-    ...query.utxos.map((i) => ({
+    ...utxos.map((i) => ({
       txid: i.txid,
       vout: i.vout,
       outputValue: i.satoshis,
       script: i.script_pubkey,
+      ...(filter === 'inscriptions' && { inscriptions: i.inscriptions }),
     }))
   );
+
+  if (result.length && tx) {
+    return;
+  }
 
   result = result.sort(
     (a, b) => sb.toBitcoin(b.outputValue) - sb.toBitcoin(a.outputValue)
@@ -335,4 +348,11 @@ export async function getSpendableUtxos(address) {
   await getUtxos(address, 0, utxos, 'spendable');
 
   return utxos;
+}
+
+export async function getInscriptionsUtxo(address, tx) {
+  const inscriptions = [];
+  await getUtxos(address, 0, inscriptions, 'inscriptions', tx);
+
+  return inscriptions[0];
 }
