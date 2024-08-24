@@ -11,6 +11,7 @@ import {
   getSpendableUtxos,
 } from '../scripts/helpers/doginals';
 import { network } from '../scripts/helpers/wallet';
+import { MIN_TX_AMOUNT } from '../scripts/helpers/constants';
 
 async function run() {
   const keyPair = bitcoin.ECPair.fromWIF(process.env.WIF_1, network);
@@ -20,7 +21,7 @@ async function run() {
   }).address;
   const recipientAddress = process.env.RECIPIENT_ADDRESS;
   const fee = Number(process.env.FEE);
-  const amount = Number(process.env.AMOUNT);
+  let amount = 0;
 
   console.log('initialized keypairs and addresses');
 
@@ -39,18 +40,42 @@ async function run() {
   const tx = new Transaction();
 
   console.log(
-    'inscription input 1',
+    'spendable input 1',
+    spendableUtxos[0].txid,
+    spendableUtxos[0].vout,
+    sb.toBitcoin(spendableUtxos[0].outputValue)
+  );
+  console.log(
+    'inscription input 2',
     inscriptionUtxos[0].txid,
     inscriptionUtxos[0].vout,
     sb.toBitcoin(inscriptionUtxos[0].outputValue)
   );
   console.log(
-    'inscription input 2',
+    'spendable input 3',
+    spendableUtxos[1].txid,
+    spendableUtxos[1].vout,
+    sb.toBitcoin(spendableUtxos[1].outputValue)
+  );
+  console.log(
+    'inscription input 4',
     inscriptionUtxos[1].txid,
     inscriptionUtxos[1].vout,
     sb.toBitcoin(inscriptionUtxos[1].outputValue)
   );
+  console.log(
+    'spendable input 5',
+    spendableUtxos[2].txid,
+    spendableUtxos[2].vout,
+    sb.toBitcoin(spendableUtxos[2].outputValue)
+  );
 
+  tx.from({
+    txid: spendableUtxos[0].txid,
+    vout: spendableUtxos[0].vout,
+    script: spendableUtxos[0].script,
+    satoshis: Number(spendableUtxos[0].outputValue),
+  });
   tx.from({
     txid: inscriptionUtxos[0].txid,
     vout: inscriptionUtxos[0].vout,
@@ -58,43 +83,41 @@ async function run() {
     satoshis: Number(inscriptionUtxos[0].outputValue),
   });
   tx.from({
+    txid: spendableUtxos[1].txid,
+    vout: spendableUtxos[1].vout,
+    script: spendableUtxos[1].script,
+    satoshis: Number(spendableUtxos[1].outputValue),
+  });
+  tx.from({
     txid: inscriptionUtxos[1].txid,
     vout: inscriptionUtxos[1].vout,
     script: inscriptionUtxos[1].script,
     satoshis: Number(inscriptionUtxos[1].outputValue),
   });
+  tx.from({
+    txid: spendableUtxos[2].txid,
+    vout: spendableUtxos[2].vout,
+    script: spendableUtxos[2].script,
+    satoshis: Number(spendableUtxos[2].outputValue),
+  });
 
-  for (const utxo of spendableUtxos) {
-    const value = sb.toBitcoin(utxo.outputValue);
+  const inputAmount = sb.toBitcoin(tx._getInputAmount());
 
-    if (total < amount + fee) {
-      tx.from({
-        txid: utxo.txid,
-        vout: utxo.vout,
-        script: utxo.script,
-        satoshis: Number(utxo.outputValue),
-      });
-      total += value;
-      console.log(
-        'payment input',
-        utxo.txid,
-        utxo.vout,
-        sb.toBitcoin(utxo.outputValue)
-      );
-    } else {
-      break;
-    }
+  console.log('input amount', inputAmount);
+
+  if (inputAmount < fee + MIN_TX_AMOUNT * 2) {
+    throw new Error('not enough inputs to cover fee');
   }
 
   // recipient
-  tx.to(recipientAddress, sb.toSatoshi(amount));
-  // change
-  tx.to(senderAddress, sb.toSatoshi(total - amount - fee));
-  console.log('change', total - amount - fee);
+  tx.to(recipientAddress, sb.toSatoshi(inputAmount - fee));
+  console.log('recipient', recipientAddress, inputAmount - fee);
   console.log('fee', sb.toBitcoin(tx.getFee()));
+
   // sign
   tx.sign(process.env.WIF_1);
   console.log('sending signedt tx', tx.toString());
+
   // send
   const jsonrpcReq = {
     jsonrpc: '2.0',
