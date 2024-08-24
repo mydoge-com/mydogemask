@@ -63,6 +63,7 @@ export const NFTComponent = ({ nft, index, onPress, selected }) => {
             alignItems='center'
             justifyContent='center'
             maxH='130px'
+            pointerEvents='none'
           >
             <NFTView nft={nft} />
           </Box>

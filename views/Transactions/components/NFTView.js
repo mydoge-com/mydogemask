@@ -55,7 +55,7 @@ export const NFTViewComponent = ({ nft = {} }) => {
           allow
           scrolling='no'
           style={{
-            pointerEvents: 'none',
+            // pointerEvents: 'none',
             border: 'none',
             overflow: 'hidden',
             opacity: nftLoaded ? 1 : 0,
