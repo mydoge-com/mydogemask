@@ -1,3 +1,4 @@
+import { Transaction } from 'bitcore-lib-doge';
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
@@ -20,7 +21,11 @@ import {
   TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
-import { getSpendableUtxos, inscribe } from './helpers/doginals';
+import {
+  getInscriptionsUtxo,
+  getSpendableUtxos,
+  inscribe,
+} from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
@@ -224,23 +229,42 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
 }
 
 async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
-  const txid = data.output.split(':')[0];
-  const vout = parseInt(data.output.split(':')[1], 10);
-  const amount = sb.toBitcoin(data.outputValue);
+  const split = data.location.split(':');
 
-  console.log('nft tx', txid, vout, amount);
+  if (split.length !== 3) {
+    sendResponse?.(false);
+    return;
+  }
+
+  const txid = split[0];
+  const vout = Number(split[1]);
+  const offset = Number(split[2]);
+  const amount = Number(data.outputValue);
+  const minSats = sb.toSatoshi(MIN_TX_AMOUNT);
+
+  console.log(
+    'sending inscription',
+    data.inscriptionId,
+    'in tx',
+    txid,
+    'vout',
+    vout,
+    'offset',
+    offset,
+    'amount',
+    sb.toBitcoin(amount)
+  );
 
   try {
-    // get spendable utxos
-    let utxos = await getSpendableUtxos(data.address);
-
-    const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
-
-    utxos = utxos.filter(
-      (utxo) => !spentUtxosCache.find((cache) => cache.txid === utxo.txid)
+    // Get the inscribed utxo
+    const inUtxo = await getInscriptionsUtxo(data.address, { txid, vout });
+    console.log(
+      'found inscription utxo with',
+      inUtxo.inscriptions.length,
+      'inscriptions and',
+      sb.toBitcoin(inUtxo.outputValue),
+      'value'
     );
-
-    console.log('found utxos', utxos.length);
 
     // estimate fee
     const smartfeeReq = {
@@ -251,95 +275,146 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
     };
     const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
     const feePerKB = feeData.result.feerate || FEE_RATE_KB;
-    const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
-    const jsonrpcReq = {
-      jsonrpc: '2.0',
-      id: `${data.address}_create_${Date.now()}`,
-      method: 'createrawtransaction',
-      params: [
-        [{ txid, vout }],
-        {
-          [data.recipientAddress]: amount,
-        },
-      ],
-    };
-    let fee = feePerInput;
-    let total = amount;
-    let i = 1;
+    const tx = new Transaction();
 
-    console.log('found feerate', feeData.result.feerate);
-    console.log('using feePerKb', feePerKB);
-    console.log('estimated feePerInput', feePerInput);
+    // Populate the transaction with initial input
+    tx.feePerKb(sb.toSatoshi(feePerKB));
+    tx.from({
+      txid,
+      vout,
+      script: inUtxo.script,
+      satoshis: Number(inUtxo.outputValue),
+    });
 
-    for (const utxo of utxos) {
-      const value = sb.toBitcoin(utxo.outputValue);
+    // Determine the outputs for the specific inscription
+    let currOffset = 0;
+    let output = 0;
+    let total = 0;
 
-      total += value;
-      fee = feePerInput * (i + 1);
-      jsonrpcReq.params[0].push({
-        txid: utxo.txid,
-        vout: utxo.vout,
-      });
+    for (let i = 0; i < inUtxo.inscriptions.length; i++) {
+      const inscription = inUtxo.inscriptions[i];
+      const currSat = inscription.offset - currOffset;
 
-      console.log('utxo', i + 1, total, '>=', amount + fee);
-      i++;
-
-      if (total >= amount + fee) {
-        break;
+      if (currSat > 0) {
+        tx.to(data.address, inscription.offset - currOffset);
+        console.log(
+          'output',
+          output,
+          'to',
+          data.address,
+          'with',
+          sb.toBitcoin(inscription.offset - currOffset)
+        );
+        output++;
+        total += inscription.offset - currOffset;
       }
-    }
 
-    total = sanitizeFloatAmount(total);
-    fee = sanitizeFloatAmount(fee);
-
-    console.log('num utxos', i);
-    console.log('total', total);
-    console.log('amount', amount);
-    console.log('estimated fee', fee);
-
-    // Detect insufficient funds, discounting estimated fee from amount to allow for max send
-    if (total - fee < MIN_TX_AMOUNT) {
-      throw new Error(
-        `Insufficient funds ${total} < ${amount} + ${fee} with ${i}/${utxos.length} inputs`
-      );
-    }
-
-    // Set a dummy amount in the change address
-    jsonrpcReq.params[1][data.address] = feePerInput;
-    const estimateRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
-    const size = estimateRes.result.length / 2;
-
-    console.log('tx size', size);
-
-    fee = Math.max(sanitizeFloatAmount((size / 1000) * feePerKB), feePerInput);
-
-    console.log('calculated fee', fee);
-
-    // Add change address and amount if enough, otherwise add to fee
-    const changeSatoshi = Math.trunc(
-      sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee)
-    );
-
-    console.log('calculated change', changeSatoshi);
-
-    if (changeSatoshi >= 0) {
-      const changeAmount = sb.toBitcoin(changeSatoshi);
-      if (changeAmount >= MIN_TX_AMOUNT) {
-        jsonrpcReq.params[1][data.address] = changeAmount;
+      if (inscription.offset === offset) {
+        tx.to(data.recipientAddress, minSats);
+        console.log(
+          'output',
+          output,
+          'to',
+          data.recipientAddress,
+          'with',
+          MIN_TX_AMOUNT
+        );
       } else {
-        delete jsonrpcReq.params[1][data.address];
-        fee += changeAmount;
+        tx.to(data.address, minSats);
+        console.log(
+          'output',
+          output,
+          'to',
+          data.address,
+          'with',
+          MIN_TX_AMOUNT
+        );
+      }
+
+      output++;
+      total += minSats;
+      currOffset += inscription.offset + minSats;
+    }
+
+    console.log('total outputs', sb.toBitcoin(total));
+
+    const estimatedSize = tx._estimateSize() / 1000;
+    const estimatedFee = Math.trunc(sb.toSatoshi(estimatedSize * feePerKB));
+    const remainder = amount - total;
+
+    console.log('estimated size', estimatedSize);
+    console.log('fee per kb', feePerKB);
+    console.log('estimated fee', sb.toBitcoin(estimatedFee));
+    console.log('remainder', sb.toBitcoin(remainder));
+
+    if (remainder >= estimatedFee) {
+      if (remainder - estimatedFee >= minSats) {
+        console.log(
+          'change to',
+          data.address,
+          'should be',
+          sb.toBitcoin(remainder - estimatedFee)
+        );
+        tx.to(data.address, remainder - estimatedFee);
+      }
+    } else {
+      const diff = estimatedFee - remainder;
+      console.log('needed to cover fee', sb.toBitcoin(diff));
+      let extra = 0;
+      // Find another utxo to cover the fee
+      // get spendable utxos
+      let utxos = await getSpendableUtxos(data.address);
+
+      const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
+
+      utxos = utxos.filter(
+        (utxo) => !spentUtxosCache.find((cache) => cache.txid === utxo.txid)
+      );
+
+      console.log('found utxos', utxos.length);
+      for (const utxo of utxos) {
+        const value = Number(utxo.outputValue);
+
+        tx.from({
+          txid: utxo.txid,
+          vout: utxo.vout,
+          script: utxo.script,
+          satoshis: value,
+        });
+        console.log('added utxo', utxo.txid, 'amount', sb.toBitcoin(value));
+
+        extra += value;
+
+        if (extra >= diff) {
+          break;
+        }
+      }
+
+      console.log('total added to cover fee', sb.toBitcoin(extra));
+
+      if (total > diff && total - diff >= minSats) {
+        tx.to(data.address, total - diff);
+        console.log(
+          'change to',
+          data.address,
+          'should be',
+          sb.toBitcoin(total - diff)
+        );
       }
     }
 
-    const rawTx = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
+    const rawTx = tx.toString();
+    const fee = sb.toBitcoin(tx._getUnspentValue());
 
-    console.log('raw tx', rawTx.result);
+    console.log('total input amount', sb.toBitcoin(tx._getInputAmount()));
+    console.log('total output amount', sb.toBitcoin(tx._getOutputAmount()));
+    console.log('total fee', fee);
+    console.log('raw tx', rawTx);
 
     sendResponse?.({
-      rawTx: rawTx.result,
+      rawTx,
       fee,
-      amount,
+      amount: MIN_TX_AMOUNT,
     });
   } catch (err) {
     logError(err);
