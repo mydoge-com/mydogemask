@@ -9,8 +9,7 @@ import * as Validator from 'multicoin-address-validator';
 import sb from 'satoshi-bitcoin';
 import * as wif from 'wif';
 
-import { MIN_TX_AMOUNT } from '../../constants/Doge';
-import { SPENT_UTXOS_CACHE } from './constants';
+import { MIN_TX_AMOUNT, SPENT_UTXOS_CACHE } from './constants';
 import { getLocalValue, setLocalValue } from './storage';
 
 const ec = new EC('secp256k1');
