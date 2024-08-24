@@ -96,7 +96,7 @@ export const AppContextProvider = ({ children }) => {
     authenticated: false,
     onboardingComplete: undefined,
     wallet: undefined,
-    selectedAddressIndex: 0,
+    selectedAddressIndex: undefined,
     txTabIndex: 0,
     ready: false,
   });
@@ -170,12 +170,10 @@ export const AppContextProvider = ({ children }) => {
                   },
                 });
               }
-              if (typeof selectedAddressIndex === 'number') {
-                dispatch({
-                  type: DISPATCH_TYPES.SELECT_WALLET,
-                  payload: { index: selectedAddressIndex },
-                });
-              }
+              dispatch({
+                type: DISPATCH_TYPES.SELECT_WALLET,
+                payload: { index: selectedAddressIndex ?? 0 },
+              });
               dispatch({
                 type: DISPATCH_TYPES.SET_CONTEXT_LOADED,
                 payload: { ready: true },
