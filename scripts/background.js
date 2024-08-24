@@ -392,13 +392,13 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
 
       console.log('total added to cover fee', sb.toBitcoin(extra));
 
-      if (total > diff && total - diff >= minSats) {
-        tx.to(data.address, total - diff);
+      if (extra - diff >= minSats) {
+        tx.to(data.address, extra - diff);
         console.log(
           'change to',
           data.address,
           'should be',
-          sb.toBitcoin(total - diff)
+          sb.toBitcoin(extra - diff)
         );
       }
     }
