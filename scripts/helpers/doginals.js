@@ -1,6 +1,5 @@
 import {
   crypto,
-  Networks,
   Opcode,
   PrivateKey,
   Script,
@@ -9,21 +8,10 @@ import {
 import sb from 'satoshi-bitcoin';
 
 import { mydoge } from '../api';
-import { network } from './wallet';
 
 const { Hash, Signature } = crypto;
 const MAX_CHUNK_LEN = 240;
 const MAX_PAYLOAD_LEN = 1500;
-
-Networks.add({
-  name: 'doge',
-  alias: 'dogecoin',
-  pubkeyhash: network.pubKeyHash,
-  privatekey: network.wif,
-  scripthash: network.scriptHash,
-  xpubkey: network.bip32.public,
-  xprivkey: network.bip32.private,
-});
 
 function bufferToChunk(b, type) {
   b = Buffer.from(b, type);
@@ -124,7 +112,7 @@ export function inscribe(
 
   // console.log('set fee per kb', Transaction.FEE_PER_KB);
 
-  const privateKey = new PrivateKey(privkey, 'doge');
+  const privateKey = new PrivateKey(privkey, 'livenet');
   const publicKey = privateKey.toPublicKey();
   const txs = [];
   const parts = [];
