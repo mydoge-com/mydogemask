@@ -17,7 +17,10 @@ import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
-import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import {
+  MESSAGE_TYPES,
+  TRANSACTION_TYPES,
+} from '../../scripts/helpers/constants';
 import { getInscriptionsUtxo } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateAddress } from '../../scripts/helpers/wallet';
@@ -210,6 +213,7 @@ export function ClientDoginalTransaction({
         handleWindowClose={handleWindowClose}
         recipientAddress={recipientAddress}
         dogeAmount={transaction.amount}
+        selectedNFT={selectedNFT}
       />
     </>
   );
@@ -225,6 +229,7 @@ const ConfirmationModal = ({
   handleWindowClose,
   recipientAddress,
   dogeAmount,
+  selectedNFT,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
@@ -234,7 +239,12 @@ const ConfirmationModal = ({
     sendMessage(
       {
         message: MESSAGE_TYPES.SEND_TRANSACTION,
-        data: { rawTx, selectedAddressIndex: addressIndex },
+        data: {
+          rawTx,
+          selectedAddressIndex: addressIndex,
+          txType: TRANSACTION_TYPES.DOGINAL_TX,
+          location: selectedNFT.location,
+        },
       },
       (txId) => {
         setLoading(false);
