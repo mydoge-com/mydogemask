@@ -77,10 +77,15 @@ export const formatTransaction = ({ transaction: tx, walletAddress }) => {
   }
 
   const fee = totalIn - totalOut;
-  const amount =
+  let amount =
     type === 'incoming' ? amountIn - amountOut : amountOut - amountIn - fee;
   const address = type === 'incoming' ? incomingAddress : outgoingAddress;
   const { txid: id, blockTime, confirmations } = tx;
+
+  if (type === 'outgoing' && amount < 0) {
+    type = 'incoming';
+    amount = -amount;
+  }
 
   return { address, amount, type, blockTime, id, confirmations, fee };
 };
