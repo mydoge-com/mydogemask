@@ -137,7 +137,7 @@ async function run() {
     fee
   );
   console.log('change', changeAddress, 'amount', sb.toBitcoin(change));
-  console.log(`\nraw tx awaiting signature on index 1\n\n${txHex}`);
+  console.log(`\nraw tx awaiting signature on indexes 1,2\n\n${txHex}`);
 
   // Finalize the transaction so we can compare the results
   const finalPsbt = bitcoin.Psbt.fromHex(txHex, { network });
