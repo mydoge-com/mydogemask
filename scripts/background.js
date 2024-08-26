@@ -117,7 +117,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
       params: [BLOCK_CONFIRMATIONS], // confirm within x blocks
     };
     const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
-    const feePerKB = feeData.result.feerate || FEE_RATE_KB;
+    const feePerKB = feeData.result.feerate * 2 || FEE_RATE_KB;
     const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
     const jsonrpcReq = {
       jsonrpc: '2.0',
@@ -274,11 +274,10 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
       params: [BLOCK_CONFIRMATIONS], // confirm within x blocks
     };
     const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
-    const feePerKB = feeData.result.feerate || FEE_RATE_KB;
+    const feePerKB = feeData.result.feerate * 2 || FEE_RATE_KB;
     const tx = new Transaction();
 
     // Populate the transaction with initial input
-    tx.feePerKb(sb.toSatoshi(feePerKB));
     tx.from({
       txid,
       vout,
@@ -456,7 +455,7 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
       params: [BLOCK_CONFIRMATIONS], // confirm within x blocks
     };
     const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
-    const feePerKB = sb.toSatoshi(feeData.result.feerate || FEE_RATE_KB);
+    const feePerKB = sb.toSatoshi(feeData.result.feerate * 2 || FEE_RATE_KB);
 
     console.log('found feePerKB', feePerKB);
 
