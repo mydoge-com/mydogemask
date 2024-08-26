@@ -49,7 +49,7 @@ import {
   signRawTx,
 } from './helpers/wallet';
 
-const NOWNODES_SLEEP_S = 5;
+const NOWNODES_SLEEP_S = 10;
 
 const sleep = async (time) =>
   new Promise((resolve) => {
