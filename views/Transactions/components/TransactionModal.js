@@ -64,7 +64,9 @@ export const TransactionModal = ({
                 color='gray.500'
                 textAlign='center'
               >
-                {address?.slice(0, 8)}...{address?.slice(-4)}
+                {address?.includes('Multiple')
+                  ? address
+                  : `${address?.slice(0, 8)}...${address?.slice(-4)}`}
               </Text>
               <Button
                 variant='subtle'

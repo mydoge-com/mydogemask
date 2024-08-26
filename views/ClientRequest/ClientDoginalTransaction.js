@@ -17,10 +17,12 @@ import { RecipientAddress } from '../../components/RecipientAddress';
 import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { DISPATCH_TYPES } from '../../Context';
-import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
-import { getAllInscriptions } from '../../scripts/helpers/doginals';
+import {
+  MESSAGE_TYPES,
+  TRANSACTION_TYPES,
+} from '../../scripts/helpers/constants';
+import { getInscriptionsUtxo } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
-import { getCachedTx } from '../../scripts/helpers/storage';
 import { validateAddress } from '../../scripts/helpers/wallet';
 import { NFTView } from '../Transactions/components/NFTView';
 
@@ -31,7 +33,7 @@ export function ClientDoginalTransaction({
   connectedAddressIndex,
   handleError,
 }) {
-  const { originTabId, origin, recipientAddress, output } = params;
+  const { originTabId, origin, recipientAddress, location } = params;
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
@@ -57,8 +59,10 @@ export function ClientDoginalTransaction({
         return;
       }
 
-      const txid = output.split(':')[0];
-      const vout = parseInt(output.split(':')[1], 10);
+      const split = location.split(':');
+      const txid = split[0];
+      const vout = Number(split[1]);
+      const offset = Number(split[2]);
 
       if (txid?.length !== 64 || Number.isNaN(vout)) {
         handleError({
@@ -68,26 +72,15 @@ export function ClientDoginalTransaction({
         });
         return;
       }
+
       setPageLoading(true);
-      let inscriptions = await getAllInscriptions(connectedClient?.address);
 
-      // Get output values
-      inscriptions = await Promise.all(
-        inscriptions.map(async (nft) => {
-          const tx = await getCachedTx(nft.txid);
+      const doginal = await getInscriptionsUtxo(connectedClient?.address, {
+        txid,
+        vout,
+      });
 
-          return {
-            ...nft,
-            outputValue: tx.vout[nft.vout].value,
-          };
-        })
-      );
-
-      const doginal = inscriptions.find(
-        (ins) => ins.txid === txid && ins.vout === vout
-      );
-
-      if (!doginal) {
+      if (!doginal || !doginal.inscriptions?.find((i) => i.offset === offset)) {
         handleError({
           error: 'Doginal not found',
           messageType:
@@ -105,7 +98,7 @@ export function ClientDoginalTransaction({
           data: {
             ...doginal,
             recipientAddress,
-            output,
+            location,
             address: connectedClient?.address,
             outputValue: doginal.outputValue,
           },
@@ -125,7 +118,7 @@ export function ClientDoginalTransaction({
         }
       );
     })();
-  }, [connectedClient?.address, handleError, output, recipientAddress]);
+  }, [connectedClient?.address, handleError, location, recipientAddress]);
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -220,6 +213,7 @@ export function ClientDoginalTransaction({
         handleWindowClose={handleWindowClose}
         recipientAddress={recipientAddress}
         dogeAmount={transaction.amount}
+        selectedNFT={selectedNFT}
       />
     </>
   );
@@ -235,6 +229,7 @@ const ConfirmationModal = ({
   handleWindowClose,
   recipientAddress,
   dogeAmount,
+  selectedNFT,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
@@ -244,7 +239,12 @@ const ConfirmationModal = ({
     sendMessage(
       {
         message: MESSAGE_TYPES.SEND_TRANSACTION,
-        data: { rawTx, selectedAddressIndex: addressIndex },
+        data: {
+          rawTx,
+          selectedAddressIndex: addressIndex,
+          txType: TRANSACTION_TYPES.DOGINAL_TX,
+          location: selectedNFT.location,
+        },
       },
       (txId) => {
         setLoading(false);

@@ -21,7 +21,6 @@ export const useAuth = ({
         data: { password, _dangerouslyReturnSecretPhrase },
       },
       ({ authenticated, wallet }) => {
-        console.log('wallet', wallet);
         if (authenticated && wallet) {
           setErrors({});
           onValidAuth?.({ authenticated, wallet });

@@ -23,7 +23,7 @@ export const TRANSACTION_TYPES = {
 };
 export const DOGINAL_TX = 'doginal_tx';
 
-export const TRANSACTION_PENDING_TIME = 1000 * 60 * 15;
+export const TRANSACTION_PENDING_TIME = 1000 * 60 * 2; // 2 minutes
 
 const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_CONNECTION: 'clientRequestConnection',
@@ -46,6 +46,9 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_PSBT_RESPONSE: 'clientRequestPsbtResponse',
   CLIENT_REQUEST_SIGNED_MESSAGE: 'clientRequestSignedMessage',
   CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE: 'clientRequestSignedMessageResponse',
+  CLIENT_REQUEST_DECRYPTED_MESSAGE: 'clientRequestDecryptedMessage',
+  CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE:
+    'clientRequestDecryptedMessageResponse',
   CLIENT_DISCONNECT: 'clientDisconnect',
   CLIENT_DISCONNECT_RESPONSE: 'clientDisconnectResponse',
   CLIENT_CONNECTION_STATUS: 'clientConnectionStatus',
@@ -77,6 +80,7 @@ export const MESSAGE_TYPES = {
   SIGN_PSBT: 'signPsbt',
   SEND_PSBT: 'sendPsbt',
   SIGN_MESSAGE: 'signMessage',
+  DECRYPT_MESSAGE: 'decryptMessage',
   GET_PSBT_FEE: 'getPsbtFee',
   GET_CONNECTED_CLIENTS: 'getConnectedClients',
   UPDATE_ADDRESS_NICKNAME: 'updateAddressNickname',

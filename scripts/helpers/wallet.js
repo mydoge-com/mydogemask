@@ -3,12 +3,16 @@ import * as bip32 from 'bip32';
 import * as bip39 from 'bip39';
 import * as bitcoin from 'bitcoinjs-lib';
 import * as bitcoinMessage from 'bitcoinjs-message';
+import * as crypto from 'crypto';
+import { ec as EC } from 'elliptic';
 import * as Validator from 'multicoin-address-validator';
 import sb from 'satoshi-bitcoin';
+import * as wif from 'wif';
 
-import { MIN_TX_AMOUNT } from '../../constants/Doge';
-import { SPENT_UTXOS_CACHE } from './constants';
+import { MIN_TX_AMOUNT, SPENT_UTXOS_CACHE } from './constants';
 import { getLocalValue, setLocalValue } from './storage';
+
+const ec = new EC('secp256k1');
 
 // Dogecoin mainnet
 export const network = {
@@ -21,7 +25,7 @@ export const network = {
   },
   pubKeyHash: 0x1e,
   scriptHash: 0x16,
-  wif: 0x80,
+  wif: 0x9e,
 };
 
 export function generatePhrase() {
@@ -29,7 +33,7 @@ export function generatePhrase() {
 }
 
 export function generateRoot(phrase) {
-  return bip32.fromSeed(bip39.mnemonicToSeedSync(phrase));
+  return bip32.fromSeed(bip39.mnemonicToSeedSync(phrase), network);
 }
 
 export function generateChild(root, idx) {
@@ -43,8 +47,14 @@ export function generateAddress(child) {
   }).address;
 }
 
-export function fromWIF(wif) {
-  return new bitcoin.ECPair.fromWIF(wif, network); // eslint-disable-line
+export function fromWIF(wifKey) {
+  let pair;
+  try {
+    pair = new bitcoin.ECPair.fromWIF(wifKey, network); // eslint-disable-line
+  } catch (e) {
+    console.error(e.message);
+  }
+  return pair;
 }
 
 export function decodeRawPsbt(rawTx) {
@@ -77,8 +87,8 @@ export const validateTransaction = ({
   return undefined;
 };
 
-export function signRawTx(rawTx, wif) {
-  const keyPair = fromWIF(wif);
+export function signRawTx(rawTx, wifKey) {
+  const keyPair = fromWIF(wifKey);
   const tx = bitcoin.Transaction.fromHex(rawTx);
   const txb = bitcoin.TransactionBuilder.fromTransaction(tx, network);
 
@@ -89,8 +99,8 @@ export function signRawTx(rawTx, wif) {
   return txb.build().toHex();
 }
 
-export function signRawPsbt(rawTx, indexes, wif, withTx = true) {
-  const keyPair = fromWIF(wif);
+export function signRawPsbt(rawTx, indexes, wifKey, withTx = true) {
+  const keyPair = fromWIF(wifKey);
   const finalPsbt = bitcoin.Psbt.fromHex(rawTx, { network });
   finalPsbt.setMaximumFeeRate(100000000);
 
@@ -118,8 +128,8 @@ export function signRawPsbt(rawTx, indexes, wif, withTx = true) {
   };
 }
 
-export function signMessage(message, wif) {
-  const keyPair = fromWIF(wif);
+export function signMessage(message, wifKey) {
+  const keyPair = fromWIF(wifKey);
   return bitcoinMessage
     .sign(message, keyPair.privateKey, keyPair.compressed)
     .toString('hex');
@@ -140,4 +150,62 @@ export async function cacheSignedTx(signed) {
   const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
   spentUtxosCache.push(...inputUtxos);
   setLocalValue({ [SPENT_UTXOS_CACHE]: spentUtxosCache });
+}
+
+function decryptAesKeyWithPrivkey(
+  privkey, // : EC.KeyPair,
+  encryptedAesKey // : Buffer
+) /*: Buffer */ {
+  const tempPubKeyBuffer = encryptedAesKey.slice(0, 33);
+  const iv = encryptedAesKey.slice(33, 45);
+  const ciphertext = encryptedAesKey.slice(45, -16);
+  const tag = encryptedAesKey.slice(-16);
+
+  const tempPubKey = ec.keyFromPublic(tempPubKeyBuffer);
+
+  const sharedSecret = privkey.derive(tempPubKey.getPublic());
+
+  const derivedKey = crypto
+    .createHmac('sha256', Buffer.from('ecdh derived key'))
+    .update(Buffer.from(sharedSecret.toString(16), 'hex'))
+    .digest();
+
+  const decipher = crypto.createDecipheriv('aes-256-gcm', derivedKey, iv);
+  decipher.setAuthTag(tag);
+  const aesKey = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+
+  return aesKey;
+}
+
+function decryptDataWithAes(
+  aesKey /*: Buffer */,
+  encryptedData /*: Buffer */
+) /*: Buffer */ {
+  const iv = encryptedData.slice(0, 12);
+  const tag = encryptedData.slice(-16);
+  const ciphertext = encryptedData.slice(12, -16);
+
+  const decipher = crypto.createDecipheriv('aes-256-gcm', aesKey, iv);
+  decipher.setAuthTag(tag);
+  return Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+}
+
+export function decryptData(
+  wifKey, // : string,
+  encryptedData // : Buffer | string
+) /*: string */ {
+  const decoded = wif.decode(wifKey);
+  const privKey = ec.keyFromPrivate(decoded.privateKey);
+
+  if (typeof encryptedData === 'string') {
+    encryptedData = Buffer.from(encryptedData, 'base64');
+  }
+
+  // Assuming the first 33 + 12 + len(encrypted AES key) bytes are the encrypted AES key data
+  const encryptedAesKey = encryptedData.slice(0, 33 + 12 + 32 + 16);
+  const encryptedMessage = encryptedData.slice(33 + 12 + 32 + 16);
+
+  const aesKey = decryptAesKeyWithPrivkey(privKey, encryptedAesKey);
+
+  return decryptDataWithAes(aesKey, encryptedMessage).toString('utf8');
 }

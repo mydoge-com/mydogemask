@@ -219,8 +219,7 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
               </HStack>
             ) : null}
 
-            {!Number(transferableBalance) ||
-            Number(transferableBalance) < Number(overallBalance) ? (
+            {Number(availableBalance) > 0 ? (
               <HStack space='8px' mt='10px' alignItems='center'>
                 <BigButton
                   onPress={onInscribeToken}

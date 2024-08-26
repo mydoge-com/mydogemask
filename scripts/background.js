@@ -1,3 +1,4 @@
+import { Transaction } from 'bitcore-lib-doge';
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
@@ -20,7 +21,11 @@ import {
   TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
-import { getSpendableUtxos, inscribe } from './helpers/doginals';
+import {
+  getInscriptionsUtxo,
+  getSpendableUtxos,
+  inscribe,
+} from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
@@ -33,6 +38,8 @@ import {
 } from './helpers/storage';
 import {
   cacheSignedTx,
+  decryptData,
+  fromWIF,
   generateAddress,
   generateChild,
   generatePhrase,
@@ -42,7 +49,7 @@ import {
   signRawTx,
 } from './helpers/wallet';
 
-const NOWNODES_SLEEP_S = 5;
+const NOWNODES_SLEEP_S = 10;
 
 const sleep = async (time) =>
   new Promise((resolve) => {
@@ -222,23 +229,42 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
 }
 
 async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
-  const txid = data.output.split(':')[0];
-  const vout = parseInt(data.output.split(':')[1], 10);
-  const amount = sb.toBitcoin(data.outputValue);
+  const split = data.location.split(':');
 
-  console.log('nft tx', txid, vout, amount);
+  if (split.length !== 3) {
+    sendResponse?.(false);
+    return;
+  }
+
+  const txid = split[0];
+  const vout = Number(split[1]);
+  const offset = Number(split[2]);
+  const amount = Number(data.outputValue);
+  const minSats = sb.toSatoshi(MIN_TX_AMOUNT);
+
+  console.log(
+    'sending inscription',
+    data.inscriptionId,
+    'in tx',
+    txid,
+    'vout',
+    vout,
+    'offset',
+    offset,
+    'amount',
+    sb.toBitcoin(amount)
+  );
 
   try {
-    // get spendable utxos
-    let utxos = await getSpendableUtxos(data.address);
-
-    const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
-
-    utxos = utxos.filter(
-      (utxo) => !spentUtxosCache.find((cache) => cache.txid === utxo.txid)
+    // Get the inscribed utxo
+    const inUtxo = await getInscriptionsUtxo(data.address, { txid, vout });
+    console.log(
+      'found inscription utxo with',
+      inUtxo.inscriptions.length,
+      'inscriptions and',
+      sb.toBitcoin(inUtxo.outputValue),
+      'value'
     );
-
-    console.log('found utxos', utxos.length);
 
     // estimate fee
     const smartfeeReq = {
@@ -249,95 +275,146 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
     };
     const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
     const feePerKB = feeData.result.feerate || FEE_RATE_KB;
-    const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
-    const jsonrpcReq = {
-      jsonrpc: '2.0',
-      id: `${data.address}_create_${Date.now()}`,
-      method: 'createrawtransaction',
-      params: [
-        [{ txid, vout }],
-        {
-          [data.recipientAddress]: amount,
-        },
-      ],
-    };
-    let fee = feePerInput;
-    let total = amount;
-    let i = 1;
+    const tx = new Transaction();
 
-    console.log('found feerate', feeData.result.feerate);
-    console.log('using feePerKb', feePerKB);
-    console.log('estimated feePerInput', feePerInput);
+    // Populate the transaction with initial input
+    tx.feePerKb(sb.toSatoshi(feePerKB));
+    tx.from({
+      txid,
+      vout,
+      script: inUtxo.script,
+      satoshis: Number(inUtxo.outputValue),
+    });
 
-    for (const utxo of utxos) {
-      const value = sb.toBitcoin(utxo.outputValue);
+    // Determine the outputs for the specific inscription
+    let currOffset = 0;
+    let output = 0;
+    let total = 0;
 
-      total += value;
-      fee = feePerInput * (i + 1);
-      jsonrpcReq.params[0].push({
-        txid: utxo.txid,
-        vout: utxo.vout,
-      });
+    for (let i = 0; i < inUtxo.inscriptions.length; i++) {
+      const inscription = inUtxo.inscriptions[i];
+      const currSat = inscription.offset - currOffset;
 
-      console.log('utxo', i + 1, total, '>=', amount + fee);
-      i++;
-
-      if (total >= amount + fee) {
-        break;
+      if (currSat > 0) {
+        tx.to(data.address, inscription.offset - currOffset);
+        console.log(
+          'output',
+          output,
+          'to',
+          data.address,
+          'with',
+          sb.toBitcoin(inscription.offset - currOffset)
+        );
+        output++;
+        total += inscription.offset - currOffset;
       }
-    }
 
-    total = sanitizeFloatAmount(total);
-    fee = sanitizeFloatAmount(fee);
-
-    console.log('num utxos', i);
-    console.log('total', total);
-    console.log('amount', amount);
-    console.log('estimated fee', fee);
-
-    // Detect insufficient funds, discounting estimated fee from amount to allow for max send
-    if (total - fee < MIN_TX_AMOUNT) {
-      throw new Error(
-        `Insufficient funds ${total} < ${amount} + ${fee} with ${i}/${utxos.length} inputs`
-      );
-    }
-
-    // Set a dummy amount in the change address
-    jsonrpcReq.params[1][data.address] = feePerInput;
-    const estimateRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
-    const size = estimateRes.result.length / 2;
-
-    console.log('tx size', size);
-
-    fee = Math.max(sanitizeFloatAmount((size / 1000) * feePerKB), feePerInput);
-
-    console.log('calculated fee', fee);
-
-    // Add change address and amount if enough, otherwise add to fee
-    const changeSatoshi = Math.trunc(
-      sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee)
-    );
-
-    console.log('calculated change', changeSatoshi);
-
-    if (changeSatoshi >= 0) {
-      const changeAmount = sb.toBitcoin(changeSatoshi);
-      if (changeAmount >= MIN_TX_AMOUNT) {
-        jsonrpcReq.params[1][data.address] = changeAmount;
+      if (inscription.offset === offset) {
+        tx.to(data.recipientAddress, minSats);
+        console.log(
+          'output',
+          output,
+          'to',
+          data.recipientAddress,
+          'with',
+          MIN_TX_AMOUNT
+        );
       } else {
-        delete jsonrpcReq.params[1][data.address];
-        fee += changeAmount;
+        tx.to(data.address, minSats);
+        console.log(
+          'output',
+          output,
+          'to',
+          data.address,
+          'with',
+          MIN_TX_AMOUNT
+        );
+      }
+
+      output++;
+      total += minSats;
+      currOffset += inscription.offset + minSats;
+    }
+
+    console.log('total outputs', sb.toBitcoin(total));
+
+    const estimatedSize = tx._estimateSize() / 1000;
+    const estimatedFee = Math.trunc(sb.toSatoshi(estimatedSize * feePerKB));
+    const remainder = amount - total;
+
+    console.log('estimated size', estimatedSize);
+    console.log('fee per kb', feePerKB);
+    console.log('estimated fee', sb.toBitcoin(estimatedFee));
+    console.log('remainder', sb.toBitcoin(remainder));
+
+    if (remainder >= estimatedFee) {
+      if (remainder - estimatedFee >= minSats) {
+        console.log(
+          'change to',
+          data.address,
+          'should be',
+          sb.toBitcoin(remainder - estimatedFee)
+        );
+        tx.to(data.address, remainder - estimatedFee);
+      }
+    } else {
+      const diff = estimatedFee - remainder;
+      console.log('needed to cover fee', sb.toBitcoin(diff));
+      let extra = 0;
+      // Find another utxo to cover the fee
+      // get spendable utxos
+      let utxos = await getSpendableUtxos(data.address);
+
+      const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
+
+      utxos = utxos.filter(
+        (utxo) => !spentUtxosCache.find((cache) => cache.txid === utxo.txid)
+      );
+
+      console.log('found utxos', utxos.length);
+      for (const utxo of utxos) {
+        const value = Number(utxo.outputValue);
+
+        tx.from({
+          txid: utxo.txid,
+          vout: utxo.vout,
+          script: utxo.script,
+          satoshis: value,
+        });
+        console.log('added utxo', utxo.txid, 'amount', sb.toBitcoin(value));
+
+        extra += value;
+
+        if (extra >= diff) {
+          break;
+        }
+      }
+
+      console.log('total added to cover fee', sb.toBitcoin(extra));
+
+      if (extra - diff >= minSats) {
+        tx.to(data.address, extra - diff);
+        console.log(
+          'change to',
+          data.address,
+          'should be',
+          sb.toBitcoin(extra - diff)
+        );
       }
     }
 
-    const rawTx = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
+    const rawTx = tx.toString();
+    const fee = sb.toBitcoin(tx._getUnspentValue());
 
-    console.log('raw tx', rawTx.result);
+    console.log('total input amount', sb.toBitcoin(tx._getInputAmount()));
+    console.log('total output amount', sb.toBitcoin(tx._getOutputAmount()));
+    console.log('total fee', fee);
+    console.log('raw tx', rawTx);
 
     sendResponse?.({
-      rawTx: rawTx.result,
+      rawTx,
       fee,
-      amount,
+      amount: MIN_TX_AMOUNT,
     });
   } catch (err) {
     logError(err);
@@ -483,7 +560,7 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
             timestamp: Date.now(),
             ticker: data.ticker,
             tokenAmount: data.tokenAmount,
-            output: data.output,
+            location: data.location,
           });
 
           setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
@@ -546,6 +623,7 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       tokenAmount: data.tokenAmount,
       timestamp: Date.now(),
       ticker: data.ticker,
+      location: `${results[1]}:0:0`,
     });
 
     setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
@@ -627,7 +705,7 @@ async function onSendPsbt({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
+async function onSignMessage({ data = {}, sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
     ([wallet, password]) => {
       const decryptedWallet = decrypt({
@@ -642,6 +720,28 @@ async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
       const signedMessage = signMessage(
         data.message,
         decryptedWallet.children[data.selectedAddressIndex]
+      );
+
+      sendResponse?.(signedMessage);
+    }
+  );
+}
+
+async function onDecryptMessage({ data = {}, sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+      }
+
+      const signedMessage = decryptData(
+        decryptedWallet.children[data.selectedAddressIndex],
+        data.message
       );
 
       sendResponse?.(signedMessage);
@@ -742,6 +842,23 @@ async function onRequestSignedMessage({ data, sendResponse, sender } = {}) {
   return true;
 }
 
+async function onRequestDecryptedMessage({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE,
+  });
+  return true;
+}
+
 // Generates a seed phrase, root keypair, child keypair + address 0
 // Encrypt + store the private data and address
 function onCreateWallet({ data = {}, sendResponse } = {}) {
@@ -812,13 +929,20 @@ async function onGetDogecoinPrice({ sendResponse } = {}) {
 
 async function onGetAddressBalance({ data, sendResponse } = {}) {
   try {
-    const response = (
-      await mydoge.get('/wallet/info', {
-        params: { route: `/address/${data.address}` },
-      })
-    ).data;
+    const addresses = data.addresses?.length ? data.addresses : [data.address];
+    const balances = await Promise.all(
+      addresses.map(async (address) => {
+        const response = (
+          await mydoge.get('/wallet/info', {
+            params: { route: `/address/${address}` },
+          })
+        ).data;
 
-    sendResponse?.(response.balance);
+        return response.balance;
+      })
+    );
+
+    sendResponse?.(balances.length > 1 ? balances : balances[0]);
   } catch (err) {
     logError(err);
     sendResponse?.(false);
@@ -983,7 +1107,15 @@ async function onConnectionRequest({ sendResponse, sender } = {}) {
 // Handle the user's response to the connection request popup and send a message to the content script with the response
 async function onApproveConnection({
   sendResponse,
-  data: { approved, address, balance, originTabId, origin, error },
+  data: {
+    approved,
+    address,
+    selectedAddressIndex,
+    balance,
+    originTabId,
+    origin,
+    error,
+  },
 } = {}) {
   if (approved) {
     const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || {};
@@ -993,16 +1125,35 @@ async function onApproveConnection({
         [origin]: { address, originTabId, origin },
       },
     });
-    chrome.tabs?.sendMessage(originTabId, {
-      type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
-      data: {
-        approved: true,
-        address,
-        balance,
-      },
-      origin,
-    });
-    sendResponse(true);
+
+    Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+      ([wallet, password]) => {
+        const decryptedWallet = decrypt({
+          data: wallet,
+          password,
+        });
+
+        if (!decryptedWallet) {
+          sendResponse?.(false);
+          return;
+        }
+
+        chrome.tabs?.sendMessage(originTabId, {
+          type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+          data: {
+            approved: true,
+            publicKey: fromWIF(
+              decryptedWallet.children[selectedAddressIndex]
+            ).publicKey.toString('hex'),
+            address,
+            balance,
+          },
+          origin,
+        });
+
+        sendResponse(true);
+      }
+    );
   } else {
     chrome.tabs?.sendMessage(originTabId, {
       type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
@@ -1147,6 +1298,30 @@ async function onApproveSignedMessage({
   return true;
 }
 
+async function onApproveDecryptedMessage({
+  sendResponse,
+  data: { decryptedMessage, error, originTabId, origin },
+} = {}) {
+  if (decryptedMessage) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+      data: {
+        decryptedMessage,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
 async function onGetConnectedClients({ sendResponse } = {}) {
   const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || {};
   sendResponse(connectedClients);
@@ -1218,23 +1393,59 @@ function onAuthenticate({ data = {}, sendResponse } = {}) {
         password: data.password,
       });
 
-      const decryptedWallet = decrypt({
-        data: encryptedWallet,
-        password: data.password,
-      });
       const authenticated = decryptedPass === hash(data.password);
-      const sessionWallet = {
-        addresses: decryptedWallet?.addresses,
-        nicknames: decryptedWallet?.nicknames,
-      };
+
       if (authenticated) {
+        const decryptedWallet = decrypt({
+          data: encryptedWallet,
+          password: data.password,
+        });
+
+        if (!decryptedWallet) {
+          sendResponse?.(false);
+          return;
+        }
+
+        // MIGRATE Bitcon WIF to Dogecoin WIF
+        if (!fromWIF(decryptedWallet.root)) {
+          const root = generateRoot(decryptedWallet.phrase);
+          const numChildren = decryptedWallet.children.length;
+          decryptedWallet.root = root.toWIF();
+          decryptedWallet.children = [];
+
+          for (let i = 0; i < numChildren; i++) {
+            const child = generateChild(root, i);
+            decryptedWallet.children.push(child.toWIF());
+          }
+
+          const migratedWallet = encrypt({
+            data: decryptedWallet,
+            password: data.password,
+          });
+
+          setLocalValue({
+            [WALLET]: migratedWallet,
+          });
+
+          console.info('migrated wif format');
+        }
+
+        // decryptedWallet.children.forEach((wif) => console.log(wif));
+
+        const sessionWallet = {
+          addresses: decryptedWallet.addresses,
+          nicknames: decryptedWallet.nicknames,
+        };
+
         setSessionValue({
           [AUTHENTICATED]: true,
           [WALLET]: sessionWallet,
           [PASSWORD]: data.password,
         });
-        if (data._dangerouslyReturnSecretPhrase)
+
+        if (data._dangerouslyReturnSecretPhrase) {
           sessionWallet.phrase = decryptedWallet.phrase;
+        }
 
         sendResponse?.({
           authenticated,
@@ -1337,7 +1548,10 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       onSendPsbt({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SIGN_MESSAGE:
-      onCreateSignedMessage({ data, sendResponse });
+      onSignMessage({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.DECRYPT_MESSAGE:
+      onDecryptMessage({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SEND_TRANSACTION:
       onSendTransaction({ data, sender, sendResponse });
@@ -1405,8 +1619,14 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
       onRequestSignedMessage({ data, sendResponse, sender });
       break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE:
+      onRequestDecryptedMessage({ data, sendResponse, sender });
+      break;
     case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
       onApproveSignedMessage({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE:
+      onApproveDecryptedMessage({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });

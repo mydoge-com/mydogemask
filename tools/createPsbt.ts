@@ -1,25 +1,11 @@
-const bitcoin = require('bitcoinjs-lib');
-const dotenv = require('dotenv');
-const sb = require('satoshi-bitcoin');
+import * as bitcoin from 'bitcoinjs-lib';
+import dotenv from 'dotenv';
+import sb from 'satoshi-bitcoin';
 
 dotenv.config();
 
-const api = require('../scripts/api');
-
-const { mydoge } = api;
-
-const network = {
-  messagePrefix: '\x19Dogecoin Signed Message:\n',
-  bech32: 'dc',
-  bip44: 3,
-  bip32: {
-    public: 0x02facafd,
-    private: 0x02fac398,
-  },
-  pubKeyHash: 0x1e,
-  scriptHash: 0x16,
-  wif: 0x80,
-};
+import { mydoge } from '../scripts/api';
+import { network } from '../scripts/helpers/wallet';
 
 /*
  * Create a PSBT with the first UTXOs from WIF_1 and WIF_2
@@ -111,17 +97,17 @@ async function run() {
     hash: tx1.data.txid,
     index: index1,
     nonWitnessUtxo: Buffer.from(tx1.data.hex, 'hex'),
-  });
+  } as any);
   psbt.addInput({
     hash: tx2.data.txid,
     index: index2,
     nonWitnessUtxo: Buffer.from(tx2.data.hex, 'hex'),
-  });
+  } as any);
   psbt.addInput({
     hash: tx3.data.txid,
     index: index3,
     nonWitnessUtxo: Buffer.from(tx3.data.hex, 'hex'),
-  });
+  } as any);
 
   // Add outputs
   psbt.addOutput({
@@ -151,7 +137,7 @@ async function run() {
     fee
   );
   console.log('change', changeAddress, 'amount', sb.toBitcoin(change));
-  console.log(`\nraw tx awaiting signature on index 1\n\n${txHex}`);
+  console.log(`\nraw tx awaiting signature on indexes 1,2\n\n${txHex}`);
 
   // Finalize the transaction so we can compare the results
   const finalPsbt = bitcoin.Psbt.fromHex(txHex, { network });

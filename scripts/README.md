@@ -30,6 +30,7 @@ if (myDogeMask?.isMyDoge) {
         "approved": true,
         "address": "DBKwBLEDY96jBtx1xCmjfBzp9FrNCWxnmM",
         "balance": "4206912345678"
+        "publicKey": "02351af56885860f7956f87a8aec360cad73be184ecdc466c05a96e4fffd3ad32c"
       }*/
 
     // Request connected address balance

@@ -318,6 +318,13 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
             responseType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
           })({ origin: source.origin, data });
           break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE:
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE,
+            responseType:
+              MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+          })({ origin: source.origin, data });
+          break;
         case MESSAGE_TYPES.CLIENT_DISCONNECT:
           onDisconnectClient({ origin: source.origin });
           break;

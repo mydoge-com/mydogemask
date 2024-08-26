@@ -32,7 +32,9 @@ export const Transaction = ({
           </VStack>
           <VStack flex={1}>
             <Text fontSize='xs' fontWeight='medium'>
-              {address?.slice(0, 8)}...{address?.slice(-4)}
+              {address?.includes('Multiple')
+                ? address
+                : `${address?.slice(0, 8)}...${address?.slice(-4)}`}
             </Text>
 
             <HStack space='6px'>
