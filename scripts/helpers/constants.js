@@ -23,7 +23,7 @@ export const TRANSACTION_TYPES = {
 };
 export const DOGINAL_TX = 'doginal_tx';
 
-export const TRANSACTION_PENDING_TIME = 1000 * 60 * 15;
+export const TRANSACTION_PENDING_TIME = 1000 * 60 * 2; // 2 minutes
 
 const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_CONNECTION: 'clientRequestConnection',

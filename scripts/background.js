@@ -560,7 +560,7 @@ function onSendTransaction({ data = {}, sendResponse } = {}) {
             timestamp: Date.now(),
             ticker: data.ticker,
             tokenAmount: data.tokenAmount,
-            output: data.output,
+            location: data.location,
           });
 
           setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
@@ -623,6 +623,7 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       tokenAmount: data.tokenAmount,
       timestamp: Date.now(),
       ticker: data.ticker,
+      location: `${results[1]}:0:0`,
     });
 
     setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
