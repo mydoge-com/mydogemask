@@ -59,7 +59,7 @@ if (myDogeMask?.isMyDoge) {
       {
         recipientAddress: 'DAHkCF5LajV6jYyi5o4eMvtpqXRcm9eZYq',
         output:
-          'c788a88a04a649a5ba049ee7b23ce337a7304d1d0d37cc46108767095fb2d01a:0', // The transaction id and output index separated by colon
+          'c788a88a04a649a5ba049ee7b23ce337a7304d1d0d37cc46108767095fb2d01a:0:0', // The transaction id, output index and sats offset separated by colons
       }
       // onSuccess,
       // onError
@@ -97,6 +97,13 @@ if (myDogeMask?.isMyDoge) {
     const signMessageRes = await myDogeMask.signMessage({ message: 'the message to sign', /*onSuccess, onError*/);
     console.log('signed message result', signMessageRes);
     // { "signedMessage": "b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0" }
+
+    // Request the decryption of an message encrypted with the connected address publickey
+    // Generates a popup to be confirmed by the user
+    // Promise will reject or onError will be called if canceled
+    const signMessageRes = await myDogeMask.decryptMessage({ message: 'the message to decrypt', /*onSuccess, onError*/);
+    console.log('decrypted message result', signMessageRes);
+    // { "decryptedMessage": "Some decrypted message text" }
 
     // Poll to get the transaction status
     setInterval(async () => {
