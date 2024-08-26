@@ -1,10 +1,12 @@
+import { Transaction } from 'bitcore-lib-doge';
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
-import { apiKey, node, nownodes } from './api';
+import { mydoge } from './api';
 import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
+  BLOCK_CONFIRMATIONS,
   CONNECTED_CLIENTS,
   FEE_RATE_KB,
   INSCRIPTION_TXS_CACHE,
@@ -19,7 +21,11 @@ import {
   TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
-import { getSpendableUtxos, inscribe } from './helpers/doginals';
+import {
+  getInscriptionsUtxo,
+  getSpendableUtxos,
+  inscribe,
+} from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
@@ -31,7 +37,9 @@ import {
   setSessionValue,
 } from './helpers/storage';
 import {
-  decodeRawTx,
+  cacheSignedTx,
+  decryptData,
+  fromWIF,
   generateAddress,
   generateChild,
   generatePhrase,
@@ -41,7 +49,7 @@ import {
   signRawTx,
 } from './helpers/wallet';
 
-const NOWNODES_SLEEP_S = 5;
+const NOWNODES_SLEEP_S = 10;
 
 const sleep = async (time) =>
   new Promise((resolve) => {
@@ -103,17 +111,15 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
 
     // estimate fee
     const smartfeeReq = {
-      API_key: apiKey,
       jsonrpc: '2.0',
       id: `${data.senderAddress}_estimatesmartfee_${Date.now()}`,
       method: 'estimatesmartfee',
-      params: [2], // confirm within x blocks
+      params: [BLOCK_CONFIRMATIONS], // confirm within x blocks
     };
-    const feeData = await node.post(smartfeeReq).json();
-    const feePerKB = feeData.result.feerate || FEE_RATE_KB;
+    const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
+    const feePerKB = feeData.result.feerate * 2 || FEE_RATE_KB;
     const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
     const jsonrpcReq = {
-      API_key: apiKey,
       jsonrpc: '2.0',
       id: `${data.senderAddress}_create_${Date.now()}`,
       method: 'createrawtransaction',
@@ -175,7 +181,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
 
     // Set a dummy amount in the change address
     jsonrpcReq.params[1][data.senderAddress] = feePerInput;
-    const estimateRes = await node.post(jsonrpcReq).json();
+    const estimateRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
     const size = estimateRes.result.length / 2;
 
     console.log('tx size', size);
@@ -207,7 +213,7 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
       }
     }
 
-    const rawTx = await node.post(jsonrpcReq).json();
+    const rawTx = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
 
     console.log('raw tx', rawTx.result);
 
@@ -223,118 +229,191 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
 }
 
 async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
-  const txid = data.output.split(':')[0];
-  const vout = parseInt(data.output.split(':')[1], 10);
-  const amount = sb.toBitcoin(data.outputValue);
+  const split = data.location.split(':');
 
-  console.log('nft tx', txid, vout, amount);
+  if (split.length !== 3) {
+    sendResponse?.(false);
+    return;
+  }
+
+  const txid = split[0];
+  const vout = Number(split[1]);
+  const offset = Number(split[2]);
+  const amount = Number(data.outputValue);
+  const minSats = sb.toSatoshi(MIN_TX_AMOUNT);
+
+  console.log(
+    'sending inscription',
+    data.inscriptionId,
+    'in tx',
+    txid,
+    'vout',
+    vout,
+    'offset',
+    offset,
+    'amount',
+    sb.toBitcoin(amount)
+  );
 
   try {
-    // get spendable utxos
-    const utxos = await getSpendableUtxos(data.address);
-
-    console.log('found utxos', utxos.length);
+    // Get the inscribed utxo
+    const inUtxo = await getInscriptionsUtxo(data.address, { txid, vout });
+    console.log(
+      'found inscription utxo with',
+      inUtxo.inscriptions.length,
+      'inscriptions and',
+      sb.toBitcoin(inUtxo.outputValue),
+      'value'
+    );
 
     // estimate fee
     const smartfeeReq = {
-      API_key: apiKey,
       jsonrpc: '2.0',
       id: `${data.address}_estimatesmartfee_${Date.now()}`,
       method: 'estimatesmartfee',
-      params: [2], // confirm within x blocks
+      params: [BLOCK_CONFIRMATIONS], // confirm within x blocks
     };
-    const feeData = await node.post(smartfeeReq).json();
-    const feePerKB = feeData.result.feerate || FEE_RATE_KB;
-    const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
-    const jsonrpcReq = {
-      API_key: apiKey,
-      jsonrpc: '2.0',
-      id: `${data.address}_create_${Date.now()}`,
-      method: 'createrawtransaction',
-      params: [
-        [{ txid, vout }],
-        {
-          [data.recipientAddress]: amount,
-        },
-      ],
-    };
-    let fee = feePerInput;
-    let total = amount;
-    let i = 1;
+    const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
+    const feePerKB = feeData.result.feerate * 2 || FEE_RATE_KB;
+    const tx = new Transaction();
 
-    console.log('found feerate', feeData.result.feerate);
-    console.log('using feePerKb', feePerKB);
-    console.log('estimated feePerInput', feePerInput);
+    // Populate the transaction with initial input
+    tx.from({
+      txid,
+      vout,
+      script: inUtxo.script,
+      satoshis: Number(inUtxo.outputValue),
+    });
 
-    for (const utxo of utxos) {
-      const value = sb.toBitcoin(utxo.outputValue);
+    // Determine the outputs for the specific inscription
+    let currOffset = 0;
+    let output = 0;
+    let total = 0;
 
-      total += value;
-      fee = feePerInput * (i + 1);
-      jsonrpcReq.params[0].push({
-        txid: utxo.txid,
-        vout: utxo.vout,
-      });
+    for (let i = 0; i < inUtxo.inscriptions.length; i++) {
+      const inscription = inUtxo.inscriptions[i];
+      const currSat = inscription.offset - currOffset;
 
-      console.log('utxo', i + 1, total, '>=', amount + fee);
-      i++;
-
-      if (total >= amount + fee) {
-        break;
+      if (currSat > 0) {
+        tx.to(data.address, inscription.offset - currOffset);
+        console.log(
+          'output',
+          output,
+          'to',
+          data.address,
+          'with',
+          sb.toBitcoin(inscription.offset - currOffset)
+        );
+        output++;
+        total += inscription.offset - currOffset;
       }
-    }
 
-    total = sanitizeFloatAmount(total);
-    fee = sanitizeFloatAmount(fee);
-
-    console.log('num utxos', i);
-    console.log('total', total);
-    console.log('amount', amount);
-    console.log('estimated fee', fee);
-
-    // Detect insufficient funds, discounting estimated fee from amount to allow for max send
-    if (total - fee < MIN_TX_AMOUNT) {
-      throw new Error(
-        `Insufficient funds ${total} < ${amount} + ${fee} with ${i}/${utxos.length} inputs`
-      );
-    }
-
-    // Set a dummy amount in the change address
-    jsonrpcReq.params[1][data.address] = feePerInput;
-    const estimateRes = await node.post(jsonrpcReq).json();
-    const size = estimateRes.result.length / 2;
-
-    console.log('tx size', size);
-
-    fee = Math.max(sanitizeFloatAmount((size / 1000) * feePerKB), feePerInput);
-
-    console.log('calculated fee', fee);
-
-    // Add change address and amount if enough, otherwise add to fee
-    const changeSatoshi = Math.trunc(
-      sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee)
-    );
-
-    console.log('calculated change', changeSatoshi);
-
-    if (changeSatoshi >= 0) {
-      const changeAmount = sb.toBitcoin(changeSatoshi);
-      if (changeAmount >= MIN_TX_AMOUNT) {
-        jsonrpcReq.params[1][data.address] = changeAmount;
+      if (inscription.offset === offset) {
+        tx.to(data.recipientAddress, minSats);
+        console.log(
+          'output',
+          output,
+          'to',
+          data.recipientAddress,
+          'with',
+          MIN_TX_AMOUNT
+        );
       } else {
-        delete jsonrpcReq.params[1][data.address];
-        fee += changeAmount;
+        tx.to(data.address, minSats);
+        console.log(
+          'output',
+          output,
+          'to',
+          data.address,
+          'with',
+          MIN_TX_AMOUNT
+        );
+      }
+
+      output++;
+      total += minSats;
+      currOffset += inscription.offset + minSats;
+    }
+
+    console.log('total outputs', sb.toBitcoin(total));
+
+    const estimatedSize = tx._estimateSize() / 1000;
+    const estimatedFee = Math.trunc(sb.toSatoshi(estimatedSize * feePerKB));
+    const remainder = amount - total;
+
+    console.log('estimated size', estimatedSize);
+    console.log('fee per kb', feePerKB);
+    console.log('estimated fee', sb.toBitcoin(estimatedFee));
+    console.log('remainder', sb.toBitcoin(remainder));
+
+    if (remainder >= estimatedFee) {
+      if (remainder - estimatedFee >= minSats) {
+        console.log(
+          'change to',
+          data.address,
+          'should be',
+          sb.toBitcoin(remainder - estimatedFee)
+        );
+        tx.to(data.address, remainder - estimatedFee);
+      }
+    } else {
+      const diff = estimatedFee - remainder;
+      console.log('needed to cover fee', sb.toBitcoin(diff));
+      let extra = 0;
+      // Find another utxo to cover the fee
+      // get spendable utxos
+      let utxos = await getSpendableUtxos(data.address);
+
+      const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
+
+      utxos = utxos.filter(
+        (utxo) => !spentUtxosCache.find((cache) => cache.txid === utxo.txid)
+      );
+
+      console.log('found utxos', utxos.length);
+      for (const utxo of utxos) {
+        const value = Number(utxo.outputValue);
+
+        tx.from({
+          txid: utxo.txid,
+          vout: utxo.vout,
+          script: utxo.script,
+          satoshis: value,
+        });
+        console.log('added utxo', utxo.txid, 'amount', sb.toBitcoin(value));
+
+        extra += value;
+
+        if (extra >= diff) {
+          break;
+        }
+      }
+
+      console.log('total added to cover fee', sb.toBitcoin(extra));
+
+      if (extra - diff >= minSats) {
+        tx.to(data.address, extra - diff);
+        console.log(
+          'change to',
+          data.address,
+          'should be',
+          sb.toBitcoin(extra - diff)
+        );
       }
     }
 
-    const rawTx = await node.post(jsonrpcReq).json();
+    const rawTx = tx.toString();
+    const fee = sb.toBitcoin(tx._getUnspentValue());
 
-    console.log('raw tx', rawTx.result);
+    console.log('total input amount', sb.toBitcoin(tx._getInputAmount()));
+    console.log('total output amount', sb.toBitcoin(tx._getOutputAmount()));
+    console.log('total fee', fee);
+    console.log('raw tx', rawTx);
 
     sendResponse?.({
-      rawTx: rawTx.result,
+      rawTx,
       fee,
-      amount,
+      amount: MIN_TX_AMOUNT,
     });
   } catch (err) {
     logError(err);
@@ -346,6 +425,12 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
   try {
     // Get utxos
     let utxos = await getSpendableUtxos(data.walletAddress);
+
+    const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
+
+    utxos = utxos.filter(
+      (utxo) => !spentUtxosCache.find((cache) => cache.txid === utxo.txid)
+    );
 
     console.log('found utxos', utxos.length);
 
@@ -364,14 +449,13 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
     console.log('num utxos', utxos.length);
 
     const smartfeeReq = {
-      API_key: apiKey,
       jsonrpc: '2.0',
       id: `${data.address}_estimatesmartfee_${Date.now()}`,
       method: 'estimatesmartfee',
-      params: [2], // confirm within x blocks
+      params: [BLOCK_CONFIRMATIONS], // confirm within x blocks
     };
-    const feeData = await node.post(smartfeeReq).json();
-    const feePerKB = sb.toSatoshi(feeData.result.feerate || FEE_RATE_KB);
+    const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
+    const feePerKB = sb.toSatoshi(feeData.result.feerate * 2 || FEE_RATE_KB);
 
     console.log('found feePerKB', feePerKB);
 
@@ -429,78 +513,63 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
 
 function onSendTransaction({ data = {}, sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-    ([wallet, password]) => {
-      const decryptedWallet = decrypt({
-        data: wallet,
-        password,
-      });
-      if (!decryptedWallet) {
+    async ([wallet, password]) => {
+      try {
+        const decryptedWallet = decrypt({
+          data: wallet,
+          password,
+        });
+        if (!decryptedWallet) {
+          sendResponse?.(false);
+        }
+        const signed = signRawTx(
+          data.rawTx,
+          decryptedWallet.children[data.selectedAddressIndex]
+        );
+
+        const jsonrpcReq = {
+          jsonrpc: '2.0',
+          id: `${data.senderAddress}_send_${Date.now()}`,
+          method: 'sendrawtransaction',
+          params: [signed],
+        };
+        const jsonrpcRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
+
+        // Open offscreen notification page to handle transaction status notifications
+        chrome.offscreen
+          ?.createDocument({
+            url: chrome.runtime.getURL(
+              `notification.html/?txId=${jsonrpcRes.result}`
+            ),
+            reasons: ['BLOBS'],
+            justification: 'Handle transaction status notifications',
+          })
+          .catch(() => {});
+
+        // Cache spent utxos
+        await cacheSignedTx(signed);
+
+        // Cache transaction if it's a DRC20 transaction
+        if (data.txType) {
+          const txsCache = (await getLocalValue(INSCRIPTION_TXS_CACHE)) ?? [];
+
+          txsCache.push({
+            txs: [jsonrpcRes.result],
+            txType: data.txType,
+            timestamp: Date.now(),
+            ticker: data.ticker,
+            tokenAmount: data.tokenAmount,
+            location: data.location,
+          });
+
+          setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
+        }
+
+        sendResponse(jsonrpcRes.result);
+      } catch (err) {
+        logError(err);
         sendResponse?.(false);
       }
-      const signed = signRawTx(
-        data.rawTx,
-        decryptedWallet.children[data.selectedAddressIndex]
-      );
-
-      const jsonrpcReq = {
-        API_key: apiKey,
-        jsonrpc: '2.0',
-        id: `${data.senderAddress}_send_${Date.now()}`,
-        method: 'sendrawtransaction',
-        params: [signed],
-      };
-      node
-        .post(jsonrpcReq)
-        .json(async (jsonrpcRes) => {
-          // Open offscreen notification page to handle transaction status notifications
-          chrome.offscreen
-            ?.createDocument({
-              url: chrome.runtime.getURL(
-                `notification.html/?txId=${jsonrpcRes.result}`
-              ),
-              reasons: ['BLOBS'],
-              justification: 'Handle transaction status notifications',
-            })
-            .catch(() => {});
-
-          // cache spent utxos
-          const tx = decodeRawTx(signed);
-          // Get the input UTXOs
-          const inputUtxos = tx.ins.map((input) => {
-            const txid = Buffer.from(input.hash.reverse()).toString('hex');
-            return {
-              txid,
-              vout: input.index,
-              timestamp: Date.now(),
-            };
-          });
-          const spentUtxosCache =
-            (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
-          spentUtxosCache.push(...inputUtxos);
-          setLocalValue({ [SPENT_UTXOS_CACHE]: spentUtxosCache });
-
-          // Cache transaction if it's a DRC20 transaction
-          if (data.txType) {
-            const txsCache = (await getLocalValue(INSCRIPTION_TXS_CACHE)) ?? [];
-
-            txsCache.push({
-              txs: [jsonrpcRes.result],
-              txType: data.txType,
-              timestamp: Date.now(),
-              ticker: data.ticker,
-              tokenAmount: data.tokenAmount,
-              output: data.output,
-            });
-
-            setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
-          }
-
-          sendResponse(jsonrpcRes.result);
-        })
-        .catch((err) => {
-          logError(err);
-          sendResponse?.(false);
-        });
     }
   );
 }
@@ -516,7 +585,6 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       }
 
       const jsonrpcReq = {
-        API_key: apiKey,
         jsonrpc: '2.0',
         id: `send_${Date.now()}`,
         method: 'sendrawtransaction',
@@ -528,7 +596,9 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
         jsonrpcReq.params[0]
       );
 
-      const jsonrpcRes = await node.post(jsonrpcReq).json();
+      const jsonrpcRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
+      await cacheSignedTx(signed);
+
       results.push(jsonrpcRes.result);
       i++;
     }
@@ -552,6 +622,7 @@ async function onSendInscribeTransfer({ data = {}, sendResponse } = {}) {
       tokenAmount: data.tokenAmount,
       timestamp: Date.now(),
       ticker: data.ticker,
+      location: `${results[1]}:0:0`,
     });
 
     setLocalValue({ [INSCRIPTION_TXS_CACHE]: txsCache });
@@ -601,7 +672,6 @@ async function onSignPsbt({ data = {}, sendResponse } = {}) {
 async function onSendPsbt({ data = {}, sendResponse } = {}) {
   try {
     const jsonrpcReq = {
-      API_key: apiKey,
       jsonrpc: '2.0',
       id: `send_${Date.now()}`,
       method: 'sendrawtransaction',
@@ -610,7 +680,7 @@ async function onSendPsbt({ data = {}, sendResponse } = {}) {
 
     console.log(`sending signed psbt`, jsonrpcReq.params[0]);
 
-    const jsonrpcRes = await node.post(jsonrpcReq).json();
+    const jsonrpcRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
 
     console.log(`tx id ${jsonrpcRes.result}`);
 
@@ -625,6 +695,8 @@ async function onSendPsbt({ data = {}, sendResponse } = {}) {
       })
       .catch(() => {});
 
+    await cacheSignedTx(data.rawTx);
+
     sendResponse(jsonrpcRes.result);
   } catch (err) {
     logError(err);
@@ -632,7 +704,7 @@ async function onSendPsbt({ data = {}, sendResponse } = {}) {
   }
 }
 
-async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
+async function onSignMessage({ data = {}, sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
     ([wallet, password]) => {
       const decryptedWallet = decrypt({
@@ -647,6 +719,28 @@ async function onCreateSignedMessage({ data = {}, sendResponse } = {}) {
       const signedMessage = signMessage(
         data.message,
         decryptedWallet.children[data.selectedAddressIndex]
+      );
+
+      sendResponse?.(signedMessage);
+    }
+  );
+}
+
+async function onDecryptMessage({ data = {}, sendResponse } = {}) {
+  Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+    ([wallet, password]) => {
+      const decryptedWallet = decrypt({
+        data: wallet,
+        password,
+      });
+
+      if (!decryptedWallet) {
+        sendResponse?.(false);
+      }
+
+      const signedMessage = decryptData(
+        decryptedWallet.children[data.selectedAddressIndex],
+        data.message
       );
 
       sendResponse?.(signedMessage);
@@ -747,6 +841,23 @@ async function onRequestSignedMessage({ data, sendResponse, sender } = {}) {
   return true;
 }
 
+async function onRequestDecryptedMessage({ data, sendResponse, sender } = {}) {
+  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+    sender.origin
+  ];
+  if (!isConnected) {
+    sendResponse?.(false);
+    return;
+  }
+  createClientPopup({
+    sendResponse,
+    sender,
+    data,
+    messageType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE,
+  });
+  return true;
+}
+
 // Generates a seed phrase, root keypair, child keypair + address 0
 // Encrypt + store the private data and address
 function onCreateWallet({ data = {}, sendResponse } = {}) {
@@ -773,6 +884,11 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
       password: data.password,
     });
 
+    const sessionWallet = {
+      addresses: wallet.addresses,
+      nicknames: wallet.nicknames,
+    };
+
     Promise.all([
       setLocalValue({
         [PASSWORD]: encryptedPassword,
@@ -781,12 +897,12 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
       }),
       setSessionValue({
         [AUTHENTICATED]: true,
-        [WALLET]: wallet,
+        [WALLET]: sessionWallet,
         [PASSWORD]: data.password,
       }),
     ])
       .then(() => {
-        sendResponse?.({ authenticated: true, wallet });
+        sendResponse?.({ authenticated: true, wallet: sessionWallet });
       })
       .catch(() => sendResponse?.(false));
   } else {
@@ -795,46 +911,41 @@ function onCreateWallet({ data = {}, sendResponse } = {}) {
   return true;
 }
 
-function onGetDogecoinPrice({ sendResponse } = {}) {
-  nownodes
-    .get('/tickers/?currency=usd')
-    .json((response) => {
-      sendResponse?.(response.rates);
-    })
-    .catch((err) => {
-      logError(err);
-      sendResponse?.(false);
-    });
-  return true;
+async function onGetDogecoinPrice({ sendResponse } = {}) {
+  try {
+    const response = (
+      await mydoge.get('/wallet/info', {
+        params: { route: '/tickers/?currency=usd' },
+      })
+    ).data;
+
+    sendResponse?.(response.rates);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
 }
 
-function onGetAddressBalance({ data, sendResponse } = {}) {
-  if (data.addresses) {
-    Promise.all(
-      data.addresses.map((address) =>
-        nownodes.get(`/address/${address}`).json((response) => response.balance)
-      )
-    )
-      .then((balances) => {
-        sendResponse?.(balances);
-      })
-      .catch((err) => {
-        logError(err);
-        sendResponse?.(false);
-      });
+async function onGetAddressBalance({ data, sendResponse } = {}) {
+  try {
+    const addresses = data.addresses?.length ? data.addresses : [data.address];
+    const balances = await Promise.all(
+      addresses.map(async (address) => {
+        const response = (
+          await mydoge.get('/wallet/info', {
+            params: { route: `/address/${address}` },
+          })
+        ).data;
 
-    return true;
+        return response.balance;
+      })
+    );
+
+    sendResponse?.(balances.length > 1 ? balances : balances[0]);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
   }
-  nownodes
-    .get(`/address/${data.address}`)
-    .json((response) => {
-      sendResponse?.(response.balance);
-    })
-    .catch((err) => {
-      logError(err);
-      sendResponse?.(false);
-    });
-  return true;
 }
 
 async function onGetTransactions({ data, sendResponse } = {}) {
@@ -843,53 +954,55 @@ async function onGetTransactions({ data, sendResponse } = {}) {
   let totalPages;
   let page;
 
-  nownodes
-    .get(
-      `/address/${data.address}?page=${
-        data.page || 1
-      }&pageSize=${TRANSACTION_PAGE_SIZE}`
-    )
-    .json((response) => {
-      txIds = response.txids;
-      totalPages = response.totalPages;
-      page = response.page;
-    })
-    // Get tx details
-    .then(async () => {
-      if (!txIds?.length) {
-        sendResponse?.({ transactions: [], totalPages, page });
-        return;
-      }
-      const transactions = (
-        await Promise.all(txIds.map((txId) => getCachedTx(txId)))
-      ).sort((a, b) => b.blockTime - a.blockTime);
-      sendResponse?.({ transactions, totalPages, page });
-    })
-    .catch((err) => {
-      logError(err);
-      sendResponse?.(false);
-    });
-  return true;
+  try {
+    const response = (
+      await mydoge.get('/wallet/info', {
+        params: {
+          route: `/address/${data.address}?page=${
+            data.page || 1
+          }&pageSize=${TRANSACTION_PAGE_SIZE}`,
+        },
+      })
+    ).data;
+
+    txIds = response.txids;
+    totalPages = response.totalPages;
+    page = response.page;
+
+    if (!txIds?.length) {
+      sendResponse?.({ transactions: [], totalPages, page });
+      return;
+    }
+
+    const transactions = (
+      await Promise.all(txIds.map((txId) => getCachedTx(txId)))
+    ).sort((a, b) => b.blockTime - a.blockTime);
+
+    sendResponse?.({ transactions, totalPages, page });
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
 }
 
-function onGetTransactionDetails({ data, sendResponse } = {}) {
-  nownodes
-    .get(`/tx/${data.txId}`)
-    .json((transaction) => {
-      sendResponse?.(transaction);
-    })
-    .catch((err) => {
-      logError(err);
-      sendResponse?.(false);
-    });
-  return true;
+async function onGetTransactionDetails({ data, sendResponse } = {}) {
+  try {
+    const transaction = (
+      await mydoge.get('wallet/info', { params: { route: `/tx/${data.txId}` } })
+    ).data;
+
+    sendResponse?.(transaction);
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
 }
 
 function onGenerateAddress({ sendResponse, data } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
-    ([wallet, password]) => {
+    ([encryptedWallet, password]) => {
       const decryptedWallet = decrypt({
-        data: wallet,
+        data: encryptedWallet,
         password,
       });
       if (!decryptedWallet) {
@@ -907,18 +1020,25 @@ function onGenerateAddress({ sendResponse, data } = {}) {
           ? data.nickname
           : `Address ${decryptedWallet.addresses.length}`,
       };
-      const encryptedWallet = encrypt({
+      encryptedWallet = encrypt({
         data: decryptedWallet,
         password,
       });
+
+      const sessionWallet = {
+        addresses: decryptedWallet.addresses,
+        nicknames: decryptedWallet.nicknames,
+      };
       Promise.all([
-        setSessionValue({ [WALLET]: decryptedWallet }),
+        setSessionValue({
+          [WALLET]: sessionWallet,
+        }),
         setLocalValue({
           [WALLET]: encryptedWallet,
         }),
       ])
         .then(() => {
-          sendResponse?.({ wallet: decryptedWallet });
+          sendResponse?.({ wallet: sessionWallet });
         })
         .catch(() => sendResponse?.(false));
     }
@@ -946,14 +1066,20 @@ function onUpdateAddressNickname({ sendResponse, data } = {}) {
         data: decryptedWallet,
         password,
       });
+      const sessionWallet = {
+        addresses: decryptedWallet.addresses,
+        nicknames: decryptedWallet.nicknames,
+      };
       Promise.all([
-        setSessionValue({ [WALLET]: decryptedWallet }),
+        setSessionValue({
+          [WALLET]: sessionWallet,
+        }),
         setLocalValue({
           [WALLET]: encryptedWallet,
         }),
       ])
         .then(() => {
-          sendResponse?.({ wallet: decryptedWallet });
+          sendResponse?.({ wallet: sessionWallet });
         })
         .catch(() => sendResponse?.(false));
     }
@@ -980,7 +1106,15 @@ async function onConnectionRequest({ sendResponse, sender } = {}) {
 // Handle the user's response to the connection request popup and send a message to the content script with the response
 async function onApproveConnection({
   sendResponse,
-  data: { approved, address, balance, originTabId, origin, error },
+  data: {
+    approved,
+    address,
+    selectedAddressIndex,
+    balance,
+    originTabId,
+    origin,
+    error,
+  },
 } = {}) {
   if (approved) {
     const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || {};
@@ -990,16 +1124,35 @@ async function onApproveConnection({
         [origin]: { address, originTabId, origin },
       },
     });
-    chrome.tabs?.sendMessage(originTabId, {
-      type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
-      data: {
-        approved: true,
-        address,
-        balance,
-      },
-      origin,
-    });
-    sendResponse(true);
+
+    Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
+      ([wallet, password]) => {
+        const decryptedWallet = decrypt({
+          data: wallet,
+          password,
+        });
+
+        if (!decryptedWallet) {
+          sendResponse?.(false);
+          return;
+        }
+
+        chrome.tabs?.sendMessage(originTabId, {
+          type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+          data: {
+            approved: true,
+            publicKey: fromWIF(
+              decryptedWallet.children[selectedAddressIndex]
+            ).publicKey.toString('hex'),
+            address,
+            balance,
+          },
+          origin,
+        });
+
+        sendResponse(true);
+      }
+    );
   } else {
     chrome.tabs?.sendMessage(originTabId, {
       type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
@@ -1144,6 +1297,30 @@ async function onApproveSignedMessage({
   return true;
 }
 
+async function onApproveDecryptedMessage({
+  sendResponse,
+  data: { decryptedMessage, error, originTabId, origin },
+} = {}) {
+  if (decryptedMessage) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+      data: {
+        decryptedMessage,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
 async function onGetConnectedClients({ sendResponse } = {}) {
   const connectedClients = (await getSessionValue(CONNECTED_CLIENTS)) || {};
   sendResponse(connectedClients);
@@ -1168,14 +1345,21 @@ function onDeleteAddress({ sendResponse, data } = {}) {
         data: decryptedWallet,
         password,
       });
+
+      const sessionWallet = {
+        addresses: decryptedWallet.addresses,
+        nicknames: decryptedWallet.nicknames,
+      };
       Promise.all([
-        setSessionValue({ [WALLET]: decryptedWallet }),
+        setSessionValue({
+          [WALLET]: sessionWallet,
+        }),
         setLocalValue({
           [WALLET]: encryptedWallet,
         }),
       ])
         .then(() => {
-          sendResponse?.({ wallet: decryptedWallet });
+          sendResponse?.({ wallet: sessionWallet });
         })
         .catch(() => sendResponse?.(false));
     }
@@ -1208,19 +1392,70 @@ function onAuthenticate({ data = {}, sendResponse } = {}) {
         password: data.password,
       });
 
-      const decryptedWallet = decrypt({
-        data: encryptedWallet,
-        password: data.password,
-      });
       const authenticated = decryptedPass === hash(data.password);
+
       if (authenticated) {
+        const decryptedWallet = decrypt({
+          data: encryptedWallet,
+          password: data.password,
+        });
+
+        if (!decryptedWallet) {
+          sendResponse?.(false);
+          return;
+        }
+
+        // MIGRATE Bitcon WIF to Dogecoin WIF
+        if (!fromWIF(decryptedWallet.root)) {
+          const root = generateRoot(decryptedWallet.phrase);
+          const numChildren = decryptedWallet.children.length;
+          decryptedWallet.root = root.toWIF();
+          decryptedWallet.children = [];
+
+          for (let i = 0; i < numChildren; i++) {
+            const child = generateChild(root, i);
+            decryptedWallet.children.push(child.toWIF());
+          }
+
+          const migratedWallet = encrypt({
+            data: decryptedWallet,
+            password: data.password,
+          });
+
+          setLocalValue({
+            [WALLET]: migratedWallet,
+          });
+
+          console.info('migrated wif format');
+        }
+
+        // decryptedWallet.children.forEach((wif) => console.log(wif));
+
+        const sessionWallet = {
+          addresses: decryptedWallet.addresses,
+          nicknames: decryptedWallet.nicknames,
+        };
+
         setSessionValue({
           [AUTHENTICATED]: true,
-          [WALLET]: decryptedWallet,
+          [WALLET]: sessionWallet,
           [PASSWORD]: data.password,
         });
+
+        if (data._dangerouslyReturnSecretPhrase) {
+          sessionWallet.phrase = decryptedWallet.phrase;
+        }
+
+        sendResponse?.({
+          authenticated,
+          wallet: sessionWallet,
+        });
+      } else {
+        sendResponse?.({
+          authenticated,
+          wallet: null,
+        });
       }
-      sendResponse?.({ authenticated, wallet: decryptedWallet });
     }
   );
   return true;
@@ -1312,7 +1547,10 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       onSendPsbt({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SIGN_MESSAGE:
-      onCreateSignedMessage({ data, sendResponse });
+      onSignMessage({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.DECRYPT_MESSAGE:
+      onDecryptMessage({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SEND_TRANSACTION:
       onSendTransaction({ data, sender, sendResponse });
@@ -1380,8 +1618,14 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
       onRequestSignedMessage({ data, sendResponse, sender });
       break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE:
+      onRequestDecryptedMessage({ data, sendResponse, sender });
+      break;
     case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
       onApproveSignedMessage({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE:
+      onApproveDecryptedMessage({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.GET_CONNECTED_CLIENTS:
       onGetConnectedClients({ sender, sendResponse, data });

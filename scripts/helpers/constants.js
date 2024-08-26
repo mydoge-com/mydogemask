@@ -4,7 +4,6 @@ export const ONBOARDING_COMPLETE = '@mydoge_ONBOARDING_COMPLETE';
 export const SELECTED_ADDRESS_INDEX = '@mydoge_SELECTED_ADDRESS_INDEX';
 export const CONNECTED_CLIENTS = '@mydoge_CONNECTED_CLIENTS';
 export const AUTHENTICATED = '@mydoge_AUTHENTICATED';
-export const NOWNODES_BASE_URL = 'https://dogebook.nownodes.io/api/v2';
 export const MAX_NICKNAME_LENGTH = 18;
 export const FEE_RATE_KB = 0.5;
 export const MAX_UTXOS = 1000;
@@ -14,6 +13,7 @@ export const QUERY_CACHE = '@mydoge_QUERY_CACHE';
 export const INSCRIPTION_TXS_CACHE = '@mydoge_INSCRIPTION_TXS_CACHE';
 export const SPENT_UTXOS_CACHE = '@mydoge_SPENT_UTXOS_CACHE';
 
+export const BLOCK_CONFIRMATIONS = 1;
 export const TRANSACTION_PAGE_SIZE = 10;
 
 export const TRANSACTION_TYPES = {
@@ -23,7 +23,7 @@ export const TRANSACTION_TYPES = {
 };
 export const DOGINAL_TX = 'doginal_tx';
 
-export const TRANSACTION_PENDING_TIME = 1000 * 60 * 15;
+export const TRANSACTION_PENDING_TIME = 1000 * 60 * 2; // 2 minutes
 
 const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_CONNECTION: 'clientRequestConnection',
@@ -46,6 +46,9 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_REQUEST_PSBT_RESPONSE: 'clientRequestPsbtResponse',
   CLIENT_REQUEST_SIGNED_MESSAGE: 'clientRequestSignedMessage',
   CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE: 'clientRequestSignedMessageResponse',
+  CLIENT_REQUEST_DECRYPTED_MESSAGE: 'clientRequestDecryptedMessage',
+  CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE:
+    'clientRequestDecryptedMessageResponse',
   CLIENT_DISCONNECT: 'clientDisconnect',
   CLIENT_DISCONNECT_RESPONSE: 'clientDisconnectResponse',
   CLIENT_CONNECTION_STATUS: 'clientConnectionStatus',
@@ -77,18 +80,14 @@ export const MESSAGE_TYPES = {
   SIGN_PSBT: 'signPsbt',
   SEND_PSBT: 'sendPsbt',
   SIGN_MESSAGE: 'signMessage',
+  DECRYPT_MESSAGE: 'decryptMessage',
   GET_PSBT_FEE: 'getPsbtFee',
   GET_CONNECTED_CLIENTS: 'getConnectedClients',
   UPDATE_ADDRESS_NICKNAME: 'updateAddressNickname',
   NOTIFY_TRANSACTION_SUCCESS: 'notifyTransactionSuccess',
 };
 
-export const NODE_BASE_URL = 'https://doge.nownodes.io';
-export const DOGINALS_WALLET_API_V2_URL = 'https://wallet-api.dogeord.io/v2';
-export const DOGINALS_WALLET_API_URL = 'https://wallet-api.dogeord.io';
-export const DOGINALS_MARKETPLACE_API_URL =
-  'https://marketplace-api.dogeord.io';
-export const MYDOGE_BASE_URL = 'https://api.mydoge.com';
+export const MYDOGE_BASE_URL = 'https://api.mydoge.com'; // 'http://localhost:3000';
 
 export const TICKER_ICON_URL =
   'https://drc-20-icons.s3.eu-central-1.amazonaws.com';

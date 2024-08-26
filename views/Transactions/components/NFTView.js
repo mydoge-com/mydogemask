@@ -7,7 +7,7 @@ export const NFTViewComponent = ({ nft = {} }) => {
   const iframeRef = useRef(null);
   const retryCount = useRef(0);
 
-  const { content, contentType } = nft;
+  const { content, contentType, preview } = nft;
   const [nftLoaded, setNFTLoaded] = useState(false);
 
   useEffect(() => {
@@ -30,8 +30,8 @@ export const NFTViewComponent = ({ nft = {} }) => {
     };
   }, [content]);
 
-  const isImage = contentType.includes('image');
-  const isText = contentType.includes('text');
+  const isImage = contentType?.includes('image');
+  const isText = !contentType || contentType.includes('text');
 
   if (isImage) {
     return <img src={content} width='100%' height='auto' alt='NFT' />;
@@ -48,14 +48,14 @@ export const NFTViewComponent = ({ nft = {} }) => {
           key={content}
           ref={iframeRef}
           title='NFT'
-          src={content}
+          src={contentType ? content : preview}
           width='100%'
           height='auto'
           sandbox='allow-same-origin allow-scripts'
           allow
           scrolling='no'
           style={{
-            pointerEvents: 'none',
+            // pointerEvents: 'none',
             border: 'none',
             overflow: 'hidden',
             opacity: nftLoaded ? 1 : 0,

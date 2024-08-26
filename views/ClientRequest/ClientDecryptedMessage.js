@@ -21,7 +21,7 @@ import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 
-export function ClientSignedMessage({
+export function ClientDecryptedMessage({
   params,
   dispatch,
   connectedClient,
@@ -41,8 +41,8 @@ export function ClientSignedMessage({
   const onRejectTransaction = useCallback(() => {
     sendMessage(
       {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
-        data: { error: 'User refused signed message', originTabId, origin },
+        message: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+        data: { error: 'User refused decrypted message', originTabId, origin },
       },
       () => {
         Toast.show({
@@ -51,7 +51,7 @@ export function ClientSignedMessage({
             return (
               <ToastRender
                 title='Message Rejected'
-                description={`MyDoge failed to authorize the signed message request to ${origin}`}
+                description={`MyDoge failed to authorize the decrypted message request to ${origin}`}
                 status='error'
               />
             );
@@ -69,19 +69,19 @@ export function ClientSignedMessage({
         <FaLink />
       </Box>
       <Text fontSize='2xl'>
-        Confirm <Text fontWeight='bold'>Signed Message</Text>
+        Confirm <Text fontWeight='bold'>Decrypted Message</Text>
       </Text>
       <Center pt='16px' width='80%'>
         <WalletAddress address={connectedClient.address} />
         <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-          Signing
+          Decrypting
         </Text>
         <OriginBadge origin={origin} mt='12px' mb='20px' />
         <Text
           fontWeight='semibold'
           pt='6px'
           adjustsFontSizeToFit
-          numberOfLines={4}
+          numberOfLines={1}
         >
           {message}
         </Text>
@@ -99,7 +99,7 @@ export function ClientSignedMessage({
             role='button'
             px='28px'
           >
-            Sign
+            Decrypt
           </BigButton>
         </HStack>
       </Center>
@@ -132,15 +132,15 @@ const ConfirmationModal = ({
     setLoading(true);
     sendMessage(
       {
-        message: MESSAGE_TYPES.SIGN_MESSAGE,
+        message: MESSAGE_TYPES.DECRYPT_MESSAGE,
         data: { message, selectedAddressIndex: addressIndex },
       },
-      (signedMessage) => {
-        if (signedMessage) {
+      (decryptedMessage) => {
+        if (decryptedMessage) {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
-              data: { signedMessage, originTabId, origin },
+              message: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+              data: { decryptedMessage, originTabId, origin },
             },
             () => {
               Toast.show({
@@ -148,7 +148,7 @@ const ConfirmationModal = ({
                 render: () => {
                   return (
                     <ToastRender
-                      description='Message Signed Successfully'
+                      description='Message Decrypted Successfully'
                       status='success'
                     />
                   );
@@ -160,9 +160,9 @@ const ConfirmationModal = ({
         } else {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+              message: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
               data: {
-                error: 'Failed to sign message',
+                error: 'Failed to decrypt message',
                 originTabId,
                 origin,
               },
@@ -170,13 +170,13 @@ const ConfirmationModal = ({
             () => {
               Toast.show({
                 title: 'Error',
-                description: 'Message Signing Failed',
+                description: 'Message Decrypting Failed',
                 duration: 3000,
                 render: () => {
                   return (
                     <ToastRender
                       title='Error'
-                      description='Failed to sign message.'
+                      description='Failed to decrypt message.'
                       status='error'
                     />
                   );
@@ -209,7 +209,8 @@ const ConfirmationModal = ({
             <OriginBadge origin={origin} mb='8px' />
             <VStack alignItems='center'>
               <Text adjustsFontSizeToFit numberOfLines={2}>
-                Confirm message to sign <Text fontWeight='bold'>{message}</Text>
+                Confirm message to decrypt{' '}
+                <Text fontWeight='bold'>{message}</Text>
               </Text>
             </VStack>
           </AlertDialog.Body>

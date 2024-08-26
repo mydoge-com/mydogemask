@@ -38,7 +38,7 @@ class MyDogeWallet {
    * @param {function({ approved: boolean, address: string, balance: number }): void} [onSuccess] - Optional callback function to execute upon successful connection.
    *                                                           Receives an object containing the wallet address and balance.
    * @param {function(string): void} [onError] - Optional callback function to execute upon connection error.
-   * @returns {Promise<{ approved: boolean; address: string; balance: number }>} Promise object representing the outcome of the connection attempt, resolving to an object with the wallet address.
+   * @returns {Promise<{ approved: boolean, address: string, publicKey: string, balance: number }>} Promise object representing the outcome of the connection attempt, resolving to an object with the connected address information.
    * @method
    * @example
    * connect(
@@ -71,7 +71,7 @@ class MyDogeWallet {
    * @param {function({ address: string, balance: number }): void} [onSuccess] - Optional callback function to execute upon successful retrieval of balance.
    *                                                           Receives an object containing the wallet address and balance.
    * @param {function(string): void} [onError] - Optional callback function to execute upon error in retrieving balance.
-   * @returns {Promise<{ address: string; balance: number }>} Promise object representing the outcome of the balance retrieval, resolving to an object with the wallet address and balance.
+   * @returns {Promise<{ address: string, balance: number }>} Promise object representing the outcome of the balance retrieval, resolving to an object with the wallet address and balance.
    * @method
    * @example
    * getBalance(
@@ -148,7 +148,7 @@ class MyDogeWallet {
    * @param {function({ inscriptions: Array<{ txid: string, vout: number, ticker: string, contentType: string, content: string, output: string, amount: number }>, ticker: string, address: string }): void} [onSuccess] - Optional callback function to execute upon successful retrieval.
    *                                                           Receives an object containing the transferable inscriptions, ticker symbol, and wallet address.
    * @param {function(string): void} [onError] - Optional callback function to execute upon error in fetching the transferable balance.
-   * @returns {Promise<{ inscriptions: Array<{ txid: string, vout: number, ticker: string, contentType: string, content: string, output: string, amount: number }>, ticker: string, address: string }>} Promise object representing the outcome of the balance retrieval, resolving to an object with the wallet address, transferable inscriptions, and ticker symbol.
+   * @returns {Promise<{ inscriptions: Array<{ txid: string, vout: number, ticker: string, contentType: string, content: string, output: string, amount: number }>, ticker: string, address: string }>} Promise object representing the outcome of the balance retrieval, resolving to an object with the wallet address, transferable inscriptions, and ticker symbol.}
    * @method
    * @example
    * getTransferableDRC20(
@@ -227,7 +227,7 @@ class MyDogeWallet {
    * @async
    * @param {Object} data - Data required for the transaction, must contain 'recipientAddress' and 'output'.
    * @param {string} data.recipientAddress - The recipient address.
-   * @param {string} data.output - The output value.
+   * @param {string} data.location - The location of the inscription in the format txid:vout:offset.
    * @param {function({ txId: string }): void} [onSuccess] - Optional callback function to execute upon successful transaction request.
    *                                                           Receives an object containing the transaction ID.
    * @param {function(string): void} [onError] - Optional function to execute upon error in processing the transaction request.
@@ -242,7 +242,7 @@ class MyDogeWallet {
    */
   requestInscriptionTransaction(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
-      if (!data?.recipientAddress || !data?.output) {
+      if (!data?.recipientAddress || !data?.location) {
         onError?.(new Error('Invalid data'));
         reject(new Error('Invalid data'));
         return;
@@ -270,10 +270,11 @@ class MyDogeWallet {
    * @param {Object} data - Data required for the transaction, must contain 'ticker' and 'amount'.
    * @param {string} data.ticker - The ticker symbol for the DRC20 token.
    * @param {string} data.amount - The amount of DRC20 tokens to make available.
-   * @param {function({ txId: string; ticker: string; amount: number }): void} [onSuccess] - Optional callback function to execute upon successful transaction request.
-   *                                                           Receives an object containing the transaction ID, ticker symbol, and amount.
+   * @param {function({ txId: string, ticker: string, amount: number }): void} [onSuccess] - Optional callback function to execute upon successful transaction request.
+   *
+   * Receives an object containing the transaction ID, ticker symbol, and amount.
    * @param {function(string): void} [onError] - Optional callback function to execute upon error in processing the transaction request.
-   * @returns {Promise<{ txId: string; ticker: string; amount: number }>} Promise object representing the outcome of the transaction request, resolving to an object with the transaction ID, ticker symbol, and amount.
+   * @returns {Promise<{ txId: string, ticker: string, amount: number }>} Promise object representing the outcome of the transaction request, resolving to an object with the transaction ID, ticker symbol, and amount.
    * @method
    * @example
    * requestInscriptionTransaction(
@@ -362,8 +363,8 @@ class MyDogeWallet {
    * @param {string} data.message - The message to be signed.
    * @param {function({ signedMessage: string }): void} [onSuccess] - Optional callback function to execute upon successful message signing.
    *                                                           Receives an object containing the signed message.
-   * @param {function(string): void} [onError] - Callback function to execute upon error in signing the PSBT.
-   * @returns {Promise<{ signedMessage: string }>} Promise object representing the outcome of the transaction request, resolving to an object with the signed message.
+   * @param {function(string): void} [onError] - Callback function to execute upon error in signing the message.
+   * @returns {Promise<{ signedMessage: string }>} Promise object representing the outcome of the request, resolving to an object with the signed message.
    * @method
    * @example
    * requestSignedMessage(
@@ -390,6 +391,46 @@ class MyDogeWallet {
         onSuccess,
         onError,
         messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+      });
+    });
+  }
+
+  /**
+   * Requests the decrypting of an arbitrary message encrypted by the connected address public key.
+   * @function
+   * @async
+   * @param {Object} data - Data required for the decryption, must contain 'message'.
+   * @param {string} data.message - The message to be decrypted.
+   * @param {function({ decryptedMessage: string }): void} [onSuccess] - Optional callback function to execute upon successful message signing.
+   *                                                           Receives an object containing the decrypted message.
+   * @param {function(string): void} [onError] - Callback function to execute upon error in decrypting the message.
+   * @returns {Promise<{ decryptedMessage: string }>} Promise object representing the outcome of the request, resolving to an object with the decrypted message.
+   * @method
+   * @example
+   * requestDecryptedMessage(
+   *   (result) => console.log(`Decrypted message: ${result.decryptedMessage}`),
+   *   (error) => console.error(`Message decryption failed: ${error}`)
+   * ).then(result => console.log(result.decryptedMessage))
+   *   .catch(error => console.error(error));
+   */
+  requestDecryptedMessage(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.message) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE, data },
+        window.location.origin
+      );
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
       });
     });
   }
@@ -434,7 +475,7 @@ class MyDogeWallet {
    * @param {function({ connected: boolean, address: string, selectedWalletAddress: string }): void} [onSuccess] - Optional callback function to execute upon successfully retrieving the status.
    *                                                           Receives an object containing the wallet address, selected wallet address, and connection status.
    * @param {function(string): void} [onError] - Optional callback function to execute upon error in retrieving the connection status.
-   * @returns {Promise<{ connected: boolean; address: string; selectedWalletAddress: string }>} Promise object representing the outcome of the connection status retrieval, resolving to an object with the wallet address, selected wallet address, and connection status.
+   * @returns {Promise<{ connected: boolean, address: string, selectedWalletAddress: string }>} Promise object representing the outcome of the connection status retrieval, resolving to an object with the wallet address, selected wallet address, and connection status.
    * @method
    * @example
    * getConnectionStatus(
@@ -476,7 +517,7 @@ class MyDogeWallet {
    * @param {function({ connected: boolean, address: string, selectedWalletAddress: string }): void} [onSuccess] - Optional callback function to execute upon successfully retrieving the status.
    *                                                           Receives an object containing the wallet address, selected wallet address, and connection status.
    * @param {function(string): void} [onError] - Optional callback function to execute upon error in retrieving the connection status.
-   * @returns {Promise<{ connected: boolean; address: string; connectedWalletAddress: string }>} Promise object representing the outcome of the connection status retrieval, resolving to an object with the wallet address, selected wallet address, and connection status.
+   * @returns {Promise<{ connected: boolean, address: string, connectedWalletAddress: string }>} Promise object representing the outcome of the connection status retrieval, resolving to an object with the wallet address, selected wallet address, and connection status.
    * @method
    * @example
    * getConnectionStatus(

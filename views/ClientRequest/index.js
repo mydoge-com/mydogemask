@@ -9,6 +9,7 @@ import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { ClientAvailableDRC20Transaction } from './ClientAvailableDRC20Transaction';
 import { ClientConnect } from './ClientConnect';
+import { ClientDecryptedMessage } from './ClientDecryptedMessage';
 import { ClientDoginalTransaction } from './ClientDoginalTransaction';
 import { ClientPSBT } from './ClientPSBT';
 import { ClientSignedMessage } from './ClientSignedMessage';
@@ -22,6 +23,7 @@ const CLIENT_REQUEST_ROUTES = {
     ClientAvailableDRC20Transaction,
   [MESSAGE_TYPES.CLIENT_REQUEST_PSBT]: ClientPSBT,
   [MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE]: ClientSignedMessage,
+  [MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE]: ClientDecryptedMessage,
 };
 
 export function ClientRequest() {

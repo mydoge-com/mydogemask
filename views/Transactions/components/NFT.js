@@ -19,7 +19,7 @@ export const NFTComponent = ({ nft, index, onPress, selected }) => {
   );
 
   const isNFTPending = pendingDoginalTxs?.find(
-    (tx) => tx.output === nft?.output
+    (tx) => tx.location === nft?.location
   );
 
   return (
@@ -63,6 +63,7 @@ export const NFTComponent = ({ nft, index, onPress, selected }) => {
             alignItems='center'
             justifyContent='center'
             maxH='130px'
+            pointerEvents='none'
           >
             <NFTView nft={nft} />
           </Box>

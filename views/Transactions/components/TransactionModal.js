@@ -6,7 +6,7 @@ import { FiArrowUpRight, FiCopy } from 'react-icons/fi';
 import { BigButton } from '../../../components/Button';
 import { InscriptionIndicator } from '../../../components/InscriptionIndicator';
 import { useCopyText } from '../../../hooks/useCopyText';
-import { nownodes } from '../../../scripts/api';
+import { mydoge } from '../../../scripts/api';
 import { TRANSACTION_TYPES } from '../../../scripts/helpers/constants';
 import { setLocalValue } from '../../../scripts/helpers/storage';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
@@ -25,7 +25,9 @@ export const TransactionModal = ({
   useEffect(() => {
     (async () => {
       if (isOpen) {
-        const tx = await nownodes.get(`/tx/${id}`).json();
+        const tx = (
+          await mydoge.get('/wallet/info', { params: { route: `/tx/${id}` } })
+        ).data;
         setConf(tx.confirmations);
         await setLocalValue({ [id]: tx });
       }
@@ -62,7 +64,9 @@ export const TransactionModal = ({
                 color='gray.500'
                 textAlign='center'
               >
-                {address?.slice(0, 8)}...{address?.slice(-4)}
+                {address?.includes('Multiple')
+                  ? address
+                  : `${address?.slice(0, 8)}...${address?.slice(-4)}`}
               </Text>
               <Button
                 variant='subtle'

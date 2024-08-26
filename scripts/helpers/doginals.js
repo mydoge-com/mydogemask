@@ -1,6 +1,5 @@
 import {
   crypto,
-  Networks,
   Opcode,
   PrivateKey,
   Script,
@@ -8,23 +7,11 @@ import {
 } from 'bitcore-lib-doge';
 import sb from 'satoshi-bitcoin';
 
-import { doginalsV2, mydoge } from '../api';
-import { NFT_PAGE_SIZE } from './constants';
-import { network } from './wallet';
+import { mydoge } from '../api';
 
 const { Hash, Signature } = crypto;
 const MAX_CHUNK_LEN = 240;
 const MAX_PAYLOAD_LEN = 1500;
-
-Networks.add({
-  name: 'doge',
-  alias: 'dogecoin',
-  pubkeyhash: network.pubKeyHash,
-  privatekey: network.wif,
-  scripthash: network.scriptHash,
-  xpubkey: network.bip32.public,
-  xprivkey: network.bip32.private,
-});
 
 function bufferToChunk(b, type) {
   b = Buffer.from(b, type);
@@ -125,7 +112,7 @@ export function inscribe(
 
   // console.log('set fee per kb', Transaction.FEE_PER_KB);
 
-  const privateKey = new PrivateKey(privkey, 'doge');
+  const privateKey = new PrivateKey(privkey, 'livenet');
   const publicKey = privateKey.toPublicKey();
   const txs = [];
   const parts = [];
@@ -277,84 +264,67 @@ export function inscribe(
   return txs;
 }
 
-export async function getDRC20Inscriptions(address, ticker, cursor, result) {
-  const query = await doginalsV2
-    .get(
-      `/brc20/transferable-list?address=${address}&ticker=${encodeURIComponent(
+export async function getDRC20Inscriptions(address, ticker) {
+  const query = (
+    await mydoge.get(
+      `/inscriptions/${address}?filter=drc20&ticker=${encodeURIComponent(
         ticker
-      )}&cursor=${cursor}&size=${NFT_PAGE_SIZE}`
+      )}`
     )
-    .json();
+  ).data;
 
-  result.push(
-    ...query.result.list.map((i) => {
-      const txid = i.inscriptionId.slice(0, -2);
-      const vout = parseInt(i.inscriptionId.slice(-1), 10);
-
-      return {
-        txid,
-        vout,
-        // Return extra data for rendering and transfering
-        ticker,
-        contentType: 'text/plain',
-        content: `https://wonky-ord.dogeord.io/content/${i.inscriptionId}`,
-        output: `${txid}:${vout}`,
-        amount: i.amount,
-      };
-    })
-  );
-
-  if (
-    query.result.total > query.result.list.length &&
-    query.result.list.length === NFT_PAGE_SIZE
-  ) {
-    cursor += query.result.list.length;
-    return getDRC20Inscriptions(address, ticker, cursor, result);
-  }
+  return query.list;
 }
 
 export async function getDRC20Balances(address, ticker) {
-  const result = await mydoge
-    .get(`/drc20/${address}${ticker ? `?ticker=${ticker}` : ''}`)
-    .json();
+  const result = (
+    await mydoge.get(`/drc20/${address}${ticker ? `?ticker=${ticker}` : ''}`)
+  ).data;
 
   return result.balances;
 }
 
-async function getUtxos(address, cursor, result, filter) {
-  const inscriptions = await mydoge
-    .get(
+async function getUtxos(address, cursor, result, filter, tx = null) {
+  const query = (
+    await mydoge.get(
       `/utxos/${address}?filter=${filter}${cursor ? `&cursor=${cursor}` : ''}`
     )
-    .json();
+  ).data;
 
-  // console.log(
-  //   'found',
-  //   inscriptions.utxos.length,
-  //   filter,
-  //   'utxos in page',
-  //   cursor
-  // );
+  let { utxos } = query;
+
+  // console.log('found', query.utxos.length, filter, 'utxos in page', cursor);
+
+  if (tx) {
+    utxos = utxos.filter(
+      (utxo) => utxo.txid === tx.txid && utxo.vout === tx.vout
+    );
+  }
 
   result.push(
-    ...inscriptions.utxos.map((i) => ({
+    ...utxos.map((i) => ({
       txid: i.txid,
       vout: i.vout,
       outputValue: i.satoshis,
       script: i.script_pubkey,
+      ...(filter === 'inscriptions' && { inscriptions: i.inscriptions }),
     }))
   );
+
+  if (result.length && tx) {
+    return;
+  }
 
   result = result.sort(
     (a, b) => sb.toBitcoin(b.outputValue) - sb.toBitcoin(a.outputValue)
   );
 
-  if (inscriptions.next_cursor) {
-    return getUtxos(address, inscriptions.next_cursor, result, filter);
+  if (query.next_cursor) {
+    return getUtxos(address, query.next_cursor, result, filter);
   }
 }
 
-export async function getAllInscriptions(address) {
+export async function getInscriptionsUtxos(address) {
   const inscriptions = [];
   await getUtxos(address, 0, inscriptions, 'inscriptions');
 
@@ -366,4 +336,11 @@ export async function getSpendableUtxos(address) {
   await getUtxos(address, 0, utxos, 'spendable');
 
   return utxos;
+}
+
+export async function getInscriptionsUtxo(address, tx) {
+  const inscriptions = [];
+  await getUtxos(address, 0, inscriptions, 'inscriptions', tx);
+
+  return inscriptions[0];
 }

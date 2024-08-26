@@ -17,7 +17,6 @@ import { WalletAddress } from '../../components/WalletAddress';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getDRC20Inscriptions } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
-import { getCachedTx } from '../../scripts/helpers/storage';
 import { NFT } from '../Transactions/components/NFT';
 
 export const TransferTokenAmount = ({
@@ -36,23 +35,10 @@ export const TransferTokenAmount = ({
     (async () => {
       try {
         setLoading(true);
-        const results = [];
-        await getDRC20Inscriptions(
-          walletAddress,
-          selectedToken.ticker,
-          0,
-          results
-        );
-        // Get output values
-        const transfers = await Promise.all(
-          results.map(async (nft) => {
-            const tx = await getCachedTx(nft.txid);
 
-            return {
-              ...nft,
-              outputValue: tx.vout[nft.vout].value,
-            };
-          })
+        const transfers = await getDRC20Inscriptions(
+          walletAddress,
+          selectedToken.ticker
         );
 
         setNFTs(transfers);

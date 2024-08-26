@@ -6,7 +6,7 @@ import {
   getTransactionsKey,
 } from '../../dataFetchers/getTransactions';
 import { useCachedInscriptionTxs } from '../../hooks/useCachedInscriptionTxs';
-import { doginals, doginalsV2 } from '../../scripts/api';
+import { mydoge } from '../../scripts/api';
 import {
   NFT_PAGE_SIZE,
   TRANSACTION_PAGE_SIZE,
@@ -75,51 +75,57 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
   const currentTokensPage = useRef(0);
 
   const fetchNFTs = useCallback(
-    ({ currentNFTs = [], cursor } = {}) => {
+    async ({ currentNFTs = [], cursor } = {}) => {
       setNFTsLoading(true);
-      doginalsV2
-        .get(
-          `/address/inscriptions?address=${walletAddress}&cursor=${
-            cursor ?? 0
-          }&size=${NFT_PAGE_SIZE}`
-        )
-        .json((res) => {
-          setNFTs(
-            [...currentNFTs, ...(res?.result?.list ?? [])].sort(
-              (a, b) => b.inscriptionNumber - a.inscriptionNumber
-            )
-          );
-          setNFTsTotal(res?.result?.total);
-          // Don't increment page on initial fetch, where cursor is undefined
-          if (typeof cursor === 'number') {
-            currentNFTPage.current = cursor;
-          }
-        })
-        .catch(logError)
-        .finally(() => setNFTsLoading(false));
+      try {
+        const res = (await mydoge.get(`/inscriptions/${walletAddress}`)).data;
+
+        setNFTs(
+          [...currentNFTs, ...(res.list ?? [])].sort(
+            (a, b) => b.height - a.height
+          )
+        );
+        setNFTsTotal(res?.total);
+        // Don't increment page on initial fetch, where cursor is undefined
+        if (typeof cursor === 'number') {
+          currentNFTPage.current = cursor;
+        }
+      } catch (e) {
+        logError(e);
+      } finally {
+        setNFTsLoading(false);
+      }
     },
     [walletAddress]
   );
 
   const fetchTokens = useCallback(
-    ({ cursor, currentTokens = [] } = {}) => {
+    async ({ cursor, currentTokens = [] } = {}) => {
       setTokensLoading(true);
-      doginals
-        .get(
-          `/brc20/tokens?address=${walletAddress}&cursor=${
-            cursor || 0
-          }&size=${NFT_PAGE_SIZE}`
-        )
-        .json((res) => {
-          setTokens([...currentTokens, ...(res?.result?.list ?? [])]);
-          setTokensTotal(res?.result?.total);
-          // Don't increment page on initial fetch, where cursor is undefined
-          if (typeof cursor === 'number') {
-            currentTokensPage.current = cursor;
-          }
-        })
-        .catch(logError)
-        .finally(() => setTokensLoading(false));
+      try {
+        const res = (await mydoge.get(`/drc20/${walletAddress}`)).data;
+
+        setTokens(
+          [...currentTokens, ...(res.balances ?? [])].sort((a, b) => {
+            if (a.ticker < b.ticker) {
+              return -1;
+            }
+            if (a.ticker > b.ticker) {
+              return 1;
+            }
+            return 0;
+          })
+        );
+        setTokensTotal(res.total);
+        // Don't increment page on initial fetch, where cursor is undefined
+        if (typeof cursor === 'number') {
+          currentTokensPage.current = cursor;
+        }
+      } catch (e) {
+        logError(e);
+      } finally {
+        setTokensLoading(false);
+      }
     },
     [walletAddress]
   );

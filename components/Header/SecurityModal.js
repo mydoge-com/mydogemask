@@ -132,6 +132,7 @@ const BackupWallet = () => {
 
   const { renderPasswordInput, onSubmit, password } = useAuth({
     onValidAuth: onConfirm,
+    _dangerouslyReturnSecretPhrase: true,
   });
   return (
     <>

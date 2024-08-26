@@ -31,17 +31,62 @@ export function getTxSummary(tx, address) {
   return ret;
 }
 
-export const formatTransaction = ({ transaction, walletAddress }) => {
-  let address =
-    transaction.vout[0].addresses[0] || transaction.vout[1].addresses[0];
-  const amount =
-    transaction.vout[0].value !== '0'
-      ? transaction.vout[0].value
-      : transaction.vout[1].value;
-  const type = address === walletAddress ? 'incoming' : 'outgoing';
-  if (type === 'incoming') {
-    [address] = transaction.vin[0].addresses;
+export const formatTransaction = ({ transaction: tx, walletAddress }) => {
+  let type = 'incoming';
+  let amountIn = 0;
+  let amountOut = 0;
+  let totalIn = 0;
+  let totalOut = 0;
+  let incomingAddress = '';
+  let outgoingAddress = '';
+
+  tx.vin.forEach((input) => {
+    const [address] = input.addresses;
+    const value = Number(input.value);
+
+    if (!incomingAddress) {
+      incomingAddress = address;
+    } else if (incomingAddress !== address) {
+      incomingAddress = 'Multiple Addresses';
+    }
+
+    if (input.addresses.includes(walletAddress)) {
+      amountOut += value;
+    }
+
+    totalIn += value;
+  });
+
+  tx.vout.forEach((output) => {
+    const [address] = output.addresses;
+    const value = Number(output.value);
+
+    if (!outgoingAddress && outgoingAddress !== walletAddress) {
+      outgoingAddress = address;
+    }
+
+    if (output.addresses.includes(walletAddress)) {
+      amountIn += Number(output.value);
+    }
+
+    totalOut += value;
+  });
+
+  if (amountOut > amountIn) {
+    type = 'outgoing';
   }
-  const { txid: id, blockTime, confirmations } = transaction;
-  return { address, amount, type, blockTime, id, confirmations };
+
+  const fee = totalIn - totalOut;
+  let amount =
+    type === 'incoming' ? amountIn - amountOut : amountOut - amountIn - fee;
+  let address = type === 'incoming' ? incomingAddress : outgoingAddress;
+  const { txid: id, blockTime, confirmations } = tx;
+
+  if (type === 'outgoing' && amount < 0) {
+    address = incomingAddress;
+    type = 'incoming';
+    amount = -amount;
+  }
+
+  return { address, amount, type, blockTime, id, confirmations, fee };
 };

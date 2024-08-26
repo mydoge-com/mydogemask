@@ -173,6 +173,7 @@ export function ClientConnect({ params, wallet, dispatch }) {
         origin={origin}
         originTabId={originTabId}
         selectedAddress={wallet.addresses[selectedAddressIndex]}
+        selectedAddressIndex={selectedAddressIndex}
         balance={addressBalances[selectedAddressIndex]}
         handleWindowClose={handleWindowClose}
       />
@@ -184,6 +185,7 @@ const ConfirmationModal = ({
   showModal,
   onClose,
   selectedAddress,
+  selectedAddressIndex,
   origin,
   originTabId,
   balance,
@@ -197,6 +199,7 @@ const ConfirmationModal = ({
         data: {
           approved: true,
           address: selectedAddress,
+          selectedAddressIndex,
           balance,
           originTabId,
           origin,

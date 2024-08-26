@@ -115,11 +115,11 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
 
   async function onGetTransferableDRC20({ origin, data }) {
     let client;
-    const inscriptions = [];
+    let inscriptions = [];
 
     try {
       client = await getConnectedClient(origin);
-      await getDRC20Inscriptions(client?.address, data.ticker, 0, inscriptions);
+      inscriptions = await getDRC20Inscriptions(client?.address, data.ticker);
     } catch (e) {
       handleError({
         errorMessage: e.message,
@@ -316,6 +316,13 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
           createClientPopupHandler({
             messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
             responseType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+          })({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE:
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE,
+            responseType:
+              MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
           })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_DISCONNECT:
