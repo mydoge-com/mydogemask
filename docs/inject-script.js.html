@@ -229,7 +229,7 @@ class MyDogeWallet {
    * @async
    * @param {Object} data - Data required for the transaction, must contain 'recipientAddress' and 'output'.
    * @param {string} data.recipientAddress - The recipient address.
-   * @param {string} data.output - The output value.
+   * @param {string} data.location - The location of the inscription in the format txid:vout:offset.
    * @param {function({ txId: string }): void} [onSuccess] - Optional callback function to execute upon successful transaction request.
    *                                                           Receives an object containing the transaction ID.
    * @param {function(string): void} [onError] - Optional function to execute upon error in processing the transaction request.
@@ -244,7 +244,7 @@ class MyDogeWallet {
    */
   requestInscriptionTransaction(data, onSuccess, onError) {
     return new Promise((resolve, reject) => {
-      if (!data?.recipientAddress || !data?.output) {
+      if (!data?.recipientAddress || !data?.location) {
         onError?.(new Error('Invalid data'));
         reject(new Error('Invalid data'));
         return;
