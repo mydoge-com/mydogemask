@@ -71,13 +71,18 @@ export function ClientDecryptedMessage({
       <Text fontSize='2xl'>
         Confirm <Text fontWeight='bold'>Decrypted Message</Text>
       </Text>
-      <Center pt='16px'>
+      <Center pt='16px' width='80%'>
         <WalletAddress address={connectedClient.address} />
         <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
           Decrypting
         </Text>
         <OriginBadge origin={origin} mt='12px' mb='20px' />
-        <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
+        <Text
+          fontWeight='semibold'
+          pt='6px'
+          adjustsFontSizeToFit
+          numberOfLines={1}
+        >
           {message}
         </Text>
         <HStack alignItems='center' mt='60px' space='12px'>
@@ -203,9 +208,9 @@ const ConfirmationModal = ({
           <AlertDialog.Body>
             <OriginBadge origin={origin} mb='8px' />
             <VStack alignItems='center'>
-              <Text>
+              <Text adjustsFontSizeToFit numberOfLines={2}>
                 Confirm message to decrypt{' '}
-                <Text fontWeight='bold'>{message}</Text> to{' '}
+                <Text fontWeight='bold'>{message}</Text>
               </Text>
             </VStack>
           </AlertDialog.Body>
