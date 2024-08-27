@@ -67,10 +67,10 @@ if (myDogeMask?.isMyDoge) {
     console.log('drc-20 balance result', drc20BalanceRes);
     // { &quot;address&quot;: &quot;DBKwBLEDY96jBtx1xCmjfBzp9FrNCWxnmM&quot;, &quot;availableBalance&quot;: &quot;4206912345678&quot;, &quot;transferableBalance&quot;: &quot;12345678&quot;, &quot;ticker&quot;: &quot;abcd&quot; }
 
-    // Request connected address transferable DRC-20 outputs
+    // Request connected address transferable DRC-20 locations
     const transferableRes = await myDogeMask.getTransferableDRC20({ ticker: 'abcd', /*onSuccess, onError*/);
     console.log('drc-20 transferable result', transferableRes);
-    // { inscriptions: [{ &quot;amount&quot;: &quot;1000&quot;, &quot;output&quot;: &quot;68f08b2ad7dfd26192685e04a7038223fa0259e0878e1b636776104c1535bb9f:0&quot; }], ticker: 'abcd', address: 'DLRAyAnjpP6tHtzT6D7MfpWuG1nEYvw9dA'}
+    // { inscriptions: [{ &quot;amount&quot;: &quot;1000&quot;, &quot;location&quot;: &quot;68f08b2ad7dfd26192685e04a7038223fa0259e0878e1b636776104c1535bb9f:0:0&quot; }], ticker: 'abcd', address: 'DLRAyAnjpP6tHtzT6D7MfpWuG1nEYvw9dA'}
 
     // Request a transaction to inscribe a transfer of avaialble drc-20 balance
     // Generates a popup to be confirmed by the user
