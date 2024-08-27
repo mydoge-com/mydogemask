@@ -89,14 +89,14 @@ if (myDogeMask?.isMyDoge) {
     // Request the signing of an arbitrary message
     // Generates a popup to be confirmed by the user
     // Promise will reject or onError will be called if canceled
-    const signMessageRes = await myDogeMask.signMessage({ message: 'the message to sign', /*onSuccess, onError*/);
+    const signMessageRes = await myDogeMask.requestSignedMessage({ message: 'the message to sign', /*onSuccess, onError*/);
     console.log('signed message result', signMessageRes);
     // { &quot;signedMessage&quot;: &quot;b9fc04f226b194684fe24c786be89cae26abf8fcebbf90ff7049d5bc7fa003f0&quot; }
 
     // Request the decryption of an message encrypted with the connected address publickey
     // Generates a popup to be confirmed by the user
     // Promise will reject or onError will be called if canceled
-    const signMessageRes = await myDogeMask.decryptMessage({ message: 'the message to decrypt', /*onSuccess, onError*/);
+    const signMessageRes = await myDogeMask.requestDecryptedMessage({ message: 'the message to decrypt', /*onSuccess, onError*/);
     console.log('decrypted message result', signMessageRes);
     // { &quot;decryptedMessage&quot;: &quot;Some decrypted message text&quot; }
 
