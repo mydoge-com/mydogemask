@@ -80,6 +80,7 @@ export function ClientSignedMessage({
         <Text
           fontWeight='semibold'
           pt='6px'
+          px='12px'
           adjustsFontSizeToFit
           numberOfLines={4}
         >
