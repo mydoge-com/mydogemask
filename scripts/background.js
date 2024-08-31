@@ -7,6 +7,7 @@ import { decrypt, encrypt, hash } from './helpers/cipher';
 import {
   AUTHENTICATED,
   BLOCK_CONFIRMATIONS,
+  CLIENT_POPUP_MESSAGE_PAIRS,
   CONNECTED_CLIENTS,
   FEE_RATE_KB,
   INSCRIPTION_TXS_CACHE,
@@ -91,6 +92,20 @@ function createClientPopup({ sendResponse, sender, data = {}, messageType }) {
       }
     });
 }
+
+const createClientRequestHandler =
+  () =>
+  async ({ data, sendResponse, sender, messageType }) => {
+    const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
+      sender.origin
+    ];
+    if (!isConnected) {
+      sendResponse?.(false);
+      return;
+    }
+    createClientPopup({ sendResponse, sender, data, messageType });
+    return true;
+  };
 
 // Build a raw transaction and determine fee
 async function onCreateTransaction({ data = {}, sendResponse } = {}) {
@@ -748,115 +763,12 @@ async function onDecryptMessage({ data = {}, sendResponse } = {}) {
   );
 }
 
-async function onRequestTransaction({ data, sendResponse, sender } = {}) {
-  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
-    sender.origin
-  ];
-  if (!isConnected) {
-    sendResponse?.(false);
-    return;
-  }
-  createClientPopup({
-    sendResponse,
-    sender,
-    data,
-    messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
-  });
-  return true;
-}
-
-async function onRequestDoginalTransaction({
-  data = {},
-  sendResponse,
-  sender,
-} = {}) {
-  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
-    sender.origin
-  ];
-  if (!isConnected) {
-    sendResponse?.(false);
-    return;
-  }
-  createClientPopup({
-    sendResponse,
-    sender,
-    data,
-    messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
-  });
-  return true;
-}
-
-async function onRequestAvailableDRC20Transaction({
-  data,
-  sendResponse,
-  sender,
-} = {}) {
-  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
-    sender.origin
-  ];
-  if (!isConnected) {
-    sendResponse?.(false);
-    return;
-  }
-  createClientPopup({
-    sendResponse,
-    sender,
-    data,
-    messageType: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
-  });
-  return true;
-}
-
-async function onRequestPsbt({ data, sendResponse, sender } = {}) {
-  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
-    sender.origin
-  ];
-  if (!isConnected) {
-    sendResponse?.(false);
-    return;
-  }
-  createClientPopup({
-    sendResponse,
-    sender,
-    data,
-    messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
-  });
-  return true;
-}
-
-async function onRequestSignedMessage({ data, sendResponse, sender } = {}) {
-  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
-    sender.origin
-  ];
-  if (!isConnected) {
-    sendResponse?.(false);
-    return;
-  }
-  createClientPopup({
-    sendResponse,
-    sender,
-    data,
-    messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
-  });
-  return true;
-}
-
-async function onRequestDecryptedMessage({ data, sendResponse, sender } = {}) {
-  const isConnected = (await getSessionValue(CONNECTED_CLIENTS))?.[
-    sender.origin
-  ];
-  if (!isConnected) {
-    sendResponse?.(false);
-    return;
-  }
-  createClientPopup({
-    sendResponse,
-    sender,
-    data,
-    messageType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE,
-  });
-  return true;
-}
+const clientRequestHandlers = CLIENT_POPUP_MESSAGE_PAIRS.reduce((acc, pair) => {
+  const [messageType] = Object.values(pair.request);
+  const [responseType] = Object.values(pair.response);
+  acc[messageType] = createClientRequestHandler({ responseType });
+  return acc;
+}, {});
 
 // Generates a seed phrase, root keypair, child keypair + address 0
 // Encrypt + store the private data and address
@@ -1591,35 +1503,30 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE:
       onApproveConnection({ sender, sendResponse, data });
       break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
-      onRequestTransaction({ data, sendResponse, sender });
-      break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE:
-      onApproveTransaction({ data, sendResponse, sender });
-      break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
-      onRequestDoginalTransaction({ data, sendResponse, sender });
-      break;
     case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
       onApproveDoginalTransaction({ data, sendResponse, sender });
       break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
+    case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
-      onRequestAvailableDRC20Transaction({ data, sendResponse, sender });
-      break;
     case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
-      onRequestPsbt({ data, sendResponse, sender });
+    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
+    case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE:
+      clientRequestHandlers[message]({
+        data,
+        sendResponse,
+        sender,
+        messageType: message,
+      });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE:
+      onApproveTransaction({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE:
       onApprovePsbt({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
       onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
-      break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
-      onRequestSignedMessage({ data, sendResponse, sender });
-      break;
-    case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE:
-      onRequestDecryptedMessage({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
       onApproveSignedMessage({ data, sendResponse, sender });

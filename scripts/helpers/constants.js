@@ -26,29 +26,12 @@ export const DOGINAL_TX = 'doginal_tx';
 export const TRANSACTION_PENDING_TIME = 1000 * 60 * 2; // 2 minutes
 
 const CLIENT_MESSAGE_TYPES = {
-  CLIENT_REQUEST_CONNECTION: 'clientRequestConnection',
-  CLIENT_REQUEST_CONNECTION_RESPONSE: 'clientRequestConnectionResponse',
   CLIENT_GET_BALANCE: 'clientRequestBalance',
   CLIENT_GET_BALANCE_RESPONSE: 'clientGetBalanceResponse',
   CLIENT_GET_DRC20_BALANCE: 'clientRequestDRC20Balance',
   CLIENT_GET_DRC20_BALANCE_RESPONSE: 'clientGetDRC20BalanceResponse',
   CLIENT_GET_TRANSFERABLE_DRC20: 'clientRequestTransferableDRC20',
   CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE: 'clientGetTransferableDRC20Response',
-  CLIENT_REQUEST_TRANSACTION: 'clientRequestTransaction',
-  CLIENT_REQUEST_TRANSACTION_RESPONSE: 'clientRequestTransactionResponse',
-  CLIENT_REQUEST_DOGINAL_TRANSACTION: 'clientRequestDoginalTransaction',
-  CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
-    'clientRequestDoginalTransactionResponse',
-  CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION: 'clientRequestDRC20Transaction',
-  CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
-    'clientRequestDRC20TransactionResponse',
-  CLIENT_REQUEST_PSBT: 'clientRequestPsbt',
-  CLIENT_REQUEST_PSBT_RESPONSE: 'clientRequestPsbtResponse',
-  CLIENT_REQUEST_SIGNED_MESSAGE: 'clientRequestSignedMessage',
-  CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE: 'clientRequestSignedMessageResponse',
-  CLIENT_REQUEST_DECRYPTED_MESSAGE: 'clientRequestDecryptedMessage',
-  CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE:
-    'clientRequestDecryptedMessageResponse',
   CLIENT_DISCONNECT: 'clientDisconnect',
   CLIENT_DISCONNECT_RESPONSE: 'clientDisconnectResponse',
   CLIENT_CONNECTION_STATUS: 'clientConnectionStatus',
@@ -57,8 +40,74 @@ const CLIENT_MESSAGE_TYPES = {
   CLIENT_TRANSACTION_STATUS_RESPONSE: 'clientTransactionStatusResponse',
 };
 
+export const CLIENT_POPUP_MESSAGE_PAIRS = [
+  {
+    request: { CLIENT_REQUEST_CONNECTION: 'clientRequestConnection' },
+    response: {
+      CLIENT_REQUEST_CONNECTION_RESPONSE: 'clientRequestConnectionResponse',
+    },
+  },
+  {
+    request: { CLIENT_REQUEST_TRANSACTION: 'clientRequestTransaction' },
+    response: {
+      CLIENT_REQUEST_TRANSACTION_RESPONSE: 'clientRequestTransactionResponse',
+    },
+  },
+  {
+    request: {
+      CLIENT_REQUEST_DOGINAL_TRANSACTION: 'clientRequestDoginalTransaction',
+    },
+    response: {
+      CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE:
+        'clientRequestDoginalTransactionResponse',
+    },
+  },
+  {
+    request: {
+      CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
+        'clientRequestDRC20Transaction',
+    },
+    response: {
+      CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
+        'clientRequestDRC20TransactionResponse',
+    },
+  },
+  {
+    request: { CLIENT_REQUEST_PSBT: 'clientRequestPsbt' },
+    response: { CLIENT_REQUEST_PSBT_RESPONSE: 'clientRequestPsbtResponse' },
+  },
+  {
+    request: { CLIENT_REQUEST_SIGNED_MESSAGE: 'clientRequestSignedMessage' },
+    response: {
+      CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
+        'clientRequestSignedMessageResponse',
+    },
+  },
+  {
+    request: {
+      CLIENT_REQUEST_DECRYPTED_MESSAGE: 'clientRequestDecryptedMessage',
+    },
+    response: {
+      CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE:
+        'clientRequestDecryptedMessageResponse',
+    },
+  },
+];
+
+const CLIENT_POPUP_MESSAGE_TYPES = CLIENT_POPUP_MESSAGE_PAIRS.reduce(
+  (acc, pair) => {
+    const [[requestKey, requestValue]] = Object.entries(pair.request);
+    acc[requestKey] = requestValue;
+    const [[responseKey, responseValue]] = Object.entries(pair.response);
+    acc[responseKey] = responseValue;
+    return acc;
+  },
+  {}
+);
+
 export const MESSAGE_TYPES = {
   ...CLIENT_MESSAGE_TYPES,
+  ...CLIENT_POPUP_MESSAGE_TYPES,
   CREATE_WALLET: 'createWallet',
   RESET_WALLET: 'resetWallet',
   AUTHENTICATE: 'authenticate',

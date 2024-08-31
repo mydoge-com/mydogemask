@@ -57,21 +57,24 @@ export function ClientConnect({ params, wallet, dispatch }) {
     );
   }, [handleWindowClose, origin, originTabId]);
 
-  const [addressBalances, setAddressBalances] = useState([]);
+  const [addressBalances, setAddressBalances] = useState({});
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
 
   const getBalances = useCallback(() => {
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
-        data: { addresses: wallet.addresses },
-      },
-      (balances) => {
-        if (balances) {
-          setAddressBalances(balances);
+    wallet.addresses.forEach((address) => {
+      sendMessage(
+        {
+          message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
+          data: { address },
+        },
+        (response) => {
+          setAddressBalances((prev) => ({
+            ...prev,
+            [address]: response,
+          }));
         }
-      }
-    );
+      );
+    });
   }, [wallet.addresses]);
 
   useInterval(getBalances, REFRESH_INTERVAL, true);
@@ -84,6 +87,10 @@ export function ClientConnect({ params, wallet, dispatch }) {
   const onCloseModal = useCallback(() => {
     setConfirmationModalOpen(false);
   }, []);
+
+  const selectedAddress = wallet.addresses[selectedAddressIndex];
+  const selectedAddressBalance = addressBalances[selectedAddress];
+
   return (
     <>
       <OriginBadge origin={origin} />
@@ -137,10 +144,10 @@ export function ClientConnect({ params, wallet, dispatch }) {
                         </Text>
                       </HStack>
                       <Text color='gray.400' fontSize='xs'>
-                        {addressBalances[i] ? (
+                        {addressBalances[address] ? (
                           <>
                             <Text fontWeight='bold'>Balance: </Text>Ð
-                            {sb.toBitcoin(addressBalances[i])}
+                            {sb.toBitcoin(addressBalances[address])}
                           </>
                         ) : (
                           ' '
@@ -161,7 +168,7 @@ export function ClientConnect({ params, wallet, dispatch }) {
           <BigButton
             onPress={() => setConfirmationModalOpen(true)}
             px='20px'
-            isDisabled={!addressBalances.length}
+            isDisabled={!selectedAddressBalance}
           >
             Connect
           </BigButton>
@@ -172,9 +179,9 @@ export function ClientConnect({ params, wallet, dispatch }) {
         onClose={onCloseModal}
         origin={origin}
         originTabId={originTabId}
-        selectedAddress={wallet.addresses[selectedAddressIndex]}
         selectedAddressIndex={selectedAddressIndex}
-        balance={addressBalances[selectedAddressIndex]}
+        selectedAddress={selectedAddress}
+        balance={selectedAddressBalance}
         handleWindowClose={handleWindowClose}
       />
     </>
@@ -227,6 +234,7 @@ const ConfirmationModal = ({
     );
   }, [
     selectedAddress,
+    selectedAddressIndex,
     balance,
     originTabId,
     origin,
