@@ -364,7 +364,7 @@ class MyDogeWallet {
    * @param {function({ signedMessage: string }): void} [onSuccess] - Optional callback function to execute upon successful message signing.
    *                                                           Receives an object containing the signed message.
    * @param {function(string): void} [onError] - Callback function to execute upon error in signing the message.
-   * @returns {Promise<{ signedMessage: string }>} Promise object representing the outcome of the request, resolving to an object with the signed message.
+   * @returns {Promise<{ signedMessage: string }>} Promise object representing the outcome of the request, resolving to an object with the base64 signed message.
    * @method
    * @example
    * requestSignedMessage(
