@@ -425,7 +425,7 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
     console.log('total fee', fee);
     console.log('raw tx', rawTx);
 
-    if (fee < estimatedFee) {
+    if (fee < sb.toBitcoin(estimatedFee)) {
       sendResponse?.(false);
       return;
     }
