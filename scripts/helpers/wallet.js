@@ -132,7 +132,7 @@ export function signMessage(message, wifKey) {
   const keyPair = fromWIF(wifKey);
   return bitcoinMessage
     .sign(message, keyPair.privateKey, keyPair.compressed)
-    .toString('hex');
+    .toString('base64');
 }
 
 export async function cacheSignedTx(signed) {
