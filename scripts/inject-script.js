@@ -2,10 +2,12 @@ import { MESSAGE_TYPES } from './helpers/constants';
 
 const createResponseHandler =
   () =>
-  ({ resolve, reject, onSuccess, onError, messageType }) => {
+  ({ resolve, reject, onSuccess, onError, messageType, setRequestPending }) => {
     function listener({ data: { type, data, error }, origin }) {
       // only accept messages from the same origin and message type of this context
       if (origin !== window.location.origin || type !== messageType) return;
+
+      setRequestPending?.(false);
 
       if (error) {
         onError?.(new Error(error));
@@ -26,8 +28,13 @@ const createResponseHandler =
  * Class representing the MyDoge API to interact with the Dogecoin wallet.
  */
 class MyDogeWallet {
+  static setRequestPending(isRequestPending) {
+    this.isRequestPending = isRequestPending;
+  }
+
   constructor() {
     this.isMyDoge = true;
+    this.isRequestPending = false;
     console.info('MyDoge API initialized');
   }
 
@@ -206,6 +213,12 @@ class MyDogeWallet {
         reject(new Error('Invalid data'));
         return;
       }
+      if (this.isRequestPending) {
+        onError?.(new Error('There is a pending request'));
+        reject(new Error('There is a pending request'));
+        return;
+      }
+      this.isRequestPending = true;
       window.postMessage(
         { type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION, data },
         window.location.origin
@@ -217,6 +230,9 @@ class MyDogeWallet {
         onSuccess,
         onError,
         messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+        setRequestPending: (isRequestPending) => {
+          this.isRequestPending = isRequestPending;
+        },
       });
     });
   }
@@ -247,7 +263,12 @@ class MyDogeWallet {
         reject(new Error('Invalid data'));
         return;
       }
-
+      if (this.isRequestPending) {
+        onError?.(new Error('There is a pending request'));
+        reject(new Error('There is a pending request'));
+        return;
+      }
+      this.isRequestPending = true;
       window.postMessage(
         { type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION, data },
         window.location.origin
@@ -259,6 +280,9 @@ class MyDogeWallet {
         onSuccess,
         onError,
         messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+        setRequestPending: (isRequestPending) => {
+          this.isRequestPending = isRequestPending;
+        },
       });
     });
   }
@@ -290,7 +314,12 @@ class MyDogeWallet {
         reject(new Error('Invalid data'));
         return;
       }
-
+      if (this.isRequestPending) {
+        onError?.(new Error('There is a pending request'));
+        reject(new Error('There is a pending request'));
+        return;
+      }
+      this.isRequestPending = true;
       window.postMessage(
         {
           type: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
@@ -306,6 +335,9 @@ class MyDogeWallet {
         onError,
         messageType:
           MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+        setRequestPending: (isRequestPending) => {
+          this.isRequestPending = isRequestPending;
+        },
       });
     });
   }
@@ -336,7 +368,12 @@ class MyDogeWallet {
         reject(new Error('Invalid data'));
         return;
       }
-
+      if (this.isRequestPending) {
+        onError?.(new Error('There is a pending request'));
+        reject(new Error('There is a pending request'));
+        return;
+      }
+      this.isRequestPending = true;
       window.postMessage(
         {
           type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
@@ -351,6 +388,9 @@ class MyDogeWallet {
         onSuccess,
         onError,
         messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+        setRequestPending: (isRequestPending) => {
+          this.isRequestPending = isRequestPending;
+        },
       });
     });
   }
@@ -380,6 +420,12 @@ class MyDogeWallet {
         reject(new Error('Invalid data'));
         return;
       }
+      if (this.isRequestPending) {
+        onError?.(new Error('There is a pending request'));
+        reject(new Error('There is a pending request'));
+        return;
+      }
+      this.isRequestPending = true;
       window.postMessage(
         { type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE, data },
         window.location.origin
@@ -391,6 +437,9 @@ class MyDogeWallet {
         onSuccess,
         onError,
         messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+        setRequestPending: (isRequestPending) => {
+          this.isRequestPending = isRequestPending;
+        },
       });
     });
   }
@@ -420,6 +469,12 @@ class MyDogeWallet {
         reject(new Error('Invalid data'));
         return;
       }
+      if (this.isRequestPending) {
+        onError?.(new Error('There is a pending request'));
+        reject(new Error('There is a pending request'));
+        return;
+      }
+      this.isRequestPending = true;
       window.postMessage(
         { type: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE, data },
         window.location.origin
@@ -431,6 +486,9 @@ class MyDogeWallet {
         onSuccess,
         onError,
         messageType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+        setRequestPending: (isRequestPending) => {
+          this.isRequestPending = isRequestPending;
+        },
       });
     });
   }
