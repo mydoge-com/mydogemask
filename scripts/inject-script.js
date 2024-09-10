@@ -28,10 +28,6 @@ const createResponseHandler =
  * Class representing the MyDoge API to interact with the Dogecoin wallet.
  */
 class MyDogeWallet {
-  static setRequestPending(isRequestPending) {
-    this.isRequestPending = isRequestPending;
-  }
-
   constructor() {
     this.isMyDoge = true;
     this.isRequestPending = false;
