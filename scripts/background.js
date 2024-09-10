@@ -70,7 +70,22 @@ function sanitizeFloatAmount(amount) {
  * @param {Object} [options.data={}] - Additional data to be passed to the popup window.
  * @param {string} options.messageType - The type of message to be sent to the popup window.
  */
-function createClientPopup({ sendResponse, sender, data = {}, messageType }) {
+
+async function createClientPopup({
+  sendResponse,
+  sender,
+  data = {},
+  messageType,
+}) {
+  // Remove existing client popup windows
+  const contexts = await chrome.runtime.getContexts({
+    contextTypes: ['TAB'],
+  });
+
+  contexts.forEach((context) => {
+    chrome.tabs.remove(context.tabId);
+  });
+
   const params = new URLSearchParams();
   params.append('originTabId', JSON.stringify(sender.tab.id));
   params.append('origin', JSON.stringify(sender.origin));
@@ -84,8 +99,8 @@ function createClientPopup({ sendResponse, sender, data = {}, messageType }) {
       width: data.isOnboardingPending ? 800 : 357,
       height: 640,
     })
-    .then((tab) => {
-      if (tab) {
+    .then((newWindow) => {
+      if (newWindow) {
         sendResponse?.({ originTabId: sender.tab.id });
       } else {
         sendResponse?.(false);
@@ -103,7 +118,7 @@ const createClientRequestHandler =
       sendResponse?.(false);
       return;
     }
-    createClientPopup({ sendResponse, sender, data, messageType });
+    await createClientPopup({ sendResponse, sender, data, messageType });
     return true;
   };
 
