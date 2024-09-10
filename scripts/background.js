@@ -77,23 +77,15 @@ async function createClientPopup({
   data = {},
   messageType,
 }) {
+  // Remove existing client popup windows
   const contexts = await chrome.runtime.getContexts({
     contextTypes: ['TAB'],
   });
-
-  console.log('contexts', contexts);
-  console.log('id', chrome.runtime.id);
 
   contexts.forEach((context) => {
     chrome.tabs.remove(context.tabId);
   });
 
-  try {
-    const url = await chrome.runtime.getURL('');
-    console.log('url', url);
-  } catch (err) {
-    console.log('error', err);
-  }
   const params = new URLSearchParams();
   params.append('originTabId', JSON.stringify(sender.tab.id));
   params.append('origin', JSON.stringify(sender.origin));
