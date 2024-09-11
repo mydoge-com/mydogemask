@@ -16,14 +16,34 @@ import { ClientSignedMessage } from './ClientSignedMessage';
 import { ClientTransaction } from './ClientTransaction';
 
 const CLIENT_REQUEST_ROUTES = {
-  [MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION]: ClientConnect,
-  [MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION]: ClientTransaction,
-  [MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION]: ClientDoginalTransaction,
-  [MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION]:
-    ClientAvailableDRC20Transaction,
-  [MESSAGE_TYPES.CLIENT_REQUEST_PSBT]: ClientPSBT,
-  [MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE]: ClientSignedMessage,
-  [MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE]: ClientDecryptedMessage,
+  [MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION]: {
+    component: ClientConnect,
+    response: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+  },
+  [MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION]: {
+    component: ClientTransaction,
+    response: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+  },
+  [MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION]: {
+    component: ClientDoginalTransaction,
+    response: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+  },
+  [MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION]: {
+    component: ClientAvailableDRC20Transaction,
+    response: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+  },
+  [MESSAGE_TYPES.CLIENT_REQUEST_PSBT]: {
+    component: ClientPSBT,
+    response: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+  },
+  [MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE]: {
+    component: ClientSignedMessage,
+    response: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+  },
+  [MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE]: {
+    component: ClientDecryptedMessage,
+    response: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+  },
 };
 
 export function ClientRequest() {
@@ -32,8 +52,11 @@ export function ClientRequest() {
   const { params } = clientRequest;
 
   const RenderScreen = clientRequest
-    ? CLIENT_REQUEST_ROUTES[clientRequest?.requestType]
+    ? CLIENT_REQUEST_ROUTES[clientRequest?.requestType]?.component
     : null;
+
+  const responseMessageType =
+    CLIENT_REQUEST_ROUTES[clientRequest?.requestType]?.response;
 
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
@@ -82,6 +105,7 @@ export function ClientRequest() {
         connectedAddressIndex={params.connectedAddressIndex}
         handleError={handleError}
         handleWindowClose={handleWindowClose}
+        responseMessageType={responseMessageType}
       />
     </Layout>
   );

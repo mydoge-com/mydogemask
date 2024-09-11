@@ -32,6 +32,7 @@ export function ClientDoginalTransaction({
   connectedClient,
   connectedAddressIndex,
   handleError,
+  responseMessageType,
 }) {
   const { originTabId, origin, recipientAddress, location } = params;
 
@@ -53,8 +54,7 @@ export function ClientDoginalTransaction({
       if (!validateAddress(recipientAddress)) {
         handleError({
           error: 'Invalid address',
-          messageType:
-            MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+          messageType: responseMessageType,
         });
         return;
       }
@@ -67,8 +67,7 @@ export function ClientDoginalTransaction({
       if (txid?.length !== 64 || Number.isNaN(vout)) {
         handleError({
           error: 'Invalid output',
-          messageType:
-            MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+          messageType: responseMessageType,
         });
         return;
       }
@@ -83,8 +82,7 @@ export function ClientDoginalTransaction({
       if (!doginal || !doginal.inscriptions?.find((i) => i.offset === offset)) {
         handleError({
           error: 'Doginal not found',
-          messageType:
-            MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+          messageType: responseMessageType,
         });
         setPageLoading(false);
         return;
@@ -110,15 +108,20 @@ export function ClientDoginalTransaction({
           } else {
             handleError({
               error: 'Unable to create doginal transaction',
-              messageType:
-                MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+              messageType: responseMessageType,
             });
             throw new Error('Unable to create doginal transaction');
           }
         }
       );
     })();
-  }, [connectedClient?.address, handleError, location, recipientAddress]);
+  }, [
+    connectedClient?.address,
+    handleError,
+    location,
+    recipientAddress,
+    responseMessageType,
+  ]);
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -128,7 +131,7 @@ export function ClientDoginalTransaction({
   const onRejectTransaction = useCallback(() => {
     sendMessage(
       {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+        message: responseMessageType,
         data: { error: 'User refused transaction', originTabId, origin },
       },
       () => {
@@ -148,7 +151,7 @@ export function ClientDoginalTransaction({
       },
       []
     );
-  }, [handleWindowClose, origin, originTabId]);
+  }, [handleWindowClose, origin, originTabId, responseMessageType]);
 
   if (!transaction)
     return (
@@ -214,6 +217,7 @@ export function ClientDoginalTransaction({
         recipientAddress={recipientAddress}
         dogeAmount={transaction.amount}
         selectedNFT={selectedNFT}
+        responseMessageType={responseMessageType}
       />
     </>
   );
@@ -230,6 +234,7 @@ const ConfirmationModal = ({
   recipientAddress,
   dogeAmount,
   selectedNFT,
+  responseMessageType,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
@@ -252,8 +257,7 @@ const ConfirmationModal = ({
         if (txId) {
           sendMessage(
             {
-              message:
-                MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
+              message: responseMessageType,
               data: { txId, originTabId, origin },
             },
             () => {
@@ -274,7 +278,7 @@ const ConfirmationModal = ({
         } else {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              message: responseMessageType,
               data: {
                 error: 'Failed to send transaction',
                 originTabId,
@@ -302,7 +306,16 @@ const ConfirmationModal = ({
         }
       }
     );
-  }, [addressIndex, handleWindowClose, onClose, origin, originTabId, rawTx]);
+  }, [
+    addressIndex,
+    handleWindowClose,
+    onClose,
+    origin,
+    originTabId,
+    rawTx,
+    responseMessageType,
+    selectedNFT.location,
+  ]);
 
   return (
     <>

@@ -31,6 +31,7 @@ export function ClientPSBT({
   dispatch,
   connectedClient,
   connectedAddressIndex: selectedAddressIndex,
+  responseMessageType,
 }) {
   const { originTabId, origin, rawTx, indexes: indexesParam } = params;
 
@@ -120,7 +121,7 @@ export function ClientPSBT({
       setLoading(false);
       sendMessage(
         {
-          message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+          message: responseMessageType,
           data: { error: description, originTabId, origin },
         },
         () => {
@@ -141,13 +142,13 @@ export function ClientPSBT({
         []
       );
     },
-    [handleWindowClose, origin, originTabId]
+    [handleWindowClose, origin, originTabId, responseMessageType]
   );
 
   const onRejectTransaction = useCallback(() => {
     sendMessage(
       {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+        message: responseMessageType,
         data: { error: 'User refused transaction', originTabId, origin },
       },
       () => {
@@ -167,7 +168,7 @@ export function ClientPSBT({
       },
       []
     );
-  }, [handleWindowClose, origin, originTabId]);
+  }, [handleWindowClose, origin, originTabId, responseMessageType]);
 
   const [loading, setLoading] = useState(false);
 
@@ -190,7 +191,7 @@ export function ClientPSBT({
               if (txId) {
                 sendMessage(
                   {
-                    message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+                    message: responseMessageType,
                     data: { txId, originTabId, origin },
                   },
                   () => {
@@ -232,6 +233,7 @@ export function ClientPSBT({
     originTabId,
     rawTx,
     selectedAddressIndex,
+    responseMessageType,
   ]);
 
   const [inputsModalOpen, setInputsModalOpen] = useState(false);

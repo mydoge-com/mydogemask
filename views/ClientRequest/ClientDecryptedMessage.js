@@ -26,6 +26,7 @@ export function ClientDecryptedMessage({
   dispatch,
   connectedClient,
   connectedAddressIndex: addressIndex,
+  responseMessageType,
 }) {
   const { originTabId, origin, message } = params;
 
@@ -41,7 +42,7 @@ export function ClientDecryptedMessage({
   const onRejectTransaction = useCallback(() => {
     sendMessage(
       {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+        message: responseMessageType,
         data: { error: 'User refused decrypted message', originTabId, origin },
       },
       () => {
@@ -61,7 +62,7 @@ export function ClientDecryptedMessage({
       },
       []
     );
-  }, [handleWindowClose, origin, originTabId]);
+  }, [handleWindowClose, origin, originTabId, responseMessageType]);
 
   return (
     <>
@@ -111,6 +112,7 @@ export function ClientDecryptedMessage({
         message={message}
         addressIndex={addressIndex}
         handleWindowClose={handleWindowClose}
+        responseMessageType={responseMessageType}
       />
     </>
   );
@@ -124,6 +126,7 @@ const ConfirmationModal = ({
   addressIndex,
   originTabId,
   handleWindowClose,
+  responseMessageType,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
@@ -139,7 +142,7 @@ const ConfirmationModal = ({
         if (decryptedMessage) {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+              message: responseMessageType,
               data: { decryptedMessage, originTabId, origin },
             },
             () => {
@@ -160,7 +163,7 @@ const ConfirmationModal = ({
         } else {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
+              message: responseMessageType,
               data: {
                 error: 'Failed to decrypt message',
                 originTabId,
@@ -188,7 +191,14 @@ const ConfirmationModal = ({
         }
       }
     );
-  }, [addressIndex, handleWindowClose, origin, originTabId, message]);
+  }, [
+    addressIndex,
+    handleWindowClose,
+    origin,
+    originTabId,
+    message,
+    responseMessageType,
+  ]);
 
   return (
     <>

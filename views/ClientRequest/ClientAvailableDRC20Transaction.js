@@ -26,6 +26,7 @@ export function ClientAvailableDRC20Transaction({
   connectedClient,
   connectedAddressIndex,
   handleError,
+  responseMessageType,
 }) {
   const handleWindowClose = useCallback(() => {
     dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
@@ -48,7 +49,7 @@ export function ClientAvailableDRC20Transaction({
   const onRejectTransaction = useCallback(() => {
     sendMessage(
       {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+        message: responseMessageType,
         data: { error: 'User refused transaction', originTabId, origin },
       },
       () => {
@@ -68,7 +69,7 @@ export function ClientAvailableDRC20Transaction({
       },
       []
     );
-  }, [handleWindowClose, origin, originTabId]);
+  }, [handleWindowClose, origin, originTabId, responseMessageType]);
 
   useEffect(() => {
     if (!connectedClient?.address || typeof connectedAddressIndex !== 'number')
@@ -83,8 +84,7 @@ export function ClientAvailableDRC20Transaction({
         setPageLoading(false);
         handleError({
           error: 'Insufficient balance',
-          messageType:
-            MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+          messageType: responseMessageType,
         });
         return;
       }
@@ -106,8 +106,7 @@ export function ClientAvailableDRC20Transaction({
           } else {
             handleError({
               error: 'Unable to create available drc-20 transaction',
-              messageType:
-                MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+              messageType: responseMessageType,
             });
           }
         }
@@ -119,6 +118,7 @@ export function ClientAvailableDRC20Transaction({
     connectedClient?.address,
     handleError,
     params,
+    responseMessageType,
     ticker,
   ]);
 
@@ -174,6 +174,7 @@ export function ClientAvailableDRC20Transaction({
         params={params}
         handleWindowClose={handleWindowClose}
         txs={transaction?.txs}
+        responseMessageType={responseMessageType}
       />
     </>
   );
@@ -184,6 +185,7 @@ const ConfirmationModal = ({
   onClose,
   params,
   handleWindowClose,
+  responseMessageType,
   txs,
 }) => {
   const cancelRef = useRef();
@@ -202,8 +204,7 @@ const ConfirmationModal = ({
         if (txId) {
           sendMessage(
             {
-              message:
-                MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+              message: responseMessageType,
               data: { tokenAmount, ticker, txId, originTabId, origin },
             },
             () => {
@@ -224,8 +225,7 @@ const ConfirmationModal = ({
           );
         } else {
           sendMessage({
-            message:
-              MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+            message: responseMessageType,
             data: {
               error: 'Failed to inscribe token transfer',
               originTabId,
@@ -256,6 +256,7 @@ const ConfirmationModal = ({
     origin,
     originTabId,
     params,
+    responseMessageType,
     ticker,
     tokenAmount,
     txs,

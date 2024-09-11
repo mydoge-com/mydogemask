@@ -28,6 +28,7 @@ export function ClientTransaction({
   connectedAddressIndex,
   handleError,
   handleWindowClose,
+  responseMessageType,
 }) {
   const { originTabId, origin, recipientAddress, dogeAmount } = params;
 
@@ -56,7 +57,7 @@ export function ClientTransaction({
       });
       if (error) {
         handleError({
-          messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+          messageType: responseMessageType,
           error,
         });
       }
@@ -69,7 +70,7 @@ export function ClientTransaction({
             setTransaction({ rawTx, fee, amount });
           } else {
             handleError({
-              messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              messageType: responseMessageType,
               error: 'Unable to create transaction',
             });
           }
@@ -83,6 +84,7 @@ export function ClientTransaction({
     origin,
     originTabId,
     recipientAddress,
+    responseMessageType,
   ]);
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
@@ -93,7 +95,7 @@ export function ClientTransaction({
   const onRejectTransaction = useCallback(() => {
     sendMessage(
       {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+        message: responseMessageType,
         data: { error: 'User refused transaction', originTabId, origin },
       },
       () => {
@@ -113,7 +115,7 @@ export function ClientTransaction({
       },
       []
     );
-  }, [handleWindowClose, origin, originTabId]);
+  }, [handleWindowClose, origin, originTabId, responseMessageType]);
 
   if (!transaction)
     return (
@@ -174,6 +176,7 @@ export function ClientTransaction({
         handleWindowClose={handleWindowClose}
         recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}
+        responseMessageType={responseMessageType}
       />
     </>
   );
@@ -189,6 +192,7 @@ const ConfirmationModal = ({
   handleWindowClose,
   recipientAddress,
   dogeAmount,
+  responseMessageType,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
@@ -206,7 +210,7 @@ const ConfirmationModal = ({
         if (txId) {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              message: responseMessageType,
               data: { txId, originTabId, origin },
             },
             () => {
@@ -227,7 +231,7 @@ const ConfirmationModal = ({
         } else {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+              message: responseMessageType,
               data: {
                 error: 'Failed to send transaction',
                 originTabId,
@@ -255,7 +259,15 @@ const ConfirmationModal = ({
         }
       }
     );
-  }, [addressIndex, handleWindowClose, onClose, origin, originTabId, rawTx]);
+  }, [
+    addressIndex,
+    handleWindowClose,
+    onClose,
+    origin,
+    originTabId,
+    rawTx,
+    responseMessageType,
+  ]);
 
   return (
     <>

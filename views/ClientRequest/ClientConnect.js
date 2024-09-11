@@ -25,7 +25,12 @@ import { sendMessage } from '../../scripts/helpers/message';
 
 const REFRESH_INTERVAL = 10000;
 
-export function ClientConnect({ params, wallet, dispatch }) {
+export function ClientConnect({
+  params,
+  wallet,
+  dispatch,
+  responseMessageType,
+}) {
   const { origin, originTabId } = params ?? {};
 
   const handleWindowClose = useCallback(() => {
@@ -35,7 +40,7 @@ export function ClientConnect({ params, wallet, dispatch }) {
   const onRejectConnection = useCallback(() => {
     sendMessage(
       {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
+        message: responseMessageType,
         data: { approved: false, originTabId, origin },
       },
       () => {
@@ -55,7 +60,7 @@ export function ClientConnect({ params, wallet, dispatch }) {
       },
       []
     );
-  }, [handleWindowClose, origin, originTabId]);
+  }, [handleWindowClose, origin, originTabId, responseMessageType]);
 
   const [addressBalances, setAddressBalances] = useState({});
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);

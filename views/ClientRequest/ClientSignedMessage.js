@@ -26,6 +26,7 @@ export function ClientSignedMessage({
   dispatch,
   connectedClient,
   connectedAddressIndex: addressIndex,
+  responseMessageType,
 }) {
   const { originTabId, origin, message } = params;
 
@@ -41,7 +42,7 @@ export function ClientSignedMessage({
   const onRejectTransaction = useCallback(() => {
     sendMessage(
       {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+        message: responseMessageType,
         data: { error: 'User refused signed message', originTabId, origin },
       },
       () => {
@@ -61,7 +62,7 @@ export function ClientSignedMessage({
       },
       []
     );
-  }, [handleWindowClose, origin, originTabId]);
+  }, [handleWindowClose, origin, originTabId, responseMessageType]);
 
   return (
     <>
@@ -112,6 +113,7 @@ export function ClientSignedMessage({
         message={message}
         addressIndex={addressIndex}
         handleWindowClose={handleWindowClose}
+        responseMessageType={responseMessageType}
       />
     </>
   );
@@ -125,6 +127,7 @@ const ConfirmationModal = ({
   addressIndex,
   originTabId,
   handleWindowClose,
+  responseMessageType,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
@@ -140,7 +143,7 @@ const ConfirmationModal = ({
         if (signedMessage) {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+              message: responseMessageType,
               data: { signedMessage, originTabId, origin },
             },
             () => {
@@ -161,7 +164,7 @@ const ConfirmationModal = ({
         } else {
           sendMessage(
             {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
+              message: responseMessageType,
               data: {
                 error: 'Failed to sign message',
                 originTabId,
@@ -189,7 +192,14 @@ const ConfirmationModal = ({
         }
       }
     );
-  }, [addressIndex, handleWindowClose, origin, originTabId, message]);
+  }, [
+    addressIndex,
+    handleWindowClose,
+    origin,
+    originTabId,
+    message,
+    responseMessageType,
+  ]);
 
   return (
     <>
