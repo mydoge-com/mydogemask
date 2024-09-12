@@ -5,7 +5,6 @@ import {
   Center,
   HStack,
   Text,
-  // Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,7 +14,6 @@ import { BigButton } from '../../components/Button';
 import { ClientPopupLoading } from '../../components/ClientPopupLoading';
 import { OriginBadge } from '../../components/OriginBadge';
 import { RecipientAddress } from '../../components/RecipientAddress';
-// import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getAddressBalance } from '../../scripts/helpers/data';
@@ -27,9 +25,6 @@ export function ClientTransaction({
   connectedClient,
   connectedAddressIndex,
   handleResponse,
-  // handleError,
-  // handleWindowClose,
-  // responseMessageType,
 }) {
   const { originTabId, origin, recipientAddress, dogeAmount } = params;
 
@@ -100,28 +95,6 @@ export function ClientTransaction({
       toastTitle: 'Transaction Rejected',
       error: 'User refused transaction',
     });
-    // sendMessage(
-    //   {
-    //     message: responseMessageType,
-    //     data: { error: 'User refused transaction', originTabId, origin },
-    //   },
-    //   () => {
-    //     Toast.show({
-    //       duration: 3000,
-    //       render: () => {
-    //         return (
-    //           <ToastRender
-    //             title='Transaction Rejected'
-    //             description={`MyDoge failed to authorize the transaction to ${origin}`}
-    //             status='error'
-    //           />
-    //         );
-    //       },
-    //     });
-    //     handleWindowClose();
-    //   },
-    //   []
-    // );
   }, [handleResponse, origin]);
 
   if (!transaction)
@@ -176,15 +149,11 @@ export function ClientTransaction({
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
-        // origin={origin}
-        // originTabId={originTabId}
         rawTx={transaction.rawTx}
         addressIndex={connectedAddressIndex}
-        // handleWindowClose={handleWindowClose}
         recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}
         handleResponse={handleResponse}
-        // responseMessageType={responseMessageType}
       />
     </>
   );
@@ -193,14 +162,11 @@ export function ClientTransaction({
 const ConfirmationModal = ({
   showModal,
   onClose,
-  // origin,
   rawTx,
   addressIndex,
-  // originTabId,
   handleResponse,
   recipientAddress,
   dogeAmount,
-  // responseMessageType,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);

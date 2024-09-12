@@ -7,7 +7,6 @@ import {
   HStack,
   Pressable,
   Text,
-  // Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useRef, useState } from 'react';
@@ -17,8 +16,6 @@ import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
-// import { ToastRender } from '../../components/ToastRender';
-// import { DISPATCH_TYPES } from '../../Context';
 import { useInterval } from '../../hooks/useInterval';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
@@ -28,39 +25,12 @@ const REFRESH_INTERVAL = 10000;
 export function ClientConnect({ params, wallet, handleResponse }) {
   const { origin, originTabId } = params ?? {};
 
-  // const handleWindowClose = useCallback(() => {
-  //   dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  // }, [dispatch]);
-
   const onRejectConnection = useCallback(() => {
     handleResponse({
       toastMessage: `MyDoge failed to connected to ${origin}`,
       toastTitle: 'Connection Failed',
       error: 'Unable to connect to MyDoge',
-      // data: { approved: false, originTabId, origin },
     });
-    // sendMessage(
-    //   {
-    //     message: responseMessageType,
-    //     data: { approved: false, originTabId, origin },
-    //   },
-    //   () => {
-    //     Toast.show({
-    //       duration: 3000,
-    //       render: () => {
-    //         return (
-    //           <ToastRender
-    //             title='Connection Failed'
-    //             description={`MyDoge failed to connected to ${origin}`}
-    //             status='error'
-    //           />
-    //         );
-    //       },
-    //     });
-    //     handleWindowClose();
-    //   },
-    //   []
-    // );
   }, [handleResponse, origin, originTabId]);
 
   const [addressBalances, setAddressBalances] = useState({});
@@ -183,13 +153,10 @@ export function ClientConnect({ params, wallet, handleResponse }) {
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
-        // origin={origin}
-        // originTabId={originTabId}
         selectedAddressIndex={selectedAddressIndex}
         selectedAddress={selectedAddress}
         balance={selectedAddressBalance}
         handleResponse={handleResponse}
-        // handleWindowClose={handleWindowClose}
       />
     </>
   );
@@ -200,11 +167,8 @@ const ConfirmationModal = ({
   onClose,
   selectedAddress,
   selectedAddressIndex,
-  // origin,
-  // originTabId,
   balance,
   handleResponse,
-  // handleWindowClose,
 }) => {
   const cancelRef = useRef();
   const onConnect = useCallback(() => {
@@ -218,38 +182,6 @@ const ConfirmationModal = ({
         balance,
       },
     });
-    // sendMessage(
-    //   {
-    //     message: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
-    //     data: {
-    //       approved: true,
-    //       address: selectedAddress,
-    //       selectedAddressIndex,
-    //       balance,
-    //       originTabId,
-    //       origin,
-    //     },
-    //   },
-    //   (response) => {
-    //     if (response) {
-    //       onClose?.();
-    //       Toast.show({
-    //         duration: 3000,
-    //         render: () => {
-    //           return (
-    //             <ToastRender
-    //               title='Connection Success'
-    //               description={`MyDoge has connected to ${origin}`}
-    //               status='success'
-    //             />
-    //           );
-    //         },
-    //       });
-    //       handleWindowClose();
-    //     }
-    //   },
-    //   []
-    // );
   }, [handleResponse, selectedAddress, selectedAddressIndex, balance]);
 
   return (

@@ -9,7 +9,6 @@ import {
   ScrollView,
   Spinner,
   Text,
-  // Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -18,9 +17,7 @@ import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
-// import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
-// import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { getCachedTx } from '../../scripts/helpers/storage';
@@ -28,10 +25,8 @@ import { decodeRawPsbt } from '../../scripts/helpers/wallet';
 
 export function ClientPSBT({
   params,
-  // dispatch,
   connectedClient,
   connectedAddressIndex: selectedAddressIndex,
-  // responseMessageType,
   handleResponse,
 }) {
   const {
@@ -41,10 +36,6 @@ export function ClientPSBT({
     indexes: indexesParam,
     signOnly,
   } = params;
-
-  // const handleWindowClose = useCallback(() => {
-  //   dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  // }, [dispatch]);
 
   const [psbt, setPsbt] = useState(null);
   const [inputs, setInputs] = useState([]);
@@ -131,28 +122,6 @@ export function ClientPSBT({
         toastTitle: title,
         error: 'Error creating transaction',
       });
-      // sendMessage(
-      //   {
-      //     message: responseMessageType,
-      //     data: { error: description, originTabId, origin },
-      //   },
-      //   () => {
-      //     Toast.show({
-      //       duration: 3000,
-      //       render: () => {
-      //         return (
-      //           <ToastRender
-      //             title={title}
-      //             description={description}
-      //             status='error'
-      //           />
-      //         );
-      //       },
-      //     });
-      //     handleWindowClose();
-      //   },
-      //   []
-      // );
     },
     [handleResponse]
   );
@@ -163,28 +132,6 @@ export function ClientPSBT({
       toastTitle: 'Transaction Rejected',
       error: 'User refused transaction',
     });
-    // sendMessage(
-    //   {
-    //     message: responseMessageType,
-    //     data: { error: 'User refused transaction', originTabId, origin },
-    //   },
-    //   () => {
-    //     Toast.show({
-    //       duration: 3000,
-    //       render: () => {
-    //         return (
-    //           <ToastRender
-    //             title='Transaction Rejected'
-    //             description={`MyDoge failed to authorize the transaction to ${origin}`}
-    //             status='error'
-    //           />
-    //         );
-    //       },
-    //     });
-    //     handleWindowClose();
-    //   },
-    //   []
-    // );
   }, [handleResponse, origin]);
 
   const [loading, setLoading] = useState(false);
@@ -212,26 +159,6 @@ export function ClientPSBT({
                     toastTitle: 'Success',
                     data: { txId },
                   });
-                  // sendMessage(
-                  //   {
-                  //     message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
-                  //     data: { txId, originTabId, origin },
-                  //   },
-                  //   () => {
-                  //     Toast.show({
-                  //       duration: 3000,
-                  //       render: () => {
-                  //         return (
-                  //           <ToastRender
-                  //             description='Transaction Sent'
-                  //             status='success'
-                  //           />
-                  //         );
-                  //       },
-                  //     });
-                  //     handleWindowClose();
-                  //   }
-                  // );
                 } else {
                   handleFailedTransaction({
                     title: 'Error',

@@ -4,7 +4,6 @@ import {
   Button,
   HStack,
   Text,
-  // Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -14,9 +13,7 @@ import { BigButton } from '../../components/Button';
 import { ClientPopupLoading } from '../../components/ClientPopupLoading';
 import { OriginBadge } from '../../components/OriginBadge';
 import { RecipientAddress } from '../../components/RecipientAddress';
-// import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
-// import { DISPATCH_TYPES } from '../../Context';
 import {
   MESSAGE_TYPES,
   TRANSACTION_TYPES,
@@ -28,18 +25,11 @@ import { NFTView } from '../Transactions/components/NFTView';
 
 export function ClientDoginalTransaction({
   params,
-  // dispatch,
   connectedClient,
   connectedAddressIndex,
-  // handleError,
-  // responseMessageType,
   handleResponse,
 }) {
   const { originTabId, origin, recipientAddress, location } = params;
-
-  // const handleWindowClose = useCallback(() => {
-  //   dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  // }, [dispatch]);
 
   /**
    * @type {ReturnType<typeof useState<{ rawTx: string; fee: number; amount: number } | undefined}>>}
@@ -132,28 +122,6 @@ export function ClientDoginalTransaction({
       toastTitle: 'Error',
       error: 'User refused transaction',
     });
-    // sendMessage(
-    //   {
-    //     message: responseMessageType,
-    //     data: { error: 'User refused transaction', originTabId, origin },
-    //   },
-    //   () => {
-    //     Toast.show({
-    //       duration: 3000,
-    //       render: () => {
-    //         return (
-    //           <ToastRender
-    //             title='Transaction Rejected'
-    //             description={`MyDoge failed to authorize the transaction to ${origin}`}
-    //             status='error'
-    //           />
-    //         );
-    //       },
-    //     });
-    //     handleWindowClose();
-    //   },
-    //   []
-    // );
   }, [handleResponse]);
 
   if (!transaction)
@@ -232,12 +200,9 @@ const ConfirmationModal = ({
   origin,
   rawTx,
   addressIndex,
-  // originTabId,
-  // handleWindowClose,
   recipientAddress,
   dogeAmount,
   selectedNFT,
-  // responseMessageType,
   handleResponse,
 }) => {
   const cancelRef = useRef();
@@ -264,59 +229,12 @@ const ConfirmationModal = ({
             toastTitle: 'Success',
             data: { txId },
           });
-          // sendMessage(
-          //   {
-          //     message: responseMessageType,
-          //     data: { txId, originTabId, origin },
-          //   },
-          //   () => {
-          //     Toast.show({
-          //       duration: 3000,
-          //       render: () => {
-          //         return (
-          //           <ToastRender
-          //             description='Transaction Sent'
-          //             status='success'
-          //           />
-          //         );
-          //       },
-          //     });
-          //     handleWindowClose();
-          //   }
-          // );
         } else {
           handleResponse({
             toastMessage: 'Transaction Failed',
             toastTitle: 'Error',
             error: 'Failed to send transaction',
           });
-          // sendMessage(
-          //   {
-          //     message: responseMessageType,
-          //     data: {
-          //       error: 'Failed to send transaction',
-          //       originTabId,
-          //       origin,
-          //     },
-          //   },
-          //   () => {
-          //     Toast.show({
-          //       title: 'Error',
-          //       description: 'Transaction Failed',
-          //       duration: 3000,
-          //       render: () => {
-          //         return (
-          //           <ToastRender
-          //             title='Error'
-          //             description='Failed to send transaction.'
-          //             status='error'
-          //           />
-          //         );
-          //       },
-          //     });
-          //     handleWindowClose();
-          //   }
-          // );
         }
       }
     );

@@ -3,7 +3,6 @@ import { useCallback, useEffect, useRef } from 'react';
 
 import { Layout } from '../../components/Layout';
 import { ToastRender } from '../../components/ToastRender';
-// import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
@@ -58,12 +57,6 @@ export function ClientRequest() {
 
   const responseMessageType =
     CLIENT_REQUEST_ROUTES[clientRequest?.requestType]?.response;
-
-  // const handleWindowClose = useCallback(() => {
-  //   dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  // }, [dispatch]);
-
-  // const handleError = useCallback(
   //   ({ error = 'Transaction Failed', title = 'Error', messageType }) => {
   //     sendMessage(
   //       {

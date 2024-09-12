@@ -7,7 +7,6 @@ import {
   Modal,
   Spinner,
   Text,
-  // Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useRef, useState } from 'react';
@@ -15,25 +14,17 @@ import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
-// import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
-// import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 
 export function ClientDecryptedMessage({
   params,
-  // dispatch,
   connectedClient,
   connectedAddressIndex: addressIndex,
-  // responseMessageType,
   handleResponse,
 }) {
   const { originTabId, origin, message } = params;
-
-  // const handleWindowClose = useCallback(() => {
-  //   dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  // }, [dispatch]);
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -46,28 +37,6 @@ export function ClientDecryptedMessage({
       toastTitle: 'Error',
       error: 'User refused decrypted message',
     });
-    // sendMessage(
-    //   {
-    //     message: responseMessageType,
-    //     data: { error: 'User refused decrypted message', originTabId, origin },
-    //   },
-    //   () => {
-    //     Toast.show({
-    //       duration: 3000,
-    //       render: () => {
-    //         return (
-    //           <ToastRender
-    //             title='Message Rejected'
-    //             description={`MyDoge failed to authorize the decrypted message request to ${origin}`}
-    //             status='error'
-    //           />
-    //         );
-    //       },
-    //     });
-    //     handleWindowClose();
-    //   },
-    //   []
-    // );
   }, [handleResponse, origin, originTabId]);
 
   return (
@@ -118,8 +87,6 @@ export function ClientDecryptedMessage({
         message={message}
         addressIndex={addressIndex}
         handleResponse={handleResponse}
-        // handleWindowClose={handleWindowClose}
-        // responseMessageType={responseMessageType}
       />
     </>
   );
@@ -131,9 +98,6 @@ const ConfirmationModal = ({
   origin,
   message,
   addressIndex,
-  // originTabId,
-  // handleWindowClose,
-  // responseMessageType,
   handleResponse,
 }) => {
   const cancelRef = useRef();
@@ -158,59 +122,12 @@ const ConfirmationModal = ({
             toastTitle: 'Success',
             data: { decryptedMessage },
           });
-          // sendMessage(
-          //   {
-          //     message: responseMessageType,
-          //     data: { decryptedMessage, originTabId, origin },
-          //   },
-          //   () => {
-          //     Toast.show({
-          //       duration: 3000,
-          //       render: () => {
-          //         return (
-          //           <ToastRender
-          //             description='Message Decrypted Successfully'
-          //             status='success'
-          //           />
-          //         );
-          //       },
-          //     });
-          //     handleWindowClose();
-          //   }
-          // );
         } else {
           handleResponse({
             toastMessage: 'Message Decrypting Failed',
             toastTitle: 'Error',
             error: 'Failed to decrypt message',
           });
-          // sendMessage(
-          //   {
-          //     message: responseMessageType,
-          //     data: {
-          //       error: 'Failed to decrypt message',
-          //       originTabId,
-          //       origin,
-          //     },
-          //   },
-          //   () => {
-          //     Toast.show({
-          //       title: 'Error',
-          //       description: 'Message Decrypting Failed',
-          //       duration: 3000,
-          //       render: () => {
-          //         return (
-          //           <ToastRender
-          //             title='Error'
-          //             description='Failed to decrypt message.'
-          //             status='error'
-          //           />
-          //         );
-          //       },
-          //     });
-          //     handleWindowClose();
-          //   }
-          // );
         }
       }
     );
