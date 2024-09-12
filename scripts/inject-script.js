@@ -14,8 +14,6 @@ const createResponseHandler =
         onSuccess?.(data);
         resolve(data);
       } else {
-        onError?.(new Error('Unable to connect to MyDoge'));
-        reject(new Error('Unable to connect to MyDoge'));
       }
       window.removeEventListener('message', listener);
     }
@@ -26,14 +24,14 @@ const createResponseHandler =
  * Class representing the MyDoge API to interact with the Dogecoin wallet.
  */
 class MyDogeWallet {
+  #requestQueue = [];
+  #isRequestPending = false;
   constructor() {
     this.isMyDoge = true;
-    this.requestQueue = [];
-    this.isRequestPending = false;
     console.info('MyDoge API initialized');
   }
 
-  createPopupRequestHandler({ requestType, responseType, isDataValid }) {
+  #createPopupRequestHandler({ requestType, responseType, isDataValid }) {
     return ({ data, onSuccess, onError }) => {
       return new Promise((resolve, reject) => {
         if (data && !isDataValid) {
@@ -41,7 +39,7 @@ class MyDogeWallet {
           reject(new Error('Invalid data'));
           return;
         }
-        this.requestQueue.push({
+        this.#requestQueue.push({
           onSuccess,
           onError,
           requestType,
@@ -50,14 +48,14 @@ class MyDogeWallet {
           reject,
           data,
         });
-        if (!this.isRequestPending) {
-          this.processNextRequest();
+        if (!this.#isRequestPending) {
+          this.#processNextRequest();
         }
       });
     };
   }
 
-  createPopupResponseHandler() {
+  #createPopupResponseHandler() {
     return ({ resolve, reject, onSuccess, onError, responseType }) => {
       const listener = ({ data: { type, data, error }, origin }) => {
         // only accept messages from the same origin and message type of this context
@@ -69,36 +67,33 @@ class MyDogeWallet {
         } else if (data) {
           onSuccess?.(data);
           resolve(data);
-        } else {
-          onError?.(new Error('Unable to connect to MyDoge'));
-          reject(new Error('Unable to connect to MyDoge'));
         }
         // process next request after popup has closed
         setTimeout(() => {
-          this.requestQueue.shift();
-          this.processNextRequest();
+          this.#requestQueue.shift();
+          this.#processNextRequest();
           window.removeEventListener('message', listener);
-        }, 1600);
+        }, 500);
       };
       window.addEventListener('message', listener);
     };
   }
 
-  handleRequest({ requestType, data }) {
+  #handleRequest({ requestType, data }) {
     window.postMessage({ type: requestType, data }, window.location.origin);
   }
 
-  handlePopupResponse({ resolve, reject, onSuccess, onError, responseType }) {
-    const popupResponseHandler = this.createPopupResponseHandler();
+  #handlePopupResponse({ resolve, reject, onSuccess, onError, responseType }) {
+    const popupResponseHandler = this.#createPopupResponseHandler();
     popupResponseHandler({ resolve, reject, onSuccess, onError, responseType });
   }
 
-  processNextRequest() {
-    if (this.requestQueue.length === 0) {
-      this.isRequestPending = false;
+  #processNextRequest() {
+    if (this.#requestQueue.length === 0) {
+      this.#isRequestPending = false;
       return;
     }
-    this.isRequestPending = true;
+    this.#isRequestPending = true;
 
     const {
       data,
@@ -108,11 +103,11 @@ class MyDogeWallet {
       onError,
       requestType,
       responseType,
-    } = this.requestQueue[0];
+    } = this.#requestQueue[0];
 
-    this.handleRequest({ requestType, data });
+    this.#handleRequest({ requestType, data });
 
-    this.handlePopupResponse({
+    this.#handlePopupResponse({
       resolve,
       reject,
       onSuccess,
@@ -138,7 +133,7 @@ class MyDogeWallet {
    *   .catch(error => console.error(error));
    */
   connect(onSuccess, onError) {
-    return this.createPopupRequestHandler({
+    return this.#createPopupRequestHandler({
       requestType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION,
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
     })({ onSuccess, onError });
@@ -185,7 +180,7 @@ class MyDogeWallet {
         window.location.origin
       );
 
-      createResponseHandler()({
+      this.#createPopupResponseHandler()({
         resolve,
         reject,
         onSuccess,
@@ -298,7 +293,7 @@ class MyDogeWallet {
    *   .catch(error => console.error(error));
    */
   requestTransaction(data, onSuccess, onError) {
-    return this.createPopupRequestHandler({
+    return this.#createPopupRequestHandler({
       requestType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
       isDataValid: data?.recipientAddress && data?.dogeAmount,
@@ -353,7 +348,7 @@ class MyDogeWallet {
    *   .catch(error => console.error(error));
    */
   requestInscriptionTransaction(data, onSuccess, onError) {
-    return this.createPopupRequestHandler({
+    return this.#createPopupRequestHandler({
       requestType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION,
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
       isDataValid: data?.recipientAddress && data?.location,
@@ -409,7 +404,7 @@ class MyDogeWallet {
    *   .catch(error => console.error(error));
    */
   requestAvailableDRC20Transaction(data, onSuccess, onError) {
-    return this.createPopupRequestHandler({
+    return this.#createPopupRequestHandler({
       requestType: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
       responseType:
         MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
@@ -469,7 +464,7 @@ class MyDogeWallet {
    *   .catch(error => console.error(error));
    */
   requestPsbt(data, onSuccess, onError) {
-    return this.createPopupRequestHandler({
+    return this.#createPopupRequestHandler({
       requestType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
       isDataValid: data?.rawTx && data?.indexes?.length,
@@ -526,7 +521,7 @@ class MyDogeWallet {
    *   .catch(error => console.error(error));
    */
   requestSignedMessage(data, onSuccess, onError) {
-    return this.createPopupRequestHandler({
+    return this.#createPopupRequestHandler({
       requestType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE,
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
       isDataValid: !!data?.message,
@@ -580,7 +575,7 @@ class MyDogeWallet {
    *   .catch(error => console.error(error));
    */
   requestDecryptedMessage(data, onSuccess, onError) {
-    return this.createPopupRequestHandler({
+    return this.#createPopupRequestHandler({
       requestType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE,
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
       isDataValid: !!data?.message,

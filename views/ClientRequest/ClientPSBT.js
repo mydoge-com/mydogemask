@@ -9,7 +9,7 @@ import {
   ScrollView,
   Spinner,
   Text,
-  Toast,
+  // Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -18,9 +18,9 @@ import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
-import { ToastRender } from '../../components/ToastRender';
+// import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
-import { DISPATCH_TYPES } from '../../Context';
+// import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { getCachedTx } from '../../scripts/helpers/storage';
@@ -28,16 +28,17 @@ import { decodeRawPsbt } from '../../scripts/helpers/wallet';
 
 export function ClientPSBT({
   params,
-  dispatch,
+  // dispatch,
   connectedClient,
   connectedAddressIndex: selectedAddressIndex,
-  responseMessageType,
+  // responseMessageType,
+  handleResponse,
 }) {
-  const { originTabId, origin, rawTx, indexes: indexesParam } = params;
+  const { origin, rawTx, indexes: indexesParam } = params;
 
-  const handleWindowClose = useCallback(() => {
-    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  }, [dispatch]);
+  // const handleWindowClose = useCallback(() => {
+  //   dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
+  // }, [dispatch]);
 
   const [psbt, setPsbt] = useState(null);
   const [inputs, setInputs] = useState([]);
@@ -119,56 +120,66 @@ export function ClientPSBT({
       description = 'Error creating transaction',
     }) => {
       setLoading(false);
-      sendMessage(
-        {
-          message: responseMessageType,
-          data: { error: description, originTabId, origin },
-        },
-        () => {
-          Toast.show({
-            duration: 3000,
-            render: () => {
-              return (
-                <ToastRender
-                  title={title}
-                  description={description}
-                  status='error'
-                />
-              );
-            },
-          });
-          handleWindowClose();
-        },
-        []
-      );
+      handleResponse({
+        toastMessage: description,
+        toastTitle: title,
+        error: 'Error creating transaction',
+      });
+      // sendMessage(
+      //   {
+      //     message: responseMessageType,
+      //     data: { error: description, originTabId, origin },
+      //   },
+      //   () => {
+      //     Toast.show({
+      //       duration: 3000,
+      //       render: () => {
+      //         return (
+      //           <ToastRender
+      //             title={title}
+      //             description={description}
+      //             status='error'
+      //           />
+      //         );
+      //       },
+      //     });
+      //     handleWindowClose();
+      //   },
+      //   []
+      // );
     },
-    [handleWindowClose, origin, originTabId, responseMessageType]
+    [handleResponse]
   );
 
   const onRejectTransaction = useCallback(() => {
-    sendMessage(
-      {
-        message: responseMessageType,
-        data: { error: 'User refused transaction', originTabId, origin },
-      },
-      () => {
-        Toast.show({
-          duration: 3000,
-          render: () => {
-            return (
-              <ToastRender
-                title='Transaction Rejected'
-                description={`MyDoge failed to authorize the transaction to ${origin}`}
-                status='error'
-              />
-            );
-          },
-        });
-        handleWindowClose();
-      },
-      []
-    );
-  }, [handleWindowClose, origin, originTabId, responseMessageType]);
+    handleResponse({
+      toastMessage: `MyDoge failed to authorize the transaction to ${origin}`,
+      toastTitle: 'Transaction Rejected',
+      error: 'User refused transaction',
+    });
+    // sendMessage(
+    //   {
+    //     message: responseMessageType,
+    //     data: { error: 'User refused transaction', originTabId, origin },
+    //   },
+    //   () => {
+    //     Toast.show({
+    //       duration: 3000,
+    //       render: () => {
+    //         return (
+    //           <ToastRender
+    //             title='Transaction Rejected'
+    //             description={`MyDoge failed to authorize the transaction to ${origin}`}
+    //             status='error'
+    //           />
+    //         );
+    //       },
+    //     });
+    //     handleWindowClose();
+    //   },
+    //   []
+    // );
+  }, [handleResponse, origin]);
 
   const [loading, setLoading] = useState(false);
 
@@ -189,26 +200,31 @@ export function ClientPSBT({
             (txId) => {
               setLoading(false);
               if (txId) {
-                sendMessage(
-                  {
-                    message: responseMessageType,
-                    data: { txId, originTabId, origin },
-                  },
-                  () => {
-                    Toast.show({
-                      duration: 3000,
-                      render: () => {
-                        return (
-                          <ToastRender
-                            description='Transaction Sent'
-                            status='success'
-                          />
-                        );
-                      },
-                    });
-                    handleWindowClose();
-                  }
-                );
+                handleResponse({
+                  toastMessage: 'Transaction Sent',
+                  toastTitle: 'Success',
+                  data: { txId },
+                });
+                // sendMessage(
+                //   {
+                //     message: responseMessageType,
+                //     data: { txId, originTabId, origin },
+                //   },
+                //   () => {
+                //     Toast.show({
+                //       duration: 3000,
+                //       render: () => {
+                //         return (
+                //           <ToastRender
+                //             description='Transaction Sent'
+                //             status='success'
+                //           />
+                //         );
+                //       },
+                //     });
+                //     handleWindowClose();
+                //   }
+                // );
               } else {
                 handleFailedTransaction({
                   title: 'Error',
@@ -226,14 +242,11 @@ export function ClientPSBT({
       }
     );
   }, [
-    handleFailedTransaction,
-    handleWindowClose,
-    indexes,
-    origin,
-    originTabId,
     rawTx,
+    indexes,
     selectedAddressIndex,
-    responseMessageType,
+    handleResponse,
+    handleFailedTransaction,
   ]);
 
   const [inputsModalOpen, setInputsModalOpen] = useState(false);

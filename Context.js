@@ -82,7 +82,7 @@ export const AppContextProvider = ({ children }) => {
         case DISPATCH_TYPES.SET_CLIENT_REQUEST:
           return { ...state, clientRequest: payload.clientRequest };
         case DISPATCH_TYPES.CLEAR_CLIENT_REQUEST:
-          setTimeout(() => window?.close(), 1500);
+          window?.close();
           return { ...state };
         case DISPATCH_TYPES.SET_CONTEXT_LOADED:
           return { ...state, ready: payload.ready };

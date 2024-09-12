@@ -1,9 +1,9 @@
 import { Toast } from 'native-base';
-import { useCallback } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { Layout } from '../../components/Layout';
 import { ToastRender } from '../../components/ToastRender';
-import { DISPATCH_TYPES } from '../../Context';
+// import { DISPATCH_TYPES } from '../../Context';
 import { useAppContext } from '../../hooks/useAppContext';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
@@ -50,6 +50,7 @@ export function ClientRequest() {
   const { wallet, clientRequest, dispatch } = useAppContext();
 
   const { params } = clientRequest;
+  const timeoutRef = useRef(null);
 
   const RenderScreen = clientRequest
     ? CLIENT_REQUEST_ROUTES[clientRequest?.requestType]?.component
@@ -58,40 +59,90 @@ export function ClientRequest() {
   const responseMessageType =
     CLIENT_REQUEST_ROUTES[clientRequest?.requestType]?.response;
 
-  const handleWindowClose = useCallback(() => {
-    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  }, [dispatch]);
+  // const handleWindowClose = useCallback(() => {
+  //   dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
+  // }, [dispatch]);
 
-  const handleError = useCallback(
-    ({ error = 'Transaction Failed', title = 'Error', messageType }) => {
-      sendMessage(
-        {
-          message: messageType,
-          data: {
-            error,
-            originTabId: clientRequest?.params?.originTabId,
-            origin: clientRequest?.params?.origin,
-          },
+  // const handleError = useCallback(
+  //   ({ error = 'Transaction Failed', title = 'Error', messageType }) => {
+  //     sendMessage(
+  //       {
+  //         message: messageType,
+  //         data: {
+  //           error,
+  //           originTabId: clientRequest?.params?.originTabId,
+  //           origin: clientRequest?.params?.origin,
+  //         },
+  //       },
+  //       () => {
+  //         Toast.show({
+  //           duration: 3000,
+  //           render: () => {
+  //             return (
+  //               <ToastRender title={title} description={error} status='error' />
+  //             );
+  //           },
+  //         });
+  //         handleWindowClose();
+  //       }
+  //     );
+  //   },
+  //   [
+  //     clientRequest?.params?.origin,
+  //     clientRequest?.params?.originTabId,
+  //     handleWindowClose,
+  //   ]
+  // );
+
+  /**
+   * Handles the response for client requests
+   * @param {Object} options - The options for handling the response
+   * @param {string} options.toastMessage - The message to display in the toast
+   * @param {string} options.toastTitle - The title of the toast
+   * @param {Object} options.data - Additional data to be sent with the response
+   * @param {string} [options.error] - Error message, if any
+   */
+  const handleResponse = useCallback(
+    ({ toastMessage, toastTitle, data, error }) => {
+      Toast.show({
+        duration: 1500,
+        render: () => {
+          return (
+            <ToastRender
+              title={toastTitle}
+              description={toastMessage}
+              status={error ? 'error' : 'success'}
+            />
+          );
         },
-        () => {
-          Toast.show({
-            duration: 3000,
-            render: () => {
-              return (
-                <ToastRender title={title} description={error} status='error' />
-              );
+      });
+      timeoutRef.current = setTimeout(() => {
+        sendMessage(
+          {
+            message: responseMessageType,
+            data: {
+              ...data,
+              error,
+              originTabId: clientRequest?.params?.originTabId,
+              origin: clientRequest?.params?.origin,
             },
-          });
-          handleWindowClose();
-        }
-      );
+          },
+          () => window.close()
+        );
+      }, 1500);
     },
     [
       clientRequest?.params?.origin,
       clientRequest?.params?.originTabId,
-      handleWindowClose,
+      responseMessageType,
     ]
   );
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(timeoutRef.current);
+    };
+  }, []);
 
   if (!RenderScreen) return null;
 
@@ -103,9 +154,7 @@ export function ClientRequest() {
         dispatch={dispatch}
         connectedClient={params.connectedClient}
         connectedAddressIndex={params.connectedAddressIndex}
-        handleError={handleError}
-        handleWindowClose={handleWindowClose}
-        responseMessageType={responseMessageType}
+        handleResponse={handleResponse}
       />
     </Layout>
   );

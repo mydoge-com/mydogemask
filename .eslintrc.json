@@ -5,8 +5,9 @@
     "es2021": true,
     "react-native/react-native": true
   },
+  // "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": 2020,
+    "ecmaVersion": 2022,
     "ecmaFeatures": {
       "jsx": true
     },
