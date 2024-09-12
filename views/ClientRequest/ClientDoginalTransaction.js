@@ -4,7 +4,6 @@ import {
   Button,
   HStack,
   Text,
-  Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -14,9 +13,7 @@ import { BigButton } from '../../components/Button';
 import { ClientPopupLoading } from '../../components/ClientPopupLoading';
 import { OriginBadge } from '../../components/OriginBadge';
 import { RecipientAddress } from '../../components/RecipientAddress';
-import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
-import { DISPATCH_TYPES } from '../../Context';
 import {
   MESSAGE_TYPES,
   TRANSACTION_TYPES,
@@ -28,16 +25,11 @@ import { NFTView } from '../Transactions/components/NFTView';
 
 export function ClientDoginalTransaction({
   params,
-  dispatch,
   connectedClient,
   connectedAddressIndex,
-  handleError,
+  handleResponse,
 }) {
   const { originTabId, origin, recipientAddress, location } = params;
-
-  const handleWindowClose = useCallback(() => {
-    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  }, [dispatch]);
 
   /**
    * @type {ReturnType<typeof useState<{ rawTx: string; fee: number; amount: number } | undefined}>>}
@@ -51,10 +43,10 @@ export function ClientDoginalTransaction({
     if (!connectedClient?.address) return;
     (async () => {
       if (!validateAddress(recipientAddress)) {
-        handleError({
+        handleResponse({
+          toastMessage: 'Invalid address',
+          toastTitle: 'Error',
           error: 'Invalid address',
-          messageType:
-            MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
         });
         return;
       }
@@ -65,10 +57,10 @@ export function ClientDoginalTransaction({
       const offset = Number(split[2]);
 
       if (txid?.length !== 64 || Number.isNaN(vout)) {
-        handleError({
+        handleResponse({
+          toastMessage: 'Invalid output',
+          toastTitle: 'Error',
           error: 'Invalid output',
-          messageType:
-            MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
         });
         return;
       }
@@ -81,10 +73,10 @@ export function ClientDoginalTransaction({
       });
 
       if (!doginal || !doginal.inscriptions?.find((i) => i.offset === offset)) {
-        handleError({
+        handleResponse({
+          toastMessage: 'Doginal not found',
+          toastTitle: 'Error',
           error: 'Doginal not found',
-          messageType:
-            MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
         });
         setPageLoading(false);
         return;
@@ -108,17 +100,16 @@ export function ClientDoginalTransaction({
           if (rawTx && fee && amount) {
             setTransaction({ rawTx, fee, amount });
           } else {
-            handleError({
+            handleResponse({
+              toastMessage: 'Unable to create doginal transaction',
+              toastTitle: 'Error',
               error: 'Unable to create doginal transaction',
-              messageType:
-                MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
             });
-            throw new Error('Unable to create doginal transaction');
           }
         }
       );
     })();
-  }, [connectedClient?.address, handleError, location, recipientAddress]);
+  }, [connectedClient?.address, handleResponse, location, recipientAddress]);
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -126,29 +117,12 @@ export function ClientDoginalTransaction({
   }, []);
 
   const onRejectTransaction = useCallback(() => {
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-        data: { error: 'User refused transaction', originTabId, origin },
-      },
-      () => {
-        Toast.show({
-          duration: 3000,
-          render: () => {
-            return (
-              <ToastRender
-                title='Transaction Rejected'
-                description={`MyDoge failed to authorize the transaction to ${origin}`}
-                status='error'
-              />
-            );
-          },
-        });
-        handleWindowClose();
-      },
-      []
-    );
-  }, [handleWindowClose, origin, originTabId]);
+    handleResponse({
+      toastMessage: 'Transaction Rejected',
+      toastTitle: 'Error',
+      error: 'User refused transaction',
+    });
+  }, [handleResponse]);
 
   if (!transaction)
     return (
@@ -210,10 +184,11 @@ export function ClientDoginalTransaction({
         originTabId={originTabId}
         rawTx={transaction.rawTx}
         addressIndex={connectedAddressIndex}
-        handleWindowClose={handleWindowClose}
+        // handleWindowClose={handleWindowClose}
         recipientAddress={recipientAddress}
         dogeAmount={transaction.amount}
         selectedNFT={selectedNFT}
+        // responseMessageType={responseMessageType}
       />
     </>
   );
@@ -225,11 +200,10 @@ const ConfirmationModal = ({
   origin,
   rawTx,
   addressIndex,
-  originTabId,
-  handleWindowClose,
   recipientAddress,
   dogeAmount,
   selectedNFT,
+  handleResponse,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
@@ -250,59 +224,21 @@ const ConfirmationModal = ({
         setLoading(false);
         onClose();
         if (txId) {
-          sendMessage(
-            {
-              message:
-                MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
-              data: { txId, originTabId, origin },
-            },
-            () => {
-              Toast.show({
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      description='Transaction Sent'
-                      status='success'
-                    />
-                  );
-                },
-              });
-              handleWindowClose();
-            }
-          );
+          handleResponse({
+            toastMessage: 'Transaction Sent',
+            toastTitle: 'Success',
+            data: { txId },
+          });
         } else {
-          sendMessage(
-            {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-              data: {
-                error: 'Failed to send transaction',
-                originTabId,
-                origin,
-              },
-            },
-            () => {
-              Toast.show({
-                title: 'Error',
-                description: 'Transaction Failed',
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      title='Error'
-                      description='Failed to send transaction.'
-                      status='error'
-                    />
-                  );
-                },
-              });
-              handleWindowClose();
-            }
-          );
+          handleResponse({
+            toastMessage: 'Transaction Failed',
+            toastTitle: 'Error',
+            error: 'Failed to send transaction',
+          });
         }
       }
     );
-  }, [addressIndex, handleWindowClose, onClose, origin, originTabId, rawTx]);
+  }, [addressIndex, handleResponse, onClose, rawTx, selectedNFT.location]);
 
   return (
     <>

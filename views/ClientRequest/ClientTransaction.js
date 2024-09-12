@@ -5,7 +5,6 @@ import {
   Center,
   HStack,
   Text,
-  Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,7 +14,6 @@ import { BigButton } from '../../components/Button';
 import { ClientPopupLoading } from '../../components/ClientPopupLoading';
 import { OriginBadge } from '../../components/OriginBadge';
 import { RecipientAddress } from '../../components/RecipientAddress';
-import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getAddressBalance } from '../../scripts/helpers/data';
@@ -26,8 +24,7 @@ export function ClientTransaction({
   params,
   connectedClient,
   connectedAddressIndex,
-  handleError,
-  handleWindowClose,
+  handleResponse,
 }) {
   const { originTabId, origin, recipientAddress, dogeAmount } = params;
 
@@ -55,8 +52,9 @@ export function ClientTransaction({
         addressBalance: balance,
       });
       if (error) {
-        handleError({
-          messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+        handleResponse({
+          toastMessage: 'Error creating transaction',
+          toastTitle: 'Error',
           error,
         });
       }
@@ -68,8 +66,9 @@ export function ClientTransaction({
           if (rawTx && fee && amount) {
             setTransaction({ rawTx, fee, amount });
           } else {
-            handleError({
-              messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
+            handleResponse({
+              toastMessage: 'Error creating transaction',
+              toastTitle: 'Error',
               error: 'Unable to create transaction',
             });
           }
@@ -79,7 +78,7 @@ export function ClientTransaction({
   }, [
     connectedClient.address,
     dogeAmount,
-    handleError,
+    handleResponse,
     origin,
     originTabId,
     recipientAddress,
@@ -91,29 +90,12 @@ export function ClientTransaction({
   }, []);
 
   const onRejectTransaction = useCallback(() => {
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-        data: { error: 'User refused transaction', originTabId, origin },
-      },
-      () => {
-        Toast.show({
-          duration: 3000,
-          render: () => {
-            return (
-              <ToastRender
-                title='Transaction Rejected'
-                description={`MyDoge failed to authorize the transaction to ${origin}`}
-                status='error'
-              />
-            );
-          },
-        });
-        handleWindowClose();
-      },
-      []
-    );
-  }, [handleWindowClose, origin, originTabId]);
+    handleResponse({
+      toastMessage: `MyDoge failed to authorize the transaction to ${origin}`,
+      toastTitle: 'Transaction Rejected',
+      error: 'User refused transaction',
+    });
+  }, [handleResponse, origin]);
 
   if (!transaction)
     return (
@@ -167,13 +149,11 @@ export function ClientTransaction({
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
-        origin={origin}
-        originTabId={originTabId}
         rawTx={transaction.rawTx}
         addressIndex={connectedAddressIndex}
-        handleWindowClose={handleWindowClose}
         recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}
+        handleResponse={handleResponse}
       />
     </>
   );
@@ -182,11 +162,9 @@ export function ClientTransaction({
 const ConfirmationModal = ({
   showModal,
   onClose,
-  origin,
   rawTx,
   addressIndex,
-  originTabId,
-  handleWindowClose,
+  handleResponse,
   recipientAddress,
   dogeAmount,
 }) => {
@@ -204,58 +182,68 @@ const ConfirmationModal = ({
         setLoading(false);
         onClose();
         if (txId) {
-          sendMessage(
-            {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-              data: { txId, originTabId, origin },
-            },
-            () => {
-              Toast.show({
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      description='Transaction Sent'
-                      status='success'
-                    />
-                  );
-                },
-              });
-              handleWindowClose();
-            }
-          );
+          handleResponse({
+            toastMessage: 'Transaction Sent',
+            toastTitle: 'Success',
+            data: { txId },
+          });
+          // sendMessage(
+          //   {
+          //     message: responseMessageType,
+          //     data: { txId, originTabId, origin },
+          //   },
+          //   () => {
+          //     Toast.show({
+          //       duration: 3000,
+          //       render: () => {
+          //         return (
+          //           <ToastRender
+          //             description='Transaction Sent'
+          //             status='success'
+          //           />
+          //         );
+          //       },
+          //     });
+          //     handleWindowClose();
+          //   }
+          // );
         } else {
-          sendMessage(
-            {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-              data: {
-                error: 'Failed to send transaction',
-                originTabId,
-                origin,
-              },
-            },
-            () => {
-              Toast.show({
-                title: 'Error',
-                description: 'Transaction Failed',
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      title='Error'
-                      description='Failed to send transaction.'
-                      status='error'
-                    />
-                  );
-                },
-              });
-              handleWindowClose();
-            }
-          );
+          handleResponse({
+            toastMessage: 'Failed to send transaction.',
+            toastTitle: 'Error',
+            error: 'Failed to send transaction',
+          });
+          // sendMessage(
+          //   {
+          // message: responseMessageType,
+          //   data: {
+          //     error: 'Failed to send transaction',
+          //     originTabId,
+          //     origin,
+          //   },
+          // },
+          // () => {
+          //   Toast.show({
+          //     title: 'Error',
+          //     description: 'Transaction Failed',
+          //     duration: 3000,
+          //     render: () => {
+          //       return (
+          //         <ToastRender
+          //           title='Error'
+          //           description='Failed to send transaction.'
+          //           status='error'
+          //         />
+          //       );
+          //     },
+          //   });
+          //   handleWindowClose();
+          // }
+          // );
         }
       }
     );
-  }, [addressIndex, handleWindowClose, onClose, origin, originTabId, rawTx]);
+  }, [addressIndex, handleResponse, onClose, rawTx]);
 
   return (
     <>

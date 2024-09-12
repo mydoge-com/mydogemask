@@ -7,7 +7,6 @@ import {
   HStack,
   Pressable,
   Text,
-  Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useRef, useState } from 'react';
@@ -17,45 +16,22 @@ import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
-import { ToastRender } from '../../components/ToastRender';
-import { DISPATCH_TYPES } from '../../Context';
 import { useInterval } from '../../hooks/useInterval';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 
 const REFRESH_INTERVAL = 10000;
 
-export function ClientConnect({ params, wallet, dispatch }) {
+export function ClientConnect({ params, wallet, handleResponse }) {
   const { origin, originTabId } = params ?? {};
 
-  const handleWindowClose = useCallback(() => {
-    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  }, [dispatch]);
-
   const onRejectConnection = useCallback(() => {
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
-        data: { approved: false, originTabId, origin },
-      },
-      () => {
-        Toast.show({
-          duration: 3000,
-          render: () => {
-            return (
-              <ToastRender
-                title='Connection Failed'
-                description={`MyDoge failed to connected to ${origin}`}
-                status='error'
-              />
-            );
-          },
-        });
-        handleWindowClose();
-      },
-      []
-    );
-  }, [handleWindowClose, origin, originTabId]);
+    handleResponse({
+      toastMessage: `MyDoge failed to connected to ${origin}`,
+      toastTitle: 'Connection Failed',
+      error: 'Unable to connect to MyDoge',
+    });
+  }, [handleResponse, origin, originTabId]);
 
   const [addressBalances, setAddressBalances] = useState({});
   const [selectedAddressIndex, setSelectedAddressIndex] = useState(0);
@@ -177,12 +153,10 @@ export function ClientConnect({ params, wallet, dispatch }) {
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
-        origin={origin}
-        originTabId={originTabId}
         selectedAddressIndex={selectedAddressIndex}
         selectedAddress={selectedAddress}
         balance={selectedAddressBalance}
-        handleWindowClose={handleWindowClose}
+        handleResponse={handleResponse}
       />
     </>
   );
@@ -193,54 +167,22 @@ const ConfirmationModal = ({
   onClose,
   selectedAddress,
   selectedAddressIndex,
-  origin,
-  originTabId,
   balance,
-  handleWindowClose,
+  handleResponse,
 }) => {
   const cancelRef = useRef();
   const onConnect = useCallback(() => {
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
-        data: {
-          approved: true,
-          address: selectedAddress,
-          selectedAddressIndex,
-          balance,
-          originTabId,
-          origin,
-        },
+    handleResponse({
+      toastMessage: `MyDoge has connected to ${origin}`,
+      toastTitle: 'Connection Success',
+      data: {
+        approved: true,
+        address: selectedAddress,
+        selectedAddressIndex,
+        balance,
       },
-      (response) => {
-        if (response) {
-          onClose?.();
-          Toast.show({
-            duration: 3000,
-            render: () => {
-              return (
-                <ToastRender
-                  title='Connection Success'
-                  description={`MyDoge has connected to ${origin}`}
-                  status='success'
-                />
-              );
-            },
-          });
-          handleWindowClose();
-        }
-      },
-      []
-    );
-  }, [
-    selectedAddress,
-    selectedAddressIndex,
-    balance,
-    originTabId,
-    origin,
-    onClose,
-    handleWindowClose,
-  ]);
+    });
+  }, [handleResponse, selectedAddress, selectedAddressIndex, balance]);
 
   return (
     <AlertDialog

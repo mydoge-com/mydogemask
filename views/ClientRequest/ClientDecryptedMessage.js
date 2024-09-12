@@ -7,7 +7,6 @@ import {
   Modal,
   Spinner,
   Text,
-  Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useRef, useState } from 'react';
@@ -15,23 +14,17 @@ import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
-import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
-import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 
 export function ClientDecryptedMessage({
   params,
-  dispatch,
   connectedClient,
   connectedAddressIndex: addressIndex,
+  handleResponse,
 }) {
   const { originTabId, origin, message } = params;
-
-  const handleWindowClose = useCallback(() => {
-    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  }, [dispatch]);
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -39,29 +32,12 @@ export function ClientDecryptedMessage({
   }, []);
 
   const onRejectTransaction = useCallback(() => {
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
-        data: { error: 'User refused decrypted message', originTabId, origin },
-      },
-      () => {
-        Toast.show({
-          duration: 3000,
-          render: () => {
-            return (
-              <ToastRender
-                title='Message Rejected'
-                description={`MyDoge failed to authorize the decrypted message request to ${origin}`}
-                status='error'
-              />
-            );
-          },
-        });
-        handleWindowClose();
-      },
-      []
-    );
-  }, [handleWindowClose, origin, originTabId]);
+    handleResponse({
+      toastMessage: 'Message Rejected',
+      toastTitle: 'Error',
+      error: 'User refused decrypted message',
+    });
+  }, [handleResponse, origin, originTabId]);
 
   return (
     <>
@@ -110,7 +86,7 @@ export function ClientDecryptedMessage({
         originTabId={originTabId}
         message={message}
         addressIndex={addressIndex}
-        handleWindowClose={handleWindowClose}
+        handleResponse={handleResponse}
       />
     </>
   );
@@ -122,11 +98,15 @@ const ConfirmationModal = ({
   origin,
   message,
   addressIndex,
-  originTabId,
-  handleWindowClose,
+  handleResponse,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
+
+  const handleClose = useCallback(() => {
+    setLoading(false);
+    onClose();
+  }, [onClose]);
 
   const onSubmit = useCallback(async () => {
     setLoading(true);
@@ -137,58 +117,22 @@ const ConfirmationModal = ({
       },
       (decryptedMessage) => {
         if (decryptedMessage) {
-          sendMessage(
-            {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
-              data: { decryptedMessage, originTabId, origin },
-            },
-            () => {
-              Toast.show({
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      description='Message Decrypted Successfully'
-                      status='success'
-                    />
-                  );
-                },
-              });
-              handleWindowClose();
-            }
-          );
+          handleResponse({
+            toastMessage: 'Message Decrypted Successfully',
+            toastTitle: 'Success',
+            data: { decryptedMessage },
+          });
         } else {
-          sendMessage(
-            {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
-              data: {
-                error: 'Failed to decrypt message',
-                originTabId,
-                origin,
-              },
-            },
-            () => {
-              Toast.show({
-                title: 'Error',
-                description: 'Message Decrypting Failed',
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      title='Error'
-                      description='Failed to decrypt message.'
-                      status='error'
-                    />
-                  );
-                },
-              });
-              handleWindowClose();
-            }
-          );
+          handleResponse({
+            toastMessage: 'Message Decrypting Failed',
+            toastTitle: 'Error',
+            error: 'Failed to decrypt message',
+          });
         }
       }
     );
-  }, [addressIndex, handleWindowClose, origin, originTabId, message]);
+  }, [message, addressIndex, handleResponse]);
+  
 
   return (
     <>
@@ -200,7 +144,7 @@ const ConfirmationModal = ({
       <AlertDialog
         leastDestructiveRef={cancelRef}
         isOpen={showModal}
-        onClose={onClose}
+        onClose={handleClose}
       >
         <AlertDialog.Content>
           <AlertDialog.CloseButton />
@@ -219,7 +163,7 @@ const ConfirmationModal = ({
               <Button
                 variant='unstyled'
                 colorScheme='coolGray'
-                onPress={onClose}
+                onPress={handleClose}
                 ref={cancelRef}
               >
                 Cancel

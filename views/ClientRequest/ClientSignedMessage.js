@@ -7,7 +7,6 @@ import {
   Modal,
   Spinner,
   Text,
-  Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useRef, useState } from 'react';
@@ -15,23 +14,17 @@ import { FaLink } from 'react-icons/fa';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
-import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
-import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 
 export function ClientSignedMessage({
   params,
-  dispatch,
   connectedClient,
   connectedAddressIndex: addressIndex,
+  handleResponse,
 }) {
-  const { originTabId, origin, message } = params;
-
-  const handleWindowClose = useCallback(() => {
-    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  }, [dispatch]);
+  const { origin, message } = params;
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -39,29 +32,12 @@ export function ClientSignedMessage({
   }, []);
 
   const onRejectTransaction = useCallback(() => {
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
-        data: { error: 'User refused signed message', originTabId, origin },
-      },
-      () => {
-        Toast.show({
-          duration: 3000,
-          render: () => {
-            return (
-              <ToastRender
-                title='Message Rejected'
-                description={`MyDoge failed to authorize the signed message request to ${origin}`}
-                status='error'
-              />
-            );
-          },
-        });
-        handleWindowClose();
-      },
-      []
-    );
-  }, [handleWindowClose, origin, originTabId]);
+    handleResponse({
+      toastMessage: `MyDoge failed to authorize the signed message request to ${origin}`,
+      toastTitle: 'Message Rejected',
+      error: 'User refused signed message',
+    });
+  }, [handleResponse, origin]);
 
   return (
     <>
@@ -107,11 +83,9 @@ export function ClientSignedMessage({
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
-        origin={origin}
-        originTabId={originTabId}
         message={message}
         addressIndex={addressIndex}
-        handleWindowClose={handleWindowClose}
+        handleResponse={handleResponse}
       />
     </>
   );
@@ -120,11 +94,9 @@ export function ClientSignedMessage({
 const ConfirmationModal = ({
   showModal,
   onClose,
-  origin,
   message,
   addressIndex,
-  originTabId,
-  handleWindowClose,
+  handleResponse,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
@@ -138,58 +110,21 @@ const ConfirmationModal = ({
       },
       (signedMessage) => {
         if (signedMessage) {
-          sendMessage(
-            {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
-              data: { signedMessage, originTabId, origin },
-            },
-            () => {
-              Toast.show({
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      description='Message Signed Successfully'
-                      status='success'
-                    />
-                  );
-                },
-              });
-              handleWindowClose();
-            }
-          );
+          handleResponse({
+            toastMessage: 'Message Signed Successfully',
+            toastTitle: 'Message Signed',
+            data: { signedMessage },
+          });
         } else {
-          sendMessage(
-            {
-              message: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
-              data: {
-                error: 'Failed to sign message',
-                originTabId,
-                origin,
-              },
-            },
-            () => {
-              Toast.show({
-                title: 'Error',
-                description: 'Message Signing Failed',
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      title='Error'
-                      description='Failed to sign message.'
-                      status='error'
-                    />
-                  );
-                },
-              });
-              handleWindowClose();
-            }
-          );
+          handleResponse({
+            toastMessage: 'Message Signing Failed',
+            toastTitle: 'Error',
+            error: 'Failed to sign message',
+          });
         }
       }
     );
-  }, [addressIndex, handleWindowClose, origin, originTabId, message]);
+  }, [message, addressIndex, handleResponse]);
 
   return (
     <>

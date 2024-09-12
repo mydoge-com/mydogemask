@@ -4,7 +4,6 @@ import {
   Button,
   HStack,
   Text,
-  Toast,
   VStack,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -13,25 +12,19 @@ import { FaLink } from 'react-icons/fa';
 import { BigButton } from '../../components/Button';
 import { ClientPopupLoading } from '../../components/ClientPopupLoading';
 import { OriginBadge } from '../../components/OriginBadge';
-import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
-import { DISPATCH_TYPES } from '../../Context';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getDRC20Balances } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
 
 export function ClientAvailableDRC20Transaction({
   params,
-  dispatch,
   connectedClient,
   connectedAddressIndex,
-  handleError,
+  handleResponse,
 }) {
-  const handleWindowClose = useCallback(() => {
-    dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
-  }, [dispatch]);
 
-  const { origin, originTabId, ticker, amount } = params ?? {};
+  const { origin, ticker, amount } = params ?? {};
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
@@ -46,29 +39,12 @@ export function ClientAvailableDRC20Transaction({
   const [transaction, setTransaction] = useState();
 
   const onRejectTransaction = useCallback(() => {
-    sendMessage(
-      {
-        message: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-        data: { error: 'User refused transaction', originTabId, origin },
-      },
-      () => {
-        Toast.show({
-          duration: 3000,
-          render: () => {
-            return (
-              <ToastRender
-                title='Transaction Rejected'
-                description={`MyDoge failed to authorize the transaction to ${origin}`}
-                status='error'
-              />
-            );
-          },
-        });
-        handleWindowClose();
-      },
-      []
-    );
-  }, [handleWindowClose, origin, originTabId]);
+    handleResponse({
+      toastMessage: `MyDoge failed to authorize the transaction to ${origin}`,
+      toastTitle: 'Transaction Rejected',
+      error: 'User refused transaction',
+    });
+  }, [handleResponse, origin]);
 
   useEffect(() => {
     if (!connectedClient?.address || typeof connectedAddressIndex !== 'number')
@@ -81,10 +57,10 @@ export function ClientAvailableDRC20Transaction({
 
       if (ab < amt) {
         setPageLoading(false);
-        handleError({
+        handleResponse({
+          toastMessage: 'Insufficient balance',
+          toastTitle: 'Error',
           error: 'Insufficient balance',
-          messageType:
-            MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
         });
         return;
       }
@@ -104,10 +80,10 @@ export function ClientAvailableDRC20Transaction({
           if (txs?.length && fee) {
             setTransaction({ txs, fee });
           } else {
-            handleError({
+            handleResponse({
               error: 'Unable to create available drc-20 transaction',
-              messageType:
-                MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+              toastTitle: 'Error',
+              toastMessage: 'Unable to create transaction',
             });
           }
         }
@@ -117,7 +93,7 @@ export function ClientAvailableDRC20Transaction({
     amount,
     connectedAddressIndex,
     connectedClient?.address,
-    handleError,
+    handleResponse,
     params,
     ticker,
   ]);
@@ -172,8 +148,8 @@ export function ClientAvailableDRC20Transaction({
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
         params={params}
-        handleWindowClose={handleWindowClose}
         txs={transaction?.txs}
+        handleResponse={handleResponse}
       />
     </>
   );
@@ -183,12 +159,12 @@ const ConfirmationModal = ({
   showModal,
   onClose,
   params,
-  handleWindowClose,
   txs,
+  handleResponse,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
-  const { origin, originTabId, ticker, amount: tokenAmount } = params;
+  const { origin, ticker, amount: tokenAmount } = params;
 
   const onSubmit = useCallback(async () => {
     setLoading(true);
@@ -200,66 +176,21 @@ const ConfirmationModal = ({
       (txId) => {
         setLoading(false);
         if (txId) {
-          sendMessage(
-            {
-              message:
-                MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
-              data: { tokenAmount, ticker, txId, originTabId, origin },
-            },
-            () => {
-              onClose();
-              Toast.show({
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      description='Transaction Sent'
-                      status='success'
-                    />
-                  );
-                },
-              });
-              handleWindowClose();
-            }
-          );
+          handleResponse({
+            toastMessage: 'Transaction Sent',
+            toastTitle: 'Success',
+            data: { tokenAmount, ticker, txId },
+          });
         } else {
-          sendMessage({
-            message:
-              MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
-            data: {
-              error: 'Failed to inscribe token transfer',
-              originTabId,
-              origin,
-            },
+          handleResponse({
+            toastMessage: 'Failed to inscribe token transfer',
+            toastTitle: 'Error',
+            error: 'Failed to inscribe token transfer',
           });
-          Toast.show({
-            title: 'Error',
-            description: 'Transaction Failed',
-            duration: 3000,
-            render: () => {
-              return (
-                <ToastRender
-                  title='Error'
-                  description='Failed to send transaction.'
-                  status='error'
-                />
-              );
-            },
-          });
-          handleWindowClose();
         }
       }
     );
-  }, [
-    handleWindowClose,
-    onClose,
-    origin,
-    originTabId,
-    params,
-    ticker,
-    tokenAmount,
-    txs,
-  ]);
+  }, [handleResponse, params, ticker, tokenAmount, txs]);
 
   return (
     <>
