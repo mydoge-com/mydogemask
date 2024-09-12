@@ -137,20 +137,6 @@ class MyDogeWallet {
       requestType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION,
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
     })({ onSuccess, onError });
-    // return new Promise((resolve, reject) => {
-    //   window.postMessage(
-    //     { type: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION },
-    //     window.location.origin
-    //   );
-
-    //   createResponseHandler()({
-    //     resolve,
-    //     reject,
-    //     onSuccess,
-    //     onError,
-    //     messageType: MESSAGE_TYPES.CLIENT_REQUEST_CONNECTION_RESPONSE,
-    //   });
-    // });
   }
 
   /**
@@ -170,10 +156,6 @@ class MyDogeWallet {
    *   .catch(error => console.error(error));
    */
   getBalance(onSuccess, onError) {
-    // return this.createRegularRequestHandler({
-    //   requestType: MESSAGE_TYPES.CLIENT_GET_BALANCE,
-    //   responseType: MESSAGE_TYPES.CLIENT_GET_BALANCE_RESPONSE,
-    // })({ onSuccess, onError });
     return new Promise((resolve, reject) => {
       window.postMessage(
         { type: MESSAGE_TYPES.CLIENT_GET_BALANCE },
@@ -298,34 +280,6 @@ class MyDogeWallet {
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
       isDataValid: data?.recipientAddress && data?.dogeAmount,
     })({ data, onSuccess, onError });
-    // return new Promise((resolve, reject) => {
-    //   if (!data?.recipientAddress || !data?.dogeAmount) {
-    //     onError?.(new Error('Invalid data'));
-    //     reject(new Error('Invalid data'));
-    //     return;
-    //   }
-    //   if (this.isRequestPending) {
-    //     onError?.(new Error('There is a pending request'));
-    //     reject(new Error('There is a pending request'));
-    //     return;
-    //   }
-    //   this.isRequestPending = true;
-    //   window.postMessage(
-    //     { type: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION, data },
-    //     window.location.origin
-    //   );
-
-    //   createResponseHandler()({
-    //     resolve,
-    //     reject,
-    //     onSuccess,
-    //     onError,
-    //     messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION_RESPONSE,
-    //     setRequestPending: (isRequestPending) => {
-    //       this.isRequestPending = isRequestPending;
-    //     },
-    //   });
-    // });
   }
 
   /**
@@ -353,34 +307,6 @@ class MyDogeWallet {
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
       isDataValid: data?.recipientAddress && data?.location,
     })({ data, onSuccess, onError });
-    // return new Promise((resolve, reject) => {
-    //   if (!data?.recipientAddress || !data?.location) {
-    //     onError?.(new Error('Invalid data'));
-    //     reject(new Error('Invalid data'));
-    //     return;
-    //   }
-    //   if (this.isRequestPending) {
-    //     onError?.(new Error('There is a pending request'));
-    //     reject(new Error('There is a pending request'));
-    //     return;
-    //   }
-    //   this.isRequestPending = true;
-    //   window.postMessage(
-    //     { type: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION, data },
-    //     window.location.origin
-    //   );
-
-    //   createResponseHandler()({
-    //     resolve,
-    //     reject,
-    //     onSuccess,
-    //     onError,
-    //     messageType: MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION_RESPONSE,
-    //     setRequestPending: (isRequestPending) => {
-    //       this.isRequestPending = isRequestPending;
-    //     },
-    //   });
-    // });
   }
 
   /**
@@ -410,38 +336,6 @@ class MyDogeWallet {
         MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
       isDataValid: data?.ticker && data?.amount,
     })({ data, onSuccess, onError });
-    // return new Promise((resolve, reject) => {
-    //   if (!data?.ticker || !data?.amount) {
-    //     onError?.(new Error('Invalid data'));
-    //     reject(new Error('Invalid data'));
-    //     return;
-    //   }
-    //   if (this.isRequestPending) {
-    //     onError?.(new Error('There is a pending request'));
-    //     reject(new Error('There is a pending request'));
-    //     return;
-    //   }
-    //   this.isRequestPending = true;
-    //   window.postMessage(
-    //     {
-    //       type: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
-    //       data,
-    //     },
-    //     window.location.origin
-    //   );
-
-    //   createResponseHandler()({
-    //     resolve,
-    //     reject,
-    //     onSuccess,
-    //     onError,
-    //     messageType:
-    //       MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
-    //     setRequestPending: (isRequestPending) => {
-    //       this.isRequestPending = isRequestPending;
-    //     },
-    //   });
-    // });
   }
 
   /**
@@ -470,37 +364,6 @@ class MyDogeWallet {
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
       isDataValid: data?.rawTx && data?.indexes?.length,
     })({ data, onSuccess, onError });
-    // return new Promise((resolve, reject) => {
-    //   if (!data?.rawTx || !data?.indexes?.length) {
-    //     onError?.(new Error('Invalid data'));
-    //     reject(new Error('Invalid data'));
-    //     return;
-    //   }
-    //   if (this.isRequestPending) {
-    //     onError?.(new Error('There is a pending request'));
-    //     reject(new Error('There is a pending request'));
-    //     return;
-    //   }
-    //   this.isRequestPending = true;
-    //   window.postMessage(
-    //     {
-    //       type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,
-    //       data,
-    //     },
-    //     window.location.origin
-    //   );
-
-    //   createResponseHandler()({
-    //     resolve,
-    //     reject,
-    //     onSuccess,
-    //     onError,
-    //     messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
-    //     setRequestPending: (isRequestPending) => {
-    //       this.isRequestPending = isRequestPending;
-    //     },
-    //   });
-    // });
   }
 
   /**
@@ -527,34 +390,6 @@ class MyDogeWallet {
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
       isDataValid: !!data?.message,
     })({ data, onSuccess, onError });
-    // return new Promise((resolve, reject) => {
-    //   if (!data?.message) {
-    //     onError?.(new Error('Invalid data'));
-    //     reject(new Error('Invalid data'));
-    //     return;
-    //   }
-    //   if (this.isRequestPending) {
-    //     onError?.(new Error('There is a pending request'));
-    //     reject(new Error('There is a pending request'));
-    //     return;
-    //   }
-    //   this.isRequestPending = true;
-    //   window.postMessage(
-    //     { type: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE, data },
-    //     window.location.origin
-    //   );
-
-    //   createResponseHandler()({
-    //     resolve,
-    //     reject,
-    //     onSuccess,
-    //     onError,
-    //     messageType: MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE,
-    //     setRequestPending: (isRequestPending) => {
-    //       this.isRequestPending = isRequestPending;
-    //     },
-    //   });
-    // });
   }
 
   /**
@@ -581,34 +416,6 @@ class MyDogeWallet {
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
       isDataValid: !!data?.message,
     })({ data, onSuccess, onError });
-    // return new Promise((resolve, reject) => {
-    //   if (!data?.message) {
-    //     onError?.(new Error('Invalid data'));
-    //     reject(new Error('Invalid data'));
-    //     return;
-    //   }
-    //   if (this.isRequestPending) {
-    //     onError?.(new Error('There is a pending request'));
-    //     reject(new Error('There is a pending request'));
-    //     return;
-    //   }
-    //   this.isRequestPending = true;
-    //   window.postMessage(
-    //     { type: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE, data },
-    //     window.location.origin
-    //   );
-
-    //   createResponseHandler()({
-    //     resolve,
-    //     reject,
-    //     onSuccess,
-    //     onError,
-    //     messageType: MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE_RESPONSE,
-    //     setRequestPending: (isRequestPending) => {
-    //       this.isRequestPending = isRequestPending;
-    //     },
-    //   });
-    // });
   }
 
   /**
