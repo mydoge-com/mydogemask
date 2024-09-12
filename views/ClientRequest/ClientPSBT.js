@@ -34,7 +34,13 @@ export function ClientPSBT({
   // responseMessageType,
   handleResponse,
 }) {
-  const { origin, rawTx, indexes: indexesParam } = params;
+  const {
+    originTabId,
+    origin,
+    rawTx,
+    indexes: indexesParam,
+    signOnly,
+  } = params;
 
   // const handleWindowClose = useCallback(() => {
   //   dispatch({ type: DISPATCH_TYPES.CLEAR_CLIENT_REQUEST });
@@ -192,47 +198,70 @@ export function ClientPSBT({
       },
       ({ rawTx: signedRawTx, fee, amount }) => {
         if (signedRawTx && fee && amount) {
-          sendMessage(
-            {
-              message: MESSAGE_TYPES.SEND_PSBT,
-              data: { rawTx: signedRawTx, selectedAddressIndex },
-            },
-            (txId) => {
-              setLoading(false);
-              if (txId) {
-                handleResponse({
-                  toastMessage: 'Transaction Sent',
-                  toastTitle: 'Success',
-                  data: { txId },
-                });
-                // sendMessage(
-                //   {
-                //     message: responseMessageType,
-                //     data: { txId, originTabId, origin },
-                //   },
-                //   () => {
-                //     Toast.show({
-                //       duration: 3000,
-                //       render: () => {
-                //         return (
-                //           <ToastRender
-                //             description='Transaction Sent'
-                //             status='success'
-                //           />
-                //         );
-                //       },
-                //     });
-                //     handleWindowClose();
-                //   }
-                // );
-              } else {
-                handleFailedTransaction({
-                  title: 'Error',
-                  description: 'Failed to send transaction.',
-                });
+          if (!signOnly) {
+            sendMessage(
+              {
+                message: MESSAGE_TYPES.SEND_PSBT,
+                data: { rawTx: signedRawTx, selectedAddressIndex },
+              },
+              (txId) => {
+                setLoading(false);
+                if (txId) {
+                  handleResponse({
+                    toastMessage: 'Transaction Sent',
+                    toastTitle: 'Success',
+                    data: { txId },
+                  });
+                  // sendMessage(
+                  //   {
+                  //     message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+                  //     data: { txId, originTabId, origin },
+                  //   },
+                  //   () => {
+                  //     Toast.show({
+                  //       duration: 3000,
+                  //       render: () => {
+                  //         return (
+                  //           <ToastRender
+                  //             description='Transaction Sent'
+                  //             status='success'
+                  //           />
+                  //         );
+                  //       },
+                  //     });
+                  //     handleWindowClose();
+                  //   }
+                  // );
+                } else {
+                  handleFailedTransaction({
+                    title: 'Error',
+                    description: 'Failed to send transaction.',
+                  });
+                }
               }
-            }
-          );
+            );
+          } else {
+            sendMessage(
+              {
+                message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
+                data: { signedRawTx, originTabId, origin },
+              },
+              () => {
+                Toast.show({
+                  duration: 3000,
+                  render: () => {
+                    return (
+                      <ToastRender
+                        description='Transaction Signed'
+                        status='success'
+                      />
+                    );
+                  },
+                });
+                handleWindowClose();
+              }
+            );
+          }
         } else {
           handleFailedTransaction({
             title: 'Error',
@@ -247,6 +276,7 @@ export function ClientPSBT({
     selectedAddressIndex,
     handleResponse,
     handleFailedTransaction,
+    signOnly,
   ]);
 
   const [inputsModalOpen, setInputsModalOpen] = useState(false);
@@ -267,7 +297,7 @@ export function ClientPSBT({
       <Center pt='16px' w='300px'>
         <WalletAddress address={connectedClient.address} />
         <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-          Send PSBT
+          {signOnly ? 'Sign' : 'Send'} PSBT
         </Text>
         <OriginBadge origin={origin} mt='12px' mb='10px' />
         <HStack py='20px' justifyContent='center' space='16px' mt='-10px'>
@@ -317,7 +347,7 @@ export function ClientPSBT({
             role='button'
             px='28px'
           >
-            Send
+            {signOnly ? 'Sign' : 'Send'}
           </BigButton>
         </HStack>
       </Center>
@@ -328,6 +358,7 @@ export function ClientPSBT({
         onSubmit={onSubmit}
         loading={loading}
         dogeAmount={dogeAmount}
+        signOnly={signOnly}
       />
       <Modal
         isOpen={inputsModalOpen}
@@ -481,6 +512,7 @@ const ConfirmationModal = ({
   onSubmit,
   loading,
   dogeAmount,
+  signOnly,
 }) => {
   const cancelRef = useRef();
 
@@ -503,7 +535,7 @@ const ConfirmationModal = ({
             <OriginBadge origin={origin} mb='8px' />
             <VStack alignItems='center'>
               <Text>
-                Confirm transaction to send{' '}
+                Confirm transaction to {signOnly ? 'sign' : 'send'}{' '}
                 <Text fontWeight='bold'>Ð{dogeAmount}</Text>
               </Text>
             </VStack>

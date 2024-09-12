@@ -440,6 +440,11 @@ async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
     console.log('total fee', fee);
     console.log('raw tx', rawTx);
 
+    if (fee < sb.toBitcoin(estimatedFee)) {
+      sendResponse?.(false);
+      return;
+    }
+
     sendResponse?.({
       rawTx,
       fee,
@@ -1178,13 +1183,14 @@ async function onApproveDoginalTransaction({
 
 async function onApprovePsbt({
   sendResponse,
-  data: { txId, error, originTabId, origin },
+  data: { signedRawTx, txId, error, originTabId, origin },
 } = {}) {
-  if (txId) {
+  if (txId || signedRawTx) {
     chrome.tabs?.sendMessage(originTabId, {
       type: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
       data: {
-        txId,
+        ...(signedRawTx && { signedRawTx }),
+        ...(txId && { txId }),
       },
       origin,
     });
