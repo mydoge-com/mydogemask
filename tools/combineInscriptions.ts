@@ -21,19 +21,17 @@ async function run() {
   }).address;
   const recipientAddress = process.env.RECIPIENT_ADDRESS;
   const fee = Number(process.env.FEE);
-  let amount = 0;
 
   console.log('initialized keypairs and addresses');
 
   const inscriptionUtxos = await getInscriptionsUtxos(senderAddress);
   const spendableUtxos = await getSpendableUtxos(senderAddress);
-  let total = 0;
 
   if (inscriptionUtxos.length < 2) {
     throw new Error('not enough inscription utxos for sender');
   }
 
-  if (spendableUtxos.length === 0) {
+  if (spendableUtxos.length < 3) {
     throw new Error('no spendable utxos for sender');
   }
 
