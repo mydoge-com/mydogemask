@@ -100,17 +100,19 @@ async function run() {
   });
 
   const inputAmount = sb.toBitcoin(tx._getInputAmount());
+  const outputAmount = Math.trunc(sb.toSatoshi(inputAmount - fee));
 
   console.log('input amount', inputAmount);
+  console.log('output amount', sb.toBitcoin(outputAmount));
 
-  if (inputAmount < fee + MIN_TX_AMOUNT * 2) {
-    throw new Error('not enough inputs to cover fee');
+  if (inputAmount - sb.toBitcoin(outputAmount) < fee) {
+    throw new Error('not enough funds to cover fee');
   }
 
   // recipient
-  tx.to(recipientAddress, sb.toSatoshi(inputAmount - fee));
-  console.log('recipient', recipientAddress, inputAmount - fee);
-  console.log('fee', sb.toBitcoin(tx.getFee()));
+  tx.to(recipientAddress, outputAmount);
+
+  console.log('fee', sb.toBitcoin(tx._getUnspentValue()));
 
   // sign
   tx.sign(process.env.WIF_1);
