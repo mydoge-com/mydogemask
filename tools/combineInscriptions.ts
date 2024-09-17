@@ -1,5 +1,6 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { Transaction } from 'bitcore-lib-doge';
+import commandLineArgs from 'command-line-args';
 import dotenv from 'dotenv';
 import sb from 'satoshi-bitcoin';
 
@@ -11,7 +12,9 @@ import {
   getSpendableUtxos,
 } from '../scripts/helpers/doginals';
 import { network } from '../scripts/helpers/wallet';
-import { MIN_TX_AMOUNT } from '../scripts/helpers/constants';
+
+const cliOptions = [{ name: 'send', alias: 's', type: Boolean }];
+const options = commandLineArgs(cliOptions);
 
 async function run() {
   const keyPair = bitcoin.ECPair.fromWIF(process.env.WIF_1, network);
@@ -100,31 +103,35 @@ async function run() {
   });
 
   const inputAmount = sb.toBitcoin(tx._getInputAmount());
+  const outputAmount = Math.trunc(sb.toSatoshi(inputAmount - fee));
 
   console.log('input amount', inputAmount);
+  console.log('output amount to', recipientAddress, sb.toBitcoin(outputAmount));
 
-  if (inputAmount < fee + MIN_TX_AMOUNT * 2) {
-    throw new Error('not enough inputs to cover fee');
+  if (inputAmount - sb.toBitcoin(outputAmount) < fee) {
+    throw new Error('not enough funds to cover fee');
   }
 
   // recipient
-  tx.to(recipientAddress, sb.toSatoshi(inputAmount - fee));
-  console.log('recipient', recipientAddress, inputAmount - fee);
-  console.log('fee', sb.toBitcoin(tx.getFee()));
+  tx.to(recipientAddress, outputAmount);
 
-  // sign
-  tx.sign(process.env.WIF_1);
-  console.log('sending signedt tx', tx.toString());
+  console.log('fee', sb.toBitcoin(tx._getUnspentValue()));
 
-  // send
-  const jsonrpcReq = {
-    jsonrpc: '2.0',
-    id: `send_${Date.now()}`,
-    method: 'sendrawtransaction',
-    params: [tx.toString()],
-  };
-  const jsonrpcRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
-  console.log('\nresult', jsonrpcRes.result);
+  if (options.send) {
+    // sign
+    tx.sign(process.env.WIF_1);
+    console.log('sending signedt tx', tx.toString());
+
+    // send
+    const jsonrpcReq = {
+      jsonrpc: '2.0',
+      id: `send_${Date.now()}`,
+      method: 'sendrawtransaction',
+      params: [tx.toString()],
+    };
+    const jsonrpcRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
+    console.log('\nresult', jsonrpcRes.result);
+  }
 }
 
 run()

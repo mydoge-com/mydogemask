@@ -125,132 +125,26 @@ const createClientRequestHandler =
 // Build a raw transaction and determine fee
 async function onCreateTransaction({ data = {}, sendResponse } = {}) {
   const amountSatoshi = sb.toSatoshi(data.dogeAmount);
-  let amount = sb.toBitcoin(amountSatoshi);
+  const amount = sb.toBitcoin(amountSatoshi);
 
   try {
-    // get spendable utxos
-    let utxos = await getSpendableUtxos(data.senderAddress);
+    const response = await mydoge.post('/v3/tx/prepare', {
+      sender: data.senderAddress,
+      recipient: data.recipientAddress,
+      amount,
+    });
+    const { rawTx, fee, amount: resultAmount } = response.data;
+    let amountMismatch = false;
 
-    const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
-
-    utxos = utxos.filter(
-      (utxo) => !spentUtxosCache.find((cache) => cache.txid === utxo.txid)
-    );
-
-    console.log('found utxos', utxos.length);
-
-    // estimate fee
-    const smartfeeReq = {
-      jsonrpc: '2.0',
-      id: `${data.senderAddress}_estimatesmartfee_${Date.now()}`,
-      method: 'estimatesmartfee',
-      params: [BLOCK_CONFIRMATIONS], // confirm within x blocks
-    };
-    const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
-    const feePerKB = feeData.result.feerate * 2 || FEE_RATE_KB;
-    const feePerInput = sanitizeFloatAmount(feePerKB / 5); // about 5 inputs per KB
-    const jsonrpcReq = {
-      jsonrpc: '2.0',
-      id: `${data.senderAddress}_create_${Date.now()}`,
-      method: 'createrawtransaction',
-      params: [
-        [],
-        {
-          [data.recipientAddress]: amount,
-        },
-      ],
-    };
-    let fee = feePerInput;
-    let total = 0;
-    let i = 0;
-
-    console.log('found feerate', feeData.result.feerate);
-    console.log('using feePerKb', feePerKB);
-    console.log('estimated feePerInput', feePerInput);
-
-    for (const utxo of utxos) {
-      const value = sb.toBitcoin(utxo.outputValue);
-
-      total += value;
-      fee = feePerInput * (i + 1);
-      jsonrpcReq.params[0].push({
-        txid: utxo.txid,
-        vout: utxo.vout,
-      });
-
-      i++;
-
-      if (total >= amount + fee) {
-        console.log('utxo', i, total, '>=', amount + fee);
-        break;
-      }
-
-      if (i === MAX_UTXOS) {
-        total = amount = sanitizeFloatAmount(total);
-
-        console.warn(`hit UTXO limit with ${i} inputs, sending max ${amount}`);
-        break;
-      }
+    if (resultAmount < amount - fee) {
+      amountMismatch = true;
     }
-
-    total = sanitizeFloatAmount(total);
-    amount = sanitizeFloatAmount(amount);
-    fee = sanitizeFloatAmount(fee);
-
-    console.log('num utxos', i);
-    console.log('total', total);
-    console.log('amount', amount);
-    console.log('estimated fee', fee);
-
-    // Detect insufficient funds, discounting estimated fee from amount to allow for max send
-    if (total === 0 || i === 0 || total - fee < MIN_TX_AMOUNT) {
-      throw new Error(
-        `Insufficient funds ${total} < ${amount} + ${fee} with ${i}/${utxos.length} inputs`
-      );
-    }
-
-    // Set a dummy amount in the change address
-    jsonrpcReq.params[1][data.senderAddress] = feePerInput;
-    const estimateRes = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
-    const size = estimateRes.result.length / 2;
-
-    console.log('tx size', size);
-
-    fee = Math.max(sanitizeFloatAmount((size / 1000) * feePerKB), feePerInput);
-
-    // Adjust for max send
-    if (total < amount + fee) {
-      amount = sanitizeFloatAmount(total - fee);
-      jsonrpcReq.params[1][data.recipientAddress] = amount;
-    }
-
-    console.log('calculated fee', fee);
-
-    // Add change address and amount if enough, otherwise add to fee
-    const changeSatoshi = Math.trunc(
-      sb.toSatoshi(total) - sb.toSatoshi(amount) - sb.toSatoshi(fee)
-    );
-
-    console.log('calculated change', changeSatoshi);
-
-    if (changeSatoshi >= 0) {
-      const changeAmount = sb.toBitcoin(changeSatoshi);
-      if (changeAmount >= MIN_TX_AMOUNT) {
-        jsonrpcReq.params[1][data.senderAddress] = changeAmount;
-      } else {
-        delete jsonrpcReq.params[1][data.senderAddress];
-        fee += changeAmount;
-      }
-    }
-
-    const rawTx = (await mydoge.post('/wallet/rpc', jsonrpcReq)).data;
-
-    console.log('raw tx', rawTx.result);
 
     sendResponse?.({
-      rawTx: rawTx.result,
+      rawTx,
       fee,
-      amount,
+      amount: resultAmount,
+      amountMismatch,
     });
   } catch (err) {
     logError(err);
