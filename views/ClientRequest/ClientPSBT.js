@@ -91,6 +91,13 @@ export function ClientPSBT({
           })
         );
 
+        // Subtract change output
+        psbt?.txOutputs?.forEach((output) => {
+          if (output.address === connectedClient.address) {
+            amount -= sb.toBitcoin(output.value);
+          }
+        });
+
         setDogeAmount(amount);
         setInputs(mappedInputs);
       }
