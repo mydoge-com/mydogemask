@@ -72,11 +72,11 @@ export const TransferTokenAmount = ({
           onPress={() => {
             setSelectedNFT(item);
           }}
-          selected={selectedNFT?.txid === item.txid}
+          selected={selectedNFT?.location === item.location}
         />
       );
     },
-    [selectedNFT?.txid, setSelectedNFT]
+    [selectedNFT?.location, setSelectedNFT]
   );
 
   const onSubmit = useCallback(() => {
@@ -145,7 +145,7 @@ export const TransferTokenAmount = ({
               <FlatList
                 data={nfts}
                 renderItem={renderItem}
-                keyExtractor={(item) => item.inscriptionNumber}
+                keyExtractor={(item) => selectedNFT?.location + item.location}
                 numColumns={2}
                 initialNumToRender={4}
               />
@@ -162,7 +162,10 @@ export const TransferTokenAmount = ({
               <Button
                 variant='unstyled'
                 colorScheme='coolGray'
-                onPress={() => setFormPage('address')}
+                onPress={() => {
+                  setSelectedNFT(null);
+                  setFormPage('address');
+                }}
                 alignSelf='center'
               >
                 Back
