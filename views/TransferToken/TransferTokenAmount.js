@@ -18,7 +18,6 @@ import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getDRC20Inscriptions } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
 import { NFT } from '../Transactions/components/NFT';
-import { set } from 'bitcore-lib-doge/lib/hdkeycache';
 
 export const TransferTokenAmount = ({
   setFormPage,
