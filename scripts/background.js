@@ -1,4 +1,3 @@
-import { Transaction } from 'bitcore-lib-doge';
 import sb from 'satoshi-bitcoin';
 
 import { logError } from '../utils/error';
@@ -11,9 +10,7 @@ import {
   CONNECTED_CLIENTS,
   FEE_RATE_KB,
   INSCRIPTION_TXS_CACHE,
-  MAX_UTXOS,
   MESSAGE_TYPES,
-  MIN_TX_AMOUNT,
   ONBOARDING_COMPLETE,
   PASSWORD,
   SELECTED_ADDRESS_INDEX,
@@ -22,11 +19,7 @@ import {
   TRANSACTION_TYPES,
   WALLET,
 } from './helpers/constants';
-import {
-  getInscriptionsUtxo,
-  getSpendableUtxos,
-  inscribe,
-} from './helpers/doginals';
+import { getSpendableUtxos, inscribe } from './helpers/doginals';
 import { addListener } from './helpers/message';
 import {
   clearSessionStorage,
@@ -56,10 +49,6 @@ const sleep = async (time) =>
   new Promise((resolve) => {
     setTimeout(resolve, time);
   });
-
-function sanitizeFloatAmount(amount) {
-  return sb.toBitcoin(Math.trunc(sb.toSatoshi(amount)));
-}
 
 /**
  * Creates a client popup window.
@@ -153,196 +142,19 @@ async function onCreateTransaction({ data = {}, sendResponse } = {}) {
 }
 
 async function onCreateNFTTransaction({ data = {}, sendResponse } = {}) {
-  const split = data.location.split(':');
-
-  if (split.length !== 3) {
-    sendResponse?.(false);
-    return;
-  }
-
-  const txid = split[0];
-  const vout = Number(split[1]);
-  const offset = Number(split[2]);
-  const amount = Number(data.outputValue);
-  const minSats = sb.toSatoshi(MIN_TX_AMOUNT);
-
-  console.log(
-    'sending inscription',
-    data.inscriptionId,
-    'in tx',
-    txid,
-    'vout',
-    vout,
-    'offset',
-    offset,
-    'amount',
-    sb.toBitcoin(amount)
-  );
-
   try {
-    // Get the inscribed utxo
-    const inUtxo = await getInscriptionsUtxo(data.address, { txid, vout });
-    console.log(
-      'found inscription utxo with',
-      inUtxo.inscriptions.length,
-      'inscriptions and',
-      sb.toBitcoin(inUtxo.outputValue),
-      'value'
-    );
-
-    // estimate fee
-    const smartfeeReq = {
-      jsonrpc: '2.0',
-      id: `${data.address}_estimatesmartfee_${Date.now()}`,
-      method: 'estimatesmartfee',
-      params: [BLOCK_CONFIRMATIONS], // confirm within x blocks
-    };
-    const feeData = (await mydoge.post('/wallet/rpc', smartfeeReq)).data;
-    const feePerKB = feeData.result.feerate * 2 || FEE_RATE_KB;
-    const tx = new Transaction();
-
-    // Populate the transaction with initial input
-    tx.from({
-      txid,
-      vout,
-      script: inUtxo.script,
-      satoshis: Number(inUtxo.outputValue),
+    const response = await mydoge.post('/tx/prepare/inscription', {
+      sender: data.address,
+      recipient: data.recipientAddress,
+      location: data.location,
+      inscriptionId: data.inscriptionId,
     });
-
-    // Determine the outputs for the specific inscription
-    let currOffset = 0;
-    let output = 0;
-    let total = 0;
-
-    for (let i = 0; i < inUtxo.inscriptions.length; i++) {
-      const inscription = inUtxo.inscriptions[i];
-      const currSat = inscription.offset - currOffset;
-
-      if (currSat > 0) {
-        tx.to(data.address, inscription.offset - currOffset);
-        console.log(
-          'output',
-          output,
-          'to',
-          data.address,
-          'with',
-          sb.toBitcoin(inscription.offset - currOffset)
-        );
-        output++;
-        total += inscription.offset - currOffset;
-      }
-
-      if (inscription.offset === offset) {
-        tx.to(data.recipientAddress, minSats);
-        console.log(
-          'output',
-          output,
-          'to',
-          data.recipientAddress,
-          'with',
-          MIN_TX_AMOUNT
-        );
-      } else {
-        tx.to(data.address, minSats);
-        console.log(
-          'output',
-          output,
-          'to',
-          data.address,
-          'with',
-          MIN_TX_AMOUNT
-        );
-      }
-
-      output++;
-      total += minSats;
-      currOffset += inscription.offset + minSats;
-    }
-
-    console.log('total outputs', sb.toBitcoin(total));
-
-    const estimatedSize = tx._estimateSize() / 1000;
-    const estimatedFee = Math.trunc(sb.toSatoshi(estimatedSize * feePerKB));
-    const remainder = amount - total;
-
-    console.log('estimated size', estimatedSize);
-    console.log('fee per kb', feePerKB);
-    console.log('estimated fee', sb.toBitcoin(estimatedFee));
-    console.log('remainder', sb.toBitcoin(remainder));
-
-    if (remainder >= estimatedFee) {
-      if (remainder - estimatedFee >= minSats) {
-        console.log(
-          'change to',
-          data.address,
-          'should be',
-          sb.toBitcoin(remainder - estimatedFee)
-        );
-        tx.to(data.address, remainder - estimatedFee);
-      }
-    } else {
-      const diff = estimatedFee - remainder;
-      console.log('needed to cover fee', sb.toBitcoin(diff));
-      let extra = 0;
-      // Find another utxo to cover the fee
-      // get spendable utxos
-      let utxos = await getSpendableUtxos(data.address);
-
-      const spentUtxosCache = (await getLocalValue(SPENT_UTXOS_CACHE)) ?? [];
-
-      utxos = utxos.filter(
-        (utxo) => !spentUtxosCache.find((cache) => cache.txid === utxo.txid)
-      );
-
-      console.log('found utxos', utxos.length);
-      for (const utxo of utxos) {
-        const value = Number(utxo.outputValue);
-
-        tx.from({
-          txid: utxo.txid,
-          vout: utxo.vout,
-          script: utxo.script,
-          satoshis: value,
-        });
-        console.log('added utxo', utxo.txid, 'amount', sb.toBitcoin(value));
-
-        extra += value;
-
-        if (extra >= diff) {
-          break;
-        }
-      }
-
-      console.log('total added to cover fee', sb.toBitcoin(extra));
-
-      if (extra - diff >= minSats) {
-        tx.to(data.address, extra - diff);
-        console.log(
-          'change to',
-          data.address,
-          'should be',
-          sb.toBitcoin(extra - diff)
-        );
-      }
-    }
-
-    const rawTx = tx.toString();
-    const fee = sb.toBitcoin(tx._getUnspentValue());
-
-    console.log('total input amount', sb.toBitcoin(tx._getInputAmount()));
-    console.log('total output amount', sb.toBitcoin(tx._getOutputAmount()));
-    console.log('total fee', fee);
-    console.log('raw tx', rawTx);
-
-    if (fee < sb.toBitcoin(estimatedFee)) {
-      sendResponse?.(false);
-      return;
-    }
+    const { rawTx, fee, amount } = response.data;
 
     sendResponse?.({
       rawTx,
       fee,
-      amount: MIN_TX_AMOUNT,
+      amount,
     });
   } catch (err) {
     logError(err);
