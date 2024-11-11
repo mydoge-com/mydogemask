@@ -162,7 +162,7 @@ class MyDogeWallet {
         window.location.origin
       );
 
-      this.#createPopupResponseHandler()({
+      createResponseHandler()({
         resolve,
         reject,
         onSuccess,
