@@ -74,9 +74,9 @@ export function ClientDoginalTransaction({
 
       if (!doginal || !doginal.inscriptions?.find((i) => i.offset === offset)) {
         handleResponse({
-          toastMessage: 'Doginal not found',
+          toastMessage: 'NFT not found',
           toastTitle: 'Error',
-          error: 'Doginal not found',
+          error: 'NFT not found',
         });
         setPageLoading(false);
         return;
@@ -101,9 +101,9 @@ export function ClientDoginalTransaction({
             setTransaction({ rawTx, fee, amount });
           } else {
             handleResponse({
-              toastMessage: 'Unable to create doginal transaction',
+              toastMessage: 'Unable to create NFT transaction',
               toastTitle: 'Error',
-              error: 'Unable to create doginal transaction',
+              error: 'Unable to create NFT transaction',
             });
           }
         }
