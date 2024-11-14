@@ -60,7 +60,7 @@ export function Transactions() {
 
   const [routes] = useState([
     { key: 'transactions', title: 'Transactions' },
-    { key: 'doginals', title: 'Doginals' },
+    { key: 'doginals', title: 'NFTs' },
     { key: 'tokens', title: 'Tokens' },
   ]);
 
