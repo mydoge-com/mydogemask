@@ -99,7 +99,7 @@ export const TransferNFTAddress = ({
   return (
     <>
       <Text fontSize='xl' pb='16px' textAlign='center' fontWeight='semibold'>
-        Transfer Doginal
+        Transfer NFT
       </Text>
       <Box borderRadius='12px' overflow='hidden' mb='24px' mx='20px'>
         <NFTView nft={selectedNFT} />

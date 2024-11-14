@@ -4,18 +4,18 @@ import { TRANSACTION_TYPES } from '../scripts/helpers/constants';
 
 const TRANSACTION_LABELS = {
   [TRANSACTION_TYPES.DRC20_AVAILABLE_TX]: {
-    shortLabel: 'DRC-20',
-    fullLabel: 'DRC-20 Inscription',
+    shortLabel: 'Token',
+    fullLabel: 'Token Inscription',
     color: 'gray.200',
   },
   [TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX]: {
-    shortLabel: 'DRC-20',
-    fullLabel: 'DRC-20 Inscription Transfer',
+    shortLabel: 'Token',
+    fullLabel: 'Token Transfer',
     color: 'gray.200',
   },
   [TRANSACTION_TYPES.DOGINAL_TX]: {
-    shortLabel: 'DOGINAL',
-    fullLabel: 'DOGINAL Transfer',
+    shortLabel: 'NFT',
+    fullLabel: 'NFT Transfer',
     color: 'amber.100',
   },
 };
