@@ -57,7 +57,7 @@ export const Token = ({
             bg='brandYellow.500'
             _text={{ color: 'gray.800' }}
             source={{
-              uri: `${TICKER_ICON_URL}/${ticker}.png`,
+              uri: `${TICKER_ICON_URL}/${ticker}.jpg`,
             }}
             mr='12px'
           >
