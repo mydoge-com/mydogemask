@@ -154,6 +154,7 @@ export function ClientTransaction({
         recipientAddress={recipientAddress}
         dogeAmount={dogeAmount}
         handleResponse={handleResponse}
+        origin={origin}
       />
     </>
   );
@@ -167,6 +168,7 @@ const ConfirmationModal = ({
   handleResponse,
   recipientAddress,
   dogeAmount,
+  origin,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
@@ -267,7 +269,7 @@ const ConfirmationModal = ({
                 Confirm transaction to send{' '}
                 <Text fontWeight='bold'>Ð{dogeAmount}</Text> to{' '}
               </Text>
-              <Text fontSize='10px' fontWeight='bold'>
+              <Text fontSize='10px' fontWeight='bold' mt='12px' bg='gray.200' borderRadius='4px' px='4px' py='2px'>
                 {recipientAddress}
               </Text>
             </VStack>

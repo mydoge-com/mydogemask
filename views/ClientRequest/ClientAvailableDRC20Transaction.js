@@ -150,6 +150,7 @@ export function ClientAvailableDRC20Transaction({
         params={params}
         txs={transaction?.txs}
         handleResponse={handleResponse}
+        origin={origin}
       />
     </>
   );
@@ -161,6 +162,7 @@ const ConfirmationModal = ({
   params,
   txs,
   handleResponse,
+  origin,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);

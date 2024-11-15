@@ -157,6 +157,7 @@ export function ClientConnect({ params, wallet, handleResponse }) {
         selectedAddress={selectedAddress}
         balance={selectedAddressBalance}
         handleResponse={handleResponse}
+        origin={origin}
       />
     </>
   );
@@ -169,6 +170,7 @@ const ConfirmationModal = ({
   selectedAddressIndex,
   balance,
   handleResponse,
+  origin,
 }) => {
   const cancelRef = useRef();
   const onConnect = useCallback(() => {

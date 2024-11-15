@@ -86,6 +86,7 @@ export function ClientSignedMessage({
         message={message}
         addressIndex={addressIndex}
         handleResponse={handleResponse}
+        origin={origin}
       />
     </>
   );
@@ -97,6 +98,7 @@ const ConfirmationModal = ({
   message,
   addressIndex,
   handleResponse,
+  origin,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
