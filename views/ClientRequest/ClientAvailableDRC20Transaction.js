@@ -1,11 +1,4 @@
-import {
-  AlertDialog,
-  Box,
-  Button,
-  HStack,
-  Text,
-  VStack,
-} from 'native-base';
+import { AlertDialog, Box, Button, HStack, Text, VStack } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
 
@@ -23,7 +16,6 @@ export function ClientAvailableDRC20Transaction({
   connectedAddressIndex,
   handleResponse,
 }) {
-
   const { origin, ticker, amount } = params ?? {};
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
@@ -166,7 +158,7 @@ const ConfirmationModal = ({
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
-  const { origin, ticker, amount: tokenAmount } = params;
+  const { ticker, amount: tokenAmount } = params;
 
   const onSubmit = useCallback(async () => {
     setLoading(true);
