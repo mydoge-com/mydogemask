@@ -18,7 +18,6 @@ import sb from 'satoshi-bitcoin';
 
 import { BigButton } from '../../components/Button';
 import { OriginBadge } from '../../components/OriginBadge';
-import { ToastRender } from '../../components/ToastRender';
 import { WalletAddress } from '../../components/WalletAddress';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
@@ -177,26 +176,18 @@ export function ClientPSBT({
               }
             );
           } else {
-            sendMessage(
-              {
-                message: MESSAGE_TYPES.CLIENT_REQUEST_PSBT_RESPONSE,
-                data: { signedRawTx, originTabId, origin },
-              },
-              () => {
-                Toast.show({
-                  duration: 3000,
-                  render: () => {
-                    return (
-                      <ToastRender
-                        description='Transaction Signed'
-                        status='success'
-                      />
-                    );
-                  },
-                });
-                handleWindowClose();
-              }
-            );
+            if (signedRawTx) {
+              handleResponse({
+                toastMessage: 'Transaction Signed',
+                toastTitle: 'Success',
+                data: { signedRawTx },
+              });
+            } else {
+              handleFailedTransaction({
+                title: 'Error',
+                description: 'Failed to sign transaction.',
+              });
+            }
           }
         } else {
           handleFailedTransaction({
