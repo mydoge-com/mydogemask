@@ -44,10 +44,8 @@ export const formatTransaction = ({ transaction: tx, walletAddress }) => {
     const [address] = input.addresses;
     const value = Number(input.value);
 
-    if (!incomingAddress) {
+    if (!incomingAddress && address !== walletAddress) {
       incomingAddress = address;
-    } else if (incomingAddress !== address) {
-      incomingAddress = 'Multiple Addresses';
     }
 
     if (input.addresses.includes(walletAddress)) {
