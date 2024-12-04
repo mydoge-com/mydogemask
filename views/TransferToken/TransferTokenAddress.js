@@ -43,7 +43,9 @@ export const TransferTokenAddress = ({
   const onSubmit = useCallback(() => {
     if (validate()) {
       setLoading(true);
-      setFormPage('amount');
+      setFormPage(
+        selectedToken.protocol === 'drc20' ? 'amountDRC20' : 'amountDunes'
+      );
     }
   }, [setFormPage, validate]);
 

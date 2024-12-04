@@ -5,8 +5,9 @@ import { useSearchParams } from 'react-router-dom';
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
 import { TransferTokenAddress } from './TransferTokenAddress';
-import { TransferTokenAmount } from './TransferTokenAmount';
+import { TransferDRC20Amount } from './TransferDRC20Amount';
 import { TransferTokenConfirmation } from './TransferTokenConfirmation';
+import { TransferDunesAmount } from './TransferDunesAmount';
 
 export function TransferToken() {
   const { wallet, selectedAddressIndex } = useAppContext();
@@ -20,7 +21,8 @@ export function TransferToken() {
   const RenderScreen =
     {
       address: TransferTokenAddress,
-      amount: TransferTokenAmount,
+      amountDRC20: TransferDRC20Amount,
+      amountDunes: TransferDunesAmount,
       confirmation: TransferTokenConfirmation,
     }[formPage] ?? null;
 
