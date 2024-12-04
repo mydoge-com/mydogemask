@@ -59,7 +59,7 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
       `/InscribeToken/?selectedToken=${JSON.stringify({
         ...token,
         dogePrice: Number(
-          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 2)
+          formatSatoshisAsDoge(tokenDetails?.floorPrice || 0, 2)
         ),
       })}`
     );
@@ -70,7 +70,7 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
       `/TransferToken/?selectedToken=${JSON.stringify({
         ...token,
         dogePrice: Number(
-          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 2)
+          formatSatoshisAsDoge(tokenDetails?.floorPrice || 0, 2)
         ),
       })}`
     );
