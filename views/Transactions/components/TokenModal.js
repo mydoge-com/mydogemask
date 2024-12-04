@@ -16,9 +16,11 @@ import { BsInfoCircleFill } from 'react-icons/bs';
 import { BigButton } from '../../../components/Button';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { mydoge } from '../../../scripts/api';
-import { DRC20_ICON_URL } from '../../../scripts/helpers/constants';
 import { logError } from '../../../utils/error';
-import { formatSatoshisAsDoge } from '../../../utils/formatters';
+import {
+  formatSatoshisAsDoge,
+  formatCompactNumber,
+} from '../../../utils/formatters';
 import { TokenIcon } from './TokenIcon';
 
 export const TokenModal = ({ isOpen, onClose, token }) => {
@@ -34,6 +36,8 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
     pendingTransferAmount,
     pendingAvailableAmount,
   } = token ?? {};
+
+  const tBalance = protocol === 'drc20' ? transferableBalance : overallBalance;
 
   const fetchTokenDetails = useCallback(() => {
     mydoge
@@ -55,7 +59,7 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
       `/InscribeToken/?selectedToken=${JSON.stringify({
         ...token,
         dogePrice: Number(
-          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
+          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 2)
         ),
       })}`
     );
@@ -66,7 +70,7 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
       `/TransferToken/?selectedToken=${JSON.stringify({
         ...token,
         dogePrice: Number(
-          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 8)
+          formatSatoshisAsDoge(Math.ceil(tokenDetails?.floorPrice), 2)
         ),
       })}`
     );
@@ -108,20 +112,21 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
                 <Pill
                   label='Price'
                   value={`Ɖ ${formatSatoshisAsDoge(
-                    Math.round(tokenDetails.floorPrice)
+                    tokenDetails.floorPrice,
+                    2
                   )}`}
                 />
                 <Pill
-                  label='Volume'
-                  value={`Ɖ ${formatSatoshisAsDoge(tokenDetails.volume)}`}
+                  label='Volume (24h)'
+                  value={`Ɖ ${Number(
+                    tokenDetails.twentyFourHourVolume
+                  ).toLocaleString()}`}
                 />
                 <Pill
                   label='Minted/Supply'
-                  value={`${Number(
-                    tokenDetails.currentSupply
-                  ).toLocaleString()} / ${Number(
-                    tokenDetails.maxSupply
-                  ).toLocaleString()}`}
+                  value={`${formatCompactNumber(
+                    Number(tokenDetails.currentSupply)
+                  )} / ${formatCompactNumber(Number(tokenDetails.maxSupply))}`}
                   flexDir='column'
                   alignItems='center'
                 />
@@ -134,50 +139,54 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
               />
             )}
             <VStack space='12px' w='100%' alignItems='flex-start' py='30px'>
-              <HStack justifyContent='space-between' w='100%'>
-                <Text color='gray.700' fontSize='16px' fontWeight='semibold'>
-                  Available balance:{' '}
-                </Text>
-                <HStack space='4px' alignItems='center'>
-                  <Text color='gray.700' ontSize='16px'>
-                    {Number(availableBalance).toLocaleString()}
+              {protocol === 'drc20' && (
+                <HStack justifyContent='space-between' w='100%'>
+                  <Text color='gray.700' fontSize='16px' fontWeight='semibold'>
+                    Available balance:{' '}
                   </Text>
-                  {pendingAvailableAmount ? (
-                    <Popover
-                      trigger={(triggerProps) => {
-                        return (
-                          <Pressable {...triggerProps}>
-                            <BsInfoCircleFill color='#FCD436' />
-                          </Pressable>
-                        );
-                      }}
-                    >
-                      <Popover.Content>
-                        <Popover.Arrow />
-                        <Popover.Body>
-                          <Text fontSize='13px'>
-                            Pending token inscriptions affect your available
-                            token balance.{'\n\n'}
-                            Pending inscriptions:
-                            {'\n'}
-                            <Text fontWeight='bold'>
-                              {token.ticker}{' '}
-                              {Number(pendingAvailableAmount).toLocaleString()}
+                  <HStack space='4px' alignItems='center'>
+                    <Text color='gray.700' ontSize='16px'>
+                      {Number(availableBalance).toLocaleString()}
+                    </Text>
+                    {pendingAvailableAmount ? (
+                      <Popover
+                        trigger={(triggerProps) => {
+                          return (
+                            <Pressable {...triggerProps}>
+                              <BsInfoCircleFill color='#FCD436' />
+                            </Pressable>
+                          );
+                        }}
+                      >
+                        <Popover.Content>
+                          <Popover.Arrow />
+                          <Popover.Body>
+                            <Text fontSize='13px'>
+                              Pending token inscriptions affect your available
+                              token balance.{'\n\n'}
+                              Pending inscriptions:
+                              {'\n'}
+                              <Text fontWeight='bold'>
+                                {token.ticker}{' '}
+                                {Number(
+                                  pendingAvailableAmount
+                                ).toLocaleString()}
+                              </Text>
                             </Text>
-                          </Text>
-                        </Popover.Body>
-                      </Popover.Content>
-                    </Popover>
-                  ) : null}
+                          </Popover.Body>
+                        </Popover.Content>
+                      </Popover>
+                    ) : null}
+                  </HStack>
                 </HStack>
-              </HStack>
+              )}
               <HStack justifyContent='space-between' w='100%'>
                 <Text color='gray.700' fontSize='16px' fontWeight='semibold'>
                   Transferable balance:{' '}
                 </Text>
                 <HStack space='4px' alignItems='center'>
                   <Text color='gray.700' fontSize='16px'>
-                    {Number(transferableBalance).toLocaleString()}
+                    {Number(tBalance).toLocaleString()}
                   </Text>
                   {pendingTransferAmount ? (
                     <Popover
@@ -209,7 +218,7 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
                 </HStack>
               </HStack>
             </VStack>
-            {Number(transferableBalance) ? (
+            {Number(tBalance) ? (
               <HStack space='8px' mt='10px' alignItems='center'>
                 <BigButton onPress={onTransfer} variant='primary' px='32px'>
                   Transfer <BiTransferAlt style={{ marginLeft: '4px' }} />
