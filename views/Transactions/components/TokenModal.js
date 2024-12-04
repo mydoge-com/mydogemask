@@ -16,15 +16,17 @@ import { BsInfoCircleFill } from 'react-icons/bs';
 import { BigButton } from '../../../components/Button';
 import { useAppContext } from '../../../hooks/useAppContext';
 import { mydoge } from '../../../scripts/api';
-import { TICKER_ICON_URL } from '../../../scripts/helpers/constants';
+import { DRC20_ICON_URL } from '../../../scripts/helpers/constants';
 import { logError } from '../../../utils/error';
 import { formatSatoshisAsDoge } from '../../../utils/formatters';
+import { TokenIcon } from './TokenIcon';
 
 export const TokenModal = ({ isOpen, onClose, token }) => {
   const { navigate } = useAppContext();
   const [tokenDetails, setTokenDetails] = useState();
 
   const {
+    protocol,
     overallBalance,
     availableBalance,
     ticker,
@@ -35,12 +37,12 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
 
   const fetchTokenDetails = useCallback(() => {
     mydoge
-      .get(`/drc20/data/${ticker}`)
+      .get(`/${protocol}/data/${ticker}`)
       .then((res) => {
         setTokenDetails(res.data);
       })
       .catch(logError);
-  }, [ticker]);
+  }, [ticker, protocol]);
 
   useEffect(() => {
     if (isOpen) {
@@ -86,16 +88,12 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
         <Modal.Body alignItems='center' pt='25px' pb='36px'>
           <VStack w='100%' alignItems='center'>
             <VStack alignItems='center' space='12px'>
-              <Avatar
+              <TokenIcon
+                ticker={ticker}
                 size='md'
                 bg='brandYellow.500'
                 _text={{ color: 'gray.800' }}
-                source={{
-                  uri: `${TICKER_ICON_URL}/${ticker}.png`,
-                }}
-              >
-                {ticker?.substring(0, 2).toUpperCase()}
-              </Avatar>
+              />
               <Text fontSize='24px' fontWeight='semibold'>
                 {Number(overallBalance).toLocaleString()} {ticker}
               </Text>

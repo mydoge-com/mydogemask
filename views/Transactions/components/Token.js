@@ -1,14 +1,13 @@
-import { Avatar, HStack, Pressable, Text, VStack } from 'native-base';
+import { HStack, Pressable, Text, VStack } from 'native-base';
 import { Fragment } from 'react';
 
 import { useAppContext } from '../../../hooks/useAppContext';
-import {
-  TICKER_ICON_URL,
-  TRANSACTION_TYPES,
-} from '../../../scripts/helpers/constants';
+import { TRANSACTION_TYPES } from '../../../scripts/helpers/constants';
+import { TokenIcon } from './TokenIcon';
 
 export const Token = ({
   token: {
+    protocol,
     overallBalance,
     ticker,
     transferableBalance: transferable,
@@ -52,17 +51,13 @@ export const Token = ({
     <Fragment key={ticker}>
       <Pressable onPress={() => selectToken(token)} paddingTop='10px'>
         <HStack p='2px' alignItems='center'>
-          <Avatar
+          <TokenIcon
+            ticker={ticker}
             size='sm'
             bg='brandYellow.500'
             _text={{ color: 'gray.800' }}
-            source={{
-              uri: `${TICKER_ICON_URL}/${ticker}.jpg`,
-            }}
             mr='12px'
-          >
-            {ticker?.substring(0, 2).toUpperCase()}
-          </Avatar>
+          />
           <Text fontSize='md' fontWeight='medium' flex={1}>
             {ticker}
           </Text>
@@ -70,23 +65,37 @@ export const Token = ({
             <Text fontSize='sm' fontWeight='bold'>
               {Number(overallBalance).toLocaleString()}
             </Text>
-            <HStack>
-              <Text
-                fontSize='12px'
-                _light={{ color: 'gray.400' }}
-                _dark={{ color: 'gray.500' }}
-              >
-                Transferable:
-              </Text>
-              <Text
-                fontSize='12px'
-                fontWeight='semibold'
-                _light={{ color: 'gray.400' }}
-                _dark={{ color: 'gray.500' }}
-              >
-                {Number(transferableBalance).toLocaleString()}
-              </Text>
-            </HStack>
+
+            {protocol === 'drc20' ? ( // Potentially add more protocols
+              <HStack>
+                <Text
+                  fontSize='12px'
+                  _light={{ color: 'gray.400' }}
+                  _dark={{ color: 'gray.500' }}
+                >
+                  Transferable:
+                </Text>
+                <Text
+                  fontSize='12px'
+                  fontWeight='semibold'
+                  _light={{ color: 'gray.400' }}
+                  _dark={{ color: 'gray.500' }}
+                >
+                  {Number(transferableBalance).toLocaleString()}
+                </Text>
+              </HStack>
+            ) : (
+              // Assume Dunes for now
+              <HStack>
+                <Text
+                  fontSize='12px'
+                  _light={{ color: 'gray.400' }}
+                  _dark={{ color: 'gray.500' }}
+                >
+                  Dunes
+                </Text>
+              </HStack>
+            )}
           </VStack>
         </HStack>
       </Pressable>

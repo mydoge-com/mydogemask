@@ -138,4 +138,6 @@ export const MESSAGE_TYPES = {
 
 export const MYDOGE_BASE_URL = 'https://api.mydoge.com'; // 'http://localhost:3000';
 
-export const TICKER_ICON_URL = 'https://doggy.market/drc-20';
+export const DRC20_ICON_URL = 'https://drc-20-icons.dogeord.io';
+export const DUNES_ICON_URL = 'https://dune-icons.sdoggs.exchange';
+export const DOGGY_ICON_URL = 'https://doggy.market/drc-20';
