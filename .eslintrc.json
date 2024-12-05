@@ -2,12 +2,11 @@
   "root": true,
   "env": {
     "browser": true,
-    "es2022": true,
     "react-native/react-native": true
   },
-  // "parser": "@typescript-eslint/parser",
+  "parser": "@typescript-eslint/parser",
   "parserOptions": {
-    "ecmaVersion": 2022,
+    "ecmaVersion": "latest",
     "ecmaFeatures": {
       "jsx": true
     },

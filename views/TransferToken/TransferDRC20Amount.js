@@ -98,7 +98,7 @@ export const TransferDRC20Amount = ({
             fee,
             dogeAmount: amount,
           });
-          setFormPage('confirmation');
+          setFormPage('confirmationDRC20');
           setLoading(false);
         } else {
           setLoading(false);

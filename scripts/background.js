@@ -252,6 +252,27 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
   }
 }
 
+async function onCreateDunesTransaction({ data = {}, sendResponse } = {}) {
+  try {
+    const response = await mydoge.post('/tx/prepare/dune', {
+      sender: data.walletAddress,
+      recipient: data.recipientAddress,
+      amount: data.tokenAmount,
+      duneId: data.duneId,
+    });
+    const { rawTx, fee, amount } = response.data;
+
+    sendResponse?.({
+      rawTx,
+      fee,
+      amount,
+    });
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+}
+
 function onSendTransaction({ data = {}, sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
     async ([wallet, password]) => {
@@ -1178,6 +1199,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION:
       onInscribeTransferTransaction({ data, sendResponse });
+      break;
+    case MESSAGE_TYPES.CREATE_DUNES_TRANSACTION:
+      onCreateDunesTransaction({ data, sendResponse });
       break;
     case MESSAGE_TYPES.SIGN_PSBT:
       onSignPsbt({ data, sendResponse });

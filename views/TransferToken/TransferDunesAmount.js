@@ -74,44 +74,46 @@ export const TransferDunesAmount = ({
   const onSubmit = useCallback(() => {
     if (validate()) {
       setLoading(true);
-      // sendMessage(
-      //   {
-      //     message: MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION,
-      //     data: {
-      //       ...selectedToken,
-      //       selectedAddressIndex,
-      //       walletAddress,
-      //       tokenAmount: formData.tokenAmount,
-      //     },
-      //   },
-      //   ({ txs, fee }) => {
-      //     if (txs?.length) {
-      //       setFormData({
-      //         ...formData,
-      //         txs,
-      //         fee,
-      //       });
-      //       setFormPage('confirmation');
-      //       setLoading(false);
-      //     } else {
-      //       setLoading(false);
-      //       Toast.show({
-      //         title: 'Error',
-      //         description: 'Error creating transaction',
-      //         duration: 3000,
-      //         render: () => {
-      //           return (
-      //             <ToastRender
-      //               title='Error'
-      //               description='Error creating transaction'
-      //               status='error'
-      //             />
-      //           );
-      //         },
-      //       });
-      //     }
-      //   }
-      // );
+      sendMessage(
+        {
+          message: MESSAGE_TYPES.CREATE_DUNES_TRANSACTION,
+          data: {
+            ...selectedToken,
+            selectedAddressIndex,
+            walletAddress,
+            tokenAmount: formData.tokenAmount,
+            recipientAddress: formData.address.trim(),
+          },
+        },
+        ({ rawTx, fee, amount }) => {
+          if ((rawTx, fee, amount)) {
+            setFormData({
+              ...formData,
+              rawTx,
+              fee,
+              dogeAmount: amount,
+            });
+            setFormPage('confirmationDunes');
+            setLoading(false);
+          } else {
+            setLoading(false);
+            Toast.show({
+              title: 'Error',
+              description: 'Error creating transaction',
+              duration: 3000,
+              render: () => {
+                return (
+                  <ToastRender
+                    title='Error'
+                    description='Error creating transaction'
+                    status='error'
+                  />
+                );
+              },
+            });
+          }
+        }
+      );
     } else {
       setErrors({ ...errors, tokenAmount: 'Insufficient balance' });
     }
@@ -214,9 +216,9 @@ export const TransferDunesAmount = ({
                   <Popover.Arrow />
                   <Popover.Body>
                     <Text fontSize='13px'>
-                      Pending token inscriptions affect your available token
-                      balance.{'\n\n'}
-                      Pending inscriptions:
+                      Pending token transfers affect transferable token balance.
+                      {'\n\n'}
+                      Pending transfers:
                       {'\n'}
                       <Text fontWeight='bold'>
                         {selectedToken.ticker}{' '}
