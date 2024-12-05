@@ -56,18 +56,23 @@ export const formatTransaction = ({ transaction: tx, walletAddress }) => {
   });
 
   tx.vout.forEach((output) => {
-    const [address] = output.addresses;
-    const value = Number(output.value);
+    if (output.addresses?.length) {
+      const [address] = output.addresses;
+      const value = Number(output.value);
 
-    if (!outgoingAddress && outgoingAddress !== walletAddress) {
-      outgoingAddress = address;
+      if (!outgoingAddress && outgoingAddress !== walletAddress) {
+        outgoingAddress = address;
+      }
+
+      if (output.addresses.includes(walletAddress)) {
+        amountIn += Number(output.value);
+      }
+
+      totalOut += value;
+    } else {
+      // eslint-disable-next-line prefer-destructuring
+      outgoingAddress = tx.vout[2].addresses[0];
     }
-
-    if (output.addresses.includes(walletAddress)) {
-      amountIn += Number(output.value);
-    }
-
-    totalOut += value;
   });
 
   if (amountOut > amountIn) {
