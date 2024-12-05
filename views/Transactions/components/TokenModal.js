@@ -1,5 +1,4 @@
 import {
-  Avatar,
   Box,
   HStack,
   Modal,
@@ -18,8 +17,8 @@ import { useAppContext } from '../../../hooks/useAppContext';
 import { mydoge } from '../../../scripts/api';
 import { logError } from '../../../utils/error';
 import {
-  formatSatoshisAsDoge,
   formatCompactNumber,
+  formatSatoshisAsDoge,
 } from '../../../utils/formatters';
 import { TokenIcon } from './TokenIcon';
 

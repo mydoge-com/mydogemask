@@ -35,7 +35,7 @@ export const TransferDunesAmount = ({
   const tokenInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
 
-  const { overallBalance, pendingAmount } = selectedToken;
+  const { overallBalance, pendingTransferAmount } = selectedToken;
 
   const onChangeTextToken = useCallback(
     (text) => {
@@ -202,7 +202,7 @@ export const TransferDunesAmount = ({
               Balance: <Text fontWeight='bold'>{selectedToken.ticker}</Text>{' '}
               {overallBalance}
             </Text>
-            {pendingAmount ? (
+            {pendingTransferAmount ? (
               <Popover
                 trigger={(triggerProps) => {
                   return (
@@ -222,7 +222,7 @@ export const TransferDunesAmount = ({
                       {'\n'}
                       <Text fontWeight='bold'>
                         {selectedToken.ticker}{' '}
-                        {Number(pendingAmount).toLocaleString()}
+                        {Number(pendingTransferAmount).toLocaleString()}
                       </Text>
                     </Text>
                   </Popover.Body>
