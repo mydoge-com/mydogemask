@@ -36,6 +36,8 @@ export function ClientPSBT({
     rawTx,
     indexes: indexesParam,
     signOnly,
+    partial,
+    sighashType,
   } = params;
 
   const [psbt, setPsbt] = useState(null);
@@ -51,7 +53,7 @@ export function ClientPSBT({
       sendMessage(
         {
           message: MESSAGE_TYPES.SIGN_PSBT,
-          data: { rawTx, indexes, selectedAddressIndex, feeOnly: true },
+          data: { rawTx, indexes, selectedAddressIndex, feeOnly: true, partial: partial, sighashType: sighashType },
         },
         ({ fee }) => {
           console.log('fee', fee);
@@ -66,7 +68,7 @@ export function ClientPSBT({
         description: 'Invalid PSBT',
       });
     }
-  }, [handleFailedTransaction, rawTx, indexes, selectedAddressIndex]);
+  }, [handleFailedTransaction, rawTx, indexes, selectedAddressIndex, partial, sighashType]);
 
   useEffect(() => {
     (async () => {
@@ -92,18 +94,20 @@ export function ClientPSBT({
           })
         );
 
-        // Subtract change output
-        psbt?.txOutputs?.forEach((output) => {
-          if (output.address === connectedClient.address) {
-            amount -= sb.toBitcoin(output.value);
-          }
-        });
+        if (!partial) {
+          // Subtract change output
+          psbt?.txOutputs?.forEach((output) => {
+            if (output.address === connectedClient.address) {
+              amount -= sb.toBitcoin(output.value);
+            }
+          });
+        }
 
         setDogeAmount(amount);
         setInputs(mappedInputs);
       }
     })();
-  }, [psbt, indexes]);
+  }, [psbt, indexes, partial, sighashType]);
 
   const outputs = psbt?.txOutputs?.map((output, index) => {
     return {
@@ -149,7 +153,7 @@ export function ClientPSBT({
     sendMessage(
       {
         message: MESSAGE_TYPES.SIGN_PSBT,
-        data: { rawTx, indexes, selectedAddressIndex },
+        data: { rawTx, indexes, selectedAddressIndex, partial: partial, sighashType: sighashType },
       },
       ({ rawTx: signedRawTx, fee, amount }) => {
         if (signedRawTx && fee && amount) {
@@ -189,6 +193,12 @@ export function ClientPSBT({
               });
             }
           }
+        } else if (signedRawTx && partial) {
+          handleResponse({
+            toastMessage: 'Psbt Signed',
+            toastTitle: 'Success',
+            data: { signedRawTx },
+          });
         } else {
           handleFailedTransaction({
             title: 'Error',
@@ -204,6 +214,8 @@ export function ClientPSBT({
     handleResponse,
     handleFailedTransaction,
     signOnly,
+    partial,
+    sighashType,
   ]);
 
   const [inputsModalOpen, setInputsModalOpen] = useState(false);

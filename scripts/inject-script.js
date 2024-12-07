@@ -346,6 +346,16 @@ class MyDogeWallet {
    * @param {string} data.rawTx - The raw transaction to be signed.
    * @param {number[]} data.indexes - The indexes of the inputs to be signed.
    * @param {boolean} data.signOnly - A flag to indicate whether to return the raw tx after signing instead of signing + sending (default: false)
+   * @param {boolean} data.partial - A flag to indicate whether to create partial signatures. Only effective when signOnly is true (default: false)
+   * @param {number} data.sighashType - The signature hash type to use. Only effective when partial is true. Possible values:
+   *                                   - SIGHASH_ALL (0x01): Signs all inputs and outputs (default)
+   *                                   - SIGHASH_SINGLE (0x03): Signs all inputs, and the output with the same index
+   *                                   - SIGHASH_ANYONECANPAY (0x80): Can be combined with above types using bitwise OR
+   *                                   Combinations:
+   *                                   - SIGHASH_ALL|SIGHASH_ANYONECANPAY (0x81): Signs one input and all outputs
+   *                                   - SIGHASH_SINGLE|SIGHASH_ANYONECANPAY (0x83): Signs one input and one output at same index
+   *                                   Note: 
+   *                                   - SIGHASH_NONE (0x02) is not supported for security reasons - it signs inputs but no outputs, allowing transaction outputs to be modified after signing
    * @param {function({ txId: string }): void} [onSuccess] - Optional callback function to execute upon successful signing.
    *                                                           Receives an object containing the transaction ID.
    * @param {function(string): void} [onError] - Callback function to execute upon error in signing the PSBT.
