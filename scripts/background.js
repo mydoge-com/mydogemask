@@ -415,7 +415,9 @@ async function onSignPsbt({ data = {}, sendResponse } = {}) {
       data.rawTx,
       data.indexes,
       decryptedWallet.children[data.selectedAddressIndex],
-      !data.feeOnly
+      !data.feeOnly,
+      data.partial,
+      data.sighashType,
     );
 
     sendResponse?.({
