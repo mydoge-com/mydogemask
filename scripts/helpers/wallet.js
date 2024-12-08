@@ -9,7 +9,7 @@ import * as Validator from 'multicoin-address-validator';
 import sb from 'satoshi-bitcoin';
 import * as wif from 'wif';
 
-import { MIN_TX_AMOUNT, SPENT_UTXOS_CACHE } from './constants';
+import { MIN_TX_AMOUNT, SPENT_UTXOS_CACHE, SIGHASH_TYPE_WHITELIST } from './constants';
 import { getLocalValue, setLocalValue } from './storage';
 
 const ec = new EC('secp256k1');
@@ -99,11 +99,22 @@ export function signRawTx(rawTx, wifKey) {
   return txb.build().toHex();
 }
 
-export function signRawPsbt(rawTx, indexes, wifKey, withTx = true) {
+export function signRawPsbt(rawTx, indexes, wifKey, withTx = true, partial = false, sighashType = bitcoin.Transaction.SIGHASH_ALL) {
   const keyPair = fromWIF(wifKey);
   const finalPsbt = bitcoin.Psbt.fromHex(rawTx, { network });
   finalPsbt.setMaximumFeeRate(100000000);
 
+  if (partial) {
+    if (!SIGHASH_TYPE_WHITELIST.includes(sighashType)) return;
+    for (let i = 0; i < indexes.length; i++) {
+      const index = Number(indexes[i]);
+      finalPsbt.signInput(index, keyPair, [sighashType]);
+      finalPsbt.finalizeInput(index)
+    }
+    return {
+      rawTx: finalPsbt.toHex()
+    };
+  }
   // Sign / finalize inputs
   for (let i = 0; i < indexes.length; i++) {
     const index = Number(indexes[i]);

@@ -4,9 +4,11 @@ import { useSearchParams } from 'react-router-dom';
 
 import { Layout } from '../../components/Layout';
 import { useAppContext } from '../../hooks/useAppContext';
+import { TransferDRC20Amount } from './TransferDRC20Amount';
+import { TransferDRC20Confirmation } from './TransferDRC20Confirmation';
+import { TransferDunesAmount } from './TransferDunesAmount';
+import { TransferDunesConfirmation } from './TransferDunesConfirmation';
 import { TransferTokenAddress } from './TransferTokenAddress';
-import { TransferTokenAmount } from './TransferTokenAmount';
-import { TransferTokenConfirmation } from './TransferTokenConfirmation';
 
 export function TransferToken() {
   const { wallet, selectedAddressIndex } = useAppContext();
@@ -20,8 +22,10 @@ export function TransferToken() {
   const RenderScreen =
     {
       address: TransferTokenAddress,
-      amount: TransferTokenAmount,
-      confirmation: TransferTokenConfirmation,
+      amountDRC20: TransferDRC20Amount,
+      amountDunes: TransferDunesAmount,
+      confirmationDRC20: TransferDRC20Confirmation,
+      confirmationDunes: TransferDunesConfirmation,
     }[formPage] ?? null;
 
   const [searchParams] = useSearchParams();

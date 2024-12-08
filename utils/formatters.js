@@ -103,8 +103,12 @@ export function sanitizeFiat(value, prevValue, isDeletion) {
  * @returns {string}
  */
 export function formatSatoshisAsDoge(value, maxDecimals) {
-  const newValue = sb.toBitcoin(value);
-  return formatDoge(newValue, maxDecimals);
+  if (value >= 1) {
+    const newValue = sb.toBitcoin(Math.floor(value));
+    return formatDoge(newValue, maxDecimals);
+  } else {
+    return formatDoge(value / 1e8, 10);
+  }
 }
 
 export function formatSatoshisAsFiat(value, usdValue) {
@@ -113,6 +117,21 @@ export function formatSatoshisAsFiat(value, usdValue) {
   newValue = newValue.toFixed(6).replace('.', decimalSeparator);
   return newValue;
 }
+
+export const formatCompactNumber = (num, decimals = 1) => {
+  const suffixes = ['', 'k', 'm', 'billion', 'trillion'];
+  const absNum = Math.abs(num);
+
+  if (absNum < 1000) return num.toFixed(decimals);
+
+  const exp = Math.min(Math.floor(Math.log10(absNum) / 3), suffixes.length - 1);
+  const shortened = num / 1000 ** exp;
+
+  return `${shortened.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals,
+  })} ${suffixes[exp]}`;
+};
 
 export function formatDoge(value, maxDecimals, useGrouping) {
   let newValue = value;

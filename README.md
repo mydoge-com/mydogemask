@@ -2,7 +2,7 @@
 
 ## 🚀 Quick start
 
-- Use Node.js version 18
+- Use Node.js version 20
 - Use Yarn installed by NPM only: `npm install --global yarn`
 - Install packages with `yarn install`.
 - Create a file named .env at the root of the project and populate entries from .env.example
