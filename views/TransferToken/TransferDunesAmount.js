@@ -34,7 +34,6 @@ export const TransferDunesAmount = ({
 }) => {
   const tokenInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
-
   const { overallBalance, pendingTransferAmount } = selectedToken;
 
   const onChangeTextToken = useCallback(
@@ -44,7 +43,7 @@ export const TransferDunesAmount = ({
       }
 
       setErrors({ ...errors, tokenAmount: '' });
-      const cleanText = parseFloat(sanitizeDogeInput(text || '0')).toFixed(0);
+      const cleanText = sanitizeDogeInput(text || '0', selectedToken.decimals);
 
       if (cleanText.length > MAX_CHARACTERS) {
         return;
