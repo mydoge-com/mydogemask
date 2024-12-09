@@ -147,7 +147,7 @@ export const MESSAGE_TYPES = {
   NOTIFY_TRANSACTION_SUCCESS: 'notifyTransactionSuccess',
 };
 
-export const MYDOGE_BASE_URL = 'http://localhost:3000'; // 'https://api.mydoge.com'; //
+export const MYDOGE_BASE_URL = 'https://api.mydoge.com'; // 'http://localhost:3000'; // 'https://api.mydoge.com'; //
 
 export const DRC20_ICON_URL = 'https://drc-20-icons.dogeord.io';
 export const DUNES_ICON_URL = 'https://dune-icons.sdoggs.exchange';
