@@ -59,7 +59,14 @@ export const TransferDunesAmount = ({
         tokenAmount: cleanText,
       });
     },
-    [selectedToken.dogePrice, errors, formData, setErrors, setFormData]
+    [
+      selectedToken.dogePrice,
+      selectedToken.decimals,
+      errors,
+      formData,
+      setErrors,
+      setFormData,
+    ]
   );
 
   const onSetMax = useCallback(() => {
