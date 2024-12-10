@@ -38,10 +38,12 @@ export const TRANSACTION_PENDING_TIME = 1000 * 60 * 2; // 2 minutes
 const CLIENT_MESSAGE_TYPES = {
   CLIENT_GET_BALANCE: 'clientRequestBalance',
   CLIENT_GET_BALANCE_RESPONSE: 'clientGetBalanceResponse',
-  CLIENT_GET_DRC20_BALANCE: 'clientRequestDRC20Balance',
+  CLIENT_GET_DRC20_BALANCE: 'clientGetDRC20Balance',
   CLIENT_GET_DRC20_BALANCE_RESPONSE: 'clientGetDRC20BalanceResponse',
-  CLIENT_GET_TRANSFERABLE_DRC20: 'clientRequestTransferableDRC20',
+  CLIENT_GET_TRANSFERABLE_DRC20: 'clientGetTransferableDRC20',
   CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE: 'clientGetTransferableDRC20Response',
+  CLIENT_GET_DUNES_BALANCE: 'clientGetDunesalance',
+  CLIENT_GET_DUNES_BALANCE_RESPONSE: 'clientGetDunesBalanceResponse',
   CLIENT_DISCONNECT: 'clientDisconnect',
   CLIENT_DISCONNECT_RESPONSE: 'clientDisconnectResponse',
   CLIENT_CONNECTION_STATUS: 'clientConnectionStatus',
@@ -80,6 +82,15 @@ export const CLIENT_POPUP_MESSAGE_PAIRS = [
     response: {
       CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
         'clientRequestDRC20TransactionResponse',
+    },
+  },
+  {
+    request: {
+      CLIENT_REQUEST_DUNES_TRANSACTION: 'clientRequestDunesTransaction',
+    },
+    response: {
+      CLIENT_REQUEST_DUNES_TRANSACTION_RESPONSE:
+        'clientRequestDunesTransactionResponse',
     },
   },
   {
@@ -147,8 +158,9 @@ export const MESSAGE_TYPES = {
   NOTIFY_TRANSACTION_SUCCESS: 'notifyTransactionSuccess',
 };
 
-export const MYDOGE_BASE_URL = 'https://api.mydoge.com'; // 'http://localhost:3000'; // 'https://api.mydoge.com'; //
+export const MYDOGE_BASE_URL = 'http://localhost:3000'; // 'https://api.mydoge.com'; //
 
+export const DOGGY_ICON_URL = 'https://doggy.market/drc-20';
+export const DOGGY_API_ICON_URL_2 = 'https://api.doggy.market/static/drc-20';
 export const DRC20_ICON_URL = 'https://drc-20-icons.dogeord.io';
 export const DUNES_ICON_URL = 'https://dune-icons.sdoggs.exchange';
-export const DOGGY_ICON_URL = 'https://doggy.market/drc-20';

@@ -13,8 +13,8 @@ const createResponseHandler =
       } else if (data) {
         onSuccess?.(data);
         resolve(data);
-      } else {
       }
+
       window.removeEventListener('message', listener);
     }
     window.addEventListener('message', listener);
@@ -25,7 +25,9 @@ const createResponseHandler =
  */
 class MyDogeWallet {
   #requestQueue = [];
+
   #isRequestPending = false;
+
   constructor() {
     this.isMyDoge = true;
     console.info('MyDoge API initialized');
@@ -256,6 +258,48 @@ class MyDogeWallet {
   }
 
   /**
+   * Retrieves the Dunes token balance based on provided data.
+   * @function
+   * @async
+   * @param {Object} data - Data required to fetch the Dunes balance, must contain 'ticker'.
+   * @param {string} data.ticker - The ticker symbol for the Dunes token.
+   * @param {function({ balance: number, ticker: string, address: string }): void} [onSuccess] - Optional callback function to execute upon successful retrieval.
+   *                                                           Receives an object containing the balance, ticker symbol, and wallet address.
+   * @param {function(string): void} [onError] - Optional callback function to execute upon error in retrieving balance.
+   * @returns {Promise<{ balance: number, ticker: string, address: string }>} Promise object representing the outcome of the balance retrieval, resolving to an object with the wallet address, ticker and balance.
+   * @method
+   * @example
+   * getDunesBalance(
+   *   (result) => console.log(`Balance: ${result.balance}`),
+   *   (error) => console.error(`Balance retrieval failed: ${error}`)
+   * ).then(result => console.log(result.availableBalance))
+   *   .catch(error => console.error(error));
+   */
+
+  getDunesBalance(data, onSuccess, onError) {
+    return new Promise((resolve, reject) => {
+      if (!data?.ticker) {
+        onError?.(new Error('Invalid data'));
+        reject(new Error('Invalid data'));
+        return;
+      }
+
+      window.postMessage(
+        { type: MESSAGE_TYPES.CLIENT_GET_DUNES_BALANCE, data },
+        window.location.origin
+      );
+
+      createResponseHandler()({
+        resolve,
+        reject,
+        onSuccess,
+        onError,
+        messageType: MESSAGE_TYPES.CLIENT_GET_DUNES_BALANCE_RESPONSE,
+      });
+    });
+  }
+
+  /**
    * Requests a Dogecoin transaction based on the specified data.
    * @function
    * @async
@@ -354,7 +398,7 @@ class MyDogeWallet {
    *                                   Combinations:
    *                                   - SIGHASH_ALL|SIGHASH_ANYONECANPAY (0x81): Signs one input and all outputs
    *                                   - SIGHASH_SINGLE|SIGHASH_ANYONECANPAY (0x83): Signs one input and one output at same index
-   *                                   Note: 
+   *                                   Note:
    *                                   - SIGHASH_NONE (0x02) is not supported for security reasons - it signs inputs but no outputs, allowing transaction outputs to be modified after signing
    * @param {function({ txId: string }): void} [onSuccess] - Optional callback function to execute upon successful signing.
    *                                                           Receives an object containing the transaction ID.

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import {
   DOGGY_ICON_URL,
   DRC20_ICON_URL,
-  DUNES_ICON_URL,
+  // DUNES_ICON_URL,
 } from '../../../scripts/helpers/constants';
 
 const getImageUrl = (ticker, index) => {
