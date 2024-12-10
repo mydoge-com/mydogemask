@@ -417,7 +417,7 @@ async function onSignPsbt({ data = {}, sendResponse } = {}) {
       decryptedWallet.children[data.selectedAddressIndex],
       !data.feeOnly,
       data.partial,
-      data.sighashType,
+      data.sighashType
     );
 
     sendResponse?.({
@@ -1262,6 +1262,7 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
     case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
+    case MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION:
     case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
     case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
     case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE:

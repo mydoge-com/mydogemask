@@ -346,6 +346,13 @@ import {
               MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
           })({ origin: source.origin, data });
           break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION:
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION,
+            responseType:
+              MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION_RESPONSE,
+          })({ origin: source.origin, data });
+          break;
         case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
           createClientPopupHandler({
             messageType: MESSAGE_TYPES.CLIENT_REQUEST_PSBT,

@@ -10,6 +10,7 @@ import { ClientAvailableDRC20Transaction } from './ClientAvailableDRC20Transacti
 import { ClientConnect } from './ClientConnect';
 import { ClientDecryptedMessage } from './ClientDecryptedMessage';
 import { ClientDoginalTransaction } from './ClientDoginalTransaction';
+import { ClientDunesTransaction } from './ClientDunesTransaction';
 import { ClientPSBT } from './ClientPSBT';
 import { ClientSignedMessage } from './ClientSignedMessage';
 import { ClientTransaction } from './ClientTransaction';
@@ -30,6 +31,10 @@ const CLIENT_REQUEST_ROUTES = {
   [MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION]: {
     component: ClientAvailableDRC20Transaction,
     response: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+  },
+  [MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION]: {
+    component: ClientDunesTransaction,
+    response: MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION_RESPONSE,
   },
   [MESSAGE_TYPES.CLIENT_REQUEST_PSBT]: {
     component: ClientPSBT,
