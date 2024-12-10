@@ -1,5 +1,5 @@
 import { Avatar } from 'native-base';
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 import {
   DOGGY_ICON_URL,
@@ -7,13 +7,16 @@ import {
   DUNES_ICON_URL,
 } from '../../../scripts/helpers/constants';
 
-export const TokenIcon = ({ ticker, protocol, ...props }) => {
+const getImageUrl = (ticker, index) => {
   const imageUrls = [
     `${DOGGY_ICON_URL}/${ticker}.png`,
     `${DOGGY_ICON_URL}/${ticker}.jpg`,
     `${DRC20_ICON_URL}/${ticker}.png`,
   ];
+  return imageUrls[index];
+};
 
+export const TokenIcon = ({ ticker, protocol, ...props }) => {
   const [currentUrlIndex, setCurrentUrlIndex] = useState(0);
 
   useEffect(() => {
@@ -21,7 +24,7 @@ export const TokenIcon = ({ ticker, protocol, ...props }) => {
       try {
         await new Promise((resolve, reject) => {
           const img = new window.Image();
-          img.src = imageUrls[currentUrlIndex];
+          img.src = getImageUrl(ticker, currentUrlIndex);
 
           img.onload = () => {
             resolve();
@@ -32,17 +35,17 @@ export const TokenIcon = ({ ticker, protocol, ...props }) => {
           };
         });
       } catch (e) {
-        if (currentUrlIndex < imageUrls.length - 1) {
+        if (currentUrlIndex < 2) {
           setCurrentUrlIndex((prev) => prev + 1);
         }
       }
     })();
-  }, [currentUrlIndex]);
+  }, [currentUrlIndex, ticker]);
 
   return (
     <Avatar
       source={{
-        uri: imageUrls[currentUrlIndex],
+        uri: getImageUrl(ticker, currentUrlIndex),
       }}
       {...props}
     >
