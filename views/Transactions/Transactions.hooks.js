@@ -103,10 +103,15 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
     async ({ cursor, currentTokens = [] } = {}) => {
       setTokensLoading(true);
       try {
-        const res = (await mydoge.get(`/drc20/${walletAddress}`)).data;
+        const drc20res = (await mydoge.get(`/drc20/${walletAddress}`)).data;
+        const dunes20res = (await mydoge.get(`/dunes/${walletAddress}`)).data;
 
         setTokens(
-          [...currentTokens, ...(res.balances ?? [])].sort((a, b) => {
+          [
+            ...currentTokens,
+            ...(drc20res.balances ?? []),
+            ...(dunes20res.balances ?? []),
+          ].sort((a, b) => {
             if (a.ticker < b.ticker) {
               return -1;
             }
@@ -116,7 +121,7 @@ export const useTransactions = ({ wallet, selectedAddressIndex, navigate }) => {
             return 0;
           })
         );
-        setTokensTotal(res.total);
+        setTokensTotal(drc20res.total + dunes20res.total);
         // Don't increment page on initial fetch, where cursor is undefined
         if (typeof cursor === 'number') {
           currentTokensPage.current = cursor;

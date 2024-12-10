@@ -252,6 +252,27 @@ async function onInscribeTransferTransaction({ data = {}, sendResponse } = {}) {
   }
 }
 
+async function onCreateDunesTransaction({ data = {}, sendResponse } = {}) {
+  try {
+    const response = await mydoge.post('/tx/prepare/dune', {
+      sender: data.walletAddress,
+      recipient: data.recipientAddress,
+      amount: data.tokenAmount,
+      duneId: data.duneId,
+    });
+    const { rawTx, fee, amount } = response.data;
+
+    sendResponse?.({
+      rawTx,
+      fee,
+      amount,
+    });
+  } catch (err) {
+    logError(err);
+    sendResponse?.(false);
+  }
+}
+
 function onSendTransaction({ data = {}, sendResponse } = {}) {
   Promise.all([getLocalValue(WALLET), getSessionValue(PASSWORD)]).then(
     async ([wallet, password]) => {
@@ -394,7 +415,9 @@ async function onSignPsbt({ data = {}, sendResponse } = {}) {
       data.rawTx,
       data.indexes,
       decryptedWallet.children[data.selectedAddressIndex],
-      !data.feeOnly
+      !data.feeOnly,
+      data.partial,
+      data.sighashType
     );
 
     sendResponse?.({
@@ -887,6 +910,30 @@ async function onApproveDoginalTransaction({
   return true;
 }
 
+async function onApproveDunesTransaction({
+  sendResponse,
+  data: { txId, error, originTabId, origin },
+} = {}) {
+  if (txId) {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION_RESPONSE,
+      data: {
+        txId,
+      },
+      origin,
+    });
+    sendResponse(true);
+  } else {
+    chrome.tabs?.sendMessage(originTabId, {
+      type: MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION_RESPONSE,
+      error,
+      origin,
+    });
+    sendResponse(false);
+  }
+  return true;
+}
+
 async function onApprovePsbt({
   sendResponse,
   data: { signedRawTx, txId, error, originTabId, origin },
@@ -1179,6 +1226,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CREATE_TRANSFER_TRANSACTION:
       onInscribeTransferTransaction({ data, sendResponse });
       break;
+    case MESSAGE_TYPES.CREATE_DUNES_TRANSACTION:
+      onCreateDunesTransaction({ data, sendResponse });
+      break;
     case MESSAGE_TYPES.SIGN_PSBT:
       onSignPsbt({ data, sendResponse });
       break;
@@ -1236,6 +1286,7 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
     case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
     case MESSAGE_TYPES.CLIENT_REQUEST_DOGINAL_TRANSACTION:
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION:
+    case MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION:
     case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:
     case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE:
     case MESSAGE_TYPES.CLIENT_REQUEST_DECRYPTED_MESSAGE:
@@ -1254,6 +1305,9 @@ export const messageHandler = ({ message, data }, sender, sendResponse) => {
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
       onApproveAvailableDRC20Transaction({ data, sendResponse, sender });
+      break;
+    case MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION_RESPONSE:
+      onApproveDunesTransaction({ data, sendResponse, sender });
       break;
     case MESSAGE_TYPES.CLIENT_REQUEST_SIGNED_MESSAGE_RESPONSE:
       onApproveSignedMessage({ data, sendResponse, sender });

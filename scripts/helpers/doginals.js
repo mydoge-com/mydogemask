@@ -284,6 +284,14 @@ export async function getDRC20Balances(address, ticker) {
   return result.balances;
 }
 
+export async function getDunesBalances(address, ticker) {
+  const result = (
+    await mydoge.get(`/dunes/${address}${ticker ? `?ticker=${ticker}` : ''}`)
+  ).data;
+
+  return result.balances;
+}
+
 async function getUtxos(address, cursor, result, filter, tx = null) {
   const query = (
     await mydoge.get(

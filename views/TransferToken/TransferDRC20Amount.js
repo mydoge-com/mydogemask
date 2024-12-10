@@ -19,7 +19,7 @@ import { getDRC20Inscriptions } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
 import { NFT } from '../Transactions/components/NFT';
 
-export const TransferTokenAmount = ({
+export const TransferDRC20Amount = ({
   setFormPage,
   setFormData,
   formData,
@@ -98,7 +98,7 @@ export const TransferTokenAmount = ({
             fee,
             dogeAmount: amount,
           });
-          setFormPage('confirmation');
+          setFormPage('confirmationDRC20');
           setLoading(false);
         } else {
           setLoading(false);
