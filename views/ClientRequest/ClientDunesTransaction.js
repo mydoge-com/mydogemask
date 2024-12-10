@@ -5,6 +5,7 @@ import { FaLink } from 'react-icons/fa';
 import { BigButton } from '../../components/Button';
 import { ClientPopupLoading } from '../../components/ClientPopupLoading';
 import { OriginBadge } from '../../components/OriginBadge';
+import { RecipientAddress } from '../../components/RecipientAddress';
 import { WalletAddress } from '../../components/WalletAddress';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { getDunesBalances } from '../../scripts/helpers/doginals';
@@ -125,13 +126,13 @@ export function ClientDunesTransaction({
       <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
         Sending
       </Text>
-      <Text fontSize='3xl' fontWeight='semibold' pt='6px'>
+      <Text fontSize='xl' fontWeight='semibold' pt='6px'>
         {ticker} {Number(amount).toLocaleString()}
       </Text>
       <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
         To
       </Text>
-      <WalletAddress address={recipientAddress} />
+      <RecipientAddress address={recipientAddress} />
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
         Network fee: <Text fontWeight='normal'>Ð{transaction?.fee}</Text>
       </Text>
