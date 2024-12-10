@@ -158,7 +158,7 @@ export const MESSAGE_TYPES = {
   NOTIFY_TRANSACTION_SUCCESS: 'notifyTransactionSuccess',
 };
 
-export const MYDOGE_BASE_URL = 'http://localhost:3000'; // 'https://api.mydoge.com'; //
+export const MYDOGE_BASE_URL = 'https://api.mydoge.com'; // 'http://localhost:3000'; //
 
 export const DOGGY_ICON_URL = 'https://doggy.market/drc-20';
 export const DOGGY_API_ICON_URL_2 = 'https://api.doggy.market/static/drc-20';

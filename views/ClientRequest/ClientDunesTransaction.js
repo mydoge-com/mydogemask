@@ -40,13 +40,11 @@ export function ClientDunesTransaction({
   }, [handleResponse, origin]);
 
   useEffect(() => {
-    if (!connectedClient?.address || typeof connectedAddressIndex !== 'number')
-      return;
+    if (!connectedClient?.address) return;
     (async () => {
       setPageLoading(true);
 
       if (!validateAddress(recipientAddress)) {
-        setPageLoading(false);
         handleResponse({
           toastMessage: 'Invalid recipient address',
           toastTitle: 'Error',
@@ -56,11 +54,11 @@ export function ClientDunesTransaction({
       }
 
       const balances = await getDunesBalances(connectedClient?.address, ticker);
-      const ab = Number(balances[0]?.overallBalance || 0);
+      const { duneId, overallBalance } = balances[0];
+      const ab = Number(overallBalance || 0);
       const amt = Number(amount);
 
       if (ab < amt) {
-        setPageLoading(false);
         handleResponse({
           toastMessage: 'Insufficient balance',
           toastTitle: 'Error',
@@ -74,6 +72,7 @@ export function ClientDunesTransaction({
           message: MESSAGE_TYPES.CREATE_DUNES_TRANSACTION,
           data: {
             ...params,
+            duneId,
             tokenAmount: amount,
             selectedAddressIndex: connectedAddressIndex,
             walletAddress: connectedClient?.address,
