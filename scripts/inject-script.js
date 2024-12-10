@@ -187,6 +187,7 @@ class MyDogeWallet {
    * @method
    * @example
    * getDRC20Balance(
+   *   { ticker: 'DRC20' },
    *   (result) => console.log(`Available balance: ${result.availableBalance}, transferable balance: ${result.transferableBalance}`),
    *   (error) => console.error(`Balance retrieval failed: ${error}`)
    * ).then(result => console.log(result.availableBalance))
@@ -229,6 +230,7 @@ class MyDogeWallet {
    * @method
    * @example
    * getTransferableDRC20(
+   *   { ticker: 'DRC20' },*
    *   (result) => console.log(`Transferable inscriptions: ${result.inscriptions}`),
    *   (error) => console.error(`Balance retrieval failed: ${error}`)
    * ).then(result => console.log(result.inscriptions))
@@ -270,6 +272,7 @@ class MyDogeWallet {
    * @method
    * @example
    * getDunesBalance(
+   *   { ticker: 'DUNES' },
    *   (result) => console.log(`Balance: ${result.balance}`),
    *   (error) => console.error(`Balance retrieval failed: ${error}`)
    * ).then(result => console.log(result.availableBalance))
@@ -313,6 +316,7 @@ class MyDogeWallet {
    * @method
    * @example
    * requestTransaction(
+   *   { recipientAddress: 'DAHkCF5LajV6jYyi5o4eMvtpqXRcm9eZYq', dogeAmount: 100 },
    *   (result) => console.log(`Transaction ID: ${result.txId}`),
    *   (error) => console.error(`Transaction request failed: ${error}`)
    * ).then(result => console.log(result.txId))
@@ -340,6 +344,7 @@ class MyDogeWallet {
    * @method
    * @example
    * requestInscriptionTransaction(
+   *   { recipientAddress: 'DAHkCF5LajV6jYyi5o4eMvtpqXRcm9eZYq', location: '18d83f35060323a20e158805805e217b3ab7d849d5a1131f0ed8eba3a31c39a7:0:0' },
    *   (result) => console.log(`Transaction ID: ${result.txId}`),
    *   (error) => console.error(`Transaction request failed: ${error}`)
    * ).then(result => console.log(result.txId))
@@ -368,6 +373,7 @@ class MyDogeWallet {
    * @method
    * @example
    * requestInscriptionTransaction(
+   *   { ticker: 'DRC20', amount: 100 },
    *   (result) => console.log(`Transaction ID: ${result.txId} `),
    *   (error) => console.error(`Transaction request failed: ${error}`)
    * ).then(result => console.log(result.txId))
@@ -378,6 +384,36 @@ class MyDogeWallet {
       requestType: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
       responseType:
         MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+      isDataValid: data?.ticker && data?.amount,
+    })({ data, onSuccess, onError });
+  }
+
+  /**
+   * Requests a transaction for Dunes tokens based on specified data.
+   * @function
+   * @async
+   * @param {Object} data - Data required for the transaction, must contain 'ticker' and 'amount'.
+   * @param {string} data.ticker - The ticker symbol for the Dunes token.
+   * @param {string} data.amount - The amount of Dunes tokens to make available.
+   * @param {string} data.recipientAddress - The Dogecoin address of the recipient.
+   * @param {function({ txId: string, ticker: string, amount: number }): void} [onSuccess] - Optional callback function to execute upon successful transaction request.
+   *
+   * Receives an object containing the transaction ID, ticker symbol, and amount.
+   * @param {function(string): void} [onError] - Optional callback function to execute upon error in processing the transaction request.
+   * @returns {Promise<{ txId: string, ticker: string, amount: number }>} Promise object representing the outcome of the transaction request, resolving to an object with the transaction ID, ticker symbol, and amount.
+   * @method
+   * @example
+   * requestDunesTransaction(
+   *   { ticker: 'DUNES', amount: 100, recipientAddress: 'DAHkCF5LajV6jYyi5o4eMvtpqXRcm9eZYq' },
+   *   (result) => console.log(`Transaction ID: ${result.txId} `),
+   *   (error) => console.error(`Transaction request failed: ${error}`)
+   * ).then(result => console.log(result.txId))
+   *   .catch(error => console.error(error));
+   */
+  requestDunesTransaction(data, onSuccess, onError) {
+    return this.#createPopupRequestHandler({
+      requestType: MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION,
+      responseType: MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION_RESPONSE,
       isDataValid: data?.ticker && data?.amount,
     })({ data, onSuccess, onError });
   }
@@ -407,6 +443,7 @@ class MyDogeWallet {
    * @method
    * @example
    * requestPsbt(
+   *   { rawTx: '02000000000101...', indexes: [0] },
    *   (result) => console.log(`Transaction ID: ${result.txId}`),
    *   (error) => console.error(`Transaction request failed: ${error}`)
    * ).then(result => console.log(result.txId))
@@ -433,6 +470,7 @@ class MyDogeWallet {
    * @method
    * @example
    * requestSignedMessage(
+   *   { message: 'Hello, World!' },
    *   (result) => console.log(`Signed message: ${result.signedMessage}`),
    *   (error) => console.error(`Message signing failed: ${error}`)
    * ).then(result => console.log(result.signedMessage))
@@ -459,6 +497,7 @@ class MyDogeWallet {
    * @method
    * @example
    * requestDecryptedMessage(
+   *   { message: 'STjKie7Bsm9/MtwkCimz2A==' },
    *   (result) => console.log(`Decrypted message: ${result.decryptedMessage}`),
    *   (error) => console.error(`Message decryption failed: ${error}`)
    * ).then(result => console.log(result.decryptedMessage))
@@ -540,27 +579,21 @@ class MyDogeWallet {
 
   /**
    * Retrieves the status of a specific transaction based on provided data.
-   * @param {Object} data - Data required for the query, must contain 'txId'.
-   * @param {Function} [onSuccess] - Callback function to execute upon successful status retrieval.
-   * @param {Function} [onError] - Callback function to execute upon error in retrieving the transaction status.
-   * @returns {Promise} Promise object represents the transaction status retrieval outcome.
-   * @method
-   */
-
-  /**
-   * Retrieves the status of a specific transaction based on provided data.
    * @function
    * @async
-   * @param {function({ connected: boolean, address: string, selectedWalletAddress: string }): void} [onSuccess] - Optional callback function to execute upon successfully retrieving the status.
-   *                                                           Receives an object containing the wallet address, selected wallet address, and connection status.
-   * @param {function(string): void} [onError] - Optional callback function to execute upon error in retrieving the connection status.
-   * @returns {Promise<{ connected: boolean, address: string, connectedWalletAddress: string }>} Promise object representing the outcome of the connection status retrieval, resolving to an object with the wallet address, selected wallet address, and connection status.
+   * @param {Object} data - Data required for the query, must contain 'txId'.
+   * @param {string} data.txId - The transaction ID to query.
+   * @param {function({ txId: string, confirmations: number, status: string, dogeAmount: number, blockTime: number, address: string }): void} [onSuccess] - Optional callback function to execute upon successfully retrieving the status.
+   *                                                           Receives an object containing the number of txId, confirmations, status, amount, blockTime and address for the given tx.
+   * @param {function(string): void} [onError] - Optional callback function to execute upon error in retrieving the tx status.
+   * @returns {Promise<{ txId: string, confirmations: number, status: string, dogeAmount: number, blockTime: number, address: string }>} Promise object representing the outcome of the tx retrieval, resolving to an object with the txId, confirmations, status, amount, blockTime and address for the given tx.
    * @method
    * @example
-   * getConnectionStatus(
-   *   (result) => console.log(`Connected to wallet: ${result.connected}`),
-   *   (error) => console.error(`Connection status retrieval failed: ${error}`)
-   * ).then(result => console.log(result.connected))
+   * getTransactionStatus(
+   *   { txId: '18d83f35060323a20e158805805e217b3ab7d849d5a1131f0ed8eba3a31c39a7' },
+   *   (result) => console.log(`Trasaction status: ${result.status}`),
+   *   (error) => console.error(`Transaction status retrieval failed: ${error}`)
+   * ).then(result => console.log(result.status))
    *   .catch(error => console.error(error));
    */
   getTransactionStatus(data, onSuccess, onError) {
