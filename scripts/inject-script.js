@@ -414,7 +414,7 @@ class MyDogeWallet {
     return this.#createPopupRequestHandler({
       requestType: MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION,
       responseType: MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION_RESPONSE,
-      isDataValid: data?.ticker && data?.amount,
+      isDataValid: data?.ticker && data?.amount && data?.recipientAddress,
     })({ data, onSuccess, onError });
   }
 

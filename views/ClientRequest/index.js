@@ -62,35 +62,6 @@ export function ClientRequest() {
 
   const responseMessageType =
     CLIENT_REQUEST_ROUTES[clientRequest?.requestType]?.response;
-  //   ({ error = 'Transaction Failed', title = 'Error', messageType }) => {
-  //     sendMessage(
-  //       {
-  //         message: messageType,
-  //         data: {
-  //           error,
-  //           originTabId: clientRequest?.params?.originTabId,
-  //           origin: clientRequest?.params?.origin,
-  //         },
-  //       },
-  //       () => {
-  //         Toast.show({
-  //           duration: 3000,
-  //           render: () => {
-  //             return (
-  //               <ToastRender title={title} description={error} status='error' />
-  //             );
-  //           },
-  //         });
-  //         handleWindowClose();
-  //       }
-  //     );
-  //   },
-  //   [
-  //     clientRequest?.params?.origin,
-  //     clientRequest?.params?.originTabId,
-  //     handleWindowClose,
-  //   ]
-  // );
 
   /**
    * Handles the response for client requests

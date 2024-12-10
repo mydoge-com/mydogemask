@@ -51,12 +51,14 @@ export function ClientTransaction({
         ...txData,
         addressBalance: balance,
       });
+
       if (error) {
         handleResponse({
           toastMessage: 'Error creating transaction',
           toastTitle: 'Error',
           error,
         });
+        return;
       }
 
       sendMessage(
@@ -269,7 +271,15 @@ const ConfirmationModal = ({
                 Confirm transaction to send{' '}
                 <Text fontWeight='bold'>Ð{dogeAmount}</Text> to{' '}
               </Text>
-              <Text fontSize='10px' fontWeight='bold' mt='12px' bg='gray.200' borderRadius='4px' px='4px' py='2px'>
+              <Text
+                fontSize='10px'
+                fontWeight='bold'
+                mt='12px'
+                bg='gray.200'
+                borderRadius='4px'
+                px='4px'
+                py='2px'
+              >
                 {recipientAddress}
               </Text>
             </VStack>
