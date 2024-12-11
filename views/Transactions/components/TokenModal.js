@@ -97,9 +97,23 @@ export const TokenModal = ({ isOpen, onClose, token }) => {
                 bg='brandYellow.500'
                 _text={{ color: 'gray.800' }}
               />
-              <Text fontSize='24px' fontWeight='semibold'>
+              <Text fontSize='20px' adjustFontSizeToFit fontWeight='semibold'>
                 {Number(overallBalance).toLocaleString()} {ticker}
               </Text>
+              <Box
+                backgroundColor='gray.200'
+                borderRadius='8px'
+                paddingX='6px'
+                justifyContent='center'
+                mb='8px'
+                py='4px'
+                px='10px'
+                _text={{ fontSize: '12px' }}
+              >
+                <Text fontSize='9px' fontWeight='medium'>
+                  {protocol.slice(0, 1).toUpperCase() + protocol.slice(1)}
+                </Text>
+              </Box>
             </VStack>
             {tokenDetails ? (
               <HStack

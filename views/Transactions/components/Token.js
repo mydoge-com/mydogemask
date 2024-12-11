@@ -84,18 +84,7 @@ export const Token = ({
                   {Number(transferableBalance).toLocaleString()}
                 </Text>
               </HStack>
-            ) : (
-              // Assume Dunes for now
-              <HStack>
-                <Text
-                  fontSize='12px'
-                  _light={{ color: 'gray.400' }}
-                  _dark={{ color: 'gray.500' }}
-                >
-                  Dunes
-                </Text>
-              </HStack>
-            )}
+            ) : null}
           </VStack>
         </HStack>
       </Pressable>
