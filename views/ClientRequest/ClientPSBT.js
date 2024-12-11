@@ -10,7 +10,6 @@ import {
   Spinner,
   Text,
   VStack,
-  Toast,
 } from 'native-base';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { FaLink } from 'react-icons/fa';
@@ -31,7 +30,6 @@ export function ClientPSBT({
   handleResponse,
 }) {
   const {
-    originTabId,
     origin,
     rawTx,
     indexes: indexesParam,
@@ -53,7 +51,14 @@ export function ClientPSBT({
       sendMessage(
         {
           message: MESSAGE_TYPES.SIGN_PSBT,
-          data: { rawTx, indexes, selectedAddressIndex, feeOnly: true, partial: partial, sighashType: sighashType },
+          data: {
+            rawTx,
+            indexes,
+            selectedAddressIndex,
+            feeOnly: true,
+            partial,
+            sighashType,
+          },
         },
         ({ fee }) => {
           console.log('fee', fee);
@@ -68,7 +73,14 @@ export function ClientPSBT({
         description: 'Invalid PSBT',
       });
     }
-  }, [handleFailedTransaction, rawTx, indexes, selectedAddressIndex, partial, sighashType]);
+  }, [
+    handleFailedTransaction,
+    rawTx,
+    indexes,
+    selectedAddressIndex,
+    partial,
+    sighashType,
+  ]);
 
   useEffect(() => {
     (async () => {
@@ -107,7 +119,7 @@ export function ClientPSBT({
         setInputs(mappedInputs);
       }
     })();
-  }, [psbt, indexes, partial, sighashType]);
+  }, [connectedClient.address, psbt, indexes, partial, sighashType]);
 
   const outputs = psbt?.txOutputs?.map((output, index) => {
     return {
@@ -153,7 +165,13 @@ export function ClientPSBT({
     sendMessage(
       {
         message: MESSAGE_TYPES.SIGN_PSBT,
-        data: { rawTx, indexes, selectedAddressIndex, partial: partial, sighashType: sighashType },
+        data: {
+          rawTx,
+          indexes,
+          selectedAddressIndex,
+          partial,
+          sighashType,
+        },
       },
       ({ rawTx: signedRawTx, fee, amount }) => {
         if (signedRawTx && fee && amount) {
@@ -179,19 +197,17 @@ export function ClientPSBT({
                 }
               }
             );
+          } else if (signedRawTx) {
+            handleResponse({
+              toastMessage: 'Transaction Signed',
+              toastTitle: 'Success',
+              data: { signedRawTx },
+            });
           } else {
-            if (signedRawTx) {
-              handleResponse({
-                toastMessage: 'Transaction Signed',
-                toastTitle: 'Success',
-                data: { signedRawTx },
-              });
-            } else {
-              handleFailedTransaction({
-                title: 'Error',
-                description: 'Failed to sign transaction.',
-              });
-            }
+            handleFailedTransaction({
+              title: 'Error',
+              description: 'Failed to sign transaction.',
+            });
           }
         } else if (signedRawTx && partial) {
           handleResponse({

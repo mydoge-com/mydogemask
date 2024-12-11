@@ -1,5 +1,7 @@
+.github
 .next
 build
+docs
 node_modules
 pages
 patches

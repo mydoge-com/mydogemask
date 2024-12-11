@@ -37,7 +37,7 @@ export function ClientDecryptedMessage({
       toastTitle: 'Error',
       error: 'User refused decrypted message',
     });
-  }, [handleResponse, origin, originTabId]);
+  }, [handleResponse]);
 
   return (
     <>
@@ -132,7 +132,6 @@ const ConfirmationModal = ({
       }
     );
   }, [message, addressIndex, handleResponse]);
-  
 
   return (
     <>
