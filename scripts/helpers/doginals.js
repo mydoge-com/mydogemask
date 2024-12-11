@@ -28,8 +28,8 @@ function numberToChunk(n) {
       n <= 16
         ? undefined
         : n < 128
-        ? Buffer.from([n])
-        : Buffer.from([n % 256, n / 256]),
+          ? Buffer.from([n])
+          : Buffer.from([n % 256, n / 256]),
     len: n <= 16 ? 0 : n < 128 ? 1 : 2,
     opcodenum: n === 0 ? 0 : n <= 16 ? 80 + n : n < 128 ? 1 : 2,
   };
@@ -328,7 +328,7 @@ async function getUtxos(address, cursor, result, filter, tx = null) {
   );
 
   if (query.next_cursor) {
-    return getUtxos(address, query.next_cursor, result, filter);
+    return getUtxos(address, query.next_cursor, result, filter, tx);
   }
 }
 

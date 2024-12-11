@@ -7,6 +7,7 @@ import { ClientPopupLoading } from '../../components/ClientPopupLoading';
 import { OriginBadge } from '../../components/OriginBadge';
 import { RecipientAddress } from '../../components/RecipientAddress';
 import { WalletAddress } from '../../components/WalletAddress';
+import { mydoge } from '../../scripts/api';
 import {
   MESSAGE_TYPES,
   TRANSACTION_TYPES,
@@ -22,7 +23,7 @@ export function ClientDoginalTransaction({
   connectedAddressIndex,
   handleResponse,
 }) {
-  const { originTabId, origin, recipientAddress, location } = params;
+  const { origin, recipientAddress, location } = params;
 
   /**
    * @type {ReturnType<typeof useState<{ rawTx: string; fee: number; amount: number } | undefined}>>}
@@ -65,7 +66,11 @@ export function ClientDoginalTransaction({
         vout,
       });
 
-      if (!doginal || !doginal.inscriptions?.find((i) => i.offset === offset)) {
+      const inscription = doginal?.inscriptions?.find(
+        (i) => i.offset === offset
+      );
+
+      if (!doginal || !inscription) {
         handleResponse({
           toastMessage: 'NFT not found',
           toastTitle: 'Error',
@@ -75,7 +80,11 @@ export function ClientDoginalTransaction({
         return;
       }
 
-      setSelectedNFT(doginal);
+      const meta = await mydoge.get(
+        `/inscription/${inscription.inscription_id}`
+      );
+
+      setSelectedNFT(meta.data);
 
       sendMessage(
         {
@@ -85,7 +94,7 @@ export function ClientDoginalTransaction({
             recipientAddress,
             location,
             address: connectedClient?.address,
-            outputValue: doginal.outputValue,
+            inscriptionId: inscription.inscription_id,
           },
         },
         ({ rawTx, fee, amount }) => {
@@ -173,15 +182,12 @@ export function ClientDoginalTransaction({
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
-        origin={origin}
-        originTabId={originTabId}
         rawTx={transaction.rawTx}
         addressIndex={connectedAddressIndex}
-        // handleWindowClose={handleWindowClose}
         recipientAddress={recipientAddress}
         dogeAmount={transaction.amount}
-        selectedNFT={selectedNFT}
-        // responseMessageType={responseMessageType}
+        handleResponse={handleResponse}
+        origin={origin}
       />
     </>
   );
@@ -195,7 +201,6 @@ const ConfirmationModal = ({
   addressIndex,
   recipientAddress,
   dogeAmount,
-  selectedNFT,
   handleResponse,
 }) => {
   const cancelRef = useRef();
@@ -210,7 +215,6 @@ const ConfirmationModal = ({
           rawTx,
           selectedAddressIndex: addressIndex,
           txType: TRANSACTION_TYPES.DOGINAL_TX,
-          location: selectedNFT.location,
         },
       },
       (txId) => {
@@ -231,7 +235,7 @@ const ConfirmationModal = ({
         }
       }
     );
-  }, [addressIndex, handleResponse, onClose, rawTx, selectedNFT.location]);
+  }, [addressIndex, handleResponse, onClose, rawTx]);
 
   return (
     <>
