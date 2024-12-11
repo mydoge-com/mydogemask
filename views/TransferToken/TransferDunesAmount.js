@@ -144,11 +144,11 @@ export const TransferDunesAmount = ({
         rounded='md'
         fontSize='20px'
       >
-        Transfer Dunes
+        Transfer Tokens
       </Text>
       <HStack mb='8px' space='10px'>
         <Text fontWeight='semibold' bg='gray.100' px='6px' rounded='md'>
-          {walletNickname ?? `Wallet: ${selectedAddressIndex + 1}`}
+          {walletNickname ?? `Address: ${selectedAddressIndex + 1}`}
         </Text>
         <Text fontSize='sm' color='gray.500'>
           {walletAddress?.slice(0, 8)}...{walletAddress?.slice(-4)}
@@ -162,7 +162,7 @@ export const TransferDunesAmount = ({
         w='80%'
         h='70px'
       >
-        <Text fontSize='24px' fontWeight='semibold' px='4px'>
+        <Text fontSize='24px' fontWeight='semibold' py='15px' px='4px'>
           {selectedToken.ticker}
         </Text>
         <Input

@@ -99,10 +99,13 @@ export const TransferDunesConfirmation = ({
         mb='24px'
         mx='20px'
         maxHeight='120px'
-        maxWidth='150px'
+        maxWidth='250px'
       >
-        <Text fontSize='lg' pb='4px' textAlign='center' fontWeight='semibold'>
-          {selectedToken.ticker} {formData.tokenAmount}
+        <Text fontSize='20px' pb='4px' textAlign='center' fontWeight='semibold'>
+          {formData.tokenAmount}
+        </Text>
+        <Text fontSize='19px' pb='4px' textAlign='center' fontWeight='semibold'>
+          {selectedToken.ticker}
         </Text>
       </Box>
       <RecipientAddress address={formData.address} />
@@ -117,7 +120,7 @@ export const TransferDunesConfirmation = ({
         <Button
           variant='unstyled'
           colorScheme='coolGray'
-          onPress={() => setFormPage('amount')}
+          onPress={() => setFormPage('amountDunes')}
         >
           Back
         </Button>
@@ -129,7 +132,7 @@ export const TransferDunesConfirmation = ({
           isDisabled={errors.confirmation}
           loading={loading}
         >
-          Pay
+          Transfer
         </BigButton>
       </HStack>
       {errors.confirmation ? (

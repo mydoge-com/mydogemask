@@ -125,7 +125,7 @@ export const TransferDRC20Amount = ({
     <Center>
       <WalletAddress />
       <Text fontSize='xl' pb='8px' textAlign='center'>
-        Transfer <Text fontWeight='bold'>{selectedToken.ticker}</Text> tokens
+        Transfer <Text fontWeight='bold'>{selectedToken.ticker}</Text> Tokens
       </Text>
       <RecipientAddress address={formData.address} />
       <Box flex={1}>
@@ -145,7 +145,9 @@ export const TransferDRC20Amount = ({
               <FlatList
                 data={nfts}
                 renderItem={renderItem}
-                keyExtractor={(item) => selectedNFT?.location + item.location}
+                keyExtractor={(item) =>
+                  `${selectedNFT?.location}${item.location}`
+                }
                 numColumns={2}
                 initialNumToRender={4}
               />

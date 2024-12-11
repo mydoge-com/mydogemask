@@ -47,12 +47,15 @@ export const TransferTokenAddress = ({
         selectedToken.protocol === 'drc20' ? 'amountDRC20' : 'amountDunes'
       );
     }
-  }, [setFormPage, validate]);
+  }, [selectedToken.protocol, setFormPage, validate]);
 
   return (
     <>
-      <Text fontSize='xl' pb='16px' textAlign='center'>
-        Send <Text fontWeight='bold'>{selectedToken.ticker}</Text> to
+      <Text fontSize='19px' pb='18px' textAlign='center' fontWeight='bold'>
+        {selectedToken.ticker}
+      </Text>
+      <Text fontSize='19px' pb='18px' textAlign='center'>
+        Transfer to Address
       </Text>
       <Input
         variant='filled'

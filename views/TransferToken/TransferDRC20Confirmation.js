@@ -117,7 +117,7 @@ export const TransferDRC20Confirmation = ({
         <Button
           variant='unstyled'
           colorScheme='coolGray'
-          onPress={() => setFormPage('amount')}
+          onPress={() => setFormPage('amountDRC20')}
         >
           Back
         </Button>
@@ -129,7 +129,7 @@ export const TransferDRC20Confirmation = ({
           isDisabled={errors.confirmation}
           loading={loading}
         >
-          Pay
+          Transfer
         </BigButton>
       </HStack>
       {errors.confirmation ? (
