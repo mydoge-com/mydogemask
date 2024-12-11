@@ -1,3 +1,4 @@
+/* eslint import/first :0 */
 import * as bitcoin from 'bitcoinjs-lib';
 import dotenv from 'dotenv';
 import sb from 'satoshi-bitcoin';

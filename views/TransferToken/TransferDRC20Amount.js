@@ -19,7 +19,7 @@ import { getDRC20Inscriptions } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
 import { NFT } from '../Transactions/components/NFT';
 
-export const TransferTokenAmount = ({
+export const TransferDRC20Amount = ({
   setFormPage,
   setFormData,
   formData,
@@ -98,7 +98,7 @@ export const TransferTokenAmount = ({
             fee,
             dogeAmount: amount,
           });
-          setFormPage('confirmation');
+          setFormPage('confirmationDRC20');
           setLoading(false);
         } else {
           setLoading(false);
@@ -125,7 +125,7 @@ export const TransferTokenAmount = ({
     <Center>
       <WalletAddress />
       <Text fontSize='xl' pb='8px' textAlign='center'>
-        Transfer <Text fontWeight='bold'>{selectedToken.ticker}</Text> tokens
+        Transfer <Text fontWeight='bold'>{selectedToken.ticker}</Text> Tokens
       </Text>
       <RecipientAddress address={formData.address} />
       <Box flex={1}>
@@ -145,7 +145,9 @@ export const TransferTokenAmount = ({
               <FlatList
                 data={nfts}
                 renderItem={renderItem}
-                keyExtractor={(item) => selectedNFT?.location + item.location}
+                keyExtractor={(item) =>
+                  `${selectedNFT?.location}${item.location}`
+                }
                 numColumns={2}
                 initialNumToRender={4}
               />
