@@ -191,59 +191,12 @@ const ConfirmationModal = ({
             toastTitle: 'Success',
             data: { txId },
           });
-          // sendMessage(
-          //   {
-          //     message: responseMessageType,
-          //     data: { txId, originTabId, origin },
-          //   },
-          //   () => {
-          //     Toast.show({
-          //       duration: 3000,
-          //       render: () => {
-          //         return (
-          //           <ToastRender
-          //             description='Transaction Sent'
-          //             status='success'
-          //           />
-          //         );
-          //       },
-          //     });
-          //     handleWindowClose();
-          //   }
-          // );
         } else {
           handleResponse({
             toastMessage: 'Failed to send transaction.',
             toastTitle: 'Error',
             error: 'Failed to send transaction',
           });
-          // sendMessage(
-          //   {
-          // message: responseMessageType,
-          //   data: {
-          //     error: 'Failed to send transaction',
-          //     originTabId,
-          //     origin,
-          //   },
-          // },
-          // () => {
-          //   Toast.show({
-          //     title: 'Error',
-          //     description: 'Transaction Failed',
-          //     duration: 3000,
-          //     render: () => {
-          //       return (
-          //         <ToastRender
-          //           title='Error'
-          //           description='Failed to send transaction.'
-          //           status='error'
-          //         />
-          //       );
-          //     },
-          //   });
-          //   handleWindowClose();
-          // }
-          // );
         }
       }
     );
