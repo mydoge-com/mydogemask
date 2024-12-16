@@ -58,7 +58,7 @@ if (myDogeMask?.isMyDoge) {
     const txReqRes = await myDogeMask.requesInscriptionTransaction(
       {
         recipientAddress: 'DAHkCF5LajV6jYyi5o4eMvtpqXRcm9eZYq',
-        output:
+        location:
           'c788a88a04a649a5ba049ee7b23ce337a7304d1d0d37cc46108767095fb2d01a:0:0', // The transaction id, output index and sats offset separated by colons
       }
       // onSuccess,
