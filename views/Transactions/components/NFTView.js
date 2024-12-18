@@ -31,7 +31,10 @@ export const NFTViewComponent = ({ nft = {} }) => {
   }, [content]);
 
   const isImage = contentType?.includes('image');
-  const isText = !contentType || contentType.includes('text');
+  const isText =
+    !contentType ||
+    contentType.includes('text') ||
+    contentType.includes('json');
 
   if (isImage) {
     return <img src={content} width='100%' height='auto' alt='NFT' />;

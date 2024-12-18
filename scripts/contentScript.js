@@ -5,7 +5,11 @@ import {
   getConnectedClient,
   getSelectedAddress,
 } from './helpers/data';
-import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
+import {
+  getDRC20Balances,
+  getDRC20Inscriptions,
+  getDunesBalances,
+} from './helpers/doginals';
 
 (() => {
   // Inject doge API to all websites
@@ -135,6 +139,39 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
           type: MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE,
           data: {
             inscriptions,
+            ticker: data.ticker,
+            address: client.address,
+          },
+        },
+        origin
+      );
+    }
+  }
+
+  async function onGetDunesBalance({ origin, data }) {
+    let client;
+    let balance = '0';
+
+    try {
+      client = await getConnectedClient(origin);
+      const balances = await getDunesBalances(client?.address, data.ticker);
+      if (balances.length) {
+        balance = balances[0].overallBalance;
+      }
+    } catch (e) {
+      handleError({
+        errorMessage: e.message,
+        origin,
+        messageType: MESSAGE_TYPES.CLIENT_GET_DUNES_BALANCE_RESPONSE,
+      });
+      return;
+    }
+    if (client) {
+      window.postMessage(
+        {
+          type: MESSAGE_TYPES.CLIENT_GET_DUNES_BALANCE_RESPONSE,
+          data: {
+            balance,
             ticker: data.ticker,
             address: client.address,
           },
@@ -285,6 +322,9 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
         case MESSAGE_TYPES.CLIENT_GET_TRANSFERABLE_DRC20:
           onGetTransferableDRC20({ origin: source.origin, data });
           break;
+        case MESSAGE_TYPES.CLIENT_GET_DUNES_BALANCE:
+          onGetDunesBalance({ origin: source.origin, data });
+          break;
         case MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION:
           createClientPopupHandler({
             messageType: MESSAGE_TYPES.CLIENT_REQUEST_TRANSACTION,
@@ -304,6 +344,13 @@ import { getDRC20Balances, getDRC20Inscriptions } from './helpers/doginals';
               MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION,
             responseType:
               MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+          })({ origin: source.origin, data });
+          break;
+        case MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION:
+          createClientPopupHandler({
+            messageType: MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION,
+            responseType:
+              MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION_RESPONSE,
           })({ origin: source.origin, data });
           break;
         case MESSAGE_TYPES.CLIENT_REQUEST_PSBT:

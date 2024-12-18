@@ -12,6 +12,16 @@ export const NFT_PAGE_SIZE = 500;
 export const QUERY_CACHE = '@mydoge_QUERY_CACHE';
 export const INSCRIPTION_TXS_CACHE = '@mydoge_INSCRIPTION_TXS_CACHE';
 export const SPENT_UTXOS_CACHE = '@mydoge_SPENT_UTXOS_CACHE';
+/**
+ * Whitelist of supported signature hash types:
+ * - 1 (0x01): SIGHASH_ALL - Signs all inputs and outputs
+ * - 3 (0x03): SIGHASH_SINGLE - Signs all inputs and the output with the same index
+ * - 128 (0x80): SIGHASH_ANYONECANPAY - Can be combined with ALL/SINGLE
+ * - 129 (0x81): SIGHASH_ALL|SIGHASH_ANYONECANPAY - Signs one input and all outputs
+ * - 131 (0x83): SIGHASH_SINGLE|SIGHASH_ANYONECANPAY - Signs one input and one output at same index
+ * Note: SIGHASH_NONE (2) is not supported for security reasons
+ */
+export const SIGHASH_TYPE_WHITELIST = [1, 3, 128, 129, 131];
 
 export const BLOCK_CONFIRMATIONS = 1;
 export const TRANSACTION_PAGE_SIZE = 10;
@@ -28,10 +38,12 @@ export const TRANSACTION_PENDING_TIME = 1000 * 60 * 2; // 2 minutes
 const CLIENT_MESSAGE_TYPES = {
   CLIENT_GET_BALANCE: 'clientRequestBalance',
   CLIENT_GET_BALANCE_RESPONSE: 'clientGetBalanceResponse',
-  CLIENT_GET_DRC20_BALANCE: 'clientRequestDRC20Balance',
+  CLIENT_GET_DRC20_BALANCE: 'clientGetDRC20Balance',
   CLIENT_GET_DRC20_BALANCE_RESPONSE: 'clientGetDRC20BalanceResponse',
-  CLIENT_GET_TRANSFERABLE_DRC20: 'clientRequestTransferableDRC20',
+  CLIENT_GET_TRANSFERABLE_DRC20: 'clientGetTransferableDRC20',
   CLIENT_GET_TRANSFERABLE_DRC20_RESPONSE: 'clientGetTransferableDRC20Response',
+  CLIENT_GET_DUNES_BALANCE: 'clientGetDunesalance',
+  CLIENT_GET_DUNES_BALANCE_RESPONSE: 'clientGetDunesBalanceResponse',
   CLIENT_DISCONNECT: 'clientDisconnect',
   CLIENT_DISCONNECT_RESPONSE: 'clientDisconnectResponse',
   CLIENT_CONNECTION_STATUS: 'clientConnectionStatus',
@@ -70,6 +82,15 @@ export const CLIENT_POPUP_MESSAGE_PAIRS = [
     response: {
       CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE:
         'clientRequestDRC20TransactionResponse',
+    },
+  },
+  {
+    request: {
+      CLIENT_REQUEST_DUNES_TRANSACTION: 'clientRequestDunesTransaction',
+    },
+    response: {
+      CLIENT_REQUEST_DUNES_TRANSACTION_RESPONSE:
+        'clientRequestDunesTransactionResponse',
     },
   },
   {
@@ -124,6 +145,7 @@ export const MESSAGE_TYPES = {
   CREATE_TRANSACTION: 'createTransaction',
   CREATE_NFT_TRANSACTION: 'createNFTTransaction',
   CREATE_TRANSFER_TRANSACTION: 'inscribeTransferTransaction',
+  CREATE_DUNES_TRANSACTION: 'createDunesTransaction',
   SEND_TRANSACTION: 'sendTransaction',
   SEND_TRANSFER_TRANSACTION: 'sendInscribeTransferTransaction',
   SIGN_PSBT: 'signPsbt',
@@ -136,6 +158,9 @@ export const MESSAGE_TYPES = {
   NOTIFY_TRANSACTION_SUCCESS: 'notifyTransactionSuccess',
 };
 
-export const MYDOGE_BASE_URL = 'https://api.mydoge.com'; // 'http://localhost:3000';
+export const MYDOGE_BASE_URL = 'https://api.mydoge.com'; // 'http://localhost:3000'; //
 
-export const TICKER_ICON_URL = 'https://doggy.market/drc-20';
+export const DOGGY_ICON_URL = 'https://doggy.market/drc-20';
+export const DOGGY_API_ICON_URL_2 = 'https://api.doggy.market/static/drc-20';
+export const DRC20_ICON_URL = 'https://drc-20-icons.dogeord.io';
+export const DUNES_ICON_URL = 'https://dune-icons.sdoggs.exchange';

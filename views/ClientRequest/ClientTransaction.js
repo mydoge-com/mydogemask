@@ -51,12 +51,14 @@ export function ClientTransaction({
         ...txData,
         addressBalance: balance,
       });
+
       if (error) {
         handleResponse({
           toastMessage: 'Error creating transaction',
           toastTitle: 'Error',
           error,
         });
+        return;
       }
 
       sendMessage(
@@ -189,59 +191,12 @@ const ConfirmationModal = ({
             toastTitle: 'Success',
             data: { txId },
           });
-          // sendMessage(
-          //   {
-          //     message: responseMessageType,
-          //     data: { txId, originTabId, origin },
-          //   },
-          //   () => {
-          //     Toast.show({
-          //       duration: 3000,
-          //       render: () => {
-          //         return (
-          //           <ToastRender
-          //             description='Transaction Sent'
-          //             status='success'
-          //           />
-          //         );
-          //       },
-          //     });
-          //     handleWindowClose();
-          //   }
-          // );
         } else {
           handleResponse({
             toastMessage: 'Failed to send transaction.',
             toastTitle: 'Error',
             error: 'Failed to send transaction',
           });
-          // sendMessage(
-          //   {
-          // message: responseMessageType,
-          //   data: {
-          //     error: 'Failed to send transaction',
-          //     originTabId,
-          //     origin,
-          //   },
-          // },
-          // () => {
-          //   Toast.show({
-          //     title: 'Error',
-          //     description: 'Transaction Failed',
-          //     duration: 3000,
-          //     render: () => {
-          //       return (
-          //         <ToastRender
-          //           title='Error'
-          //           description='Failed to send transaction.'
-          //           status='error'
-          //         />
-          //       );
-          //     },
-          //   });
-          //   handleWindowClose();
-          // }
-          // );
         }
       }
     );
@@ -269,7 +224,15 @@ const ConfirmationModal = ({
                 Confirm transaction to send{' '}
                 <Text fontWeight='bold'>Ð{dogeAmount}</Text> to{' '}
               </Text>
-              <Text fontSize='10px' fontWeight='bold' mt='12px' bg='gray.200' borderRadius='4px' px='4px' py='2px'>
+              <Text
+                fontSize='10px'
+                fontWeight='bold'
+                mt='12px'
+                bg='gray.200'
+                borderRadius='4px'
+                px='4px'
+                py='2px'
+              >
                 {recipientAddress}
               </Text>
             </VStack>

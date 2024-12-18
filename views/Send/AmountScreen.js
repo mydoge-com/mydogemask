@@ -18,7 +18,7 @@ import { useInterval } from '../../hooks/useInterval';
 import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateTransaction } from '../../scripts/helpers/wallet';
-import { sanitizeDogeInput, sanitizeFiat } from '../../utils/formatters';
+import { sanitizeDogeInput } from '../../utils/formatters';
 
 const MAX_CHARACTERS = 10000;
 const REFRESH_INTERVAL = 10000;
@@ -80,15 +80,21 @@ export const AmountScreen = ({
       if (Number.isNaN(Number(text))) {
         return;
       }
+
       setErrors({ ...errors, dogeAmount: '' });
+
       const cleanText = sanitizeDogeInput(text) || '0';
+
       if (cleanText.length > MAX_CHARACTERS) {
         return;
       }
 
-      const newFiatValue = parseFloat(cleanText * dogecoinPrice)
-        .toFixed(2)
-        .toString();
+      const cleanDoge = parseFloat(cleanText);
+      let newFiatValue = 0;
+
+      if (cleanDoge > 0) {
+        newFiatValue = (cleanDoge * dogecoinPrice).toFixed(2);
+      }
 
       setFormData({
         ...formData,
@@ -104,18 +110,25 @@ export const AmountScreen = ({
       if (Number.isNaN(Number(text))) {
         return;
       }
-      setErrors({ ...errors, dogeAmount: '' });
-      const isDeletion = text.length < formData.fiatAmount.length;
-      const cleanText = sanitizeFiat(text, formData.fiatAmount, isDeletion);
 
-      let newDogeValue = parseFloat(cleanText / dogecoinPrice);
-      newDogeValue = parseFloat(newDogeValue.toFixed(2));
+      setErrors({ ...errors, fiatAmount: '' });
 
-      if (newDogeValue.toString().length > MAX_CHARACTERS) return;
+      const cleanText = sanitizeDogeInput(text, 2) || '0';
+
+      if (cleanText.length > MAX_CHARACTERS) {
+        return;
+      }
+
+      const cleanFiat = parseFloat(cleanText);
+      let newDogeValue = 0;
+
+      if (cleanFiat > 0) {
+        newDogeValue = (cleanFiat / dogecoinPrice).toFixed(8);
+      }
 
       setFormData({
         ...formData,
-        fiatAmount: cleanText,
+        fiatAmount: cleanText, // This keeps the exact entered format
         dogeAmount: String(newDogeValue),
       });
     },

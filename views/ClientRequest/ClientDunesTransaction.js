@@ -7,124 +7,102 @@ import { ClientPopupLoading } from '../../components/ClientPopupLoading';
 import { OriginBadge } from '../../components/OriginBadge';
 import { RecipientAddress } from '../../components/RecipientAddress';
 import { WalletAddress } from '../../components/WalletAddress';
-import { mydoge } from '../../scripts/api';
-import {
-  MESSAGE_TYPES,
-  TRANSACTION_TYPES,
-} from '../../scripts/helpers/constants';
-import { getInscriptionsUtxo } from '../../scripts/helpers/doginals';
+import { MESSAGE_TYPES } from '../../scripts/helpers/constants';
+import { getDunesBalances } from '../../scripts/helpers/doginals';
 import { sendMessage } from '../../scripts/helpers/message';
 import { validateAddress } from '../../scripts/helpers/wallet';
-import { NFTView } from '../Transactions/components/NFTView';
 
-export function ClientDoginalTransaction({
+export function ClientDunesTransaction({
   params,
   connectedClient,
   connectedAddressIndex,
   handleResponse,
 }) {
-  const { origin, recipientAddress, location } = params;
-
-  /**
-   * @type {ReturnType<typeof useState<{ rawTx: string; fee: number; amount: number } | undefined}>>}
-   */
-  const [transaction, setTransaction] = useState();
-
-  const [pageLoading, setPageLoading] = useState(false);
-  const [selectedNFT, setSelectedNFT] = useState();
-
-  useEffect(() => {
-    if (!connectedClient?.address) return;
-    (async () => {
-      if (!validateAddress(recipientAddress)) {
-        handleResponse({
-          toastMessage: 'Invalid address',
-          toastTitle: 'Error',
-          error: 'Invalid address',
-        });
-        return;
-      }
-
-      const split = location.split(':');
-      const txid = split[0];
-      const vout = Number(split[1]);
-      const offset = Number(split[2]);
-
-      if (txid?.length !== 64 || Number.isNaN(vout)) {
-        handleResponse({
-          toastMessage: 'Invalid output',
-          toastTitle: 'Error',
-          error: 'Invalid output',
-        });
-        return;
-      }
-
-      setPageLoading(true);
-
-      const doginal = await getInscriptionsUtxo(connectedClient?.address, {
-        txid,
-        vout,
-      });
-
-      const inscription = doginal?.inscriptions?.find(
-        (i) => i.offset === offset
-      );
-
-      if (!doginal || !inscription) {
-        handleResponse({
-          toastMessage: 'NFT not found',
-          toastTitle: 'Error',
-          error: 'NFT not found',
-        });
-        setPageLoading(false);
-        return;
-      }
-
-      const meta = await mydoge.get(
-        `/inscription/${inscription.inscription_id}`
-      );
-
-      setSelectedNFT(meta.data);
-
-      sendMessage(
-        {
-          message: MESSAGE_TYPES.CREATE_NFT_TRANSACTION,
-          data: {
-            ...doginal,
-            recipientAddress,
-            location,
-            address: connectedClient?.address,
-            inscriptionId: inscription.inscription_id,
-          },
-        },
-        ({ rawTx, fee, amount }) => {
-          setPageLoading(false);
-          if (rawTx && fee && amount) {
-            setTransaction({ rawTx, fee, amount });
-          } else {
-            handleResponse({
-              toastMessage: 'Unable to create NFT transaction',
-              toastTitle: 'Error',
-              error: 'Unable to create NFT transaction',
-            });
-          }
-        }
-      );
-    })();
-  }, [connectedClient?.address, handleResponse, location, recipientAddress]);
+  const { origin, ticker, amount, recipientAddress } = params ?? {};
 
   const [confirmationModalOpen, setConfirmationModalOpen] = useState(false);
   const onCloseModal = useCallback(() => {
     setConfirmationModalOpen(false);
   }, []);
 
+  const [pageLoading, setPageLoading] = useState(false);
+
+  /**
+   * @type {ReturnType<typeof useState<{ txs: string[]; fee: number; } | undefined}>>}
+   */
+  const [transaction, setTransaction] = useState();
+
   const onRejectTransaction = useCallback(() => {
     handleResponse({
-      toastMessage: 'Transaction Rejected',
-      toastTitle: 'Error',
+      toastMessage: `MyDoge failed to authorize the transaction to ${origin}`,
+      toastTitle: 'Transaction Rejected',
       error: 'User refused transaction',
     });
-  }, [handleResponse]);
+  }, [handleResponse, origin]);
+
+  useEffect(() => {
+    if (!connectedClient?.address) return;
+    (async () => {
+      setPageLoading(true);
+
+      if (!validateAddress(recipientAddress)) {
+        handleResponse({
+          toastMessage: 'Invalid recipient address',
+          toastTitle: 'Error',
+          error: 'Invalid recipient address',
+        });
+        return;
+      }
+
+      const balances = await getDunesBalances(connectedClient?.address, ticker);
+      const { duneId, overallBalance } = balances[0];
+      const ab = Number(overallBalance || 0);
+      const amt = Number(amount);
+
+      if (ab < amt) {
+        handleResponse({
+          toastMessage: 'Insufficient balance',
+          toastTitle: 'Error',
+          error: 'Insufficient balance',
+        });
+        return;
+      }
+
+      sendMessage(
+        {
+          message: MESSAGE_TYPES.CREATE_DUNES_TRANSACTION,
+          data: {
+            ...params,
+            duneId,
+            tokenAmount: amount,
+            selectedAddressIndex: connectedAddressIndex,
+            walletAddress: connectedClient?.address,
+            recipientAddress,
+          },
+        },
+        ({ rawTx, fee, amount: txAmount }) => {
+          setPageLoading(false);
+          if (rawTx && fee && txAmount) {
+            setTransaction({ rawTx, fee, amount });
+          } else {
+            handleResponse({
+              error: 'Unable to create available dunes transaction',
+              toastTitle: 'Error',
+              toastMessage: 'Unable to create transaction',
+            });
+          }
+        }
+      );
+    })();
+  }, [
+    amount,
+    connectedAddressIndex,
+    connectedClient?.address,
+    handleResponse,
+    params,
+    ticker,
+    recipientAddress,
+  ]);
 
   if (!transaction)
     return (
@@ -145,47 +123,42 @@ export function ClientDoginalTransaction({
         Confirm <Text fontWeight='bold'>Transaction</Text>
       </Text>
       <WalletAddress address={connectedClient.address} />
-      <Text fontSize='lg' textAlign='center' fontWeight='semibold'>
-        Transfer
+      <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
+        Sending
       </Text>
-      <Box
-        borderRadius='12px'
-        overflow='hidden'
-        mb='12px'
-        mx='20px'
-        maxHeight='120px'
-        maxWidth='150px'
-      >
-        {selectedNFT ? <NFTView nft={selectedNFT} /> : null}
-      </Box>
+      <Text fontSize='xl' fontWeight='semibold' pt='6px'>
+        {ticker} {Number(amount).toLocaleString()}
+      </Text>
+      <Text fontSize='lg' pb='10px' textAlign='center' fontWeight='semibold'>
+        To
+      </Text>
       <RecipientAddress address={recipientAddress} />
-
-      <Text fontSize='3xl' fontWeight='semibold' mt='-6px'>
-        Ð{transaction.amount}
-      </Text>
       <Text fontSize='13px' fontWeight='semibold' pt='6px'>
-        Network fee Ð{transaction.fee}
+        Network fee: <Text fontWeight='normal'>Ð{transaction?.fee}</Text>
       </Text>
-      <HStack alignItems='center' mt='30px' space='12px'>
-        <BigButton onPress={onRejectTransaction} variant='secondary' px='20px'>
+
+      <HStack alignItems='center' mt='60px' space='12px'>
+        <Button
+          variant='unstyled'
+          colorScheme='coolGray'
+          onPress={onRejectTransaction}
+        >
           Cancel
-        </BigButton>
+        </Button>
         <BigButton
           onPress={() => setConfirmationModalOpen(true)}
           type='submit'
           role='button'
           px='28px'
         >
-          Transfer
+          Send
         </BigButton>
       </HStack>
       <ConfirmationModal
         showModal={confirmationModalOpen}
         onClose={onCloseModal}
-        rawTx={transaction.rawTx}
-        addressIndex={connectedAddressIndex}
-        recipientAddress={recipientAddress}
-        dogeAmount={transaction.amount}
+        params={params}
+        rawTx={transaction?.rawTx}
         handleResponse={handleResponse}
         origin={origin}
       />
@@ -196,46 +169,40 @@ export function ClientDoginalTransaction({
 const ConfirmationModal = ({
   showModal,
   onClose,
-  origin,
+  params,
   rawTx,
-  addressIndex,
-  recipientAddress,
-  dogeAmount,
   handleResponse,
+  origin,
 }) => {
   const cancelRef = useRef();
   const [loading, setLoading] = useState(false);
+  const { ticker, amount: tokenAmount } = params;
 
   const onSubmit = useCallback(async () => {
     setLoading(true);
     sendMessage(
       {
         message: MESSAGE_TYPES.SEND_TRANSACTION,
-        data: {
-          rawTx,
-          selectedAddressIndex: addressIndex,
-          txType: TRANSACTION_TYPES.DOGINAL_TX,
-        },
+        data: { ...params, rawTx, tokenAmount, ticker },
       },
       (txId) => {
         setLoading(false);
-        onClose();
         if (txId) {
           handleResponse({
             toastMessage: 'Transaction Sent',
             toastTitle: 'Success',
-            data: { txId },
+            data: { tokenAmount, ticker, txId },
           });
         } else {
           handleResponse({
-            toastMessage: 'Transaction Failed',
+            toastMessage: 'Failed to send dunes transaction',
             toastTitle: 'Error',
-            error: 'Failed to send transaction',
+            error: 'Failed to send dunes transaction',
           });
         }
       }
     );
-  }, [addressIndex, handleResponse, onClose, rawTx]);
+  }, [handleResponse, params, ticker, tokenAmount, rawTx]);
 
   return (
     <>
@@ -253,14 +220,13 @@ const ConfirmationModal = ({
           <AlertDialog.CloseButton />
           <AlertDialog.Header>Confirm Transaction</AlertDialog.Header>
           <AlertDialog.Body>
-            <OriginBadge origin={origin} mb='8px' />
+            <OriginBadge origin={origin} mb='18px' />
             <VStack alignItems='center'>
-              <Text>
-                Confirm transaction to send{' '}
-                <Text fontWeight='bold'>Ð{dogeAmount}</Text> to{' '}
-              </Text>
-              <Text fontSize='10px' fontWeight='bold'>
-                {recipientAddress}
+              <Text textAlign='center'>
+                Confirm transaction to send{'\n'}
+                <Text fontWeight='bold' fontSize='md'>
+                  {ticker} {Number(tokenAmount).toLocaleString()}
+                </Text>
               </Text>
             </VStack>
           </AlertDialog.Body>

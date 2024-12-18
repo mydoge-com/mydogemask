@@ -28,8 +28,8 @@ function numberToChunk(n) {
       n <= 16
         ? undefined
         : n < 128
-        ? Buffer.from([n])
-        : Buffer.from([n % 256, n / 256]),
+          ? Buffer.from([n])
+          : Buffer.from([n % 256, n / 256]),
     len: n <= 16 ? 0 : n < 128 ? 1 : 2,
     opcodenum: n === 0 ? 0 : n <= 16 ? 80 + n : n < 128 ? 1 : 2,
   };
@@ -284,6 +284,14 @@ export async function getDRC20Balances(address, ticker) {
   return result.balances;
 }
 
+export async function getDunesBalances(address, ticker) {
+  const result = (
+    await mydoge.get(`/dunes/${address}${ticker ? `?ticker=${ticker}` : ''}`)
+  ).data;
+
+  return result.balances;
+}
+
 async function getUtxos(address, cursor, result, filter, tx = null) {
   const query = (
     await mydoge.get(
@@ -320,7 +328,7 @@ async function getUtxos(address, cursor, result, filter, tx = null) {
   );
 
   if (query.next_cursor) {
-    return getUtxos(address, query.next_cursor, result, filter);
+    return getUtxos(address, query.next_cursor, result, filter, tx);
   }
 }
 

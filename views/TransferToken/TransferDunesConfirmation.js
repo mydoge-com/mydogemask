@@ -11,109 +11,71 @@ import {
   TRANSACTION_TYPES,
 } from '../../scripts/helpers/constants';
 import { sendMessage } from '../../scripts/helpers/message';
-import { validateTransaction } from '../../scripts/helpers/wallet';
-import { NFTView } from '../Transactions/components/NFTView';
 
-export const TransferTokenConfirmation = ({
+export const TransferDunesConfirmation = ({
   setFormPage,
   errors,
   setErrors,
   formData,
-  walletAddress,
-  selectedNFT,
   selectedAddressIndex,
+  walletAddress,
   selectedToken,
 }) => {
   const { navigate } = useAppContext();
   const [loading, setLoading] = useState(false);
   const onSubmit = useCallback(() => {
-    let addressBalance;
-
     setLoading(true);
+
+    // Process transaction
     sendMessage(
       {
-        message: MESSAGE_TYPES.GET_ADDRESS_BALANCE,
-        data: { address: walletAddress },
+        message: MESSAGE_TYPES.SEND_TRANSACTION,
+        data: {
+          rawTx: formData.rawTx,
+          selectedAddressIndex,
+          txType: TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX,
+          ticker: selectedToken.ticker,
+          tokenAmount: formData.tokenAmount,
+        },
       },
-      (balance) => {
-        if (balance) {
-          addressBalance = balance;
-        } else {
-          setErrors({ confirmation: 'Error getting address balance' });
-        }
-
-        const error = validateTransaction({
-          senderAddress: walletAddress,
-          recipientAddress: formData.address.trim(),
-          dogeAmount: formData.dogeAmount,
-          addressBalance,
-        });
-        if (error) {
-          setErrors({ confirmation: error });
+      (txId) => {
+        if (txId) {
           setLoading(false);
-
-          return;
-        }
-        // Process transaction
-        sendMessage(
-          {
-            message: MESSAGE_TYPES.SEND_TRANSACTION,
-            data: {
-              rawTx: formData.rawTx,
-              selectedAddressIndex,
-              txType: TRANSACTION_TYPES.DRC20_SEND_INSCRIPTION_TX,
-              ticker: selectedToken.ticker,
-              tokenAmount: selectedNFT.amount,
-              location: selectedNFT.location,
+          Toast.show({
+            duration: 3000,
+            render: () => {
+              return (
+                <ToastRender description='Transaction Sent' status='success' />
+              );
             },
-          },
-          (txId) => {
-            if (txId) {
-              setLoading(false);
-              Toast.show({
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      description='Transaction Sent'
-                      status='success'
-                    />
-                  );
-                },
-              });
+          });
 
-              navigate('/Transactions/?refresh=1');
-            } else {
-              setLoading(false);
-              Toast.show({
-                title: 'Error',
-                description: 'Transaction Failed',
-                duration: 3000,
-                render: () => {
-                  return (
-                    <ToastRender
-                      title='Error'
-                      description='Failed to send transaction.'
-                      status='error'
-                    />
-                  );
-                },
-              });
-            }
-          }
-        );
+          navigate('/Transactions/?refresh=1');
+        } else {
+          setLoading(false);
+          Toast.show({
+            title: 'Error',
+            description: 'Transaction Failed',
+            duration: 3000,
+            render: () => {
+              return (
+                <ToastRender
+                  title='Error'
+                  description='Failed to send transaction.'
+                  status='error'
+                />
+              );
+            },
+          });
+        }
       }
     );
   }, [
-    formData.address,
-    formData.dogeAmount,
+    formData.tokenAmount,
     formData.rawTx,
     navigate,
     selectedAddressIndex,
-    selectedNFT,
     selectedToken.ticker,
-    setErrors,
-    walletAddress,
   ]);
 
   useEffect(() => {
@@ -137,9 +99,14 @@ export const TransferTokenConfirmation = ({
         mb='24px'
         mx='20px'
         maxHeight='120px'
-        maxWidth='150px'
+        maxWidth='250px'
       >
-        <NFTView nft={selectedNFT} />
+        <Text fontSize='20px' pb='4px' textAlign='center' fontWeight='semibold'>
+          {formData.tokenAmount}
+        </Text>
+        <Text fontSize='19px' pb='4px' textAlign='center' fontWeight='semibold'>
+          {selectedToken.ticker}
+        </Text>
       </Box>
       <RecipientAddress address={formData.address} />
 
@@ -153,7 +120,7 @@ export const TransferTokenConfirmation = ({
         <Button
           variant='unstyled'
           colorScheme='coolGray'
-          onPress={() => setFormPage('amount')}
+          onPress={() => setFormPage('amountDunes')}
         >
           Back
         </Button>
@@ -165,7 +132,7 @@ export const TransferTokenConfirmation = ({
           isDisabled={errors.confirmation}
           loading={loading}
         >
-          Pay
+          Transfer
         </BigButton>
       </HStack>
       {errors.confirmation ? (

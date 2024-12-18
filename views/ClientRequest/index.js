@@ -10,6 +10,7 @@ import { ClientAvailableDRC20Transaction } from './ClientAvailableDRC20Transacti
 import { ClientConnect } from './ClientConnect';
 import { ClientDecryptedMessage } from './ClientDecryptedMessage';
 import { ClientDoginalTransaction } from './ClientDoginalTransaction';
+import { ClientDunesTransaction } from './ClientDunesTransaction';
 import { ClientPSBT } from './ClientPSBT';
 import { ClientSignedMessage } from './ClientSignedMessage';
 import { ClientTransaction } from './ClientTransaction';
@@ -30,6 +31,10 @@ const CLIENT_REQUEST_ROUTES = {
   [MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION]: {
     component: ClientAvailableDRC20Transaction,
     response: MESSAGE_TYPES.CLIENT_REQUEST_AVAILABLE_DRC20_TRANSACTION_RESPONSE,
+  },
+  [MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION]: {
+    component: ClientDunesTransaction,
+    response: MESSAGE_TYPES.CLIENT_REQUEST_DUNES_TRANSACTION_RESPONSE,
   },
   [MESSAGE_TYPES.CLIENT_REQUEST_PSBT]: {
     component: ClientPSBT,
@@ -57,35 +62,6 @@ export function ClientRequest() {
 
   const responseMessageType =
     CLIENT_REQUEST_ROUTES[clientRequest?.requestType]?.response;
-  //   ({ error = 'Transaction Failed', title = 'Error', messageType }) => {
-  //     sendMessage(
-  //       {
-  //         message: messageType,
-  //         data: {
-  //           error,
-  //           originTabId: clientRequest?.params?.originTabId,
-  //           origin: clientRequest?.params?.origin,
-  //         },
-  //       },
-  //       () => {
-  //         Toast.show({
-  //           duration: 3000,
-  //           render: () => {
-  //             return (
-  //               <ToastRender title={title} description={error} status='error' />
-  //             );
-  //           },
-  //         });
-  //         handleWindowClose();
-  //       }
-  //     );
-  //   },
-  //   [
-  //     clientRequest?.params?.origin,
-  //     clientRequest?.params?.originTabId,
-  //     handleWindowClose,
-  //   ]
-  // );
 
   /**
    * Handles the response for client requests
