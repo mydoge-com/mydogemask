@@ -94,6 +94,10 @@ export const CreateWallet = () => {
               },
             });
             dispatch({
+              type: DISPATCH_TYPES.SELECT_WALLET,
+              payload: { index: 0 },
+            });
+            dispatch({
               type: DISPATCH_TYPES.SET_ONBOARDING_COMPLETE,
               payload: true,
             });
