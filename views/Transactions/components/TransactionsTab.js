@@ -61,8 +61,8 @@ export const TransactionsTab = ({
             <Spinner color='amber.400' />
           </Center>
         ) : transactions.length <= 0 ? (
-          <VStack pt='48px' alignItems='center'>
-            <Text color='gray.500' pt='24px' pb='32px'>
+          <VStack py='10px' alignItems='center'>
+            <Text color='gray.500' pt='20px' pb='10px'>
               No transactions found
             </Text>
             <Text fontSize='16px'>
