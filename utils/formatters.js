@@ -69,37 +69,67 @@ export function sanitizeDogeInput(value = '', decimals = 8) {
   return result;
 }
 
-export function sanitizeFiat(value, prevValue, isDeletion) {
-  const { decimalSeparator = '.' } = getLocaleDecimalSeparator();
-  let counter = 0;
-  let newValue = String(value).replace(
-    new RegExp(`[^0-9\\${decimalSeparator}]|\\${decimalSeparator}`, 'g'), // removes any non 0-9/decimal characters
-    ($0) => {
-      if ($0 === decimalSeparator) {
-        // dot found and counter is not incremented
-        // that means we met first dot and we want to keep it
-        if (!counter) {
-          counter++;
-          return decimalSeparator;
+/**
+ * Sanitize user input for fiat amounts
+ * Removes leading zeros, errant decimals, invalid characters
+ * Understands commas as decimals depending on user locale
+ * @param {string} value - The input value to sanitize
+ * @returns {string}
+ */
+export function sanitizeFiat(value = '', decimals = 2) {
+  const { decimalSeparator = '.' } = getLocaleDecimalSeparator(); // Retrieve locale-specific decimal separator
+  let decimalCount = 0; // Tracks the number of decimal separators
+
+  // Remove invalid characters and conditionally allow the decimal separator
+  const sanitizedValue = String(value).replace(
+    new RegExp(`[^0-9\\${decimalSeparator}]|\\${decimalSeparator}`, 'g'),
+    (char) => {
+      if (char === decimalSeparator) {
+        if (decimals === 0) {
+          return ''; // Disallow decimal separator when decimals are not allowed
         }
+        if (decimalCount === 0) {
+          decimalCount++;
+          return decimalSeparator; // Keep the first decimal separator
+        }
+        return ''; // Remove subsequent decimal separators
       }
-      return ''; // if we find anything else, let's erase it
+      return char; // Keep valid numeric characters
     }
   );
-  if (!newValue) return `0${decimalSeparator}00`;
-  // if we removed stuff and it's the same as before, don't do the math below
-  if (newValue === prevValue) return prevValue;
-  newValue = newValue.replace(`${decimalSeparator}`, '.');
-  if (isDeletion) {
-    return (parseFloat(newValue) / 10)
-      .toFixed(2)
-      .toString()
-      .replace('.', `${decimalSeparator}`);
+
+  // Split the sanitized value into integer and fractional parts
+  const [integerPart, fractionalPart] = sanitizedValue.split(decimalSeparator);
+
+  // Truncate fractional part to the specified number of decimal places
+  const truncatedFractionalPart =
+    fractionalPart?.length > decimals
+      ? fractionalPart.substring(0, decimals)
+      : fractionalPart;
+
+  // Handle the integer part
+  let result = integerPart || ''; // Default to an empty string if no integer part
+
+  // Append the decimal separator and fractional part if present
+  if (truncatedFractionalPart !== undefined) {
+    result += `${decimalSeparator}${truncatedFractionalPart}`;
   }
-  return (parseFloat(newValue) * 10)
-    .toFixed(2)
-    .toString()
-    .replace('.', `${decimalSeparator}`);
+
+  // Ensure `0` is added only when the input starts with the decimal separator
+  if (result.startsWith(decimalSeparator)) {
+    result = `0${result}`;
+  }
+
+  // Remove leading zeros in the integer part, unless it's just a single '0'
+  if (
+    result.length > 1 &&
+    result.startsWith('0') &&
+    result[1] !== decimalSeparator
+  ) {
+    result = result.substring(1);
+  }
+
+  return result;
 }
 
 /**
