@@ -15,7 +15,15 @@ export const ResetWallet = () => {
     ({ authenticated, wallet }) => {
       dispatch({
         type: DISPATCH_TYPES.SIGN_IN,
-        payload: { authenticated, wallet, navigate: 'Success' },
+        payload: {
+          authenticated,
+          wallet,
+          navigate: 'Success',
+        },
+      });
+      dispatch({
+        type: DISPATCH_TYPES.SELECT_WALLET,
+        payload: { index: 0 },
       });
     },
     [dispatch]

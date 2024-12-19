@@ -16,7 +16,15 @@ export const ImportWallet = () => {
     ({ authenticated, wallet }) => {
       dispatch({
         type: DISPATCH_TYPES.SIGN_IN,
-        payload: { authenticated, wallet, navigate: '/Success' },
+        payload: {
+          authenticated,
+          wallet,
+          navigate: '/Success',
+        },
+      });
+      dispatch({
+        type: DISPATCH_TYPES.SELECT_WALLET,
+        payload: { index: 0 },
       });
       dispatch({
         type: DISPATCH_TYPES.SET_ONBOARDING_COMPLETE,
